@@ -1,6 +1,10 @@
 // lib/main.dart
 import 'dart:math';
+import 'package:dsv360/views/profile/AboutMe.dart';
+import 'package:dsv360/views/profile/Badges.dart';
+import 'package:dsv360/views/profile/InfoCard.dart';
 import 'package:dsv360/views/profile/LabelValueText.dart';
+import 'package:dsv360/views/profile/TagChip.dart';
 import 'package:dsv360/views/widgets/ActionsButton.dart';
 import 'package:flutter/material.dart';
 
@@ -23,8 +27,10 @@ class ProfilePage extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: const [
-                  _IconCircle(icon: Icons.arrow_back),
-                  _IconCircle(icon: Icons.settings),
+                  // _IconCircle(icon: Icons.arrow_back),
+                  // _IconCircle(icon: Icons.settings),
+                  Text("Left"),
+                  Text("Right"),
                 ],
               ),
             ),
@@ -116,7 +122,6 @@ class ProfilePage extends StatelessWidget {
                                     // stats row (removed Record pill from here)
                                     Row(
                                       children: [
-                                       
                                         LabelValueText(
                                           label: "Ph. No.",
                                           value: "+91-7635046798",
@@ -195,6 +200,11 @@ class ProfilePage extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
+                                  AboutMe(
+                                    title: 'About Me',
+                                    content:
+                                        'Full-stack developer passionate about building clean, scalable apps and delightful UX.',
+                                  ),
                                   // The grid (shrinkWrap so it only takes needed height)
                                   GridView.count(
                                     crossAxisCount: 2,
@@ -219,40 +229,107 @@ class ProfilePage extends StatelessWidget {
                                         iconBgColor: Color(0xFFFFF5E6),
                                         iconColor: Color(0xFFF2B84A),
                                       ),
-                                      InfoCard(
-                                        leadingIcon: Icons.terrain,
-                                        title: 'Barefoot',
-                                        subtitle: 'Current League',
-                                        iconBgColor: Color(0xFFFFF5E6),
-                                        iconColor: Color(0xFFF2B84A),
-                                      ),
-                                      InfoCard(
-                                        leadingIcon: Icons.bolt,
-                                        title: '30',
-                                        subtitle: 'Total XP',
-                                        iconBgColor: Color(0xFFFFF5E6),
-                                        iconColor: Color(0xFFF2B84A),
-                                      ),
                                     ],
                                   ),
 
                                   // small spacer between grid and button
                                   const SizedBox(height: 18),
 
+                                  // import 'badges_section.dart';
+                                  BadgesSection(
+                                    title: 'Badges',
+                                    badges: const [
+                                      BadgeChip(
+                                        label: 'BFSI - Bronze',
+                                        chipColor: Color(0xFFB66D2F),
+                                      ),
+                                      BadgeChip(
+                                        label: 'RETAIL - Titanium',
+                                        chipColor: Color(0xFF7A2CE6),
+                                      ),
+                                      BadgeChip(
+                                        label: 'BFSI - Diamond',
+                                        chipColor: Color(0xFF2AB2F2),
+                                      ),
+                                      BadgeChip(
+                                        label: 'Test_Badges - Titanium',
+                                        chipColor: Color(0xFF7A2CE6),
+                                      ),
+                                      // add more...
+                                    ],
+                                  ),
+
+                                  // small spacer between grid and button
+                                  const SizedBox(height: 18),
+                                  Text("Skils"),
+
+                                  Wrap(
+                                    spacing: 5,
+                                    runSpacing: 8,
+                                    children: const [
+                                      TagChip(
+                                        label: 'NodeJs',
+                                        gradientColors: [
+                                          Color(0xFF85F1FF),
+                                          Color(0xFF8EB0FF),
+                                        ],
+                                      ),
+                                      TagChip(
+                                        label: 'ReactJs',
+                                        gradientColors: [
+                                          Color(0xFFFFA8C5),
+                                          Color(0xFFFF6B8A),
+                                        ],
+                                      ),
+                                      TagChip(
+                                        label: 'MongoDB',
+                                        gradientColors: [
+                                          Color(0xFFFFC77D),
+                                          Color(0xFFFF7A7A),
+                                        ],
+                                      ),
+                                      TagChip(
+                                        label: 'S3 Bucket',
+                                        gradientColors: [
+                                          Color(0xFFB39AFF),
+                                          Color(0xFF6D5BFC),
+                                        ],
+                                      ),
+                                      TagChip(
+                                        label: 'AWS',
+                                        gradientColors: [
+                                          Color(0xFF9AE6B4),
+                                          Color(0xFF55C57B),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
                                   // Centered upload button just after the last grid item
                                   Center(
-                                    child: ActionsButton(
-                                      label: 'Upload CV',
-                                      icon: Icons.cloud_upload,
-                                      type: ActionButtonType.filled,
-                                      onTap: () {},
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        ActionsButton(
+                                          label: 'Upload CV',
+                                          icon: Icons.cloud_upload,
+                                          type: ActionButtonType.filled,
+                                          onTap: () {},
+                                        ),
+                                        SizedBox(
+                                          width: 12,
+                                        ), // spacing between buttons
+                                        ActionsButton(
+                                          label: 'View CV',
+                                          icon: Icons.cloud_upload,
+                                          type: ActionButtonType.tag,
+                                          onTap: () {},
+                                        ),
+                                      ],
                                     ),
                                   ),
 
-                                    
-
                                   // Keep some bottom spacing so button isn't touching the bottom of the card
-                                  const SizedBox(height: 24),
                                 ],
                               ),
                             ),
@@ -271,91 +348,8 @@ class ProfilePage extends StatelessWidget {
   }
 }
 
-/// Top left/right rounded icon widget
-class _IconCircle extends StatelessWidget {
-  final IconData icon;
-  const _IconCircle({required this.icon});
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 46,
-      height: 46,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: IconButton(
-        icon: Icon(icon, color: Colors.black87),
-        onPressed: () => Navigator.of(context).maybePop(),
-      ),
-    );
-  }
-}
 
-/// Info card used in grid
-class InfoCard extends StatelessWidget {
-  final IconData leadingIcon;
-  final String title;
-  final String subtitle;
-  final Color iconBgColor;
-  final Color iconColor;
 
-  const InfoCard({
-    required this.leadingIcon,
-    required this.title,
-    required this.subtitle,
-    this.iconBgColor = Colors.orange,
-    this.iconColor = Colors.white,
-    super.key,
-  });
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(
-              color: iconBgColor,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(leadingIcon, size: 22, color: iconColor),
-          ),
-          const SizedBox(width: 12),
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(color: Colors.black54)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+

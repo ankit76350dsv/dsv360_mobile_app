@@ -13,8 +13,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       // theme: ThemeData(scaffoldBackgroundColor: const Color(0xFF0EA084)),
       
-      // home: const ProfilePage(),
-      home: const DashboardPage(),
+      home: const ProfilePage(),
+      // home: const DashboardPage(),
     );
   }
 }
