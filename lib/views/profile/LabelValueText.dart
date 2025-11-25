@@ -41,7 +41,6 @@ class _LabelValueTextState extends State<LabelValueText> {
   void _showPopover() {
     _removePopover();
     final overlay = Overlay.of(context);
-    if (overlay == null) return;
 
     final RenderBox? targetRenderBox =
         _targetKey.currentContext?.findRenderObject() as RenderBox?;

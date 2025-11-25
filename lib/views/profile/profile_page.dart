@@ -1,7 +1,6 @@
 // lib/main.dart
 import 'dart:math';
 import 'package:dsv360/views/profile/LabelValueText.dart';
-import 'package:dsv360/views/profile/StatChip.dart';
 import 'package:dsv360/views/widgets/ActionsButton.dart';
 import 'package:flutter/material.dart';
 
@@ -120,8 +119,8 @@ class ProfilePage extends StatelessWidget {
                                        
                                         LabelValueText(
                                           label: "Ph. No.",
-                                          value: "+91-7635046798 sdfsdf sdfsdfsdfds sfsdfsdfsdfsdfdsf sdfs",
-                                          charLimit: 12,
+                                          value: "+91-7635046798",
+                                          charLimit: 125,
                                           enableToolkit: true,
                                           toolkitIcon: Icons.phone_iphone,
                                         ),

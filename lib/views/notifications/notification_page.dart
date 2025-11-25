@@ -292,7 +292,6 @@ class _NotificationCard extends StatelessWidget {
           child: const Icon(Icons.check_circle, color: Color(0xFF24C16E)),
         );
       case LeadingType.avatar:
-      default:
         return CircleAvatar(
           radius: 22,
           backgroundImage:
@@ -365,7 +364,6 @@ class _NotificationCard extends StatelessWidget {
       case LeadingType.check:
         return const Color(0xFF10B981); // green-ish
       case LeadingType.avatar:
-      default:
         return const Color(0xFF4B5563); // neutral grey
     }
   }
