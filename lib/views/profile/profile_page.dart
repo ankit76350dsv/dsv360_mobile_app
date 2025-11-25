@@ -6,6 +6,7 @@ import 'package:dsv360/views/profile/InfoCard.dart';
 import 'package:dsv360/views/profile/LabelValueText.dart';
 import 'package:dsv360/views/profile/TagChip.dart';
 import 'package:dsv360/views/widgets/ActionsButton.dart';
+import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -19,21 +20,35 @@ class ProfilePage extends StatelessWidget {
       body: SafeArea(
         child: Stack(
           children: [
-            // top bar icons (back + settings)
             Positioned(
-              left: 16,
-              right: 16,
-              top: 14,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  // _IconCircle(icon: Icons.arrow_back),
-                  // _IconCircle(icon: Icons.settings),
-                  Text("Left"),
-                  Text("Right"),
-                ],
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SizedBox(
+                height: 64, // choose actual TopBar height
+                child: TopBar(
+                  title: 'Profile',
+                  onBack: () {
+                    if (Navigator.canPop(context)) Navigator.pop(context);
+                  },
+                  onInfoTap: () {},
+                ),
               ),
             ),
+
+            // TopBar(
+            //   title: 'Profile',
+            //   onBack: () {
+            //     // for demo: pop if possible, otherwise do nothing
+            //     if (Navigator.canPop(context)) {
+            //       Navigator.pop(context);
+            //     }
+            //   },
+            //   onInfoTap: () {
+            //     // hook for info action
+            //     // you can open a dialog or screen here
+            //   },
+            // ),
 
             // Replace the Positioned.fill -> SingleChildScrollView ... LayoutBuilder block
             // in your
@@ -347,9 +362,3 @@ class ProfilePage extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-
