@@ -9,18 +9,26 @@ class AppColors {
   static const muted = Color(0xFF9E9E9E);
 }
 
-final ThemeData appTheme = ThemeData.dark().copyWith(
+final ColorScheme _appColorScheme = ColorScheme.dark(
+  brightness: Brightness.dark,
+  primary: AppColors.primary,
+  onPrimary: Colors.white,
+  secondary: AppColors.accent,
+  onSecondary: Colors.black,
+  // Use surface for widget backgrounds (cards, sheets, etc.)
+  surface: AppColors.surface,
+  onSurface: Colors.white,
+  // do not set `background` here (deprecated for your use-case)
+  error: const Color(0xFFCF6679),
+  onError: Colors.black,
+);
+
+final ThemeData appTheme = ThemeData.from(
+  colorScheme: _appColorScheme,
+  textTheme: Typography.whiteMountainView, // choose an appropriate textTheme
+).copyWith(
+  // scaffoldBackgroundColor still OK — this controls Scaffold specifically
   scaffoldBackgroundColor: AppColors.bg,
-  colorScheme: ColorScheme.dark(
-    primary: AppColors.primary,
-    secondary: AppColors.accent,
-    background: AppColors.bg,
-    surface: AppColors.card,
-  ),
   appBarTheme: const AppBarTheme(centerTitle: false, elevation: 0),
-  textTheme: const TextTheme(
-    // headline6: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-    // bodyText2: TextStyle(fontSize: 14),
-    // subtitle1: TextStyle(fontSize: 16),
-  ),
+  useMaterial3: false, // Material 2 look; set to true if you want M3 styles
 );

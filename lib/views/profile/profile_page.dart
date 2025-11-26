@@ -202,150 +202,151 @@ class ProfilePage extends StatelessWidget {
 
                           // --- REPLACE your current Expanded(...) block with this ---
                           Expanded(
-                            child: Container(
-                              width: double.infinity,
-                              color: const Color.fromARGB(255, 220, 219, 219),
-                              padding: const EdgeInsets.fromLTRB(
-                                16,
-                                16,
-                                16,
-                                20,
-                              ),
-                              // Use a Column so we can put Grid + Upload button one after another
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  AboutMe(
-                                    title: 'About Me',
-                                    content:
-                                        'Full-stack developer passionate about building clean, scalable apps and delightful UX.',
-                                  ),
-                                  // The grid (shrinkWrap so it only takes needed height)
-                                  GridView.count(
-                                    crossAxisCount: 2,
-                                    shrinkWrap: true,
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    mainAxisSpacing: 12,
-                                    crossAxisSpacing: 12,
-                                    childAspectRatio: gridAspect,
-                                    children: const [
-                                      InfoCard(
-                                        leadingIcon: Icons.star,
-                                        title: '51',
-                                        subtitle: 'Balance',
-                                        iconBgColor: Color(0xFFFFF5E6),
-                                        iconColor: Color(0xFFF2B84A),
-                                      ),
-                                      InfoCard(
-                                        leadingIcon: Icons.emoji_events,
-                                        title: '1',
-                                        subtitle: 'Batch',
-                                        iconBgColor: Color(0xFFFFF5E6),
-                                        iconColor: Color(0xFFF2B84A),
-                                      ),
-                                    ],
-                                  ),
-
-                                  // small spacer between grid and button
-                                  const SizedBox(height: 18),
-
-                                  // import 'badges_section.dart';
-                                  BadgesSection(
-                                    title: 'Badges',
-                                    badges: const [
-                                      BadgeChip(
-                                        label: 'BFSI - Bronze',
-                                        chipColor: Color(0xFFB66D2F),
-                                      ),
-                                      BadgeChip(
-                                        label: 'RETAIL - Titanium',
-                                        chipColor: Color(0xFF7A2CE6),
-                                      ),
-                                      BadgeChip(
-                                        label: 'BFSI - Diamond',
-                                        chipColor: Color(0xFF2AB2F2),
-                                      ),
-                                      BadgeChip(
-                                        label: 'Test_Badges - Titanium',
-                                        chipColor: Color(0xFF7A2CE6),
-                                      ),
-                                      // add more...
-                                    ],
-                                  ),
-
-                                  // small spacer between grid and button
-                                  const SizedBox(height: 18),
-                                  Text("Skils"),
-
-                                  Wrap(
-                                    spacing: 5,
-                                    runSpacing: 8,
-                                    children: const [
-                                      TagChip(
-                                        label: 'NodeJs',
-                                        gradientColors: [
-                                          Color(0xFF85F1FF),
-                                          Color(0xFF8EB0FF),
-                                        ],
-                                      ),
-                                      TagChip(
-                                        label: 'ReactJs',
-                                        gradientColors: [
-                                          Color(0xFFFFA8C5),
-                                          Color(0xFFFF6B8A),
-                                        ],
-                                      ),
-                                      TagChip(
-                                        label: 'MongoDB',
-                                        gradientColors: [
-                                          Color(0xFFFFC77D),
-                                          Color(0xFFFF7A7A),
-                                        ],
-                                      ),
-                                      TagChip(
-                                        label: 'S3 Bucket',
-                                        gradientColors: [
-                                          Color(0xFFB39AFF),
-                                          Color(0xFF6D5BFC),
-                                        ],
-                                      ),
-                                      TagChip(
-                                        label: 'AWS',
-                                        gradientColors: [
-                                          Color(0xFF9AE6B4),
-                                          Color(0xFF55C57B),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  // Centered upload button just after the last grid item
-                                  Center(
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        ActionsButton(
-                                          label: 'Upload CV',
-                                          icon: Icons.cloud_upload,
-                                          type: ActionButtonType.filled,
-                                          onTap: () {},
+                            child: SingleChildScrollView(
+                              child: Container(
+                                width: double.infinity,
+                                color: const Color.fromARGB(255, 220, 219, 219),
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  16,
+                                  16,
+                                  20,
+                                ),
+                                // Use a Column so we can put Grid + Upload button one after another
+                                child: Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
+                                  children: [
+                                    AboutMe(
+                                      title: 'About Me',
+                                      content:
+                                          'Full-stack developer passionate about building clean, scalable apps and delightful UX.',
+                                    ),
+                                    // The grid (shrinkWrap so it only takes needed height)
+                                    GridView.count(
+                                      crossAxisCount: 2,
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      mainAxisSpacing: 12,
+                                      crossAxisSpacing: 12,
+                                      childAspectRatio: gridAspect,
+                                      children: const [
+                                        InfoCard(
+                                          leadingIcon: Icons.emoji_events,
+                                          title: '1',
+                                          subtitle: 'Batch',
+                                          iconBgColor: Color(0xFFFFF5E6),
+                                          iconColor: Color(0xFFF2B84A),
                                         ),
-                                        SizedBox(
-                                          width: 12,
-                                        ), // spacing between buttons
-                                        ActionsButton(
-                                          label: 'View CV',
-                                          icon: Icons.cloud_upload,
-                                          type: ActionButtonType.tag,
-                                          onTap: () {},
+                                        InfoCard(
+                                          leadingIcon: Icons.star,
+                                          title: '51',
+                                          subtitle: 'Skills',
+                                          iconBgColor: Color(0xFFFFF5E6),
+                                          iconColor: Color(0xFFF2B84A),
                                         ),
                                       ],
                                     ),
-                                  ),
 
-                                  // Keep some bottom spacing so button isn't touching the bottom of the card
-                                ],
+                                    // small spacer between grid and button
+                                    const SizedBox(height: 18),
+
+                                    // import 'badges_section.dart';
+                                    BadgesSection(
+                                      title: 'Badges',
+                                      badges: const [
+                                        BadgeChip(
+                                          label: 'BFSI - Bronze',
+                                          chipColor: Color(0xFFB66D2F),
+                                        ),
+                                        BadgeChip(
+                                          label: 'RETAIL - Titanium',
+                                          chipColor: Color(0xFF7A2CE6),
+                                        ),
+                                        BadgeChip(
+                                          label: 'BFSI - Diamond',
+                                          chipColor: Color(0xFF2AB2F2),
+                                        ),
+                                        BadgeChip(
+                                          label: 'Test_Badges - Titanium',
+                                          chipColor: Color(0xFF7A2CE6),
+                                        ),
+                                        // add more...
+                                      ],
+                                    ),
+
+                                    // small spacer between grid and button
+                                    const SizedBox(height: 18),
+                                    Text("Skils"),
+
+                                    Wrap(
+                                      spacing: 5,
+                                      runSpacing: 8,
+                                      children: const [
+                                        TagChip(
+                                          label: 'NodeJs',
+                                          gradientColors: [
+                                            Color(0xFF85F1FF),
+                                            Color(0xFF8EB0FF),
+                                          ],
+                                        ),
+                                        TagChip(
+                                          label: 'ReactJs',
+                                          gradientColors: [
+                                            Color(0xFFFFA8C5),
+                                            Color(0xFFFF6B8A),
+                                          ],
+                                        ),
+                                        TagChip(
+                                          label: 'MongoDB',
+                                          gradientColors: [
+                                            Color(0xFFFFC77D),
+                                            Color(0xFFFF7A7A),
+                                          ],
+                                        ),
+                                        TagChip(
+                                          label: 'S3 Bucket',
+                                          gradientColors: [
+                                            Color(0xFFB39AFF),
+                                            Color(0xFF6D5BFC),
+                                          ],
+                                        ),
+                                        TagChip(
+                                          label: 'AWS',
+                                          gradientColors: [
+                                            Color(0xFF9AE6B4),
+                                            Color(0xFF55C57B),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    // Centered upload button just after the last grid item
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: ActionsButton(
+                                            label: 'Upload CV',
+                                            icon: Icons.cloud_upload,
+                                            type: ActionButtonType.filled,
+                                            onTap: () {},
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: ActionsButton(
+                                            label: 'View CV',
+                                            icon: Icons.visibility,
+                                            type: ActionButtonType.filled,
+                                            onTap: () {},
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+
+                                    // Keep some bottom spacing so button isn't touching the bottom of the card
+                                  ],
+                                ),
                               ),
                             ),
                           ),
