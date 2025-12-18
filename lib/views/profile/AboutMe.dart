@@ -23,7 +23,7 @@ class AboutMe extends StatelessWidget {
             // Card
             Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E), // dark card color
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -70,7 +70,7 @@ class AboutMe extends StatelessWidget {
                         Text(
                           content,
                           style: TextStyle(
-                            color: Colors.grey[300],
+                            color: Colors.black,
                             fontSize: 14,
                             height: 1.4,
                           ),

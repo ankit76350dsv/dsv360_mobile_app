@@ -10,6 +10,7 @@ class LabelValueText extends StatefulWidget {
   final double spacing;
   final bool enableToolkit;
   final IconData? toolkitIcon;
+  final VoidCallback? onPopoverTap;
 
   const LabelValueText({
     super.key,
@@ -21,6 +22,7 @@ class LabelValueText extends StatefulWidget {
     this.spacing = 8.0,
     this.enableToolkit = true,
     this.toolkitIcon,
+    this.onPopoverTap,
   });
 
   @override
@@ -162,6 +164,7 @@ class _LabelValueTextState extends State<LabelValueText> {
                   value: widget.value,
                   maxHeight: popoverMaxHeight,
                   allowWrap: allowWrap,
+                  onTap: widget.onPopoverTap,
                 ),
               ),
             ),
@@ -230,12 +233,14 @@ class _PopoverPill extends StatelessWidget {
   final String value;
   final double? maxHeight;
   final bool allowWrap;
+  final VoidCallback? onTap;
 
   const _PopoverPill({
     required this.label,
     required this.value,
     this.maxHeight,
     this.allowWrap = false,
+    this.onTap,
   });
 
   @override
@@ -262,13 +267,23 @@ class _PopoverPill extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: Colors.white70,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.white70,
+              ),
+            ),
+            if (onTap != null)
+               const Padding(
+                 padding: EdgeInsets.only(left: 8.0),
+                 child: Icon(Icons.open_in_new, size: 12, color: Colors.white70),
+               ),
+          ],
         ),
         const SizedBox(height: 6),
         valueText,
@@ -283,16 +298,19 @@ class _PopoverPill extends StatelessWidget {
 
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxHeight ?? double.infinity),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade900,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.28), blurRadius: 10),
-          ],
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade900,
+            borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.28), blurRadius: 10),
+            ],
+          ),
+          child: child,
         ),
-        child: child,
       ),
     );
   }

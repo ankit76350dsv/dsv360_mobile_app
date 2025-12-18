@@ -19,14 +19,14 @@ class BadgeChip extends StatelessWidget {
     return Container(
       height: height,
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.25), // slightly translucent inside
+        // color: Colors.black.withOpacity(0.25), // slightly translucent inside
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: borderColor, width: 1.25),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.6),
+            color: Colors.black,
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -38,13 +38,13 @@ class BadgeChip extends StatelessWidget {
           // small shield circle that represents the badge icon
           Container(
             width: 26,
-            height: 26,
+            // height: 26,
             decoration: BoxDecoration(
               color: chipColor,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: chipColor.withOpacity(0.35),
+                  // color: chipColor.withOpacity(0.35),
                   blurRadius: 6,
                   offset: const Offset(0, 2),
                 ),
@@ -52,11 +52,7 @@ class BadgeChip extends StatelessWidget {
             ),
             child: Center(
               // you can replace this with Image.asset(...) if you have shield images
-              child: Icon(
-                Icons.shield,
-                size: 14,
-                color: Colors.white,
-              ),
+              child: Icon(Icons.shield, size: 14, color: Colors.white),
             ),
           ),
           const SizedBox(width: 10),
@@ -102,80 +98,50 @@ class BadgesSection extends StatelessWidget {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // Card body
-            Container(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1B1B1B), // dark card background
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.6),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title row
-                  Row(
-                    children: [
-                      // vertical accent bar
-                      Container(
-                        width: 4,
-                        height: 22,
-                        decoration: BoxDecoration(
-                          color: accentColor,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        title,
-                        style: TextStyle(
-                          color: accentColor,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
 
-                  // Badges wrap
-                  LayoutBuilder(builder: (context, constraints) {
+              children: [
+                // Title row
+                Row(
+                  children: [
+                    // vertical accent bar
+                    Container(
+                      width: 4,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        color: accentColor,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: accentColor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Badges wrap
+                LayoutBuilder(
+                  builder: (context, constraints) {
                     return Wrap(
                       alignment: WrapAlignment.start,
                       runSpacing: 6,
                       spacing: 0,
                       children: badges,
                     );
-                  }),
-                ],
-              ),
+                  },
+                ),
+              ],
             ),
 
             // Thin green top border (rounded like the screenshot)
-            Positioned(
-              left: 0,
-              right: 0,
-              top: -5,
-              child: Center(
-                child: Container(
-                  height: 6,
-                  margin: const EdgeInsets.symmetric(horizontal: 6),
-                  decoration: BoxDecoration(
-                    color: accentColor,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(10),
-                      topRight: Radius.circular(10),
-                    ),
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),

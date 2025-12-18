@@ -24,7 +24,7 @@ class TopBar extends StatelessWidget {
             child: IconButton(
               onPressed: onBack,
               icon: const Icon(Icons.arrow_back_ios, size: 18),
-              color: Colors.white70,
+              color: const Color.fromARGB(179, 228, 24, 24),
               splashRadius: 20,
             ),
           ),
@@ -34,7 +34,7 @@ class TopBar extends StatelessWidget {
             child: Text(
               title,
               style: const TextStyle(
-                color: Colors.white70,
+                color: Color.fromARGB(179, 228, 27, 27),
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -47,7 +47,7 @@ class TopBar extends StatelessWidget {
                 child: IconButton(
                   onPressed: onInfoTap,
                   icon: Icon(Platform.isAndroid ? Icons.more_vert : Icons.more_horiz,size: 18),
-                  color: Colors.white70,
+                  color: const Color.fromARGB(179, 164, 25, 25),
                   splashRadius: 20,
                 // ),
               ),
