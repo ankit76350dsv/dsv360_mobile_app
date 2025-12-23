@@ -1,6 +1,7 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/models/users.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class UserDetailsPage extends StatelessWidget {
   final UsersModel user;
@@ -9,9 +10,6 @@ class UserDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-
     return DefaultTabController(
       length: 3,
       child: Scaffold(
@@ -77,7 +75,7 @@ class _TopHeader extends StatelessWidget {
       child: Row(
         children: [
           IconButton(
-            icon: const Icon(Icons.arrow_back_ios, size: 26,),
+            icon: const Icon(Icons.arrow_back_ios, size: 26),
             onPressed: () => Navigator.pop(context),
           ),
           CircleAvatar(
@@ -207,9 +205,90 @@ class _InfoTile extends StatelessWidget {
 class _ProjectsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    final exampleProjects = [
+      _ExampleProject(
+        name: "Employee Management",
+        startDate: DateTime.now().subtract(const Duration(days: 30)),
+      ),
+      _ExampleProject(
+        name: "Payroll Integration",
+        startDate: DateTime.now().subtract(const Duration(days: 15)),
+      ),
+      _ExampleProject(
+        name: "Mobile App Development",
+        startDate: DateTime.now().subtract(const Duration(days: 60)),
+      ),
+    ];
+
+    if (exampleProjects.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: const [_EmptyBox(text: "No projects assigned")],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Column(children: const [_EmptyBox(text: "No projects assigned")]),
+      child: Column(
+        children: exampleProjects
+            .map(
+              (project) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _ProjectCard(project: project),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _ExampleProject {
+  final String name;
+  final DateTime startDate;
+
+  _ExampleProject({required this.name, required this.startDate});
+}
+
+class _ProjectCard extends StatelessWidget {
+  final _ExampleProject project;
+
+  const _ProjectCard({required this.project});
+
+  String _formatDateRange() {
+    final startDate = DateFormat('MMM dd, yyyy').format(project.startDate);
+    final now = DateFormat('MMM dd, yyyy').format(DateTime.now());
+    return '$startDate - $now';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  project.name,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 6),
+                Text(_formatDateRange()),
+              ],
+            ),
+          ),
+          ElevatedButton(onPressed: () {}, child: const Text("Open")),
+        ],
+      ),
     );
   }
 }

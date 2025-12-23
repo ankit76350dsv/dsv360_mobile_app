@@ -1,16 +1,26 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/models/users.dart';
+// import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
 import 'package:dsv360/views/users/user_details_page.dart';
 import 'package:dsv360/views/widgets/VerificationStatusChip.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class UsersPage extends StatelessWidget {
+class UsersPage extends ConsumerStatefulWidget {
   const UsersPage({super.key});
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _UsersPageState();
+}
+
+class _UsersPageState extends ConsumerState<UsersPage> {
+  late ScrollController _scrollController;
 
   @override
   Widget build(BuildContext context) {
+    // final usersAsync = ref.watch(usersRepositoryProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     // final theme = Theme.of(context);
 
@@ -98,7 +108,8 @@ class UsersPage extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: ListView.builder(
+                child: 
+                ListView.builder(
                   itemCount: users.length,
                   itemBuilder: (context, index) {
                     return Padding(
@@ -107,6 +118,31 @@ class UsersPage extends StatelessWidget {
                     );
                   },
                 ),
+                // usersAsync.when(
+                //   loading: () => const Center(
+                //     child: CircularProgressIndicator(),
+                //   ),
+                //   error: (e, _) => Center(
+                //     child: Text('Error: $e'),
+                //   ),
+                //   data: (users) {
+                //     if (users.isEmpty) {
+                //       return const Center(
+                //         child: Text('No users found'),
+                //       );
+                //     }
+
+                //     return ListView.builder(
+                //       itemCount: users.length,
+                //       itemBuilder: (context, index) {
+                //         return Padding(
+                //           padding: const EdgeInsets.only(bottom: 16),
+                //           child: UserCard(user: users[index]),
+                //         );
+                //       },
+                //     );
+                //   },
+                // ),
               ),
             ),
           ],

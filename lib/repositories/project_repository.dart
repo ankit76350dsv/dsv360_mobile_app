@@ -18,10 +18,47 @@ class ProjectRepository {
         'id': 'p1',
         'name': 'Employee Management',
         'status': 'Open',
-        'tasks_count': 12
+        'tasks_count': 12,
+        'start_date': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
       },
-      {'id': 'p2', 'name': 'Payroll Integration', 'status': 'Working', 'tasks_count': 8},
-      {'id': 'p3', 'name': 'Mobile App', 'status': 'Closed', 'tasks_count': 21},
+      {
+        'id': 'p2',
+        'name': 'Payroll Integration',
+        'status': 'Working',
+        'tasks_count': 8,
+        'start_date': DateTime.now().subtract(const Duration(days: 15)).toIso8601String(),
+      },
+      {
+        'id': 'p3',
+        'name': 'Mobile App',
+        'status': 'Closed',
+        'tasks_count': 21,
+        'start_date': DateTime.now().subtract(const Duration(days: 60)).toIso8601String(),
+      },
+    ];
+    return mock.map((e) => Project.fromJson(e)).toList();
+  }
+
+  /// Fetch projects for a specific user
+  Future<List<Project>> fetchUserProjects(String userId) async {
+    // Simulate network delay
+    await Future.delayed(const Duration(milliseconds: 600));
+    // Mocked data - in production call api.get('/users/$userId/projects')
+    final mock = [
+      {
+        'id': 'p1',
+        'name': 'Employee Management',
+        'status': 'Open',
+        'tasks_count': 12,
+        'start_date': DateTime.now().subtract(const Duration(days: 30)).toIso8601String(),
+      },
+      {
+        'id': 'p2',
+        'name': 'Payroll Integration',
+        'status': 'Working',
+        'tasks_count': 8,
+        'start_date': DateTime.now().subtract(const Duration(days: 15)).toIso8601String(),
+      },
     ];
     return mock.map((e) => Project.fromJson(e)).toList();
   }
