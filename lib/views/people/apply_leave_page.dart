@@ -19,9 +19,23 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
   DateTime? _endDate;
   final TextEditingController _reasonController = TextEditingController();
 
+  late bool isEditing;
+
   int get numberOfDays {
     if (_startDate == null || _endDate == null) return 0;
     return _endDate!.difference(_startDate!).inDays + 1;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    isEditing = widget.leave != null;
+    if (isEditing) {
+      _leaveType = widget.leave!.formattedLeaveType;
+      _startDate = DateTime.parse(widget.leave!.startDate);
+      _endDate = DateTime.parse(widget.leave!.endDate);
+      _reasonController.text = widget.leave!.reason;
+    }
   }
 
   Future<void> _pickDate(bool isStart) async {
@@ -50,7 +64,7 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
       body: SafeArea(
         child: Column(
           children: [
-            _TopHeader(),
+            _TopHeader(title: isEditing ? 'Edit Leave' : 'Apply Leave'),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
@@ -173,9 +187,9 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
                     // Submit logic
                   }
                 },
-                child: const Text(
-                  'SUBMIT',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                child: Text(
+                  isEditing ? 'SAVE CHANGES' : 'SUBMIT',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -202,7 +216,8 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
 }
 
 class _TopHeader extends StatelessWidget {
-  const _TopHeader();
+  final String title;
+  const _TopHeader({required this.title});
 
   @override
   Widget build(BuildContext context) {
@@ -220,10 +235,10 @@ class _TopHeader extends StatelessWidget {
             onPressed: () => Navigator.pop(context),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
-              'Apply Leave',
-              style: TextStyle(
+              title,
+              style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,

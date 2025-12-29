@@ -20,7 +20,7 @@ class _PeoplePageState extends State<PeoplePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -31,8 +31,6 @@ class _PeoplePageState extends State<PeoplePage>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
       // backgroundColor: const Color(0xFF121212),
       drawer: const AppDrawer(),
@@ -42,35 +40,9 @@ class _PeoplePageState extends State<PeoplePage>
         elevation: 0,
       ),
 
-      /// 🔽 CHECK-IN BUTTON (BEST MOBILE PLACEMENT)
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SizedBox(
-          height: 52,
-          child: ElevatedButton(
-            onPressed: () {
-              // TODO: trigger check-in
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.green,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            child: const Text(
-              'CHECK-IN NOW',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-      ),
-
       body: Column(
         children: [
-          /// 👤 PROFILE HEADER
-          _ProfileHeader(isDark: isDark),
-
-          /// 🗂️ TABS
+          /// �️ TABS
           TabBar(
             controller: _tabController,
             indicatorColor: Colors.green,
@@ -79,6 +51,7 @@ class _PeoplePageState extends State<PeoplePage>
             indicatorSize: TabBarIndicatorSize.tab,
             indicatorWeight: 3,
             tabs: const [
+              Tab(text: 'Check In'),
               Tab(text: 'Activities'),
               Tab(text: 'Leave'),
               Tab(text: 'Attendance'),
@@ -89,7 +62,12 @@ class _PeoplePageState extends State<PeoplePage>
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: const [_ActivitiesTab(), _LeaveTab(), _AttendanceTab()],
+              children: const [
+                _CheckInTab(),
+                _ActivitiesTab(),
+                _LeaveTab(),
+                _AttendanceTab(),
+              ],
             ),
           ),
         ],
@@ -356,7 +334,7 @@ class _LeaveTab extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1C1C1C),
+      // backgroundColor: const Color(0xFF1C1C1C),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -419,7 +397,9 @@ class _LeaveTab extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => ApplyLeavePage(leave: null,)),
+                      MaterialPageRoute(
+                        builder: (_) => ApplyLeavePage(leave: null),
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -764,6 +744,415 @@ class _AttendanceTab extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _CheckInTab extends StatefulWidget {
+  const _CheckInTab();
+
+  @override
+  State<_CheckInTab> createState() => _CheckInTabState();
+}
+
+class _CheckInTabState extends State<_CheckInTab> {
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final now = DateTime.now();
+    final formattedDate =
+        '${_getDayName(now.weekday)}, ${_getMonthName(now.month)} ${now.day}';
+    final formattedTime =
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
+    return Container(
+      decoration: const BoxDecoration(
+        // gradient: LinearGradient(
+        //   begin: Alignment.topCenter,
+        //   end: Alignment.bottomCenter,
+        //   colors: [Color(0xFF2B2B2B), Color(0xFF1C1C1C)],
+        // ),
+      ),
+      child: SafeArea(
+        child: Column(
+          children: [
+            /// 👤 KEEP PROFILE HEADER AS IS
+            _ProfileHeader(isDark: isDark),
+
+            const SizedBox(height: 20),
+
+            /// 📅 CURRENT DATE & TIME INFO
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: const Color(0xFF222222),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.1),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today,
+                                size: 16,
+                                color: Colors.white.withOpacity(0.6),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'TODAY',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.6),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            formattedDate,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: const Color(0xFF222222),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.1),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.access_time,
+                                size: 16,
+                                color: Colors.white.withOpacity(0.6),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'NOW',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.6),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            formattedTime,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            /// ⏱️ TIME ELAPSED SECTION - ENHANCED
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 32,
+                  horizontal: 20,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.success.withOpacity(0.15),
+                      AppColors.success.withOpacity(0.08),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: AppColors.success.withOpacity(0.3),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.success.withOpacity(0.2),
+                      blurRadius: 20,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.timer_outlined,
+                          color: AppColors.success.withOpacity(0.8),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'TIME ELAPSED',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            letterSpacing: 2,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      '00:00:00',
+                      style: TextStyle(
+                        fontSize: 52,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.success,
+                        letterSpacing: 2,
+                        shadows: [
+                          Shadow(
+                            color: AppColors.success.withOpacity(0.5),
+                            blurRadius: 15,
+                            offset: const Offset(0, 0),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.success.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.circle, size: 8, color: AppColors.success),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Not Checked In',
+                            style: TextStyle(
+                              color: AppColors.success,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            /// 📊 QUICK INFO CARDS
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: const Color(0xFF222222),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.05),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.schedule,
+                            color: Colors.white.withOpacity(0.5),
+                            size: 24,
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            '9:00 AM',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Shift Start',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: const Color(0xFF222222),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.05),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.logout,
+                            color: Colors.white.withOpacity(0.5),
+                            size: 24,
+                          ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            '7:00 PM',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Shift End',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const Spacer(),
+
+            /// 🔽 CHECK-IN BUTTON (BOTTOM, MOBILE FRIENDLY) - ENHANCED
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.success.withOpacity(0.4),
+                      blurRadius: 20,
+                      spreadRadius: 0,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: SizedBox(
+                  height: 60,
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      // TODO: trigger check-in
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.success,
+                      foregroundColor: Colors.black,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: const [
+                        Icon(Icons.login, size: 22, color: Colors.black),
+                        SizedBox(width: 12),
+                        Text(
+                          'CHECK-IN NOW',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _getDayName(int weekday) {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return days[weekday - 1];
+  }
+
+  String _getMonthName(int month) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return months[month - 1];
   }
 }
 

@@ -1,5 +1,6 @@
 import 'package:dsv360/views/settings/settings_page.dart';
 import 'package:dsv360/views/users/users_page.dart';
+import 'package:dsv360/views/ai/dsv_ai_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/views/people/people_page.dart';
 
@@ -53,7 +54,7 @@ class AppDrawer extends StatelessWidget {
                     label: 'Users',
                     onTap: () {
                       Navigator.push(
-                        context, 
+                        context,
                         MaterialPageRoute(builder: (_) => UsersPage()),
                       );
                     },
@@ -65,6 +66,16 @@ class AppDrawer extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const PeoplePage()),
+                      );
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.smart_toy,
+                    label: 'DSV AI',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const DsvAiPage()),
                       );
                     },
                   ),
