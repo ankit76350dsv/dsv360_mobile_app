@@ -11,8 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class UsersPage extends ConsumerStatefulWidget {
   const UsersPage({super.key});
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() =>
-      _UsersPageState();
+  ConsumerState<ConsumerStatefulWidget> createState() => _UsersPageState();
 }
 
 class _UsersPageState extends ConsumerState<UsersPage> {
@@ -85,9 +84,7 @@ class _UsersPageState extends ConsumerState<UsersPage> {
           IconButton(
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const NotificationPage(),
-                ),
+                MaterialPageRoute(builder: (_) => const NotificationPage()),
               );
             },
             icon: const Icon(Icons.notifications_none),
@@ -108,8 +105,7 @@ class _UsersPageState extends ConsumerState<UsersPage> {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: 
-                ListView.builder(
+                child: ListView.builder(
                   itemCount: users.length,
                   itemBuilder: (context, index) {
                     return Padding(
@@ -265,9 +261,8 @@ class UserCard extends StatelessWidget {
                     children: [
                       Text(
                         user.name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: colors.onSurface,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

@@ -1,3 +1,4 @@
+import 'package:dsv360/views/settings/settings_page.dart';
 import 'package:dsv360/views/users/users_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/views/people/people_page.dart';
@@ -70,7 +71,12 @@ class AppDrawer extends StatelessWidget {
                   _DrawerItem(
                     icon: Icons.settings,
                     label: 'Settings',
-                    onTap: () => {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SettingsPage()),
+                      );
+                    },
                   ),
                 ],
               ),

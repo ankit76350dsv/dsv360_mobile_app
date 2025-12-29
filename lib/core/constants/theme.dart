@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 
+/// Global theme mode controller used by the app to switch
+/// between light and dark themes.
+final ValueNotifier<ThemeMode> appThemeModeNotifier = ValueNotifier<ThemeMode>(
+  ThemeMode.dark,
+);
+
 class AppColors {
   static const primary = Color(0xFF1E6EA7);
   static const accent = Color(0xFF12C6A0);
@@ -18,24 +24,52 @@ final ThemeData darkTheme = ThemeData.dark().copyWith(
     secondary: AppColors.accent,
     background: AppColors.bg,
     surface: AppColors.card,
+    onPrimary: Colors.white,
+    onSecondary: Colors.white,
+    onBackground: Colors.white,
+    onSurface: Colors.white,
   ),
-  appBarTheme: const AppBarTheme(centerTitle: false, elevation: 0),
+  appBarTheme: const AppBarTheme(
+    centerTitle: false,
+    elevation: 0,
+    backgroundColor: Colors.transparent,
+  ),
   textTheme: const TextTheme(
-    // headline6: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-    // bodyText2: TextStyle(fontSize: 14),
-    // subtitle1: TextStyle(fontSize: 16),
+    titleMedium: TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+      color: Colors.white,
+    ),
+    bodySmall: TextStyle(fontSize: 12, color: AppColors.muted),
   ),
 );
 
 final ThemeData lightTheme = ThemeData.light().copyWith(
   scaffoldBackgroundColor: Colors.white,
-  colorScheme: ColorScheme.light(
-
+  colorScheme: const ColorScheme.light(
+    primary: AppColors.primary,
+    secondary: AppColors.accent,
+    background: Colors.white,
+    surface: Colors.white,
+    onPrimary: Colors.white,
+    onSecondary: Colors.white,
+    onBackground: Colors.black87,
+    onSurface: Colors.black87,
   ),
-  appBarTheme: const AppBarTheme(centerTitle: false, elevation: 0),
+  appBarTheme: const AppBarTheme(
+    centerTitle: false,
+    elevation: 0,
+    backgroundColor: Colors.transparent,
+  ),
   textTheme: const TextTheme(
+    titleMedium: TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+      color: Colors.black87,
+    ),
     // headline6: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
     // bodyText2: TextStyle(fontSize: 14),
     // subtitle1: TextStyle(fontSize: 16),
+    bodySmall: TextStyle(fontSize: 12, color: Colors.black54),
   ),
 );
