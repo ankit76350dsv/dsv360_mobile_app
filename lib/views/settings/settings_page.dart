@@ -13,7 +13,7 @@ class SettingsPage extends StatelessWidget {
       drawer: const AppDrawer(),
       appBar: AppBar(title: const Text('Settings')),
       body: ValueListenableBuilder<ThemeMode>(
-        valueListenable: appThemeModeNotifier,
+        valueListenable: themeController.themeMode,
         builder: (context, mode, _) {
           final isDark = mode == ThemeMode.dark;
           return ListView(
@@ -25,7 +25,7 @@ class SettingsPage extends StatelessWidget {
                 ),
                 value: isDark,
                 onChanged: (value) {
-                  appThemeModeNotifier.value = value
+                  themeController.themeMode.value = value
                       ? ThemeMode.dark
                       : ThemeMode.light;
                 },

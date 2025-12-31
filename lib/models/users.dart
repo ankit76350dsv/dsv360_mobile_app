@@ -1,4 +1,4 @@
-enum WorkStatus { active, resigned, left }
+enum WorkStatus { active, inactive }
 
 enum VerificationStatus { pending, verified }
 
@@ -24,12 +24,10 @@ class UsersModel {
     switch (value) {
       case 'active':
         return WorkStatus.active;
-      case 'resigned':
-        return WorkStatus.resigned;
-      case 'left':
-        return WorkStatus.left;
+      case 'inactive':
+        return WorkStatus.inactive;
       default:
-        return WorkStatus.active;
+        return WorkStatus.inactive;
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/models/leave_summary.dart';
 import 'package:dsv360/models/leave_details.dart';
+import 'package:dsv360/models/time_logs.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/people/apply_leave_page.dart';
 import 'package:dsv360/views/people/leave_details_page.dart';
@@ -184,12 +185,7 @@ class _ActivitiesTab extends StatelessWidget {
           icon: Icons.calendar_today,
           accentColor: Colors.blueAccent,
         ),
-        const _InfoCard(
-          title: 'Today\'s Time Logs',
-          subtitle: 'No check-in/check-out logs found',
-          icon: Icons.schedule,
-          accentColor: Colors.purple,
-        ),
+        _TimeLogsCard(),
       ],
     );
   }
@@ -238,6 +234,205 @@ class _InfoCard extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TimeLogsCard extends StatelessWidget {
+  const _TimeLogsCard();
+
+  // Helper method to extract time from datetime string
+  String _extractTime(String dateTime) {
+    if (dateTime.isEmpty) return '--:--:--';
+    try {
+      // Format: "2025-12-31 20:21:38"
+      final parts = dateTime.split(' ');
+      if (parts.length > 1) {
+        return parts[1]; // Returns "20:21:38"
+      }
+      return dateTime;
+    } catch (e) {
+      return dateTime;
+    }
+  }
+
+  // Helper method to format total time
+  String _formatTotalTime(String totalTime) {
+    try {
+      final minutes = int.tryParse(totalTime) ?? 0;
+      return '$minutes m';
+    } catch (e) {
+      return '0 m';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Mock time logs data - replace with actual API call
+    final timeLogs = [
+      TimeLogs.fromJson({
+        'Day_Date': '2025-12-31',
+        'Username': 'Aman Jain',
+        'Check_In': '2025-12-31 20:21:38',
+        'Check_Out': '2025-12-31 20:21:39',
+        'Total_Time': '0',
+      }),
+      TimeLogs.fromJson({
+        'Day_Date': '2025-12-31',
+        'Username': 'Aman Jain',
+        'Check_In': '2025-12-31 20:21:41',
+        'Check_Out': '2025-12-31 20:21:44',
+        'Total_Time': '0',
+      }),
+    ];
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF3A3A3A),
+        borderRadius: BorderRadius.circular(16),
+        border: const Border(
+          left: BorderSide(color: AppColors.success, width: 4),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: const Text(
+              'Today\'s Time Logs',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+
+          // Table Header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.white.withOpacity(0.1),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Check-In',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Check-Out',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'Total Time',
+                    textAlign: TextAlign.right,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Table Rows
+          if (timeLogs.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                'No check-in/check-out logs found',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                  fontSize: 14,
+                ),
+              ),
+            )
+          else
+            ...timeLogs.map(
+              (log) => Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Colors.white.withOpacity(0.05),
+                      width: 1,
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        _extractTime(log.checkIn),
+                        style: const TextStyle(
+                          color: AppColors.success,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        log.checkOut.isNotEmpty
+                            ? _extractTime(log.checkOut)
+                            : '--:--:--',
+                        style: TextStyle(
+                          color: log.checkOut.isNotEmpty
+                              ? Colors.red
+                              : Colors.white.withOpacity(0.5),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        _formatTotalTime(log.totalTime),
+                        textAlign: TextAlign.right,
+                        style: const TextStyle(
+                          color: AppColors.success,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );

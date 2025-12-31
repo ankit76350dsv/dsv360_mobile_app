@@ -1,4 +1,6 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/models/project.dart';
+import 'package:dsv360/models/task.dart';
 import 'package:dsv360/models/users.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -65,11 +67,15 @@ class _TopHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.successDark, AppColors.primary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [colors.primaryContainer, colors.primary],
         ),
       ),
       child: Row(
@@ -108,10 +114,7 @@ class _InfoTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionTitle(
-            title: "Personal Information",
-            color: AppColors.success,
-          ),
+          _SectionTitle(title: "Personal Information"),
           _InfoTile(icon: Icons.person, label: "Full Name", value: user.name),
           _InfoTile(icon: Icons.badge, label: "User Id", value: user.userId),
           _InfoTile(
@@ -138,20 +141,20 @@ class _InfoTab extends StatelessWidget {
 
 class _SectionTitle extends StatelessWidget {
   final String title;
-  final Color color;
 
-  const _SectionTitle({required this.title, required this.color});
+  const _SectionTitle({required this.title});
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(
         title,
-        style: TextStyle(
-          fontSize: 16,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          color: colors.primary,
           fontWeight: FontWeight.w600,
-          color: color,
         ),
       ),
     );
@@ -171,7 +174,8 @@ class _InfoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -184,16 +188,13 @@ class _InfoTile extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+                style: textTheme.bodyMedium?.copyWith(
+                  fontSize: 14,
+                  color: colors.onSurfaceVariant,
                 ),
               ),
+              const SizedBox(height: 4),
+              Text(value, style: textTheme.titleMedium),
             ],
           ),
         ],
@@ -205,22 +206,31 @@ class _InfoTile extends StatelessWidget {
 class _ProjectsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final exampleProjects = [
-      _ExampleProject(
+    final List<Project> projects = [
+      Project(
+        id: "1",
         name: "Employee Management",
+        status: "open",
+        tasksCount: 12,
         startDate: DateTime.now().subtract(const Duration(days: 30)),
       ),
-      _ExampleProject(
+      Project(
+        id: "2",
         name: "Payroll Integration",
+        status: "active",
+        tasksCount: 7,
         startDate: DateTime.now().subtract(const Duration(days: 15)),
       ),
-      _ExampleProject(
+      Project(
+        id: "3",
         name: "Mobile App Development",
+        status: "on_hold",
+        tasksCount: 20,
         startDate: DateTime.now().subtract(const Duration(days: 60)),
       ),
     ];
 
-    if (exampleProjects.isEmpty) {
+    if (projects.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -229,76 +239,105 @@ class _ProjectsTab extends StatelessWidget {
       );
     }
 
-    return SingleChildScrollView(
+    return ListView.builder(
       padding: const EdgeInsets.all(16),
-      child: Column(
-        children: exampleProjects
-            .map(
-              (project) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _ProjectCard(project: project),
-              ),
-            )
-            .toList(),
-      ),
+      itemCount: projects.length,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: _ProjectCard(project: projects[index]),
+        );
+      },
     );
   }
 }
 
-class _ExampleProject {
-  final String name;
-  final DateTime startDate;
-
-  _ExampleProject({required this.name, required this.startDate});
-}
-
 class _ProjectCard extends StatelessWidget {
-  final _ExampleProject project;
+  final Project project;
 
   const _ProjectCard({required this.project});
 
   String _formatDateRange() {
-    final startDate = DateFormat('MMM dd, yyyy').format(project.startDate);
+    final startDate = DateFormat('MMM dd, yyyy').format(project.startDate!);
     final now = DateFormat('MMM dd, yyyy').format(DateTime.now());
     return '$startDate - $now';
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  project.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 6),
-                Text(_formatDateRange()),
-              ],
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: colors.secondaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            // Left content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    project.name,
+                    style: textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: colors.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  if (project.startDate != null)
+                    Text(
+                      _formatDateRange(),
+                      style: textTheme.bodySmall?.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-          ElevatedButton(onPressed: () {}, child: const Text("Open")),
-        ],
+
+            // Status chip
+            Chip(
+              label: Text(project.status),
+              backgroundColor: colors.primaryContainer,
+              labelStyle: TextStyle(color: colors.onPrimaryContainer),
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
 class _TasksTab extends StatelessWidget {
+  const _TasksTab();
+
   @override
   Widget build(BuildContext context) {
+    final List<Task> tasks = [
+      Task.fromJson({
+        "Status": "Open",
+        "Description": "jhv",
+        "Project_Name": "testing",
+        "Task_Name": "Abhay Singh Patel",
+        "Start_Date": "2025-11-03",
+        "End_Date": "2025-11-30",
+        "Assign_To": "adsadas Patel",
+      }),
+    ];
+
     return Padding(
       padding: const EdgeInsets.all(16),
-      child: Column(children: [_TaskCard()]),
+      child: ListView(
+        children: tasks.map((task) {
+          return _TaskCard(task: task);
+        }).toList(),
+      ),
     );
   }
 }
@@ -316,8 +355,8 @@ class _WorkStatusRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final theme = Theme.of(context);
+    final textTheme = Theme.of(context).textTheme;
+    final colors = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
@@ -330,19 +369,19 @@ class _WorkStatusRow extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
+                style: textTheme.bodyMedium?.copyWith(
+                  fontSize: 14,
+                  color: colors.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 4),
               Chip(
                 label: Text(
                   user.workStatus.name.toLowerCase(),
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isDark ? Colors.black : Colors.white,
-                  ),
+                  style: TextStyle(color: colors.onPrimaryContainer),
                 ),
                 visualDensity: VisualDensity.compact,
-                backgroundColor: AppColors.success,
+                backgroundColor: colors.primaryContainer,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -368,45 +407,45 @@ class _VerificationStatusRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final colors = Theme.of(context).colorScheme;
     final theme = Theme.of(context);
 
-    String statusText;
-    Color statusColor;
+    late final String statusText;
+    late final Color bgColor;
+    late final Color fgColor;
 
     switch (user.verificationStatus) {
       case VerificationStatus.verified:
         statusText = "Verified";
-        statusColor = AppColors.success;
+        bgColor = colors.secondaryContainer;
+        fgColor = colors.onSecondaryContainer;
         break;
       case VerificationStatus.pending:
         statusText = "Pending";
-        statusColor = Colors.orange;
+        bgColor = colors.tertiaryContainer;
+        fgColor = colors.onTertiaryContainer;
         break;
     }
 
     return Row(
       children: [
-        Icon(icon, size: 28),
+        Icon(icon, size: 28, color: colors.primary),
         const SizedBox(width: 16),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: theme.textTheme.bodyMedium?.copyWith(fontSize: 14),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontSize: 14,
+                color: colors.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 4),
             Chip(
-              label: Text(
-                statusText,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: isDark ? Colors.black : Colors.white,
-                ),
-              ),
+              label: Text(statusText, style: TextStyle(color: fgColor)),
+              backgroundColor: bgColor,
               visualDensity: VisualDensity.compact,
-              backgroundColor: statusColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
@@ -425,42 +464,106 @@ class _EmptyBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Container(
       padding: const EdgeInsets.all(16),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(text, textAlign: TextAlign.center),
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
+      ),
     );
   }
 }
 
 class _TaskCard extends StatelessWidget {
+  final Task task;
+
+  const _TaskCard({required this.task});
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text("nkjhvgv", style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 6),
-                Text("dwq"),
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: colors.secondaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Task title
+            Text(task.taskName, style: textTheme.titleMedium),
+
+            const SizedBox(height: 6),
+
+            // Project
+            Text(
+              task.projectName,
+              style: textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Description
+            Text(
+              task.description,
+              style: textTheme.bodyMedium?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Bottom row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Status chip
+                Chip(
+                  label: Text(task.status),
+                  backgroundColor: colors.primaryContainer,
+                  labelStyle: TextStyle(color: colors.onPrimaryContainer),
+                  visualDensity: VisualDensity.compact,
+                ),
+
+                // Date range
+                Text(
+                  "${_fmt(task.startDate)} → ${_fmt(task.endDate)}",
+                  style: textTheme.bodySmall,
+                ),
               ],
             ),
-          ),
-          ElevatedButton(onPressed: () {}, child: const Text("Open")),
-        ],
+
+            const SizedBox(height: 8),
+
+            // Assigned to
+            Row(
+              children: [
+                Icon(Icons.person, size: 16, color: colors.primary),
+                const SizedBox(width: 6),
+                Text(task.assignedTo, style: textTheme.bodySmall),
+              ],
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  String _fmt(DateTime d) {
+    return "${d.day}/${d.month}/${d.year}";
   }
 }

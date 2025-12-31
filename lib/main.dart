@@ -14,19 +14,24 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: appThemeModeNotifier,
-      builder: (context, themeMode, _) {
-        return MaterialApp(
-          themeMode: themeMode,
-          theme: lightTheme,
-          darkTheme: darkTheme,
-          debugShowCheckedModeBanner: false,
-          home: const PeoplePage(),
-          // home: const ProfilePage(),
-          // home: const DashboardPage(),
-          // home: const UsersPage(),
-          routes: {'/settings': (_) => const SettingsPage()},
+    return ValueListenableBuilder(
+      valueListenable: themeController.seedColor,
+      builder: (context, seedColor, _) {
+        return ValueListenableBuilder<ThemeMode>(
+          valueListenable: themeController.themeMode,
+          builder: (context, themeMode, _) {
+            return MaterialApp(
+              themeMode: themeMode,
+              theme: buildLightTheme(themeController.seedColor.value),
+              darkTheme: buildDarkTheme(themeController.seedColor.value),
+              debugShowCheckedModeBanner: false,
+              home: const PeoplePage(),
+              // home: const ProfilePage(),
+              // home: const DashboardPage(),
+              // home: const UsersPage(),
+              routes: {'/settings': (_) => const SettingsPage()},
+            );
+          },
         );
       },
     );
