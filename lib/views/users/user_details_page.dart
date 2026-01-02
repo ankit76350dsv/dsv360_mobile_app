@@ -1,8 +1,14 @@
-import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/models/project.dart';
 import 'package:dsv360/models/task.dart';
 import 'package:dsv360/models/users.dart';
+import 'package:dsv360/repositories/project_repository.dart';
+import 'package:dsv360/repositories/task_repository.dart';
+import 'package:dsv360/views/widgets/RoleChip.dart';
+import 'package:dsv360/views/widgets/TopHeaderBar.dart';
+import 'package:dsv360/views/widgets/VerificationStatusChip.dart';
+import 'package:dsv360/views/widgets/WorkStatusChip.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 class UserDetailsPage extends StatelessWidget {
@@ -18,7 +24,7 @@ class UserDetailsPage extends StatelessWidget {
         body: SafeArea(
           child: Column(
             children: [
-              _TopHeader(user: user),
+              TopHeaderBar(heading: "${user.firstName} ${user.lastName}"),
               _UserTabs(),
               Expanded(
                 child: TabBarView(
@@ -60,48 +66,6 @@ class _UserTabs extends StatelessWidget {
   }
 }
 
-class _TopHeader extends StatelessWidget {
-  final UsersModel user;
-
-  const _TopHeader({required this.user});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [colors.primaryContainer, colors.primary],
-        ),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios, size: 26),
-            onPressed: () => Navigator.pop(context),
-          ),
-          CircleAvatar(
-            radius: 28,
-            backgroundColor: Colors.white,
-            child: Icon(Icons.cloud, color: AppColors.primary),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              user.name,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _InfoTab extends StatelessWidget {
   final UsersModel user;
 
@@ -115,23 +79,55 @@ class _InfoTab extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionTitle(title: "Personal Information"),
-          _InfoTile(icon: Icons.person, label: "Full Name", value: user.name),
-          _InfoTile(icon: Icons.badge, label: "User Id", value: user.userId),
+          _InfoTile(
+            icon: Icons.person,
+            label: "Full Name",
+            value: "${user.firstName} ${user.lastName}",
+          ),
+          GridView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2, // ✅ 2 columns
+              crossAxisSpacing: 0,
+              mainAxisSpacing: 0,
+              childAspectRatio: 2.2, // adjust for tile height
+            ),
+            children: [
+              _InfoTile(icon: Icons.badge, label: "User Id", value: "U12345"),
+              _InfoTileCustom(
+                icon: Icons.verified_user,
+                label: "Verification",
+                widget: VerificationStatusChip(status: user.verificationStatus),
+              ),
+            ],
+          ),
+          GridView(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2, // ✅ 2 columns
+              crossAxisSpacing: 0,
+              mainAxisSpacing: 0,
+              childAspectRatio: 2.2, // adjust for tile height
+            ),
+            children: [
+              _InfoTileCustom(
+                icon: Icons.work,
+                label: "Role",
+                widget: RoleChip(text: user.role),
+              ),
+              _InfoTileCustom(
+                icon: Icons.business_center,
+                label: "Status",
+                widget: WorkStatusChip(status: user.workStatus),
+              ),
+            ],
+          ),
           _InfoTile(
             icon: Icons.email,
             label: "Email Address",
             value: user.emailAddress,
-          ),
-          _InfoTile(icon: Icons.work, label: "Role", value: user.role),
-          _WorkStatusRow(
-            user: user,
-            label: "Status",
-            icon: Icons.business_center,
-          ),
-          _VerificationStatusRow(
-            user: user,
-            label: "Verification",
-            icon: Icons.verified_user,
           ),
         ],
       ),
@@ -203,49 +199,70 @@ class _InfoTile extends StatelessWidget {
   }
 }
 
-class _ProjectsTab extends StatelessWidget {
+class _InfoTileCustom extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Widget widget;
+
+  const _InfoTileCustom({
+    required this.icon,
+    required this.label,
+    required this.widget,
+  });
+
   @override
   Widget build(BuildContext context) {
-    final List<Project> projects = [
-      Project(
-        id: "1",
-        name: "Employee Management",
-        status: "open",
-        tasksCount: 12,
-        startDate: DateTime.now().subtract(const Duration(days: 30)),
-      ),
-      Project(
-        id: "2",
-        name: "Payroll Integration",
-        status: "active",
-        tasksCount: 7,
-        startDate: DateTime.now().subtract(const Duration(days: 15)),
-      ),
-      Project(
-        id: "3",
-        name: "Mobile App Development",
-        status: "on_hold",
-        tasksCount: 20,
-        startDate: DateTime.now().subtract(const Duration(days: 60)),
-      ),
-    ];
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
-    if (projects.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: const [_EmptyBox(text: "No projects assigned")],
-        ),
-      );
-    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        children: [
+          Icon(icon, size: 28),
+          const SizedBox(width: 16),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: textTheme.bodyMedium?.copyWith(
+                  fontSize: 14,
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 4),
+              widget,
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: projects.length,
-      itemBuilder: (context, index) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _ProjectCard(project: projects[index]),
+class _ProjectsTab extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final projectsAsync = ref.watch(projectsRepositoryProvider);
+
+    return projectsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+      data: (projects) {
+        if (projects.isEmpty) {
+          return const Center(child: _EmptyBox(text: "No projects assigned"));
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: projects.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _ProjectCard(project: projects[index]),
+            );
+          },
         );
       },
     );
@@ -271,7 +288,6 @@ class _ProjectCard extends StatelessWidget {
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: colors.secondaryContainer,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -306,153 +322,44 @@ class _ProjectCard extends StatelessWidget {
               backgroundColor: colors.primaryContainer,
               labelStyle: TextStyle(color: colors.onPrimaryContainer),
               visualDensity: VisualDensity.compact,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TasksTab extends StatelessWidget {
-  const _TasksTab();
-
-  @override
-  Widget build(BuildContext context) {
-    final List<Task> tasks = [
-      Task.fromJson({
-        "Status": "Open",
-        "Description": "jhv",
-        "Project_Name": "testing",
-        "Task_Name": "Abhay Singh Patel",
-        "Start_Date": "2025-11-03",
-        "End_Date": "2025-11-30",
-        "Assign_To": "adsadas Patel",
-      }),
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: ListView(
-        children: tasks.map((task) {
-          return _TaskCard(task: task);
-        }).toList(),
-      ),
-    );
-  }
-}
-
-class _WorkStatusRow extends StatelessWidget {
-  final UsersModel user;
-  final String label;
-  final IconData icon;
-
-  const _WorkStatusRow({
-    required this.user,
-    required this.icon,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    final colors = Theme.of(context).colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Row(
-        children: [
-          Icon(icon, size: 28),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: textTheme.bodyMedium?.copyWith(
-                  fontSize: 14,
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Chip(
-                label: Text(
-                  user.workStatus.name.toLowerCase(),
-                  style: TextStyle(color: colors.onPrimaryContainer),
-                ),
-                visualDensity: VisualDensity.compact,
-                backgroundColor: colors.primaryContainer,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VerificationStatusRow extends StatelessWidget {
-  final UsersModel user;
-  final String label;
-  final IconData icon;
-
-  const _VerificationStatusRow({
-    required this.user,
-    required this.icon,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
-
-    late final String statusText;
-    late final Color bgColor;
-    late final Color fgColor;
-
-    switch (user.verificationStatus) {
-      case VerificationStatus.verified:
-        statusText = "Verified";
-        bgColor = colors.secondaryContainer;
-        fgColor = colors.onSecondaryContainer;
-        break;
-      case VerificationStatus.pending:
-        statusText = "Pending";
-        bgColor = colors.tertiaryContainer;
-        fgColor = colors.onTertiaryContainer;
-        break;
-    }
-
-    return Row(
-      children: [
-        Icon(icon, size: 28, color: colors.primary),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontSize: 14,
-                color: colors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Chip(
-              label: Text(statusText, style: TextStyle(color: fgColor)),
-              backgroundColor: bgColor,
-              visualDensity: VisualDensity.compact,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
+              side: BorderSide(color: colors.primaryContainer, width: 1),
             ),
           ],
         ),
-      ],
+      ),
+    );
+  }
+}
+
+class _TasksTab extends ConsumerWidget {
+  const _TasksTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tasksAsync = ref.watch(taskRepositoryProvider);
+
+    return tasksAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('Error: $e')),
+      data: (tasks) {
+        if (tasks.isEmpty) {
+          return const Center(child: _EmptyBox(text: "No tasks assigned"));
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: tasks.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _TaskCard(task: tasks[index]),
+            );
+          },
+        );
+      },
     );
   }
 }
@@ -496,7 +403,6 @@ class _TaskCard extends StatelessWidget {
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: colors.secondaryContainer,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -537,6 +443,10 @@ class _TaskCard extends StatelessWidget {
                   backgroundColor: colors.primaryContainer,
                   labelStyle: TextStyle(color: colors.onPrimaryContainer),
                   visualDensity: VisualDensity.compact,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  side: BorderSide(color: colors.primaryContainer, width: 1),
                 ),
 
                 // Date range

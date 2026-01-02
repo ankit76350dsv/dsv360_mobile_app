@@ -2,10 +2,13 @@ import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/models/leave_summary.dart';
 import 'package:dsv360/models/leave_details.dart';
 import 'package:dsv360/models/time_logs.dart';
+import 'package:dsv360/repositories/time_logs_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/people/apply_leave_page.dart';
 import 'package:dsv360/views/people/leave_details_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 class PeoplePage extends StatefulWidget {
   const PeoplePage({super.key});
@@ -21,7 +24,7 @@ class _PeoplePageState extends State<PeoplePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -56,6 +59,7 @@ class _PeoplePageState extends State<PeoplePage>
               Tab(text: 'Activities'),
               Tab(text: 'Leave'),
               Tab(text: 'Attendance'),
+              Tab(text: 'Attendance Tracker'),
             ],
           ),
 
@@ -68,6 +72,7 @@ class _PeoplePageState extends State<PeoplePage>
                 _ActivitiesTab(),
                 _LeaveTab(),
                 _AttendanceTab(),
+                _AttendanceTrackerTab(),
               ],
             ),
           ),
@@ -240,8 +245,44 @@ class _InfoCard extends StatelessWidget {
   }
 }
 
-class _TimeLogsCard extends StatelessWidget {
+class _TimeLogsCard extends ConsumerWidget {
   const _TimeLogsCard();
+
+  String _extractTime(String dateTime) {
+    if (dateTime.isEmpty) return '--:--:--';
+    final parts = dateTime.split(' ');
+    return parts.length > 1 ? parts[1] : dateTime;
+  }
+
+  String _formatTotalTime(String totalTime) {
+    final minutes = int.tryParse(totalTime) ?? 0;
+    return '$minutes m';
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final timeLogsAsync = ref.watch(timeLogsRepositoryProvider);
+
+    return timeLogsAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.all(16),
+        child: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, _) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text('Error: $error', style: const TextStyle(color: Colors.red)),
+      ),
+      data: (timeLogs) {
+        return _TimeLogsContent(timeLogs: timeLogs);
+      },
+    );
+  }
+}
+
+class _TimeLogsContent extends StatelessWidget {
+  final List<TimeLogs> timeLogs;
+
+  const _TimeLogsContent({required this.timeLogs});
 
   // Helper method to extract time from datetime string
   String _extractTime(String dateTime) {
@@ -270,108 +311,53 @@ class _TimeLogsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Mock time logs data - replace with actual API call
-    final timeLogs = [
-      TimeLogs.fromJson({
-        'Day_Date': '2025-12-31',
-        'Username': 'Aman Jain',
-        'Check_In': '2025-12-31 20:21:38',
-        'Check_Out': '2025-12-31 20:21:39',
-        'Total_Time': '0',
-      }),
-      TimeLogs.fromJson({
-        'Day_Date': '2025-12-31',
-        'Username': 'Aman Jain',
-        'Check_In': '2025-12-31 20:21:41',
-        'Check_Out': '2025-12-31 20:21:44',
-        'Total_Time': '0',
-      }),
-    ];
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF3A3A3A),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: const Border(
-          left: BorderSide(color: AppColors.success, width: 4),
-        ),
+        border: Border(left: BorderSide(color: colors.primary, width: 4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          /// Header
           Padding(
             padding: const EdgeInsets.all(16),
-            child: const Text(
-              'Today\'s Time Logs',
-              style: TextStyle(
-                fontSize: 16,
+            child: Text(
+              "Today's Time Logs",
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: Colors.white,
               ),
             ),
           ),
 
-          // Table Header
+          /// Table Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: Colors.white.withOpacity(0.1),
-                  width: 1,
-                ),
-              ),
+              border: Border(bottom: BorderSide(color: colors.outlineVariant)),
             ),
             child: Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Check-In',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'Check-Out',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    'Total Time',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.7),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
+              children: const [
+                _HeaderCell('Check-In'),
+                _HeaderCell('Check-Out'),
+                _HeaderCell('Total Time', alignRight: true),
               ],
             ),
           ),
 
-          // Table Rows
+          /// Empty or data rows
           if (timeLogs.isEmpty)
             Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
                 'No check-in/check-out logs found',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 14,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
                 ),
               ),
             )
@@ -385,36 +371,30 @@ class _TimeLogsCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
-                      color: Colors.white.withOpacity(0.05),
-                      width: 1,
+                      color: colors.outlineVariant.withOpacity(0.4),
                     ),
                   ),
                 ),
                 child: Row(
                   children: [
                     Expanded(
-                      flex: 2,
                       child: Text(
                         _extractTime(log.checkIn),
-                        style: const TextStyle(
-                          color: AppColors.success,
-                          fontSize: 14,
+                        style: TextStyle(
+                          color: colors.primary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
                     Expanded(
-                      flex: 2,
                       child: Text(
                         log.checkOut.isNotEmpty
                             ? _extractTime(log.checkOut)
                             : '--:--:--',
                         style: TextStyle(
                           color: log.checkOut.isNotEmpty
-                              ? Colors.red
-                              : Colors.white.withOpacity(0.5),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                              ? colors.error
+                              : colors.onSurfaceVariant,
                         ),
                       ),
                     ),
@@ -422,9 +402,8 @@ class _TimeLogsCard extends StatelessWidget {
                       child: Text(
                         _formatTotalTime(log.totalTime),
                         textAlign: TextAlign.right,
-                        style: const TextStyle(
-                          color: AppColors.success,
-                          fontSize: 14,
+                        style: TextStyle(
+                          color: colors.primary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -434,6 +413,26 @@ class _TimeLogsCard extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _HeaderCell extends StatelessWidget {
+  final String text;
+  final bool alignRight;
+
+  const _HeaderCell(this.text, {this.alignRight = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Text(
+        text,
+        textAlign: alignRight ? TextAlign.right : TextAlign.left,
+        style: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -1433,6 +1432,211 @@ class AttendanceTile extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _AttendanceTrackerTab extends StatefulWidget {
+  const _AttendanceTrackerTab({super.key});
+
+  @override
+  State<_AttendanceTrackerTab> createState() => _AttendanceTrackerTabState();
+}
+
+class _AttendanceTrackerTabState extends State<_AttendanceTrackerTab> {
+  String? selectedEmployee;
+  DateTime startDate = DateTime.now();
+  DateTime endDate = DateTime.now();
+
+  final List<String> employees = ['Aman Jain', 'Abhay Singh', 'Ujjwal Mishra'];
+
+  Future<void> _pickDate({required bool isStart}) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: isStart ? startDate : endDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          startDate = picked;
+        } else {
+          endDate = picked;
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          /// Title
+          Text(
+            'Attendance Tracker',
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: Colors.green,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          /// Employee dropdown
+          DropdownButtonFormField<String>(
+            value: selectedEmployee,
+            decoration: _inputDecoration('Select Employee', colors),
+            items: employees
+                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                .toList(),
+            onChanged: (value) {
+              setState(() => selectedEmployee = value);
+            },
+          ),
+          const SizedBox(height: 16),
+
+          /// Date range + submit
+          Row(
+            children: [
+              Expanded(
+                child: _DateField(
+                  label: 'Start Date',
+                  date: startDate,
+                  onTap: () => _pickDate(isStart: true),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _DateField(
+                  label: 'End Date',
+                  date: endDate,
+                  onTap: () => _pickDate(isStart: false),
+                ),
+              ),
+              const SizedBox(width: 16),
+              ElevatedButton(
+                onPressed: () {
+                  // TODO: Fetch attendance
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 18,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Submit',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 30),
+
+          /// Table header
+          _TableHeader(),
+          const SizedBox(height: 12),
+
+          /// Empty state
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Text(
+                'No attendance records found',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration(String label, ColorScheme colors) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: colors.onSurfaceVariant),
+      filled: true,
+      fillColor: colors.surfaceVariant,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+    );
+  }
+}
+
+/// Date field widget
+class _DateField extends StatelessWidget {
+  final String label;
+  final DateTime date;
+  final VoidCallback onTap;
+
+  const _DateField({
+    required this.label,
+    required this.date,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return InkWell(
+      onTap: onTap,
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: colors.onSurfaceVariant),
+          filled: true,
+          fillColor: colors.surfaceVariant,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          suffixIcon: const Icon(Icons.calendar_today),
+        ),
+        child: Text(
+          DateFormat('dd/MM/yyyy').format(date),
+          style: TextStyle(color: colors.onSurface),
+        ),
+      ),
+    );
+  }
+}
+
+/// Table header row
+class _TableHeader extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final textStyle = Theme.of(
+      context,
+    ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold);
+
+    return Row(
+      children: const [
+        _HeaderCell('Name'),
+        _HeaderCell('Date'),
+        _HeaderCell('Check In'),
+        _HeaderCell('Check Out'),
+        _HeaderCell('Total Time'),
+        _HeaderCell('Status'),
+      ],
     );
   }
 }

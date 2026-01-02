@@ -4,6 +4,7 @@ import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/people/people_page.dart';
 import 'package:dsv360/views/profile/profile_page.dart';
 import 'package:dsv360/views/settings/settings_page.dart';
+import 'package:dsv360/views/users/users_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -25,10 +26,10 @@ class MyApp extends StatelessWidget {
               theme: buildLightTheme(themeController.seedColor.value),
               darkTheme: buildDarkTheme(themeController.seedColor.value),
               debugShowCheckedModeBanner: false,
-              home: const PeoplePage(),
+              // home: const PeoplePage(),
               // home: const ProfilePage(),
               // home: const DashboardPage(),
-              // home: const UsersPage(),
+              home: const UsersPage(),
               routes: {'/settings': (_) => const SettingsPage()},
             );
           },

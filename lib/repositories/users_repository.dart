@@ -33,8 +33,7 @@ class UsersRepository extends AsyncNotifier<List<UsersModel>> {
       final data = response.data;
       final List<dynamic> newList = data['users'] ?? [];
 
-      final newUsers =
-          newList.map((e) => UsersModel.fromJson(e)).toList();
+      final newUsers = newList.map((e) => UsersModel.fromJson(e)).toList();
 
       if (isInitial) {
         _allUsers.clear();
@@ -82,55 +81,72 @@ class UsersRepository extends AsyncNotifier<List<UsersModel>> {
 //   UsersRepository.new,
 // );
 
-final usersRepositoryProvider =
-    Provider<AsyncValue<List<UsersModel>>>((ref) {
+final usersRepositoryProvider = Provider<AsyncValue<List<UsersModel>>>((ref) {
   // Simulate API data
   final users = <UsersModel>[
     UsersModel(
-      name: "Aman Jain",
+      firstName: "Aman",
+      lastName: "Jain",
       userId: "U5367",
       emailAddress: "aman.jain@example.com",
       role: "Admin",
+      profilePic:
+          "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png",
       workStatus: WorkStatus.active,
       verificationStatus: VerificationStatus.verified,
     ),
     UsersModel(
-      name: "adsadas Patel",
+      firstName: "Adsadas",
+      lastName: "Patel",
       userId: "U4243",
       emailAddress: "adsadas.patel@example.com",
       role: "Intern",
+      profilePic:
+          "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png",
       workStatus: WorkStatus.inactive,
       verificationStatus: VerificationStatus.pending,
     ),
     UsersModel(
-      name: "Kaushal Kishor",
+      firstName: "Kaushal",
+      lastName: "Kishor",
       userId: "U1227",
       emailAddress: "kaushal.kishor@example.com",
       role: "Manager/Team Lead",
+      profilePic:
+          "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png",
       workStatus: WorkStatus.active,
       verificationStatus: VerificationStatus.verified,
     ),
     UsersModel(
-      name: "Employee Singh",
+      firstName: "Employee",
+      lastName: "Singh",
       userId: "U3172",
       emailAddress: "employee.singh@example.com",
       role: "Intern",
+      profilePic:
+          "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png",
       workStatus: WorkStatus.active,
       verificationStatus: VerificationStatus.verified,
     ),
     UsersModel(
-      name: "abhay",
+      firstName: "Abhay",
+      lastName: "",
       userId: "U4167",
       emailAddress: "abhay@example.com",
       role: "Manager/Team Lead",
+      profilePic:
+          "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png",
       workStatus: WorkStatus.inactive,
       verificationStatus: VerificationStatus.pending,
     ),
     UsersModel(
-      name: "Ujjwal Mishra",
+      firstName: "Ujjwal",
+      lastName: "Mishra",
       userId: "U4027",
       emailAddress: "ujjwal.mishra@example.com",
       role: "Business Analyst",
+      profilePic:
+          "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png",
       workStatus: WorkStatus.active,
       verificationStatus: VerificationStatus.verified,
     ),
@@ -138,8 +154,6 @@ final usersRepositoryProvider =
 
   return AsyncValue.data(users);
 });
-
-
 
 // final usersRepositoryProvider =
 //     FutureProvider<List<UsersModel>>((ref) async {
