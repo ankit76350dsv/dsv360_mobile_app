@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class ThemeController {
-  final ValueNotifier<ThemeMode> themeMode = ValueNotifier(ThemeMode.dark);
+  final ValueNotifier<ThemeMode> themeMode = ValueNotifier(ThemeMode.light);
 
   final ValueNotifier<Color> seedColor = ValueNotifier(
     const Color.fromARGB(255, 220, 146, 18),
@@ -39,6 +40,7 @@ ThemeData buildLightTheme(Color seedColor) {
       backgroundColor: Colors.transparent,
       elevation: 0,
       foregroundColor: Colors.black,
+      systemOverlayStyle: SystemUiOverlayStyle.dark,
     ),
 
     cardTheme: const CardThemeData(color: Colors.white, elevation: 0),
@@ -118,6 +120,7 @@ ThemeData buildDarkTheme(Color seedColor) {
       backgroundColor: Colors.transparent,
       elevation: 0,
       foregroundColor: Colors.white,
+      systemOverlayStyle: SystemUiOverlayStyle.light,
     ),
 
     cardTheme: const CardThemeData(

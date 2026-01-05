@@ -47,8 +47,19 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
     return Scaffold(
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TopHeaderBar(heading: isEditing ? 'Edit User' : 'Add User'),
+            Padding(
+              padding: const EdgeInsets.only(left: 16.0),
+              child: Text(
+                "User Information",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
@@ -132,32 +143,26 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
                       Row(
                         children: [
                           Expanded(
-                            child: Theme(
-                              data: Theme.of(context).copyWith(
-                                splashColor: Colors.red.withOpacity(0.1),
-                                highlightColor: Colors.red.withOpacity(0.1),
-                              ),
-                              child: TextButton(
-                                onPressed: () => Navigator.pop(context),
-                                style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16,
-                                  ),
-                                  foregroundColor: Colors.red,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                    side: const BorderSide(
-                                      color: Colors.red,
-                                      width: 1.2,
-                                    ),
+                            child: TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                foregroundColor: Colors.red,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                  side: const BorderSide(
+                                    color: Colors.red,
+                                    width: 1.2,
                                   ),
                                 ),
-                                child: const Text(
-                                  'CANCEL',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              ),
+                              child: const Text(
+                                'CANCEL',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
@@ -218,7 +223,6 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
         borderSide: BorderSide(color: colors.primary, width: 1.5),
         borderRadius: BorderRadius.circular(6),
       ),
-      
     );
   }
 }

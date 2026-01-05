@@ -183,7 +183,8 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
                   ),
                 ),
                 onPressed: () {
-                  if (_formKey.currentState!.validate()) {
+                  final isValid = _formKey.currentState?.validate() ?? false;
+                  if (isValid) {
                     // Submit logic
                   }
                 },

@@ -1,6 +1,7 @@
-import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/models/task.dart';
 import 'package:dsv360/models/users.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
+import 'package:dsv360/repositories/task_repository.dart';
 import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
@@ -8,6 +9,7 @@ import 'package:dsv360/views/users/add_edit_user_page.dart';
 import 'package:dsv360/views/users/user_details_page.dart';
 import 'package:dsv360/views/widgets/RoleChip.dart';
 import 'package:dsv360/views/widgets/VerificationStatusChip.dart';
+import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,6 +24,7 @@ class _UsersPageState extends ConsumerState<UsersPage> {
   Widget build(BuildContext context) {
     final usersAsync = ref.watch(usersRepositoryProvider);
     final query = ref.watch(usersSearchQueryProvider);
+    final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -46,30 +49,54 @@ class _UsersPageState extends ConsumerState<UsersPage> {
           const SizedBox(width: 12),
         ],
       ),
-      floatingActionButtonLocation:
-      FloatingActionButtonLocation.endFloat,
-
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(),
-        
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => AddEditUserPage(user: null)),
           );
         },
-        child: Icon(
-          Icons.person_add,
-          size: 22, 
-      ),),
+        child: Icon(Icons.person_add, size: 22),
+      ),
 
       body: SafeArea(
         child: Column(
           children: [
-            _Header(),
+            Padding(
+              padding: EdgeInsetsGeometry.symmetric(
+                horizontal: 16.0,
+                vertical: 12.0,
+              ),
+              child: TextField(
+                onChanged: (value) {
+                  ref.read(usersSearchQueryProvider.notifier).state = value
+                      .trim();
+                },
+                decoration: InputDecoration(
+                  hintText: "Search users",
+                  filled: true,
+                  fillColor: colors.surfaceVariant,
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: colors.onSurfaceVariant,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: Colors.transparent),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: Colors.transparent),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsetsGeometry.symmetric(horizontal: 16.0),
                 child: usersAsync.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
@@ -103,72 +130,6 @@ class _UsersPageState extends ConsumerState<UsersPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _Header extends ConsumerWidget {
-  const _Header({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = Theme.of(context).colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          /// 🔍 Search field
-          Expanded(
-            child: TextField(
-              onChanged: (value) {
-                ref.read(usersSearchQueryProvider.notifier).state = value
-                    .trim();
-              },
-              decoration: InputDecoration(
-                hintText: "Search users",
-                filled: true,
-                fillColor: colors.surfaceVariant,
-                prefixIcon: Icon(Icons.search, color: colors.onSurfaceVariant),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(color: Colors.transparent),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(color: Colors.transparent),
-                ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 12),
-
-          /// ➕ Add User (Primary Action)
-          FilledButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => AddEditUserPage(user: null)),
-              );
-            },
-            icon: const Icon(Icons.person_add),
-            label: const Text(
-              'Add User',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            style: FilledButton.styleFrom(
-              backgroundColor: colors.primary,
-              foregroundColor: colors.onPrimary,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -366,8 +327,10 @@ class _UserCardState extends ConsumerState<UserCard> {
                         ),
                         IconButton(
                           onPressed: () {
-                            // TODO: Handle delete action
-                            _showDeleteConfirmation(context);
+                            _showDeleteUserSheet(
+                              context,
+                              user: widget.user, // List<Task>
+                            );
                           },
                           icon: const Icon(Icons.delete_outline),
                           color: colors.error,
@@ -390,29 +353,199 @@ class _UserCardState extends ConsumerState<UserCard> {
     return role == 'Admin' || role == 'Manager';
   }
 
-  void _showDeleteConfirmation(BuildContext context) {
-    showDialog(
+  void _showDeleteUserSheet(BuildContext context, {required UsersModel user}) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete User'),
-        content: Text(
-          'Are you sure you want to delete ${widget.user.firstName} ${widget.user.lastName}?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+      backgroundColor: Colors.transparent,
+      builder: (_) {
+        return _DeleteUserBottomSheet(user: user);
+      },
+    );
+  }
+}
+
+class _DeleteUserBottomSheet extends ConsumerStatefulWidget {
+  final UsersModel user;
+
+  const _DeleteUserBottomSheet({required this.user});
+
+  @override
+  ConsumerState<_DeleteUserBottomSheet> createState() =>
+      _DeleteUserBottomSheetState();
+}
+
+class _DeleteUserBottomSheetState
+    extends ConsumerState<_DeleteUserBottomSheet> {
+  final Map<String, String> reassignment = {};
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final tasksAsync = ref.watch(taskRepositoryProvider);
+    // 👆 ideally scoped by userId
+
+    return SafeArea(
+      top: true,
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height,
+        child: Container(
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 16,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement delete functionality
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: tasksAsync.when(
+            loading: () => _LoadingView(colors),
+            error: (e, _) => _ErrorView(e.toString(), colors),
+            data: (tasks) {
+              final hasPendingTasks = tasks.isNotEmpty;
+
+              return Column(
+                // mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _DragHandle(colors),
+
+                  Text(
+                    hasPendingTasks ? 'Task Assignment' : 'No Tasks Pending?',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 12),
+
+                  if (!hasPendingTasks)
+                    _NoTasksView(colors)
+                  else
+                    _TaskAssignmentView(
+                      tasks: tasks,
+                      reassignment: reassignment,
+                      onChanged: () => setState(() {}),
+                    ),
+
+                  const SizedBox(height: 20),
+
+                  BottomTwoButtons(
+                    button1Text: "Cancel",
+                    button2Text: "DELETE USER",
+                    button1Function: () {
+                      Navigator.pop(context);
+                    },
+                    button2Function: () {
+                      (!hasPendingTasks || reassignment.length == tasks.length)
+                          ? () {
+                              Navigator.pop(context);
+                            }
+                          : null;
+                    },
+                  ),
+                ],
+              );
             },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Delete'),
           ),
-        ],
+        ),
       ),
+    );
+  }
+}
+
+Widget _LoadingView(ColorScheme colors) {
+  return SizedBox(
+    height: 200,
+    child: Center(child: CircularProgressIndicator(color: colors.primary)),
+  );
+}
+
+Widget _ErrorView(String message, ColorScheme colors) {
+  return SizedBox(
+    height: 200,
+    child: Center(
+      child: Text(message, style: TextStyle(color: colors.error)),
+    ),
+  );
+}
+
+Widget _NoTasksView(ColorScheme colors) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 16),
+    child: Text(
+      'This user has no pending tasks.\nYou can safely delete the user.',
+      style: TextStyle(color: colors.onSurfaceVariant),
+    ),
+  );
+}
+
+Widget _DragHandle(ColorScheme colors) {
+  return Center(
+    child: Container(
+      width: 40,
+      height: 4,
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: colors.outlineVariant,
+        borderRadius: BorderRadius.circular(10),
+      ),
+    ),
+  );
+}
+
+class _TaskAssignmentView extends StatelessWidget {
+  final List<Task> tasks;
+  final Map<String, String> reassignment;
+  final VoidCallback onChanged;
+
+  const _TaskAssignmentView({
+    required this.tasks,
+    required this.reassignment,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Column(
+      children: tasks.map((task) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            children: [
+              /// Task name
+              Expanded(
+                child: Text(
+                  task.taskName,
+                  style: TextStyle(color: colors.onSurface),
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              /// Employee selector
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: reassignment[task.taskName], // ✅ bind value
+                  hint: const Text('Select Employee'),
+                  items: const [
+                    DropdownMenuItem(value: '1', child: Text('Aman')),
+                    DropdownMenuItem(value: '2', child: Text('Riya')),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+
+                    // ✅ STORE assignment
+                    reassignment[task.taskName] = value;
+
+                    // ✅ notify parent
+                    onChanged();
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

@@ -1,7 +1,8 @@
-import 'package:dsv360/core/constants/theme.dart';
+import 'dart:async';
 import 'package:dsv360/models/leave_summary.dart';
 import 'package:dsv360/models/leave_details.dart';
 import 'package:dsv360/models/time_logs.dart';
+import 'package:dsv360/repositories/leaves_repository.dart';
 import 'package:dsv360/repositories/time_logs_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/people/apply_leave_page.dart';
@@ -35,6 +36,8 @@ class _PeoplePageState extends State<PeoplePage>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       // backgroundColor: const Color(0xFF121212),
       drawer: const AppDrawer(),
@@ -49,9 +52,9 @@ class _PeoplePageState extends State<PeoplePage>
           /// �️ TABS
           TabBar(
             controller: _tabController,
-            indicatorColor: Colors.green,
-            labelColor: Colors.green,
-            unselectedLabelColor: Colors.grey,
+            indicatorColor: theme.colorScheme.primary,
+            labelColor: theme.colorScheme.primary,
+            unselectedLabelColor: theme.textTheme.bodyMedium?.color,
             indicatorSize: TabBarIndicatorSize.tab,
             indicatorWeight: 3,
             tabs: const [
@@ -76,67 +79,6 @@ class _PeoplePageState extends State<PeoplePage>
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProfileHeader extends StatelessWidget {
-  final bool isDark;
-
-  const _ProfileHeader({required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: [AppColors.successDark, AppColors.primary],
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              color: AppColors.success,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.people,
-              color: isDark ? Colors.black : Colors.white,
-              size: 28,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Aman Jain',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  'Yet to check-in',
-                  style: TextStyle(
-                    color: Color.fromARGB(255, 0, 0, 0),
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Icon(Icons.nightlight_round, color: Colors.white),
         ],
       ),
     );
@@ -169,6 +111,7 @@ class _ActivitiesTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -178,11 +121,11 @@ class _ActivitiesTab extends StatelessWidget {
           icon: Icons.person,
           accentColor: Colors.blue,
         ),
-        const _InfoCard(
+        _InfoCard(
           title: 'Check-in reminder',
           subtitle: 'Your shift is completed\n9:00 AM – 7:00 PM',
           icon: Icons.alarm,
-          accentColor: Colors.orange,
+          accentColor: theme.colorScheme.primary,
         ),
         const _InfoCard(
           title: 'Work Schedule',
@@ -211,35 +154,40 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border(left: BorderSide(color: accentColor, width: 4)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: accentColor),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border(left: BorderSide(color: accentColor, width: 4)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: accentColor),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(color: Colors.grey)),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -247,17 +195,6 @@ class _InfoCard extends StatelessWidget {
 
 class _TimeLogsCard extends ConsumerWidget {
   const _TimeLogsCard();
-
-  String _extractTime(String dateTime) {
-    if (dateTime.isEmpty) return '--:--:--';
-    final parts = dateTime.split(' ');
-    return parts.length > 1 ? parts[1] : dateTime;
-  }
-
-  String _formatTotalTime(String totalTime) {
-    final minutes = int.tryParse(totalTime) ?? 0;
-    return '$minutes m';
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -314,105 +251,107 @@ class _TimeLogsContent extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border(left: BorderSide(color: colors.primary, width: 4)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          /// Header
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              "Today's Time Logs",
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-
-          /// Table Header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: colors.outlineVariant)),
-            ),
-            child: Row(
-              children: const [
-                _HeaderCell('Check-In'),
-                _HeaderCell('Check-Out'),
-                _HeaderCell('Total Time', alignRight: true),
-              ],
-            ),
-          ),
-
-          /// Empty or data rows
-          if (timeLogs.isEmpty)
+    return Card(
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border(left: BorderSide(color: colors.primary, width: 4)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /// Header
             Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                'No check-in/check-out logs found',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-            )
-          else
-            ...timeLogs.map(
-              (log) => Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  border: Border(
-                    bottom: BorderSide(
-                      color: colors.outlineVariant.withOpacity(0.4),
-                    ),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _extractTime(log.checkIn),
-                        style: TextStyle(
-                          color: colors.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        log.checkOut.isNotEmpty
-                            ? _extractTime(log.checkOut)
-                            : '--:--:--',
-                        style: TextStyle(
-                          color: log.checkOut.isNotEmpty
-                              ? colors.error
-                              : colors.onSurfaceVariant,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        _formatTotalTime(log.totalTime),
-                        textAlign: TextAlign.right,
-                        style: TextStyle(
-                          color: colors.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
+                "Today's Time Logs",
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
-        ],
+
+            /// Table Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: colors.outlineVariant),
+                ),
+              ),
+              child: Row(
+                children: const [
+                  _HeaderCell('Check-In'),
+                  _HeaderCell('Check-Out'),
+                  _HeaderCell('Total Time', alignRight: true),
+                ],
+              ),
+            ),
+
+            /// Empty or data rows
+            if (timeLogs.isEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'No check-in/check-out logs found',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              )
+            else
+              ...timeLogs.map(
+                (log) => Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(
+                        color: colors.outlineVariant.withOpacity(0.4),
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _extractTime(log.checkIn),
+                          style: TextStyle(
+                            color: colors.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          log.checkOut.isNotEmpty
+                              ? _extractTime(log.checkOut)
+                              : '--:--:--',
+                          style: TextStyle(
+                            color: log.checkOut.isNotEmpty
+                                ? colors.error
+                                : colors.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          _formatTotalTime(log.totalTime),
+                          textAlign: TextAlign.right,
+                          style: TextStyle(
+                            color: colors.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -438,11 +377,14 @@ class _HeaderCell extends StatelessWidget {
   }
 }
 
-class _LeaveTab extends StatelessWidget {
+class _LeaveTab extends ConsumerWidget {
   const _LeaveTab();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final leaveDetailsListAsync = ref.watch(leaveDetailsListRepositoryProvider);
+    final theme = Theme.of(context);
+
     // Mock leave summary data - replace with actual API call
     final leaveSummary = LeaveSummary.fromJson({
       "Remaining_Total_Leaves": "24",
@@ -455,80 +397,7 @@ class _LeaveTab extends StatelessWidget {
       "Total_Paid_Leave": "20",
     });
 
-    // Mock leave details list - replace with actual API call
-    final List<LeaveDetails> dummyLeaves = [
-      LeaveDetails.fromJson({
-        "CREATORID": "1",
-        "Status": "Pending",
-        "ActionByID": null,
-        "Cancellation_Reason": null,
-        "End_Date": "2026-01-07",
-        "Reason": "Family vacation",
-        "ActionBy": null,
-        "LeaveCnt": "7",
-        "MODIFIEDTIME": "",
-        "Username": "Aman Jain",
-        "UserID": "101",
-        "Leave_Type": "Unpaid_Leave",
-        "CREATEDTIME": "2025-12-20",
-        "Start_Date": "2026-01-01",
-        "ROWID": "1",
-      }),
-      LeaveDetails.fromJson({
-        "CREATORID": "1",
-        "Status": "Approved",
-        "ActionByID": "200",
-        "Cancellation_Reason": null,
-        "End_Date": "2025-12-26",
-        "Reason": "Travel to hometown",
-        "ActionBy": "Manager",
-        "LeaveCnt": "5",
-        "MODIFIEDTIME": "",
-        "Username": "Aman Jain",
-        "UserID": "101",
-        "Leave_Type": "Unpaid_Leave",
-        "CREATEDTIME": "2025-12-15",
-        "Start_Date": "2025-12-22",
-        "ROWID": "2",
-      }),
-      LeaveDetails.fromJson({
-        "CREATORID": "1",
-        "Status": "Rejected",
-        "ActionByID": "200",
-        "Cancellation_Reason": "Project delivery",
-        "End_Date": "2025-12-19",
-        "Reason": "Personal work",
-        "ActionBy": "Manager",
-        "LeaveCnt": "3",
-        "MODIFIEDTIME": "",
-        "Username": "Aman Jain",
-        "UserID": "101",
-        "Leave_Type": "Unpaid_Leave",
-        "CREATEDTIME": "2025-12-10",
-        "Start_Date": "2025-12-17",
-        "ROWID": "3",
-      }),
-      LeaveDetails.fromJson({
-        "CREATORID": "1",
-        "Status": "Pending",
-        "ActionByID": null,
-        "Cancellation_Reason": null,
-        "End_Date": "2025-12-16",
-        "Reason": "Medical checkup",
-        "ActionBy": null,
-        "LeaveCnt": "5",
-        "MODIFIEDTIME": "",
-        "Username": "Aman Jain",
-        "UserID": "101",
-        "Leave_Type": "Paid_Leave",
-        "CREATEDTIME": "2025-12-08",
-        "Start_Date": "2025-12-12",
-        "ROWID": "4",
-      }),
-    ];
-
     return Scaffold(
-      // backgroundColor: const Color(0xFF1C1C1C),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -581,11 +450,7 @@ class _LeaveTab extends StatelessWidget {
               children: [
                 const Text(
                   "Recent Leave Requests",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 ElevatedButton.icon(
                   onPressed: () {
@@ -597,20 +462,16 @@ class _LeaveTab extends StatelessWidget {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.black,
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  icon: const Icon(
-                    Icons.calendar_today,
-                    size: 16,
-                    color: Colors.black,
-                  ),
+                  icon: const Icon(Icons.calendar_today, size: 16),
                   label: const Text(
                     "Request Leave",
-                    style: TextStyle(color: Colors.black),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ],
@@ -618,30 +479,55 @@ class _LeaveTab extends StatelessWidget {
 
             const SizedBox(height: 12),
 
-            // Leave list (dummy data based on LeaveDetails model)
-            ...dummyLeaves.map(
-              (leave) => LeaveTile(
-                type: leave.formattedLeaveType,
-                start: leave.formattedStartDate,
-                end: leave.formattedEndDate,
-                status: leave.formattedStatus,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => LeaveDetailsPage(leave: leave),
-                    ),
-                  );
-                },
-                onEditTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ApplyLeavePage(leave: leave),
-                    ),
-                  );
-                },
+            leaveDetailsListAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(child: CircularProgressIndicator()),
               ),
+              error: (error, _) => Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Error: $error',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ),
+              data: (leaveList) {
+                if (leaveList.isEmpty) {
+                  return const Center(child: Text('No leave records found'));
+                }
+
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: leaveList.length,
+                  itemBuilder: (context, index) {
+                    final leave = leaveList[index];
+
+                    return LeaveTile(
+                      type: leave.formattedLeaveType,
+                      start: leave.formattedStartDate,
+                      end: leave.formattedEndDate,
+                      status: leave.formattedStatus,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => LeaveDetailsPage(leave: leave),
+                          ),
+                        );
+                      },
+                      onEditTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ApplyLeavePage(leave: leave),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
             ),
           ],
         ),
@@ -668,32 +554,28 @@ class LeaveSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF222222),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: color),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(height: 12),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
             ),
-          ),
-          Text(title, style: TextStyle(color: color)),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: const TextStyle(color: Colors.white54, fontSize: 12),
-          ),
-        ],
+            Text(title, style: TextStyle(color: color)),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -719,224 +601,255 @@ class LeaveTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF222222),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                type,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.orange,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  status,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "From $start to $end",
-            style: const TextStyle(color: Colors.white60, fontSize: 13),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              SizedBox(
-                width: 100,
-                child: Theme(
-                  data: Theme.of(context).copyWith(
-                    splashColor: Colors.red.withOpacity(0.1),
-                    highlightColor: Colors.red.withOpacity(0.1),
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  type,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
-                  child: TextButton(
-                    onPressed: onEditTap,
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        side: const BorderSide(color: Colors.red, width: 1.5),
-                      ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    status,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.surface,
+                      fontWeight: FontWeight.w600,
                     ),
-                    child: Row(
-                      children: [
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: Icon(Icons.edit, color: Colors.green),
-                        ),
-                        Text(
-                          'EDIT',
-                          style: TextStyle(
-                            color: Colors.red,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "From $start to $end",
+              style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                SizedBox(
+                  width: 100,
+                  child: Theme(
+                    data: Theme.of(context).copyWith(
+                      splashColor: Colors.red.withOpacity(0.1),
+                      highlightColor: Colors.red.withOpacity(0.1),
+                    ),
+                    child: TextButton(
+                      onPressed: onEditTap,
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          side: BorderSide(
+                            color: theme.colorScheme.primary,
+                            width: 1.5,
                           ),
                         ),
-                      ],
+                      ),
+                      child: Row(
+                        children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Icon(
+                              Icons.edit,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          SizedBox(width: 6.0),
+                          Text(
+                            'EDIT',
+                            style: TextStyle(
+                              color: theme.colorScheme.primary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              SizedBox(
-                width: 150,
-                child: Theme(
-                  data: Theme.of(context).copyWith(
-                    splashColor: Colors.red.withOpacity(0.1),
-                    highlightColor: Colors.red.withOpacity(0.1),
-                  ),
+                const SizedBox(width: 16),
+                SizedBox(
+                  width: 150,
                   child: TextButton(
                     onPressed: onTap,
                     style: TextButton.styleFrom(
-                      foregroundColor: Colors.red,
+                      foregroundColor: theme.colorScheme.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
-                        side: const BorderSide(color: Colors.red, width: 1.5),
+                        side: BorderSide(
+                          color: theme.colorScheme.primary,
+                          width: 1.5,
+                        ),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'VIEW DETAILS',
                       style: TextStyle(
-                        color: Colors.red,
+                        color: theme.colorScheme.primary,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _AttendanceTab extends StatelessWidget {
-  const _AttendanceTab();
+class _AttendanceTab extends StatefulWidget {
+  const _AttendanceTab({super.key});
+
+  @override
+  State<_AttendanceTab> createState() => _AttendanceTabState();
+}
+
+class _AttendanceTabState extends State<_AttendanceTab> {
+  final List<String> options = [
+    'This Week',
+    'Last Week',
+    'This Month',
+    'Last Month',
+  ];
+
+  String selected = 'This Week';
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF1C1C1C),
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    "Attendance",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.green),
-                    ),
-                    child: const Row(
-                      children: [
-                        Text(
-                          "This Week",
-                          style: TextStyle(color: Colors.white),
-                        ),
-                        Icon(Icons.arrow_drop_down, color: Colors.white),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    final theme = Theme.of(context);
 
-            // Attendance List
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                children: const [
-                  AttendanceTile(
-                    day: "Sun",
-                    date: "21 Dec",
-                    status: "Weekend",
-                    statusColor: Colors.red,
-                    highlight: true,
-                  ),
-                  AttendanceTile(
-                    day: "Mon",
-                    date: "22 Dec",
-                    status: "Absent",
-                    statusColor: Colors.red,
-                  ),
-                  AttendanceTile(
-                    day: "Tue",
-                    date: "23 Dec",
-                    status: "Absent",
-                    statusColor: Colors.red,
-                  ),
-                  AttendanceTile(
-                    day: "Wed",
-                    date: "24 Dec",
-                    status: "Absent",
-                    statusColor: Colors.red,
-                  ),
-                  AttendanceTile(
-                    day: "Thu",
-                    date: "25 Dec",
-                    status: "Absent",
-                    statusColor: Colors.red,
-                  ),
-                  AttendanceTile(
-                    day: "Fri",
-                    date: "26 Dec",
-                    status: "Present",
-                    statusColor: Colors.green,
-                  ),
-                  AttendanceTile(
-                    day: "Sat",
-                    date: "27 Dec",
-                    status: "Weekend",
-                    statusColor: Colors.red,
-                    highlight: true,
-                  ),
-                ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Attendance",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
-            ),
-          ],
+              InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () async {
+                  final result = await showMenu<String>(
+                    context: context,
+                    position: const RelativeRect.fromLTRB(100, 100, 0, 0),
+                    items: options
+                        .map(
+                          (e) =>
+                              PopupMenuItem<String>(value: e, child: Text(e)),
+                        )
+                        .toList(),
+                  );
+
+                  if (result != null) {
+                    setState(() => selected = result);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: theme.colorScheme.primary),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(selected),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.arrow_drop_down),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+
+        // Attendance List
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            children: const [
+              AttendanceTile(
+                day: "Sun",
+                date: "21 Dec",
+                status: "Weekend",
+                statusColor: Colors.red,
+                highlight: true,
+              ),
+              AttendanceTile(
+                day: "Mon",
+                date: "22 Dec",
+                status: "Absent",
+                statusColor: Colors.red,
+              ),
+              AttendanceTile(
+                day: "Tue",
+                date: "23 Dec",
+                status: "Absent",
+                statusColor: Colors.red,
+              ),
+              AttendanceTile(
+                day: "Wed",
+                date: "24 Dec",
+                status: "Absent",
+                statusColor: Colors.red,
+              ),
+              AttendanceTile(
+                day: "Thu",
+                date: "25 Dec",
+                status: "Absent",
+                statusColor: Colors.red,
+              ),
+              AttendanceTile(
+                day: "Fri",
+                date: "26 Dec",
+                status: "Present",
+                statusColor: Colors.green,
+              ),
+              AttendanceTile(
+                day: "Sat",
+                date: "27 Dec",
+                status: "Weekend",
+                statusColor: Colors.red,
+                highlight: true,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -949,136 +862,72 @@ class _CheckInTab extends StatefulWidget {
 }
 
 class _CheckInTabState extends State<_CheckInTab> {
+  Timer? _timer;
+  Duration _elapsed = Duration.zero;
+  bool _isCheckedIn = false;
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _toggleCheckIn() {
+    if (_isCheckedIn) {
+      // ⛔ Stop timer
+      _timer?.cancel();
+    } else {
+      // ▶️ Start timer
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        setState(() {
+          _elapsed += const Duration(seconds: 1);
+        });
+      });
+    }
+    setState(() {
+      _isCheckedIn = !_isCheckedIn;
+    });
+  }
+
+  String _formatDuration(Duration d) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final h = twoDigits(d.inHours);
+    final m = twoDigits(d.inMinutes.remainder(60));
+    final s = twoDigits(d.inSeconds.remainder(60));
+    return '$h:$m:$s';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final now = DateTime.now();
-    final formattedDate =
-        '${_getDayName(now.weekday)}, ${_getMonthName(now.month)} ${now.day}';
-    final formattedTime =
-        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
 
     return Container(
-      decoration: const BoxDecoration(
-        // gradient: LinearGradient(
-        //   begin: Alignment.topCenter,
-        //   end: Alignment.bottomCenter,
-        //   colors: [Color(0xFF2B2B2B), Color(0xFF1C1C1C)],
-        // ),
-      ),
+      decoration: const BoxDecoration(),
       child: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            /// 👤 KEEP PROFILE HEADER AS IS
-            _ProfileHeader(isDark: isDark),
-
-            const SizedBox(height: 20),
-
-            /// 📅 CURRENT DATE & TIME INFO
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: const Color(0xFF222222),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.1),
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today,
-                                size: 16,
-                                color: Colors.white.withOpacity(0.6),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'TODAY',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.6),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            formattedDate,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: const Color(0xFF222222),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.1),
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.access_time,
-                                size: 16,
-                                color: Colors.white.withOpacity(0.6),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                'NOW',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.6),
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 1.2,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            formattedTime,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
+                  Text(
+                    'Aman Jain',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: colors.primary,
                     ),
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 20),
-
-            /// ⏱️ TIME ELAPSED SECTION - ENHANCED
+            /// ⏱️ TIME ELAPSED
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
@@ -1089,25 +938,15 @@ class _CheckInTabState extends State<_CheckInTab> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
                   gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
                     colors: [
-                      AppColors.success.withOpacity(0.15),
-                      AppColors.success.withOpacity(0.08),
+                      colors.primary.withOpacity(0.15),
+                      colors.primary.withOpacity(0.08),
                     ],
                   ),
                   border: Border.all(
-                    color: AppColors.success.withOpacity(0.3),
+                    color: colors.primary.withOpacity(0.3),
                     width: 2,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.success.withOpacity(0.2),
-                      blurRadius: 20,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
                 ),
                 child: Column(
                   children: [
@@ -1116,34 +955,33 @@ class _CheckInTabState extends State<_CheckInTab> {
                       children: [
                         Icon(
                           Icons.timer_outlined,
-                          color: AppColors.success.withOpacity(0.8),
+                          color: colors.primary.withOpacity(0.9),
                           size: 20,
                         ),
                         const SizedBox(width: 8),
                         Text(
                           'TIME ELAPSED',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
+                            color: colors.primary,
                             letterSpacing: 2,
                             fontWeight: FontWeight.w700,
-                            fontSize: 12,
+                            fontSize: 14,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      '00:00:00',
+                      _formatDuration(_elapsed),
                       style: TextStyle(
                         fontSize: 52,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.success,
+                        color: colors.primary,
                         letterSpacing: 2,
                         shadows: [
                           Shadow(
-                            color: AppColors.success.withOpacity(0.5),
+                            color: colors.primary.withOpacity(0.5),
                             blurRadius: 15,
-                            offset: const Offset(0, 0),
                           ),
                         ],
                       ),
@@ -1155,18 +993,18 @@ class _CheckInTabState extends State<_CheckInTab> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.success.withOpacity(0.2),
+                        color: colors.primary.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.circle, size: 8, color: AppColors.success),
+                          Icon(Icons.circle, size: 8, color: colors.primary),
                           const SizedBox(width: 8),
                           Text(
-                            'Not Checked In',
+                            _isCheckedIn ? 'Checked In' : 'Not Checked In',
                             style: TextStyle(
-                              color: AppColors.success,
+                              color: colors.primary,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1187,81 +1025,59 @@ class _CheckInTabState extends State<_CheckInTab> {
               child: Row(
                 children: [
                   Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
+                    child: Card(
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        color: const Color(0xFF222222),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.05),
-                          width: 1,
-                        ),
                       ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.schedule,
-                            color: Colors.white.withOpacity(0.5),
-                            size: 24,
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            '9:00 AM',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.schedule,
+                              color: colors.onSurface.withOpacity(0.5),
+                              size: 24,
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Shift Start',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
-                              fontSize: 11,
+                            const SizedBox(height: 8),
+                            Text(
+                              '9:00 AM',
+                              style: textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text('Shift Start', style: textTheme.bodySmall),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
+                    child: Card(
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
-                        color: const Color(0xFF222222),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.05),
-                          width: 1,
-                        ),
                       ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.logout,
-                            color: Colors.white.withOpacity(0.5),
-                            size: 24,
-                          ),
-                          const SizedBox(height: 8),
-                          const Text(
-                            '7:00 PM',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.logout,
+                              color: colors.onSurface.withOpacity(0.5),
+                              size: 24,
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Shift End',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
-                              fontSize: 11,
+                            const SizedBox(height: 8),
+                            Text(
+                              '7:00 PM',
+                              style: textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text('Shift End', style: textTheme.bodySmall),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -1269,55 +1085,39 @@ class _CheckInTabState extends State<_CheckInTab> {
               ),
             ),
 
-            const Spacer(),
-
-            /// 🔽 CHECK-IN BUTTON (BOTTOM, MOBILE FRIENDLY) - ENHANCED
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.success.withOpacity(0.4),
-                      blurRadius: 20,
-                      spreadRadius: 0,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: SizedBox(
-                  height: 60,
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // TODO: trigger check-in
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.success,
-                      foregroundColor: Colors.black,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+              padding: EdgeInsets.all(16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _toggleCheckIn,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colors.primary,
+                        foregroundColor: colors.onPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      icon: Icon(
+                        _isCheckedIn
+                            ? Icons.logout
+                            : Icons
+                                  .login, // or Icons.check_circle, Icons.access_time
+                        size: 20,
+                      ),
+                      label: Text(
+                        (_isCheckedIn ? 'CHECK OUT' : 'CHECK IN NOW')
+                            .toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: const [
-                        Icon(Icons.login, size: 22, color: Colors.black),
-                        SizedBox(width: 12),
-                        Text(
-                          'CHECK-IN NOW',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ],
@@ -1368,69 +1168,54 @@ class AttendanceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        gradient: highlight
-            ? const LinearGradient(
-                colors: [Color(0xFF3A3328), Color(0xFF1F1F1F)],
-              )
-            : null,
-        color: highlight ? null : const Color(0xFF222222),
-      ),
-      child: Row(
-        children: [
-          // Day & Date
-          SizedBox(
-            width: 60,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  day,
-                  style: const TextStyle(
-                    color: Colors.redAccent,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  date,
-                  style: const TextStyle(color: Colors.white70, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
+    final theme = Theme.of(context);
 
-          // Shift Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  "General",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
+    return Card(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            // Day & Date
+            SizedBox(
+              width: 60,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    day,
+                    style: const TextStyle(
+                      color: Colors.redAccent,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  "9:00 AM - 7:00 PM",
-                  style: TextStyle(color: Colors.white60, fontSize: 13),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(date, style: theme.textTheme.bodySmall),
+                ],
+              ),
             ),
-          ),
 
-          // Status
-          Text(
-            status,
-            style: TextStyle(color: statusColor, fontWeight: FontWeight.w600),
-          ),
-        ],
+            // Shift Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "General",
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  SizedBox(height: 4),
+                  Text("9:00 AM - 7:00 PM", style: theme.textTheme.bodySmall),
+                ],
+              ),
+            ),
+
+            // Status
+            Text(
+              status,
+              style: TextStyle(color: statusColor, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1483,7 +1268,7 @@ class _AttendanceTrackerTabState extends State<_AttendanceTrackerTab> {
           Text(
             'Attendance Tracker',
             style: theme.textTheme.titleLarge?.copyWith(
-              color: Colors.green,
+              color: colors.primary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -1519,15 +1304,20 @@ class _AttendanceTrackerTabState extends State<_AttendanceTrackerTab> {
                   date: endDate,
                   onTap: () => _pickDate(isStart: false),
                 ),
-              ),
-              const SizedBox(width: 16),
-              ElevatedButton(
+              ),              
+            ],
+          ),
+
+          const SizedBox(height: 30),
+
+          Row(children:[Expanded(
+            child:TextButton(
                 onPressed: () {
                   // TODO: Fetch attendance
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.black,
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.onPrimary,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 28,
                     vertical: 18,
@@ -1540,28 +1330,62 @@ class _AttendanceTrackerTabState extends State<_AttendanceTrackerTab> {
                   'Submit',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
+              ),),]),
+
+              const SizedBox(height: 16),
+
+          // Attendance List
+        Expanded(
+          child: ListView(
+
+            children: const [
+              AttendanceTile(
+                day: "Sun",
+                date: "21 Dec",
+                status: "Weekend",
+                statusColor: Colors.red,
+                highlight: true,
+              ),
+              AttendanceTile(
+                day: "Mon",
+                date: "22 Dec",
+                status: "Absent",
+                statusColor: Colors.red,
+              ),
+              AttendanceTile(
+                day: "Tue",
+                date: "23 Dec",
+                status: "Absent",
+                statusColor: Colors.red,
+              ),
+              AttendanceTile(
+                day: "Wed",
+                date: "24 Dec",
+                status: "Absent",
+                statusColor: Colors.red,
+              ),
+              AttendanceTile(
+                day: "Thu",
+                date: "25 Dec",
+                status: "Absent",
+                statusColor: Colors.red,
+              ),
+              AttendanceTile(
+                day: "Fri",
+                date: "26 Dec",
+                status: "Present",
+                statusColor: Colors.green,
+              ),
+              AttendanceTile(
+                day: "Sat",
+                date: "27 Dec",
+                status: "Weekend",
+                statusColor: Colors.red,
+                highlight: true,
               ),
             ],
           ),
-
-          const SizedBox(height: 30),
-
-          /// Table header
-          _TableHeader(),
-          const SizedBox(height: 12),
-
-          /// Empty state
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Text(
-                'No attendance records found',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-            ),
-          ),
+        ),
         ],
       ),
     );

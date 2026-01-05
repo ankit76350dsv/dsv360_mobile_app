@@ -34,7 +34,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.grid_on,
                     label: 'Dashboard',
                     onTap: () => {
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (_) => DashboardPage()),
                       )
@@ -59,7 +59,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.person_add_outlined,
                     label: 'Users',
                     onTap: () {
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (_) => UsersPage()),
                       );
@@ -69,7 +69,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.people_outline,
                     label: 'People',
                     onTap: () {
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (_) => const PeoplePage()),
                       );
@@ -79,7 +79,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.smart_toy,
                     label: 'DSV AI',
                     onTap: () {
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (_) => const DsvAiPage()),
                       );
@@ -89,7 +89,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.settings,
                     label: 'Settings',
                     onTap: () {
-                      Navigator.push(
+                      Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (_) => const SettingsPage()),
                       );

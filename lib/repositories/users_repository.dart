@@ -111,7 +111,7 @@ final usersRepositoryProvider = Provider<AsyncValue<List<UsersModel>>>((ref) {
       lastName: "Kishor",
       userId: "U1227",
       emailAddress: "kaushal.kishor@example.com",
-      role: "Manager/Team Lead",
+      role: "Manager",
       profilePic:
           "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png",
       workStatus: WorkStatus.active,

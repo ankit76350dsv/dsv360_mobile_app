@@ -26,10 +26,10 @@ class MyApp extends StatelessWidget {
               theme: buildLightTheme(themeController.seedColor.value),
               darkTheme: buildDarkTheme(themeController.seedColor.value),
               debugShowCheckedModeBanner: false,
-              // home: const PeoplePage(),
+              home: const PeoplePage(),
               // home: const ProfilePage(),
               // home: const DashboardPage(),
-              home: const UsersPage(),
+              // home: const UsersPage(),
               routes: {'/settings': (_) => const SettingsPage()},
             );
           },
