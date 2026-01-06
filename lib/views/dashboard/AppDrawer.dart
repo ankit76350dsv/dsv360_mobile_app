@@ -1,3 +1,5 @@
+import 'package:dsv360/views/accounts/accounts_page.dart';
+import 'package:dsv360/views/clientContacts/client_contacts_page.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/settings/settings_page.dart';
 import 'package:dsv360/views/users/users_page.dart';
@@ -54,6 +56,26 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.bug_report_outlined,
                     label: 'Issues',
                     onTap: () => {},
+                  ),
+                  _DrawerItem(
+                    icon: Icons.apartment,
+                    label: 'Accounts',
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => AccountsPage()),
+                      );
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.filter_alt,
+                    label: 'Client Contacts',
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => ClientContactsPage()),
+                      );
+                    },
                   ),
                   _DrawerItem(
                     icon: Icons.person_add_outlined,

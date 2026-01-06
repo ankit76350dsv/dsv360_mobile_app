@@ -120,7 +120,7 @@ class _UsersPageState extends ConsumerState<UsersPage> {
                       itemBuilder: (context, index) {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 16),
-                          child: UserCard(user: users[index]),
+                          child: UserCard(user: filteredUsers[index]),
                         );
                       },
                     );
