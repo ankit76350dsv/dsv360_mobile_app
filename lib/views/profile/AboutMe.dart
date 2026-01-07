@@ -9,8 +9,13 @@ class AboutMe extends StatelessWidget {
     Key? key,
     required this.title,
     required this.content,
-    this.accentColor = const Color.fromARGB(255, 215, 76, 30), // bright green
+    this.accentColor = const Color(0xFF00C853),
+    this.backgroundColor = Colors.white,
+    this.textColor = Colors.black,
   }) : super(key: key);
+
+  final Color backgroundColor;
+  final Color textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +28,7 @@ class AboutMe extends StatelessWidget {
             // Card
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: backgroundColor,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -70,7 +75,7 @@ class AboutMe extends StatelessWidget {
                         Text(
                           content,
                           style: TextStyle(
-                            color: Colors.black,
+                            color: textColor,
                             fontSize: 14,
                             height: 1.4,
                           ),
