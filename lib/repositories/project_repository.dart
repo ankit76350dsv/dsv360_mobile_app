@@ -1,35 +1,76 @@
 import 'dart:async';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../models/project.dart';
-import '../services/api_client.dart';
 
-class ProjectRepository {
-  // Replace with ApiClient() calls for real API
-  final ApiClient api;
-
-  ProjectRepository({ApiClient? apiClient}) : api = apiClient ?? ApiClient();
-
-  /// Mocked fetch - in production call api.get('/projects') and map results
-  Future<List<Project>> fetchProjects() async {
-    // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 600));
-    // Mocked data
-    final mock = [
-      {
-        'id': 'p1',
-        'name': 'Employee Management',
-        'status': 'Open',
-        'tasks_count': 12
-      },
-      {'id': 'p2', 'name': 'Payroll Integration', 'status': 'Working', 'tasks_count': 8},
-      {'id': 'p3', 'name': 'Mobile App', 'status': 'Closed', 'tasks_count': 21},
-    ];
-    return mock.map((e) => Project.fromJson(e)).toList();
+class ProjectsRepository extends AsyncNotifier<List<Project>> {
+  @override
+  Future<List<Project>> build() async {
+    return fetchProjects();
   }
 
-  // Example real call (commented)
-  // Future<List<Project>> fetchProjects() async {
-  //   final res = await api.get('/projects');
-  //   final list = (res.data as List).map((e) => Project.fromJson(e)).toList();
-  //   return list;
-  // }
+  Future<List<Project>> fetchProjects() async {
+    // TODO: replace with Dio call
+    await Future.delayed(const Duration(seconds: 2));
+
+    return [
+      Project(
+        id: "1",
+        name: "Employee Management",
+        status: "active",
+        tasksCount: 12,
+        startDate: DateTime.now().subtract(const Duration(days: 30)),
+      ),
+    ];
+  }
 }
+
+// final projectsRepositoryProvider =
+//     AsyncNotifierProvider<ProjectsRepository, List<Project>>(
+//   ProjectsRepository.new,
+// );
+
+
+
+
+/// Temporary Projects Repository (Mock)
+/// Replace with AsyncNotifier when API is ready
+final projectsRepositoryProvider =
+    FutureProvider<List<Project>>((ref) async {
+  // ⏳ Simulate network delay
+  await Future.delayed(const Duration(seconds: 2));
+
+  // ❌ Uncomment to test error state
+  // throw Exception("Failed to load projects");
+
+  return <Project>[
+    Project(
+      id: "1",
+      name: "Employee Management",
+      status: "active",
+      tasksCount: 12,
+      startDate: DateTime.now().subtract(const Duration(days: 30)),
+    ),
+    Project(
+      id: "2",
+      name: "Payroll Integration",
+      status: "active",
+      tasksCount: 7,
+      startDate: DateTime.now().subtract(const Duration(days: 15)),
+    ),
+    Project(
+      id: "3",
+      name: "Mobile App Development",
+      status: "on_hold",
+      tasksCount: 20,
+      startDate: DateTime.now().subtract(const Duration(days: 60)),
+    ),
+    Project(
+      id: "4",
+      name: "Analytics Dashboard",
+      status: "completed",
+      tasksCount: 25,
+      startDate: DateTime.now().subtract(const Duration(days: 90)),
+    ),
+  ];
+});

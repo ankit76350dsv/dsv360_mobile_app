@@ -1,0 +1,345 @@
+import 'package:dsv360/models/accounts.dart';
+import 'package:dsv360/models/client_contacts.dart';
+import 'package:dsv360/repositories/accounts_list_repository.dart';
+import 'package:dsv360/repositories/active_user_repository.dart';
+import 'package:dsv360/repositories/client_contacts_repository.dart';
+import 'package:dsv360/views/clientContacts/add_client_contacts_page.dart';
+import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/views/notifications/notification_page.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class ClientContactsPage extends ConsumerStatefulWidget {
+  const ClientContactsPage({super.key});
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() => _ClientContactsState();
+}
+
+class _ClientContactsState extends ConsumerState<ClientContactsPage> {
+  @override
+  Widget build(BuildContext context) {
+    final clientContactsListAsync = ref.watch(
+      clientContactsListRepositoryProvider,
+    );
+    final query = ref.watch(clientContactsSearchQueryProvider);
+    final colors = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      drawer: const AppDrawer(),
+      appBar: AppBar(
+        elevation: 0,
+        title: const Text('DSV-360'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const NotificationPage()),
+              );
+            },
+            icon: const Icon(Icons.notifications_none),
+          ),
+          const SizedBox(width: 8),
+          CircleAvatar(
+            radius: 16,
+            backgroundColor: Colors.white12,
+            child: const Icon(Icons.person_outline, size: 18),
+          ),
+          const SizedBox(width: 12),
+        ],
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: FloatingActionButton(
+        shape: const CircleBorder(),
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AddClientContactsPage(clientContacts: null),
+            ),
+          );
+        },
+        child: Icon(Icons.filter_alt, size: 22),
+      ),
+
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: EdgeInsetsGeometry.symmetric(
+                horizontal: 16.0,
+                vertical: 12.0,
+              ),
+              child: TextField(
+                style: TextStyle(color: colors.onSurfaceVariant),
+                onChanged: (value) {
+                  ref.read(accountsSearchQueryProvider.notifier).state = value
+                      .trim();
+                },
+                decoration: InputDecoration(
+                  hintText: "Search client contacts",
+                  filled: true,
+                  fillColor: colors.surfaceVariant,
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: colors.onSurfaceVariant,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: Colors.transparent),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: Colors.transparent),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsetsGeometry.symmetric(horizontal: 16.0),
+                child: clientContactsListAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (e, _) => Center(child: Text('Error: $e')),
+                  data: (clientContactsList) {
+                    final filteredClientContacts = clientContactsList.where((
+                      c,
+                    ) {
+                      final q = query.toLowerCase();
+                      return c.orgName.toLowerCase().contains(q) ||
+                          c.email.toLowerCase().contains(q) ||
+                          c.firstName.toLowerCase().contains(q) ||
+                          c.lastName.toLowerCase().contains(q);
+                    }).toList();
+
+                    if (filteredClientContacts.isEmpty) {
+                      return const Center(child: Text('No accounts found'));
+                    }
+
+                    return ListView.builder(
+                      itemCount: filteredClientContacts.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: ClientContactsCard(
+                            clientContacts: filteredClientContacts[index],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ClientContactsCard extends ConsumerStatefulWidget {
+  final ClientContacts clientContacts;
+  const ClientContactsCard({super.key, required this.clientContacts});
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _ClientContactsCardState();
+}
+
+class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
+  late bool clientStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    clientStatus = widget.clientContacts.status;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final activeUser = ref.watch(activeUserRepositoryProvider).asData?.value;
+
+    return GestureDetector(
+      onTap: () {},
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: SizedBox(
+          height: 225.00,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: colors.primary.withOpacity(0.15),
+                      child: Icon(
+                        Icons.filter_alt,
+                        size: 28,
+                        color: colors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "${widget.clientContacts.firstName} ${widget.clientContacts.lastName}",
+                            style: theme.textTheme.titleMedium,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            widget.clientContacts.orgName,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                /// Details
+                _infoRow("ID", widget.clientContacts.userId),
+                _infoRow("Email", widget.clientContacts.email),
+                _infoRow("Contacts", widget.clientContacts.phone),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    activeUser != null && _canManageUsers(activeUser.role)
+                        ? Transform.scale(
+                            scale: 0.85, // 👈 change this (0.7 – 1.2 usually)
+                            child: Switch(
+                              value: clientStatus,
+
+                              onChanged: (value) {
+                                setState(() {
+                                  clientStatus = value;
+                                  // TODO: Update workStatus in backend
+                                });
+
+                                final message = value
+                                    ? 'Employee is active'
+                                    : 'Employee is inactive';
+
+                                ScaffoldMessenger.of(context)
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    SnackBar(
+                                      content: Row(
+                                        children: [
+                                          const Icon(
+                                            Icons.info_outline,
+                                            color: Colors.white,
+                                            size: 20,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Text(message),
+                                        ],
+                                      ),
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                              },
+                            ),
+                          )
+                        : SizedBox(),
+                    IconButton(
+                      onPressed: () {
+                        _showDeleteDialog(
+                          context,
+                          "${widget.clientContacts.firstName} ${widget.clientContacts.lastName}",
+                        );
+                      },
+                      icon: const Icon(Icons.delete_outline),
+                      color: colors.error,
+                      iconSize: 20,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Centralized role rule
+  bool _canManageUsers(String role) {
+    return role == 'Admin' || role == 'Manager';
+  }
+
+  /// Small helper for label-value rows
+  Widget _infoRow(String label, String value) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: RichText(
+        text: TextSpan(
+          style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
+          children: [
+            TextSpan(
+              text: "$label: ",
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            TextSpan(
+              text: value,
+              style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context, String clientContactName) {
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: Text('Delete Staff', style: theme.textTheme.titleMedium),
+          content: Text('Are you sure you want to delete Staff  "$clientContactName" ?'),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: theme.colorScheme.primary,
+                side: BorderSide(color: theme.colorScheme.primary),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+              ),
+              child: const Text('CANCEL'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                // TODO: call delete API here
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.error,
+                foregroundColor: theme.colorScheme.onPrimary,
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+              ),
+              child: Text('DELETE'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
