@@ -9,6 +9,10 @@ import 'package:flutter/material.dart';
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
+  // const theme = dark;
+
+  // const theme = light;
+
   @override
   Widget build(BuildContext context) {
     // This page is a self-contained MaterialApp like your NotificationPage,

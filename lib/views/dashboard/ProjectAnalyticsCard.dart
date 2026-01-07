@@ -19,7 +19,7 @@ class ProjectAnalyticsCard extends StatelessWidget {
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(child: Icon(Icons.bar_chart)),
               title: Text(
-                'Project Analytics (2025)',
+                'Project Analytics (202)',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               trailing: Icon(Icons.filter_list),

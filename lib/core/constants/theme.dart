@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+
+
+
+
 class AppColors {
   static const primary = Color(0xFF1E6EA7);
   static const accent = Color(0xFF12C6A0);
@@ -32,3 +36,6 @@ final ThemeData appTheme = ThemeData.from(
   appBarTheme: const AppBarTheme(centerTitle: false, elevation: 0),
   useMaterial3: false, // Material 2 look; set to true if you want M3 styles
 );
+
+
+
