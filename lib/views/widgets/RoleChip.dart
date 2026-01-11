@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 class RoleChip extends StatelessWidget {
@@ -9,14 +8,21 @@ class RoleChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
-    return Chip(
-      label: Text(text, style: textTheme.bodyMedium?.copyWith(color: colors.primary)),
-      backgroundColor: colors.primary.withOpacity(0.12),
-      visualDensity: VisualDensity.compact,
-      side: BorderSide(color: colors.primary.withOpacity(0.4), width: 1),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: colors.primary.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: colors.primary,
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }

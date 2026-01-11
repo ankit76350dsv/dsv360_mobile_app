@@ -1,5 +1,7 @@
 // lib/main.dart
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/views/accounts/accounts_page.dart';
+import 'package:dsv360/views/badges/badges_page.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/people/people_page.dart';
 import 'package:dsv360/views/profile/profile_page.dart';
@@ -29,7 +31,9 @@ class MyApp extends StatelessWidget {
               debugShowCheckedModeBanner: false,
               // home: const ProjectsScreen(),
               // home: const ProfilePage(),
-              home: const DashboardPage(),
+              // home: const DashboardPage(),
+              // home: const AccountsPage(),
+              home: const BadgesPage(),
               // home: const UsersPage(),
               routes: {'/settings': (_) => const SettingsPage()},
             );

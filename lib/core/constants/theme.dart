@@ -27,8 +27,13 @@ ThemeData buildLightTheme(Color seedColor) {
       // 🔹 Accent only
       primary: seedColor,
       onPrimary: Colors.white,
-      secondary: seedColor.withOpacity(0.8),
+
+      // mainly used for the background of CustomInputField
+      secondary: Colors.white,
+
       onSecondary: Colors.white,
+
+      tertiary: Colors.black54,
 
       error: Colors.red,
       onError: Colors.white,
@@ -56,6 +61,10 @@ ThemeData buildLightTheme(Color seedColor) {
         fontSize: 14,
         color: Colors.black,
         // fontWeight: FontWeight.w700,
+      ),
+      bodyLarge: TextStyle(
+        fontSize: 18,
+        color: Colors.black54
       ),
     ),
 
@@ -106,10 +115,12 @@ ThemeData buildDarkTheme(Color seedColor) {
       // 🔹 Accent only
       primary: seedColor,
       onPrimary: Colors.black,
-      secondary: seedColor.withOpacity(0.8),
+      
+      // mainly used for the background of CustomInputField
+      secondary: Color.fromARGB(255, 31, 31, 31),
+      
       onSecondary: Colors.black,
-      tertiary: Color(0xFF121212),
-
+      tertiary: Colors.white,
       error: Colors.red,
       onError: Colors.black,
     ),
@@ -136,6 +147,10 @@ ThemeData buildDarkTheme(Color seedColor) {
       ),
       bodySmall: TextStyle(fontSize: 12, color: Colors.white70),
       bodyMedium: TextStyle(fontSize: 14, color: Colors.white),
+      bodyLarge: TextStyle(
+        fontSize: 18,
+        color: Colors.white
+      ),
     ),
 
     switchTheme: SwitchThemeData(

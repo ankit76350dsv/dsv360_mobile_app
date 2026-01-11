@@ -1,10 +1,13 @@
 import 'package:dsv360/models/accounts.dart';
 import 'package:dsv360/views/widgets/TopHeaderBar.dart';
+import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
+import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 
 class AddEditAccountsPage extends StatefulWidget {
   final Account? account;
-  const AddEditAccountsPage({super.key,required this.account});
+  const AddEditAccountsPage({super.key, required this.account});
 
   @override
   State<AddEditAccountsPage> createState() => _AddEditAccountsPageState();
@@ -43,18 +46,24 @@ class _AddEditAccountsPageState extends State<AddEditAccountsPage> {
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          widget.account == null ? 'Add New Account' : 'Edit Account',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: colors.surface,
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TopHeaderBar(heading: isEditing ? 'Edit Account' : 'Add Account'),
             Padding(
-              padding: const EdgeInsets.only(left: 16.0),
+              padding: const EdgeInsets.only(left: 16.0, top: 12.0),
               child: Text(
                 "Account Information",
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: colors.primary,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
@@ -66,35 +75,45 @@ class _AddEditAccountsPageState extends State<AddEditAccountsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      /// Client Name
-                      TextFormField(
+                      // Client Name
+                      CustomInputField(
                         controller: _clientNameController,
-                        decoration: _inputDecoration(context, 'Client Name'),
-                        style: TextStyle(color: colors.onSurface),
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Enter Client Name'
-                            : null,
+                        hintText: 'Client Name',
+                        labelText: 'Client Name',
+                        prefixIcon: Icons.person,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter client name';
+                          }
+                          return null;
+                        },
                       ),
-                      const SizedBox(height: 16),
 
-                      /// Website Address
-                      TextFormField(
+                      const SizedBox(height: 20),
+
+                      // Website Address
+                      CustomInputField(
                         controller: _websiteController,
-                        decoration: _inputDecoration(context, 'Website'),
-                        style: TextStyle(color: colors.onSurface),
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Enter Website address'
-                            : null,
+                        hintText: 'Website Address',
+                        labelText: 'Website Address',
+                        prefixIcon: Icons.web_sharp,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please Website Address';
+                          }
+                          return null;
+                        },
                       ),
-                      const SizedBox(height: 16),
 
-                      /// Organization Status
-                      DropdownButtonFormField<String>(
-                        value: _orgStatus,
-                        decoration: _inputDecoration(context, 'Organization Status'),
-                        dropdownColor: colors.surface,
-                        style: TextStyle(color: colors.onSurface),
-                        items: const [
+                      const SizedBox(height: 20),
+
+                      // Organization Status
+                      CustomDropDownField(
+                        hintText: "Organization Status",
+                        labelText: "Organization Status",
+                        prefixIcon: Icons.business,
+                        selectedOption: _orgStatus,
+                        options: [
                           DropdownMenuItem(
                             value: 'Active',
                             child: Text('Active'),
@@ -103,20 +122,23 @@ class _AddEditAccountsPageState extends State<AddEditAccountsPage> {
                             value: 'DeActivate',
                             child: Text('DeActivate'),
                           ),
+                          DropdownMenuItem(
+                            value: 'Inactive',
+                            child: Text('Inactive'),
+                          ),
                         ],
                         onChanged: (value) => setState(() => _orgType = value),
-                        validator: (value) =>
-                            value == null ? 'Select status' : null,
                       ),
-                      const SizedBox(height: 16),
 
-                      /// Organization Type
-                      DropdownButtonFormField<String>(
-                        value: _orgType,
-                        decoration: _inputDecoration(context, 'Organization Type'),
-                        dropdownColor: colors.surface,
-                        style: TextStyle(color: colors.onSurface),
-                        items: const [
+                      const SizedBox(height: 20),
+
+                      // Organization Type
+                      CustomDropDownField(
+                        hintText: "Organization Type",
+                        labelText: "Organization Type",
+                        prefixIcon: Icons.business,
+                        selectedOption: _orgType,
+                        options: [
                           DropdownMenuItem(
                             value: 'Non-Profit',
                             child: Text('Non-Profit'),
@@ -137,20 +159,22 @@ class _AddEditAccountsPageState extends State<AddEditAccountsPage> {
                             value: 'Startup',
                             child: Text('Startup'),
                           ),
+                          DropdownMenuItem(
+                            value: 'Enterprise',
+                            child: Text('Enterprise'),
+                          ),
                         ],
                         onChanged: (value) => setState(() => _orgType = value),
-                        validator: (value) =>
-                            value == null ? 'Select Organization Type' : null,
                       ),
-                      const SizedBox(height: 16),
 
-                      /// Email
-                      TextFormField(
+                      const SizedBox(height: 20.0),
+
+                      // Email Address
+                      CustomInputField(
                         controller: _emailController,
-                        readOnly: isEditing,
-                        decoration: _inputDecoration(context, 'Email ID'),
-                        style: TextStyle(color: colors.onSurface),
-                        keyboardType: TextInputType.emailAddress,
+                        hintText: 'Email Address',
+                        labelText: 'Email Address',
+                        prefixIcon: Icons.email,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Enter email';
@@ -160,65 +184,22 @@ class _AddEditAccountsPageState extends State<AddEditAccountsPage> {
                           }
                           return null;
                         },
+                        keyboardType: TextInputType.emailAddress,
                       ),
 
                       const SizedBox(height: 32),
-                      // buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                foregroundColor: Colors.red,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  side: const BorderSide(
-                                    color: Colors.red,
-                                    width: 1.2,
-                                  ),
-                                ),
-                              ),
-                              child: const Text(
-                                'CANCEL',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: colors.primary,
-                                foregroundColor: colors.onPrimary,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              onPressed: () {
-                                if (_formKey.currentState!.validate()) {
-                                  // TODO: Add / Update user logic
-                                }
-                              },
-                              child: Text(
-                                isEditing ? 'SAVE CHANGES' : 'ADD ACCOUNT',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+
+                      BottomTwoButtons(
+                        button1Text: "Cancel",
+                        button2Text: isEditing ? "save changes" : "add account",
+                        button1Function: () {
+                          Navigator.pop(context);
+                        },
+                        button2Function: () {
+                          if (_formKey.currentState!.validate()) {
+                            // TODO: Add / Update user logic
+                          }
+                        },
                       ),
                     ],
                   ),

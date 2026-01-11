@@ -70,28 +70,46 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
                 vertical: 12.0,
               ),
               child: TextField(
-                style: TextStyle(color: colors.onSurfaceVariant),
+                style: TextStyle(color: colors.tertiary),
                 onChanged: (value) {
-                  ref.read(accountsSearchQueryProvider.notifier).state = value
+                  ref.read(clientContactsSearchQueryProvider.notifier).state = value
                       .trim();
                 },
                 decoration: InputDecoration(
                   hintText: "Search client contacts",
+                  hintStyle: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                  ),
                   filled: true,
                   fillColor: colors.surfaceVariant,
                   prefixIcon: Icon(
                     Icons.search,
-                    color: colors.onSurfaceVariant,
+                    color: Colors.grey,
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.transparent),
+                    borderSide: BorderSide(
+                      color: Colors.grey.withOpacity(0.2),
+                      width: 1.5,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.transparent),
+                    borderSide: BorderSide(
+                      color: Colors.grey.withOpacity(0.2),
+                      width: 1.5,
+                    ),
                   ),
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(
+                      color: Colors.grey.withOpacity(0.2),
+                      width: 1.5,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -166,14 +184,17 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
     return GestureDetector(
       onTap: () {},
       child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        child: SizedBox(
-          height: 225.00,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
+        ),
+        child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -206,19 +227,50 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
 
+              ],),),
+
+              // Divider
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: Colors.grey.withOpacity(0.2),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
                 /// Details
-                _infoRow("ID", widget.clientContacts.userId),
-                _infoRow("Email", widget.clientContacts.email),
-                _infoRow("Contacts", widget.clientContacts.phone),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                _clientInfoRow(Icons.tag, widget.clientContacts.userId),
+                _clientInfoRow(Icons.email, widget.clientContacts.email),
+                _clientInfoRow(Icons.contact_emergency_outlined, widget.clientContacts.phone),
+
+              ],),),
+
+              // Divider
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: Colors.grey.withOpacity(0.2),
+            ),
+
+                Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     activeUser != null && _canManageUsers(activeUser.role)
-                        ? Transform.scale(
-                            scale: 0.85, // 👈 change this (0.7 – 1.2 usually)
-                            child: Switch(
+                        ? SizedBox(
+                                    width: 40,
+                                    height: 18,
+                                    child: Transform.scale(
+                                    scale:
+                                        0.80, 
+                                    child: Switch(
                               value: clientStatus,
 
                               onChanged: (value) {
@@ -250,25 +302,29 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
                                     ),
                                   );
                               },
-                            ),
+                            ),),
                           )
                         : SizedBox(),
-                    IconButton(
+                    Container(
+                    decoration: BoxDecoration(
+                      color: colors.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
                       onPressed: () {
                         _showDeleteDialog(
                           context,
                           "${widget.clientContacts.firstName} ${widget.clientContacts.lastName}",
                         );
                       },
-                      icon: const Icon(Icons.delete_outline),
+                      icon: const Icon(Icons.delete),
                       color: colors.error,
                       iconSize: 20,
-                    ),
+                    ),),
                   ],
                 ),
+        ),
               ],
-            ),
-          ),
         ),
       ),
     );
@@ -279,26 +335,20 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
     return role == 'Admin' || role == 'Manager';
   }
 
-  /// Small helper for label-value rows
-  Widget _infoRow(String label, String value) {
+  Widget _clientInfoRow(IconData icon, String text) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: RichText(
-        text: TextSpan(
-          style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
-          children: [
-            TextSpan(
-              text: "$label: ",
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            TextSpan(
-              text: value,
-              style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
-            ),
-          ],
+
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: theme.colorScheme.tertiary),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.tertiary,
+          ),
         ),
-      ),
+      ],
     );
   }
 

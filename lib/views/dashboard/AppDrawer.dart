@@ -1,6 +1,8 @@
 import 'package:dsv360/views/accounts/accounts_page.dart';
+import 'package:dsv360/views/badges/badges_page.dart';
 import 'package:dsv360/views/clientContacts/client_contacts_page.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
+import 'package:dsv360/views/projects/projects_screen.dart';
 import 'package:dsv360/views/settings/settings_page.dart';
 import 'package:dsv360/views/users/users_page.dart';
 import 'package:dsv360/views/ai/dsv_ai_page.dart';
@@ -45,7 +47,22 @@ class AppDrawer extends StatelessWidget {
                   _DrawerItem(
                     icon: Icons.work_outline,
                     label: 'Projects',
-                    onTap: () => {},
+                    onTap: () => {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => ProjectsScreen()),
+                      )
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.badge_sharp,
+                    label: 'Badges',
+                    onTap: () => {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => BadgesPage()),
+                      )
+                    },
                   ),
                   _DrawerItem(
                     icon: Icons.list_alt,

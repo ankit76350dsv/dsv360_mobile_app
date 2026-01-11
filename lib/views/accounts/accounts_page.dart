@@ -4,6 +4,7 @@ import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/accounts/add_edit_accounts_page.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
+import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -68,31 +69,46 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
                 vertical: 12.0,
               ),
               child: TextField(
-                style: TextStyle(
-                  color: colors.onSurfaceVariant, // ⭐ FIX
-                ),
+                style: TextStyle(color: colors.tertiary),
                 onChanged: (value) {
                   ref.read(accountsSearchQueryProvider.notifier).state = value
                       .trim();
                 },
                 decoration: InputDecoration(
                   hintText: "Search accounts",
+                  hintStyle: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w400,
+                  ),
                   filled: true,
                   fillColor: colors.surfaceVariant,
-
                   prefixIcon: Icon(
                     Icons.search,
-                    color: colors.onSurfaceVariant,
+                    color: Colors.grey,
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.transparent),
+                    borderSide: BorderSide(
+                      color: Colors.grey.withOpacity(0.2),
+                      width: 1.5,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.transparent),
+                    borderSide: BorderSide(
+                      color: Colors.grey.withOpacity(0.2),
+                      width: 1.5,
+                    ),
                   ),
                   contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(
+                      color: Colors.grey.withOpacity(0.2),
+                      width: 1.5,
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -152,50 +168,97 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
     return GestureDetector(
       onTap: () {},
       child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        child: SizedBox(
-          height: 280.00,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: colors.primary.withOpacity(0.15),
-                      child: Icon(
-                        Icons.apartment,
-                        size: 28,
-                        color: colors.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Text(
                         widget.account.orgName,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: theme.textTheme.bodyLarge,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
 
-                /// Details
-                _infoRow("Type", widget.account.orgType),
-                _infoRow("Status", widget.account.status),
-                _infoRow("Email", widget.account.email),
-                _infoRow("Website", widget.account.displayWebsite),
-                _infoRow("ROWID", widget.account.rowId),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    IconButton(
+                      const Spacer(),
+                      CustomChip(
+                        label: widget.account.orgType,
+                        color: colors.primary,
+                        icon: null,
+                      ),
+                      const SizedBox(width: 6.0),
+                      CustomChip(
+                        label: widget.account.status,
+                        color: colors.primary,
+                        icon: Icons.add_comment_outlined,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Divider
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: Colors.grey.withOpacity(0.2),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _accountInfoRow(Icons.email, widget.account.email),
+                            _websiteRow(
+                              Icons.web_sharp,
+                              widget.account.website,
+                            ),
+                            _accountInfoRow(Icons.tag, widget.account.rowId),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Divider
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: Colors.grey.withOpacity(0.2),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
                       onPressed: () {
                         // TODO: Handle edit action
                         Navigator.push(
@@ -206,23 +269,30 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
                           ),
                         );
                       },
-                      icon: Icon(Icons.edit_outlined, color: colors.primary),
+                      icon: Icon(Icons.edit, color: colors.primary),
                       color: colors.onSurface,
                       iconSize: 20,
                     ),
-                    IconButton(
+                  ),
+                  const SizedBox(width: 5.0),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: colors.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: IconButton(
                       onPressed: () {
                         _showDeleteDialog(context, widget.account.orgName);
                       },
-                      icon: const Icon(Icons.delete_outline),
+                      icon: const Icon(Icons.delete),
                       color: colors.error,
                       iconSize: 20,
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -273,6 +343,54 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
           ],
         ),
       ),
+    );
+  }
+
+  /// Small helper for website-value row
+  Widget _websiteRow(IconData icon, String value) {
+    final theme = Theme.of(context);
+
+    final websiteUrl = value.startsWith('http') ? value : 'https://$value';
+
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: theme.colorScheme.tertiary),
+        const SizedBox(width: 8),
+        RichText(
+          text: TextSpan(
+            text: value,
+            style: theme.textTheme.bodySmall?.copyWith(
+              fontSize: 14,
+              color: theme.colorScheme.primary,
+              decoration: TextDecoration.underline,
+            ),
+            recognizer: TapGestureRecognizer()
+              ..onTap = () async {
+                final uri = Uri.parse(websiteUrl);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _accountInfoRow(IconData icon, String text) {
+    final theme = Theme.of(context);
+
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: theme.colorScheme.tertiary),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.tertiary,
+          ),
+        ),
+      ],
     );
   }
 

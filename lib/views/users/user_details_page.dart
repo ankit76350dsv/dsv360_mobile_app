@@ -5,7 +5,7 @@ import 'package:dsv360/repositories/project_repository.dart';
 import 'package:dsv360/repositories/task_repository.dart';
 import 'package:dsv360/views/widgets/RoleChip.dart';
 import 'package:dsv360/views/widgets/TopHeaderBar.dart';
-import 'package:dsv360/views/widgets/VerificationStatusChip.dart';
+import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:dsv360/views/widgets/WorkStatusChip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -69,10 +69,30 @@ class _UserTabs extends StatelessWidget {
 class _InfoTab extends StatelessWidget {
   final UsersModel user;
 
-  const _InfoTab({required this.user});
+  late String verificationStatusText;
+  late IconData verificationStatusIcon;
+  late Color verificationStatusColor;
+
+  _InfoTab({required this.user});
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final verificationStatus = user.verificationStatus;
+
+    switch (verificationStatus) {
+      case VerificationStatus.verified:
+        verificationStatusText = "Verified";
+        verificationStatusIcon = Icons.verified;
+        verificationStatusColor = Colors.green;
+        break;
+      case VerificationStatus.pending:
+        verificationStatusText = "Pending";
+        verificationStatusIcon = Icons.hourglass_top;
+        verificationStatusColor = Colors.orange;
+        break;
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -98,7 +118,11 @@ class _InfoTab extends StatelessWidget {
               _InfoTileCustom(
                 icon: Icons.verified_user,
                 label: "Verification",
-                widget: VerificationStatusChip(status: user.verificationStatus),
+                widget: CustomChip(
+                  label: verificationStatusText,
+                  color: verificationStatusColor,
+                  icon: verificationStatusIcon,
+                ),
               ),
             ],
           ),
