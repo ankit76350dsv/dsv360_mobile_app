@@ -2,9 +2,15 @@ import 'package:dsv360/models/users.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/repositories/all_badges_list.dart';
 import 'package:dsv360/repositories/users_repository.dart';
+import 'package:dsv360/views/badges/add_edit_badge_page.dart';
+import 'package:dsv360/views/badges/assign_badges_page.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:math' as Math;
+
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
 class BadgesPage extends ConsumerStatefulWidget {
   const BadgesPage({super.key});
@@ -14,6 +20,8 @@ class BadgesPage extends ConsumerStatefulWidget {
 }
 
 class _BadgesPageState extends ConsumerState<BadgesPage> {
+  bool _fabOpen = false;
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -40,10 +48,46 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(
-        shape: const CircleBorder(),
-        onPressed: () {},
-        child: Icon(Icons.person_add, size: 22),
+      floatingActionButton: SpeedDial(
+        icon: Icons.add, // The icon for the main button
+        activeIcon: Icons.close, // The icon when the menu is open
+        children: [
+          SpeedDialChild(
+            child: const Icon(Icons.person_add_alt_1),
+            label: 'Add Badge',
+            onTap: () {
+              // open create badge
+              Navigator.push(
+                context, 
+                MaterialPageRoute(
+                  builder: (_) => AddEditBadgePage(),
+                ),
+              );
+            },
+          ),
+
+          SpeedDialChild(
+            child: const Icon(Icons.badge_outlined),
+            label: 'Assign Badges',
+            onTap: () {
+              // assign badges to user
+              Navigator.push(
+                context, 
+                MaterialPageRoute(
+                  builder: (_) => AssignBadgesPage(),
+                ),
+              );
+            },
+          ),
+
+          SpeedDialChild(
+            child: const Icon(Icons.emoji_events_outlined),
+            label: 'Show Badges',
+            onTap: () {
+              // view all badges of user
+            },
+          ),
+        ],
       ),
 
       body: SafeArea(
@@ -54,29 +98,9 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
                 horizontal: 16.0,
                 vertical: 12.0,
               ),
-              child: TextField(
-                onChanged: (value) {
-                  ref.read(usersSearchQueryProvider.notifier).state = value
-                      .trim();
-                },
-                decoration: InputDecoration(
-                  hintText: "Search users",
-                  filled: true,
-                  fillColor: colors.surfaceVariant,
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: colors.onSurfaceVariant,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.transparent),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.transparent),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                ),
+              child: CustomInputSearch(
+                hint: "Search users",
+                searchProvider: usersSearchQueryProvider,
               ),
             ),
             Expanded(
@@ -164,39 +188,6 @@ class _UserBadgeCardState extends ConsumerState<UserBadgeCard> {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.primary,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          widget.user.userId,
-                          style: TextStyle(color: theme.colorScheme.surface),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Divider
-            Divider(
-              height: 1,
-              thickness: 1,
-              color: Colors.grey.withOpacity(0.2),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,25 +200,46 @@ class _UserBadgeCardState extends ConsumerState<UserBadgeCard> {
                             ),
                             const SizedBox(height: 2.0),
                             _userInfoRow(Icons.email, widget.user.emailAddress),
+                            _userInfoRow(Icons.tag, widget.user.userId),
                           ],
                         ),
                       ),
-                      ElevatedButton(
-                        onPressed: () {
-                          _openUserBadges();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.black,
+                      InkWell(
+                        onTap: _openUserBadges,
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 14,
                             vertical: 8,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: colors.tertiary.withOpacity(0.3),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.emoji_events_outlined,
+                                size: 18,
+                                color: colors.tertiary.withOpacity(0.3),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                "BADGES",
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.4,
+                                  color: colors.tertiary.withOpacity(0.3),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: const Text("BADGES"),
                       ),
                     ],
                   ),
@@ -278,148 +290,193 @@ class _UserBadgesSheet extends ConsumerWidget {
     final colors = Theme.of(context).colorScheme;
 
     // 🔥 TEMP: Replace later with real API badges for this user
-    final assignedBadges =
-        ref
-            .watch(allDSVBadgesListRepositoryProvider)
-            .asData
-            ?.value
-            .take(6)
-            .toList() ??
-        [];
+    final badgesAsync = ref.watch(allDSVBadgesListRepositoryProvider);
 
-return DraggableScrollableSheet(
-  expand: false,
-  initialChildSize: 0.7,
-  minChildSize: 0.4,
-  maxChildSize: 0.95,
-  builder: (context, scrollController) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        children: [
-          // Handle
-          Container(
-            width: 40,
-            height: 5,
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: colors.outlineVariant,
-              borderRadius: BorderRadius.circular(20),
-            ),
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.7,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      builder: (context, scrollController) {
+        return Container(
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
-
-          Text(
-            "${user.firstName}'s Badges",
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-
-          const SizedBox(height: 16),
-
-          // 🔥 THIS is now safe
-          Expanded(
-            child: GridView.builder(
-              controller: scrollController, // IMPORTANT
-              itemCount: assignedBadges.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 3,
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
-                childAspectRatio: 0.8,
-              ),
-              itemBuilder: (context, index) {
-                final badge = assignedBadges[index];
-
-                return Column(
-                  children: [
-                    SizedBox(
-  width: 72,
-  height: 72,
-  child: Stack(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.green.withOpacity(0.5),
-                                blurRadius: 12,
-                              ),
-                            ],
-                          ),
-                          child: badge.badgeLogo.isNotEmpty
-    ? Image.network(
-        badge.badgeLogo,
-        fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => const Icon(
-          Icons.verified,
-          size: 40,
-          color: Colors.green,
-        ),
-      )
-    : const Icon(
-        Icons.verified,
-        size: 40,
-        color: Colors.green,
-      ),
-
-                        ),
-
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: GestureDetector(
-                            onTap: () {
-                              // remove badge
-                            },
-                            child: const CircleAvatar(
-                              radius: 12,
-                              backgroundColor: Colors.red,
-                              child: Icon(Icons.close, size: 14, color: Colors.white),
-                            ),
-                          ),
-                        )
-                      ],)
-                    ),
-                    const SizedBox(height: 6),
-                    Text(badge.badgeName, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text(
-                      badge.badgeId,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+          child: Column(
+            children: [
+              // Handle
+              Container(
+                padding: const EdgeInsets.only(top: 14, bottom: 12),
+                alignment: Alignment.center,
+                child: Container(
+                  width: 42,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: colors.tertiary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                 ),
               ),
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Close"),
-            ),
-          ),
-        ],
-      ),
-    );
-  },
-);
 
+              Text(
+                "${user.firstName}'s Badges",
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+              ),
+
+              const SizedBox(height: 16),
+
+              //
+              Expanded(
+                child: badgesAsync.when(
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+
+                  error: (err, _) => Center(
+                    child: Text(
+                      err.toString(),
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+
+                  data: (badges) {
+                    final assignedBadges = badges.take(6).toList();
+
+                    if (assignedBadges.isEmpty) {
+                      return const Center(child: Text("No badges assigned"));
+                    }
+
+                    return GridView.builder(
+                      controller: scrollController,
+                      itemCount: assignedBadges.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            mainAxisSpacing: 14,
+                            crossAxisSpacing: 14,
+                            childAspectRatio: 0.8,
+                          ),
+                      itemBuilder: (context, index) {
+                        final badge = assignedBadges[index];
+
+                        return Column(
+                          children: [
+                            SizedBox(
+                              width: 340,
+                              height: 90,
+                              child: Stack(
+                                children: [
+                                  // Glass card
+                                  Card(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(18),
+                                      side: BorderSide(
+                                        color: Colors.grey.withOpacity(0.2),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Image.network(
+                                        badge.badgeLogo,
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (_, __, ___) =>
+                                            const Icon(
+                                              Icons.verified,
+                                              color: Colors.greenAccent,
+                                              size: 36,
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+
+                                  // Remove button
+                                  Positioned(
+                                    top: 6,
+                                    right: 6,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        // remove badge
+                                      },
+                                      child: Container(
+                                        width: 26,
+                                        height: 26,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: colors.error,
+                                            width: 1,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          Icons.close,
+                                          size: 14,
+                                          color: colors.error,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 6),
+                            Text(
+                              badge.badgeName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Colors.black),
+                            ),
+                            Text(
+                              badge.badgeLevel,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              SafeArea(
+                top: false, // we only care about bottom inset
+                child: Padding(
+                  padding: EdgeInsetsGeometry.symmetric(horizontal: 16.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: colors.primary,
+                        foregroundColor: colors.onPrimary,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        "close".toUpperCase(),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 

@@ -10,6 +10,7 @@ import 'package:dsv360/views/users/user_details_page.dart';
 import 'package:dsv360/views/widgets/RoleChip.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -69,30 +70,10 @@ class _UsersPageState extends ConsumerState<UsersPage> {
                 horizontal: 16.0,
                 vertical: 12.0,
               ),
-              child: TextField(
-                onChanged: (value) {
-                  ref.read(usersSearchQueryProvider.notifier).state = value
-                      .trim();
-                },
-                decoration: InputDecoration(
-                  hintText: "Search users",
-                  filled: true,
-                  fillColor: colors.surfaceVariant,
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: colors.onSurfaceVariant,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.transparent),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.transparent),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-              ),
+              child: CustomInputSearch(
+                searchProvider: usersSearchQueryProvider,
+                hint: "Search users",
+              )
             ),
             Expanded(
               child: Padding(

@@ -6,6 +6,7 @@ import 'package:dsv360/repositories/client_contacts_repository.dart';
 import 'package:dsv360/views/clientContacts/add_client_contacts_page.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
+import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -69,49 +70,10 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
                 horizontal: 16.0,
                 vertical: 12.0,
               ),
-              child: TextField(
-                style: TextStyle(color: colors.tertiary),
-                onChanged: (value) {
-                  ref.read(clientContactsSearchQueryProvider.notifier).state = value
-                      .trim();
-                },
-                decoration: InputDecoration(
-                  hintText: "Search client contacts",
-                  hintStyle: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                  ),
-                  filled: true,
-                  fillColor: colors.surfaceVariant,
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: Colors.grey,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: Colors.grey.withOpacity(0.2),
-                      width: 1.5,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: Colors.grey.withOpacity(0.2),
-                      width: 1.5,
-                    ),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: Colors.grey.withOpacity(0.2),
-                      width: 1.5,
-                    ),
-                  ),
-                ),
-              ),
+              child: CustomInputSearch(
+                hint: "Search client contacts",
+                searchProvider: clientContactsSearchQueryProvider,
+              )
             ),
             Expanded(
               child: Padding(
