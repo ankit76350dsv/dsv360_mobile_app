@@ -3,7 +3,7 @@ import 'package:dsv360/models/client_contacts.dart';
 import 'package:dsv360/repositories/accounts_list_repository.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/repositories/client_contacts_repository.dart';
-import 'package:dsv360/views/clientContacts/add_client_contacts_page.dart';
+import 'package:dsv360/views/clients/add_client_contacts_page.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
 import 'package:flutter/material.dart';

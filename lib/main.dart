@@ -1,10 +1,10 @@
 // lib/main.dart
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
-import 'package:dsv360/views/project_screen/projects_screen.dart'; // project
-import 'package:dsv360/views/task_screen/tasks_screen.dart'; // task
-import 'package:dsv360/views/issue_screen/issues_screen.dart'; // issue
-import 'package:dsv360/views/feedback_screen/feedbacks_screen.dart'; // Feedbacks
+import 'package:dsv360/views/projects/projects_screen.dart'; // project
+import 'package:dsv360/views/task/tasks_screen.dart'; // task
+import 'package:dsv360/views/issues/issues_screen.dart'; // issue
+import 'package:dsv360/views/feedback/feedbacks_screen.dart'; // Feedbacks
 import 'package:dsv360/views/people/people_page.dart';
 import 'package:dsv360/views/profile/profile_page.dart';
 import 'package:dsv360/views/settings/settings_page.dart';
@@ -33,9 +33,9 @@ class MyApp extends StatelessWidget {
               // home: const ProjectsScreen(),
               // home: const TasksScreen(),
               // home: const IssuesScreen(),
-              home: const FeedbacksScreen(),
+              // home: const FeedbacksScreen(),
               // home: const ProfilePage(),
-              // home: const DashboardPage(),
+              home: const DashboardPage(),
               // home: const UsersPage(),
               routes: {'/settings': (_) => const SettingsPage()},
             );

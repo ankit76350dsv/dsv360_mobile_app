@@ -1,14 +1,20 @@
-import 'package:dsv360/views/accounts/accounts_page.dart';
-import 'package:dsv360/views/clientContacts/client_contacts_page.dart';
-import 'package:dsv360/views/dashboard/dashboard_page.dart';
-import 'package:dsv360/views/settings/settings_page.dart';
-import 'package:dsv360/views/users/users_page.dart';
-import 'package:dsv360/views/ai/dsv_ai_page.dart';
 import 'package:flutter/material.dart';
+import 'package:dsv360/views/dashboard/dashboard_page.dart';
+import 'package:dsv360/views/projects/projects_screen.dart';
+import 'package:dsv360/views/task/tasks_screen.dart';
+import 'package:dsv360/views/issues/issues_screen.dart';
+import 'package:dsv360/views/accounts/accounts_page.dart';
+import 'package:dsv360/views/clients/client_contacts_page.dart';
+import 'package:dsv360/views/badges/badges_page.dart';
+import 'package:dsv360/views/users/users_page.dart';
 import 'package:dsv360/views/people/people_page.dart';
+import 'package:dsv360/views/teams/teams_page.dart';
+import 'package:dsv360/views/ai/dsv_ai_page.dart';
+import 'package:dsv360/views/feedback/feedbacks_screen.dart';
+import 'package:dsv360/views/settings/settings_page.dart';
 
 class AppDrawer extends StatelessWidget {
-  const AppDrawer();
+  const AppDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,11 +26,15 @@ class AppDrawer extends StatelessWidget {
             DrawerHeader(
               child: Row(
                 children: const [
-                  Icon(Icons.cloud, size: 36),
+                  Icon(Icons.cloud, size: 36, color: Colors.white),
                   SizedBox(width: 12),
                   Text(
                     'DSV-360',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -35,27 +45,42 @@ class AppDrawer extends StatelessWidget {
                   _DrawerItem(
                     icon: Icons.grid_on,
                     label: 'Dashboard',
-                    onTap: () => {
+                    onTap: () {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (_) => DashboardPage()),
-                      )
+                      );
                     },
                   ),
                   _DrawerItem(
                     icon: Icons.work_outline,
                     label: 'Projects',
-                    onTap: () => {},
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ProjectsScreen()),
+                      );
+                    },
                   ),
                   _DrawerItem(
                     icon: Icons.list_alt,
                     label: 'Tasks',
-                    onTap: () => {},
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const TasksScreen()),
+                      );
+                    },
                   ),
                   _DrawerItem(
                     icon: Icons.bug_report_outlined,
                     label: 'Issues',
-                    onTap: () => {},
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const IssuesScreen()),
+                      );
+                    },
                   ),
                   _DrawerItem(
                     icon: Icons.apartment,
@@ -74,6 +99,16 @@ class AppDrawer extends StatelessWidget {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (_) => ClientContactsPage()),
+                      );
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.verified,
+                    label: 'Badges',
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const BadgesPage()),
                       );
                     },
                   ),
@@ -98,12 +133,32 @@ class AppDrawer extends StatelessWidget {
                     },
                   ),
                   _DrawerItem(
+                    icon: Icons.groups,
+                    label: 'Teams',
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const TeamsPage()),
+                      );
+                    },
+                  ),
+                  _DrawerItem(
                     icon: Icons.smart_toy,
                     label: 'DSV AI',
                     onTap: () {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(builder: (_) => const DsvAiPage()),
+                      );
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.feedback_outlined,
+                    label: 'Feedback',
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const FeedbacksScreen()),
                       );
                     },
                   ),

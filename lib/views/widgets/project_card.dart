@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/project_model.dart';
 import '../../core/services/auth_service.dart';
-import '../attachment_screen/attachment_list_modal.dart';
+import '../attachments/attachment_list_modal.dart';
 // import '../../screens/tasks_screen.dart';
-import '../task_screen/tasks_screen.dart';
-import '../issue_screen/issues_screen.dart';
+import '../task/tasks_screen.dart';
+import '../issues/issues_screen.dart';
 import 'generic_card.dart';
 
 class ProjectCard extends StatelessWidget {

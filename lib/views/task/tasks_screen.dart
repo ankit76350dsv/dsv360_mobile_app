@@ -6,19 +6,19 @@ import '../../core/constants/app_text_styles.dart';
 import '../time_entry/add_time_entry_dialog.dart';
 import '../widgets/custom_search_bar.dart';
 import '../widgets/generic_card.dart';
-import '../attachment_screen/attachment_list_modal.dart';
+import '../attachments/attachment_list_modal.dart';
 import 'add_task_dialog.dart';
 import 'task_details_dialog.dart';
 // import '../../screens/add_time_entry_dialog.dart';
 
 class TasksScreen extends StatefulWidget {
-  final String projectId;
-  final String projectName;
+  final String? projectId;
+  final String? projectName;
 
   const TasksScreen({
     super.key,
-    required this.projectId,
-    required this.projectName,
+    this.projectId,
+    this.projectName,
   });
 
   @override
@@ -50,7 +50,7 @@ class _TasksScreenState extends State<TasksScreen> {
         id: 'T001',
         taskName: 'Design UI Mockups',
         status: 'In Progress',
-        projectId: widget.projectId,
+        projectId: widget.projectId ?? 'P001',
         startDate: DateTime.now(),
         endDate: DateTime.now().add(const Duration(days: 7)),
         assignedTo: 'John Doe',
@@ -65,7 +65,7 @@ class _TasksScreenState extends State<TasksScreen> {
         id: 'T002',
         taskName: 'API Integration',
         status: 'Pending',
-        projectId: widget.projectId,
+        projectId: widget.projectId ?? 'P001',
         startDate: DateTime.now().add(const Duration(days: 5)),
         endDate: DateTime.now().add(const Duration(days: 15)),
         assignedTo: 'Jane Smith',
@@ -80,7 +80,7 @@ class _TasksScreenState extends State<TasksScreen> {
         id: 'T003',
         taskName: 'Database Setup',
         status: 'Completed',
-        projectId: widget.projectId,
+        projectId: widget.projectId ?? 'P001',
         startDate: DateTime.now().subtract(const Duration(days: 10)),
         endDate: DateTime.now().subtract(const Duration(days: 3)),
         assignedTo: 'Mike Johnson',
@@ -95,7 +95,7 @@ class _TasksScreenState extends State<TasksScreen> {
         id: 'T004',
         taskName: 'Testing & QA',
         status: 'In Progress',
-        projectId: widget.projectId,
+        projectId: widget.projectId ?? 'P001',
         startDate: DateTime.now(),
         endDate: DateTime.now().add(const Duration(days: 10)),
         assignedTo: 'Sarah Lee',
@@ -131,7 +131,7 @@ class _TasksScreenState extends State<TasksScreen> {
       MaterialPageRoute(
         builder: (context) => AddTaskDialog(
           task: task,
-          projectId: widget.projectId,
+          projectId: widget.projectId ?? 'P001',
         ),
       ),
     );
