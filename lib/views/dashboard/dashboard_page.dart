@@ -51,7 +51,23 @@ class _DashboardScaffold extends StatelessWidget {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
+        automaticallyImplyLeading: false, // Hide default hamburger
         title: const Text('DSV-360'),
+        leading: Builder(
+          builder: (context) {
+            return GestureDetector(
+              onTap: () => Scaffold.of(context).openDrawer(),
+              child: Container(
+                margin: const EdgeInsets.all(8.0),
+                child: const CircleAvatar(
+                  radius: 16,
+                  backgroundColor: Colors.white12,
+                  child: Icon(Icons.person_outline, size: 18, color: Colors.white),
+                ),
+              ),
+            );
+          },
+        ),
         actions: [
           IconButton(
             onPressed: () {
@@ -62,12 +78,6 @@ class _DashboardScaffold extends StatelessWidget {
               );
             },
             icon: const Icon(Icons.notifications_none),
-          ),
-          const SizedBox(width: 8),
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.white12,
-            child: const Icon(Icons.person_outline, size: 18),
           ),
           const SizedBox(width: 12),
         ],

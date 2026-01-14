@@ -46,17 +46,17 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.grid_on,
                     label: 'Dashboard',
                     onTap: () {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => DashboardPage()),
-                      );
+                      // For Dashboard, we DO want to close the drawer and go to root
+                      Navigator.pop(context);
+                      Navigator.popUntil(context, (route) => route.isFirst);
                     },
                   ),
                   _DrawerItem(
                     icon: Icons.work_outline,
                     label: 'Projects',
                     onTap: () {
-                      Navigator.pushReplacement(
+                      // Do NOT close drawer
+                      Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const ProjectsScreen()),
                       );
@@ -66,7 +66,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.list_alt,
                     label: 'Tasks',
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const TasksScreen()),
                       );
@@ -76,7 +76,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.bug_report_outlined,
                     label: 'Issues',
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const IssuesScreen()),
                       );
@@ -86,7 +86,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.apartment,
                     label: 'Accounts',
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => AccountsPage()),
                       );
@@ -96,7 +96,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.filter_alt,
                     label: 'Client Contacts',
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => ClientContactsPage()),
                       );
@@ -106,7 +106,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.verified,
                     label: 'Badges',
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const BadgesPage()),
                       );
@@ -116,7 +116,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.person_add_outlined,
                     label: 'Users',
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => UsersPage()),
                       );
@@ -126,7 +126,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.people_outline,
                     label: 'People',
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const PeoplePage()),
                       );
@@ -136,7 +136,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.groups,
                     label: 'Teams',
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const TeamsPage()),
                       );
@@ -146,7 +146,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.smart_toy,
                     label: 'DSV AI',
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const DsvAiPage()),
                       );
@@ -156,7 +156,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.feedback_outlined,
                     label: 'Feedback',
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const FeedbacksScreen()),
                       );
@@ -166,7 +166,7 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.settings,
                     label: 'Settings',
                     onTap: () {
-                      Navigator.pushReplacement(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const SettingsPage()),
                       );
@@ -201,7 +201,7 @@ class _DrawerItem extends StatelessWidget {
     leading: Icon(icon, color: Colors.white70),
     title: Text(label, style: const TextStyle(color: Colors.white70)),
     onTap: () {
-      Navigator.pop(context);
+      // Navigator.pop(context); // Handled by parent
       onTap();
     },
   );
