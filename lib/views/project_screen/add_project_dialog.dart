@@ -147,7 +147,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.textWhite,
       appBar: AppBar(
         title: Text(widget.project == null ? 'Add New Project' : 'Edit Project'),
         backgroundColor: AppColors.cardBackground,
@@ -383,50 +383,70 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                       const SizedBox(height: 20),
 
                       // Assign To Dropdown
-                      DropdownButtonFormField<String>(
-                        value: _selectedAssignTo,
-                        hint: const Text(
-                          'Assign To',
-                          style: TextStyle(color: AppColors.textHint),
+                      PopupMenuButton<String>(
+                        position: PopupMenuPosition.under,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
                         ),
-                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
-                        dropdownColor: AppColors.inputFill,
-                        decoration: InputDecoration(
-                          labelText: 'Team Member',
-                          labelStyle: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          filled: true,
-                          fillColor: AppColors.inputFill,
-                          prefixIcon: const Icon(Icons.person_outline, color: AppColors.textSecondary),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 12,
-                          ),
+                        constraints: const BoxConstraints(
+                          minWidth: 330,
+                          maxWidth: 700,
                         ),
-                        items: _assignToOptions.map((person) {
-                          return DropdownMenuItem(
-                            value: person,
-                            child: Text(person),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
+                        onSelected: (value) {
                           setState(() => _selectedAssignTo = value);
                         },
+                        itemBuilder: (BuildContext context) {
+                          return _assignToOptions.map((person) {
+                            return PopupMenuItem<String>(
+                              value: person,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                                child: Text(
+                                  person,
+                                  style: const TextStyle(
+                                    color: AppColors.textPrimary,
+                                    fontSize: 16,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            );
+                          }).toList();
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: AppColors.inputFill,
+                            border: Border.all(
+                              color: AppColors.inputBorder,
+                              width: 1.5,
+                            ),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.person_outline, color: AppColors.textSecondary),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _selectedAssignTo ?? 'Team Member',
+                                  style: TextStyle(
+                                    color: _selectedAssignTo == null ? AppColors.textHint : AppColors.textPrimary,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
+                            ],
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 20),
 

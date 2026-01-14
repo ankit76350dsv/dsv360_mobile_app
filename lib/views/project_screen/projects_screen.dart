@@ -1,22 +1,12 @@
-import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
-
-//From Core folder
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
-import '../../core/constants/routes.dart';
-
-// from model
+import '../../core/services/auth_service.dart';
 import '../../models/project_model.dart';
-
-//from widgets
-// import '../../widgets/app_drawer.dart';
 import '../widgets/custom_search_bar.dart';
-
-//from projects
-import 'project_details_dialog.dart';
-import 'project_card.dart';
+import '../widgets/project_card.dart';
 import 'add_project_dialog.dart';
+import 'project_details_dialog.dart';
 
 class ProjectsScreen extends StatefulWidget {
   const ProjectsScreen({super.key});
@@ -56,12 +46,10 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         owner: 'Aman Jain',
         description: 'Bla bla blnblab',
         progress: 0,
-        attachments: [
-          'https://tourism.gov.in/sites/default/files/2019-04/dummy-pdf_2.pdf',
-          'feedback.png',
-        ],
+        attachments: ['https://tourism.gov.in/sites/default/files/2019-04/dummy-pdf_2.pdf', 'feedback.png'],
         tasksCount: 5,
         timeEntriesCount: 12,
+        issuesCount: 3,
       ),
       ProjectModel(
         id: 'P1443',
@@ -77,6 +65,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         attachments: ['doc1.pdf', 'doc2.pdf'],
         tasksCount: 8,
         timeEntriesCount: 20,
+        issuesCount: 5,
       ),
       ProjectModel(
         id: 'P1440',
@@ -92,6 +81,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         attachments: [],
         tasksCount: 3,
         timeEntriesCount: 7,
+        issuesCount: 2,
       ),
       ProjectModel(
         id: 'P1437',
@@ -107,6 +97,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         attachments: ['file.pdf'],
         tasksCount: 10,
         timeEntriesCount: 25,
+        issuesCount: 4,
       ),
       ProjectModel(
         id: 'P1001',
@@ -122,6 +113,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         attachments: [],
         tasksCount: 4,
         timeEntriesCount: 15,
+        issuesCount: 6,
       ),
     ];
   }
@@ -132,9 +124,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         _filteredProjects = _projects;
       } else {
         _filteredProjects = _projects.where((project) {
-          return project.projectName.toLowerCase().contains(
-                query.toLowerCase(),
-              ) ||
+          return project.projectName.toLowerCase().contains(query.toLowerCase()) ||
               project.id.toLowerCase().contains(query.toLowerCase()) ||
               project.client.toLowerCase().contains(query.toLowerCase());
         }).toList();
@@ -168,9 +158,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              project == null
-                  ? 'Project added successfully'
-                  : 'Project updated successfully',
+              project == null ? 'Project added successfully' : 'Project updated successfully',
             ),
             backgroundColor: AppColors.primary,
           ),
@@ -184,9 +172,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Project'),
-        content: Text(
-          'Are you sure you want to delete "${project.projectName}"?',
-        ),
+        content: Text('Are you sure you want to delete "${project.projectName}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -214,60 +200,78 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'Open':
-        return AppColors.statusPending;
-      case 'Work In Process':
-        return AppColors.statusInProgress;
-      case 'Completed':
-        return AppColors.statusCompleted;
-      case 'On Hold':
-        return AppColors.error;
-      default:
-        return AppColors.textSecondary;
-    }
-  }
+  // Color _getStatusColor(String status) {
+  //   switch (status) {
+  //     case 'Open':
+  //       return AppColors.statusPending;
+  //     case 'Work In Process':
+  //       return AppColors.statusInProgress;
+  //     case 'Completed':
+  //       return AppColors.statusCompleted;
+  //     case 'On Hold':
+  //       return AppColors.error;
+  //     default:
+  //       return AppColors.textSecondary;
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       // drawer: const AppDrawer(currentRoute: Routes.projects),
-      drawer: const TopBar(
-        title: 'Projects',
-      ),
       body: Column(
         children: [
           // Header Section
-          Container(
+            Container(
             padding: const EdgeInsets.fromLTRB(16, 48, 16, 12),
             child: Column(
               children: [
-                TopBar(
-                  title: 'Projects',
-                  onBack: () {
-                    // for demo: pop if possible, otherwise do nothing
-                    if (Navigator.canPop(context)) {
-                      Navigator.pop(context);
-                    }
-                  },
-                  onInfoTap: () {
-                    // hook for info action
-                    // you can open a dialog or screen here
-                  },
+              Row(
+                children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                    ),
+                  ],
+                  ),
+                  child: const Icon(
+                  Icons.folder_special,
+                  color: Colors.white,
+                  size: 20,
+                  ),
                 ),
-                const SizedBox(height: 16),
-                CustomSearchBar(
-                  controller: _searchController,
-                  hintText: 'Search Projects',
-                  onChanged: _filterProjects,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                  'Projects',
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  ),
                 ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              CustomSearchBar(
+                controller: _searchController,
+                hintText: 'Search Projects',
+                onChanged: _filterProjects,
+              ),
               ],
             ),
           ),
 
-          // Mobile-Friendly Card List
+// Mobile-Friendly Card List
           Expanded(
             child: _filteredProjects.isEmpty
                 ? Center(
@@ -294,6 +298,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     itemCount: _filteredProjects.length,
                     itemBuilder: (context, index) {
                       final project = _filteredProjects[index];
+                      final isAdmin = AuthService().isAdmin;
                       return ProjectCard(
                         project: project,
                         onTap: () {
@@ -302,12 +307,11 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                             context: context,
                             isScrollControlled: true,
                             backgroundColor: Colors.transparent,
-                            builder: (context) =>
-                                ProjectDetailsDialog(project: project),
+                            builder: (context) => ProjectDetailsDialog(project: project),
                           );
                         },
-                        onEdit: () => _showAddProjectDialog(project: project),
-                        onDelete: () => _deleteProject(project),
+                        onEdit: isAdmin ? () => _showAddProjectDialog(project: project) : null,
+                        onDelete: isAdmin ? () => _deleteProject(project) : null,
                       );
                     },
                   ),
@@ -318,7 +322,11 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         onPressed: () => _showAddProjectDialog(),
         backgroundColor: AppColors.primary,
         shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+          size: 28,
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
