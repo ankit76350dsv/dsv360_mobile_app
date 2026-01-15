@@ -1,23 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
-import '../../models/project_model.dart';
+import '../../models/task_model.dart';
 
-class ProjectDetailsDialog extends StatelessWidget {
-  final ProjectModel project;
+class TaskDetailsDialog extends StatelessWidget {
+  final TaskModel task;
 
-  const ProjectDetailsDialog({super.key, required this.project});
+  const TaskDetailsDialog({super.key, required this.task});
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case 'Open':
+      case 'Pending':
         return AppColors.statusPending;
-      case 'Work In Process':
+      case 'In Progress':
         return AppColors.statusInProgress;
       case 'Completed':
         return AppColors.statusCompleted;
-      case 'Closed':
-        return AppColors.textSecondary;
       case 'On Hold':
         return AppColors.error;
       default:
@@ -30,7 +28,7 @@ class ProjectDetailsDialog extends StatelessWidget {
     final screenHeight = MediaQuery.of(context).size.height;
     return Container(
       constraints: BoxConstraints(
-        maxHeight: screenHeight * 0.75, // 75% of screen height
+        maxHeight: screenHeight * 0.75,
       ),
       decoration: const BoxDecoration(
         color: AppColors.cardBackground,
@@ -64,7 +62,7 @@ class ProjectDetailsDialog extends StatelessWidget {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Project Details',
+                'Task Details',
                 style: TextStyle(
                   color: AppColors.textPrimary,
                   fontSize: 16,
@@ -81,44 +79,44 @@ class ProjectDetailsDialog extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  // Row 1: Project ID and Project Name
+                  // Row 1: Task ID and Task Name
                   Row(
                     children: [
                       Expanded(
                         child: _buildDetailCard(
                           icon: Icons.info_outline,
-                          label: 'Project ID',
-                          value: project.id,
+                          label: 'Task ID',
+                          value: task.id,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildDetailCard(
                           icon: Icons.assignment,
-                          label: 'Project Name',
-                          value: project.projectName,
+                          label: 'Task Name',
+                          value: task.taskName,
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   
-                  // Row 2: Assigned To and Client
+                  // Row 2: Assigned To and Project Name
                   Row(
                     children: [
                       Expanded(
                         child: _buildDetailCard(
                           icon: Icons.person,
                           label: 'Assigned To',
-                          value: project.assignedTo ?? 'Not assigned',
+                          value: task.assignedTo ?? 'Not assigned',
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildDetailCard(
-                          icon: Icons.business,
-                          label: 'Client Name',
-                          value: project.client,
+                          icon: Icons.folder_outlined,
+                          label: 'Project Name',
+                          value: task.projectId,
                         ),
                       ),
                     ],
@@ -132,7 +130,7 @@ class ProjectDetailsDialog extends StatelessWidget {
                         child: _buildDetailCard(
                           icon: Icons.calendar_today,
                           label: 'Start Date',
-                          value: DateFormat('dd/MM/yy').format(project.startDate),
+                          value: DateFormat('dd/MM/yy').format(task.startDate),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -140,46 +138,34 @@ class ProjectDetailsDialog extends StatelessWidget {
                         child: _buildDetailCard(
                           icon: Icons.event,
                           label: 'End Date',
-                          value: DateFormat('dd/MM/yy').format(project.endDate),
+                          value: DateFormat('dd/MM/yy').format(task.endDate),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
                   
-                  // Status Badge (Full width)
+                  // Status (Full width)
                   _buildStatusCard(
                     label: 'Status',
-                    value: project.status,
-                    color: _getStatusColor(project.status),
+                    value: task.status,
+                    color: _getStatusColor(task.status),
                   ),
                   const SizedBox(height: 12),
                   
-                  // Progress (Full width)
-                  _buildProgressCard(
-                    label: 'Progress',
-                    value: '${project.progress ?? 0}% completed',
-                    progress: (project.progress ?? 0) / 100,
+                  // Type (Full width)
+                  _buildTypeCard(
+                    label: 'Type',
+                    value: task.status,
                   ),
                   const SizedBox(height: 12),
-                  
-                  // Owner if available
-                  if (project.owner != null && project.owner!.isNotEmpty)
-                    ...[
-                      _buildDetailCard(
-                        icon: Icons.emoji_events,
-                        label: 'Owner',
-                        value: project.owner!,
-                      ),
-                      const SizedBox(height: 12),
-                    ],
                   
                   // Description if available
-                  if (project.description != null && project.description!.isNotEmpty)
+                  if (task.description != null && task.description!.isNotEmpty)
                     _buildDetailCard(
                       icon: Icons.description,
                       label: 'Description',
-                      value: project.description!,
+                      value: task.description!,
                     ),
                 ],
               ),
@@ -238,7 +224,7 @@ class ProjectDetailsDialog extends StatelessWidget {
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
-            maxLines: 1,
+            maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
         ],
@@ -267,7 +253,7 @@ class ProjectDetailsDialog extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.check_circle, color: AppColors.primary, size: 18),
+          Icon(Icons.check_circle, color: color, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -279,18 +265,19 @@ class ProjectDetailsDialog extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
+              color: color.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
               value,
               style: TextStyle(
                 color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -299,14 +286,12 @@ class ProjectDetailsDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildProgressCard({
+  Widget _buildTypeCard({
     required String label,
     required String value,
-    required double progress,
   }) {
-    final isDarkMode = AppColors.background.computeLuminance() < 0.5;
-    
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
@@ -320,52 +305,31 @@ class ProjectDetailsDialog extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
         children: [
-          Row(
-            children: [
-              Icon(Icons.trending_up, color: AppColors.primary, size: 18),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
+          Icon(Icons.category, color: AppColors.primary, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
-              const Spacer(),
-              Text(
-                value,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress.clamp(0.0, 1.0),
-              minHeight: 6,
-              backgroundColor: isDarkMode 
-                ? Colors.grey[300]! 
-                : Colors.grey[700]!,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                AppColors.primary,
-              ),
+          const SizedBox(width: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
       ),
     );
   }
-
-  
-
-
 }

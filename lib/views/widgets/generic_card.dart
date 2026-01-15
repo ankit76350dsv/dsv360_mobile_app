@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '/core/constants/app_colors.dart';
-import '/core/constants/app_text_styles.dart';
+import '../../core/constants/app_colors.dart';
+import '../../core/constants/app_text_styles.dart';
 
 class GenericCard extends StatelessWidget {
   final String id;
@@ -8,7 +8,8 @@ class GenericCard extends StatelessWidget {
   final String status;
   final String? subtitleIcon;
   final String? subtitleText; 
-  final String dateRange; 
+  final String dateRange;
+  final String? dueDate;
   final List<CardChip> chips; 
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
@@ -22,6 +23,7 @@ class GenericCard extends StatelessWidget {
     this.subtitleIcon,
     this.subtitleText,
     required this.dateRange,
+    this.dueDate,
     required this.chips,
     this.onEdit,
     this.onDelete,
@@ -132,9 +134,11 @@ class GenericCard extends StatelessWidget {
                           name,
                           style: const TextStyle(
                             color: AppColors.textPrimary,
-                            fontSize: 18,
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 12),
 
@@ -153,6 +157,8 @@ class GenericCard extends StatelessWidget {
                                 style: AppTextStyles.bodyMedium.copyWith(
                                   color: AppColors.textSecondary,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
@@ -176,6 +182,24 @@ class GenericCard extends StatelessWidget {
                             ),
                           ],
                         ),
+                        if (dueDate != null) const SizedBox(height: 8),
+                        if (dueDate != null)
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.event_outlined,
+                                size: 18,
+                                color: AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                dueDate!,
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
                         const SizedBox(height: 16),
 
                         // Stats Row
@@ -248,6 +272,30 @@ class GenericCard extends StatelessWidget {
   }
 
   Widget _buildChip(CardChip chip) {
+    // If label is provided, render as label badge
+    if (chip.label != null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: chip.backgroundColor?.withValues(alpha: 0.15) ?? AppColors.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: chip.backgroundColor ?? AppColors.primary,
+            width: 1,
+          ),
+        ),
+        child: Text(
+          chip.label!,
+          style: TextStyle(
+            color: chip.backgroundColor ?? AppColors.primary,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+        ),
+      );
+    }
+
+    // Otherwise render as icon with count
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -261,20 +309,22 @@ class GenericCard extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              chip.icon,
-              size: 18,
-              color: chip.isActive ? AppColors.primary : AppColors.textSecondary,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              chip.count,
-              style: TextStyle(
+            if (chip.icon != null)
+              Icon(
+                chip.icon,
+                size: 18,
                 color: chip.isActive ? AppColors.primary : AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
               ),
-            ),
+            if (chip.icon != null) const SizedBox(width: 8),
+            if (chip.count != null)
+              Text(
+                chip.count!,
+                style: TextStyle(
+                  color: chip.isActive ? AppColors.primary : AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
           ],
         ),
       ),
@@ -294,15 +344,19 @@ class GenericCard extends StatelessWidget {
 }
 
 class CardChip {
-  final IconData icon;
-  final String count;
+  final IconData? icon;
+  final String? count;
+  final String? label;
   final bool isActive;
+  final Color? backgroundColor;
   final VoidCallback? onTap;
 
   CardChip({
-    required this.icon,
-    required this.count,
+    this.icon,
+    this.count,
+    this.label,
     required this.isActive,
+    this.backgroundColor,
     this.onTap,
   });
 }

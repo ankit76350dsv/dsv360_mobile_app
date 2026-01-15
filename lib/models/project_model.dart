@@ -12,6 +12,7 @@ class ProjectModel {
   final List<String> attachments;
   final int tasksCount;
   final int timeEntriesCount;
+  final int issuesCount;
 
   ProjectModel({
     required this.id,
@@ -27,6 +28,7 @@ class ProjectModel {
     this.attachments = const [],
     this.tasksCount = 0,
     this.timeEntriesCount = 0,
+    this.issuesCount = 0,
   });
 
   // Convert to JSON
@@ -45,6 +47,7 @@ class ProjectModel {
       'attachments': attachments,
       'tasksCount': tasksCount,
       'timeEntriesCount': timeEntriesCount,
+      'issuesCount': issuesCount,
     };
   }
 
@@ -82,6 +85,7 @@ class ProjectModel {
     List<String>? attachments,
     int? tasksCount,
     int? timeEntriesCount,
+    int? issuesCount,
   }) {
     return ProjectModel(
       id: id ?? this.id,
@@ -96,7 +100,6 @@ class ProjectModel {
       progress: progress ?? this.progress,
       attachments: attachments ?? this.attachments,
       tasksCount: tasksCount ?? this.tasksCount,
-      timeEntriesCount: timeEntriesCount ?? this.timeEntriesCount,
-    );
+      timeEntriesCount: timeEntriesCount ?? this.timeEntriesCount,      issuesCount: issuesCount ?? this.issuesCount,    );
   }
 }

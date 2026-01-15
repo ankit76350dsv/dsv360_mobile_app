@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-import '/core/constants/app_colors.dart';
+
 
 class AttachmentViewScreen extends StatefulWidget {
   final String attachment;

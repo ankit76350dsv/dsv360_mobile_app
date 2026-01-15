@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:dsv360/models/leave_summary.dart';
-import 'package:dsv360/models/leave_details.dart';
 import 'package:dsv360/models/time_logs.dart';
 import 'package:dsv360/repositories/leaves_repository.dart';
 import 'package:dsv360/repositories/time_logs_repository.dart';

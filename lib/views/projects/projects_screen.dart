@@ -1,22 +1,15 @@
-import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
-
-//From Core folder
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
-import '../../core/constants/routes.dart';
-
-// from model
+import '../../core/services/auth_service.dart';
 import '../../models/project_model.dart';
-
-//from widgets
-// import '../../widgets/app_drawer.dart';
 import '../widgets/custom_search_bar.dart';
-
-//from projects
-import 'project_details_dialog.dart';
-import 'project_card.dart';
+import '../widgets/project_card.dart';
 import 'add_project_dialog.dart';
+import 'project_details_dialog.dart';
+import 'package:dsv360/views/widgets/TopBar.dart';
+import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/views/dashboard/dashboard_page.dart';
 
 class ProjectsScreen extends StatefulWidget {
   const ProjectsScreen({super.key});
@@ -62,6 +55,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         ],
         tasksCount: 5,
         timeEntriesCount: 12,
+        issuesCount: 3,
       ),
       ProjectModel(
         id: 'P1443',
@@ -77,6 +71,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         attachments: ['doc1.pdf', 'doc2.pdf'],
         tasksCount: 8,
         timeEntriesCount: 20,
+        issuesCount: 5,
       ),
       ProjectModel(
         id: 'P1440',
@@ -92,6 +87,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         attachments: [],
         tasksCount: 3,
         timeEntriesCount: 7,
+        issuesCount: 2,
       ),
       ProjectModel(
         id: 'P1437',
@@ -107,6 +103,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         attachments: ['file.pdf'],
         tasksCount: 10,
         timeEntriesCount: 25,
+        issuesCount: 4,
       ),
       ProjectModel(
         id: 'P1001',
@@ -122,6 +119,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
         attachments: [],
         tasksCount: 4,
         timeEntriesCount: 15,
+        issuesCount: 6,
       ),
     ];
   }
@@ -214,42 +212,29 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
     );
   }
 
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case 'Open':
-        return AppColors.statusPending;
-      case 'Work In Process':
-        return AppColors.statusInProgress;
-      case 'Completed':
-        return AppColors.statusCompleted;
-      case 'On Hold':
-        return AppColors.error;
-      default:
-        return AppColors.textSecondary;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      // drawer: const AppDrawer(currentRoute: Routes.projects),
-      drawer: const TopBar(
-        title: 'Projects',
-      ),
+      drawer: const AppDrawer(),
       body: Column(
         children: [
           // Header Section
           Container(
-            padding: const EdgeInsets.fromLTRB(16, 48, 16, 12),
+            padding: const EdgeInsets.only(top: 48, bottom: 12),
             child: Column(
               children: [
+                // ---------- Top bar ----------
                 TopBar(
                   title: 'Projects',
                   onBack: () {
-                    // for demo: pop if possible, otherwise do nothing
                     if (Navigator.canPop(context)) {
                       Navigator.pop(context);
+                    } else {
+                       Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const DashboardPage()),
+                      );
                     }
                   },
                   onInfoTap: () {
@@ -257,11 +242,15 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     // you can open a dialog or screen here
                   },
                 ),
-                const SizedBox(height: 16),
-                CustomSearchBar(
-                  controller: _searchController,
-                  hintText: 'Search Projects',
-                  onChanged: _filterProjects,
+
+              
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: CustomSearchBar(
+                    controller: _searchController,
+                    hintText: 'Search Projects',
+                    onChanged: _filterProjects,
+                  ),
                 ),
               ],
             ),
@@ -294,6 +283,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                     itemCount: _filteredProjects.length,
                     itemBuilder: (context, index) {
                       final project = _filteredProjects[index];
+                      final isAdmin = AuthService().isAdmin;
                       return ProjectCard(
                         project: project,
                         onTap: () {
@@ -306,8 +296,12 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                                 ProjectDetailsDialog(project: project),
                           );
                         },
-                        onEdit: () => _showAddProjectDialog(project: project),
-                        onDelete: () => _deleteProject(project),
+                        onEdit: isAdmin
+                            ? () => _showAddProjectDialog(project: project)
+                            : null,
+                        onDelete: isAdmin
+                            ? () => _deleteProject(project)
+                            : null,
                       );
                     },
                   ),

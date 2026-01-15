@@ -1,3 +1,4 @@
+import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 
@@ -97,12 +98,19 @@ class NotificationListWithTopBarPage extends StatelessWidget {
             child: Column(
               children: [
                 // ---------- Top bar ----------
-                TopBar(
-                  title: 'Notification',
+                  TopBar(
+                  title: 'Projects',
                   onBack: () {
-                    // for demo: pop if possible, otherwise do nothing
                     if (Navigator.canPop(context)) {
+                      debugPrint("pop-pop-pop-pop-pop-pop-pop-pop-pop");
                       Navigator.pop(context);
+                    } else {
+                      debugPrint("pushReplacement-pushReplacementpush-Replacement");
+
+                       Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const DashboardPage()),
+                      );
                     }
                   },
                   onInfoTap: () {
