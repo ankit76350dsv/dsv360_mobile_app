@@ -88,7 +88,6 @@ class _AddEditAccountsPageState extends State<AddEditAccountsPage> {
                           return null;
                         },
                       ),
-
                       const SizedBox(height: 20),
 
                       // Website Address
@@ -104,7 +103,6 @@ class _AddEditAccountsPageState extends State<AddEditAccountsPage> {
                           return null;
                         },
                       ),
-
                       const SizedBox(height: 20),
 
                       // Organization Status
@@ -129,7 +127,6 @@ class _AddEditAccountsPageState extends State<AddEditAccountsPage> {
                         ],
                         onChanged: (value) => setState(() => _orgType = value),
                       ),
-
                       const SizedBox(height: 20),
 
                       // Organization Type

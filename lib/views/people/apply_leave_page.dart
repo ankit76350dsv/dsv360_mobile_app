@@ -1,5 +1,8 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/models/leave_details.dart';
+import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
+import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -17,7 +20,10 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
   String? _leaveType;
   DateTime? _startDate;
   DateTime? _endDate;
+
   final TextEditingController _reasonController = TextEditingController();
+  final TextEditingController _numberOfDaysLeaveController =
+      TextEditingController();
 
   late bool isEditing;
 
@@ -59,12 +65,20 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          isEditing ? 'Edit Leave' : 'Apply Leave',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: colors.surface,
+      ),
       backgroundColor: AppColors.bg,
       body: SafeArea(
         child: Column(
           children: [
-            _TopHeader(title: isEditing ? 'Edit Leave' : 'Apply Leave'),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
@@ -74,10 +88,12 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       /// Leave Type
-                      DropdownButtonFormField<String>(
-                        value: _leaveType,
-                        decoration: _inputDecoration('Leave Type'),
-                        items: const [
+                      CustomDropDownField(
+                        hintText: "Select Leave Type",
+                        labelText: "Leave Type",
+                        prefixIcon: Icons.leave_bags_at_home,
+                        selectedOption: _leaveType,
+                        options: [
                           DropdownMenuItem(
                             value: 'Sick Leave',
                             child: Text('Sick Leave'),
@@ -93,17 +109,21 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
                         ],
                         onChanged: (value) =>
                             setState(() => _leaveType = value),
-                        validator: (value) =>
-                            value == null ? 'Please select leave type' : null,
                       ),
                       const SizedBox(height: 16),
 
                       /// Number of Days
-                      TextFormField(
-                        enabled: false,
-                        initialValue: numberOfDays.toString(),
-                        decoration: _inputDecoration('Number of days'),
-                        style: const TextStyle(color: Colors.white),
+                      CustomInputField(
+                        controller: _numberOfDaysLeaveController,
+                        hintText: 'Number of Days',
+                        labelText: 'Number of Days',
+                        prefixIcon: Icons.calendar_month,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Enter first name';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 16),
 
@@ -133,64 +153,23 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
                             ? 'Enter reason'
                             : null,
                       ),
+
+                      const SizedBox(height: 32),
+                      // buttons
+                      BottomTwoButtons(
+                        button1Text: "cancel",
+                        button2Text: isEditing ? 'SAVE CHANGES' : 'SUBMIT',
+                        button1Function: () {
+                          Navigator.pop(context);
+                        },
+                        button2Function: () {
+                          if (_formKey.currentState!.validate()) {
+                            // TODO: Add / Update user logic
+                          }
+                        },
+                      ),
                     ],
                   ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Theme(
-                data: Theme.of(context).copyWith(
-                  splashColor: Colors.red.withOpacity(0.1),
-                  highlightColor: Colors.red.withOpacity(0.1),
-                ),
-                child: TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    foregroundColor: Colors.red,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: const Text(
-                    'CANCEL',
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed: () {
-                  final isValid = _formKey.currentState?.validate() ?? false;
-                  if (isValid) {
-                    // Submit logic
-                  }
-                },
-                child: Text(
-                  isEditing ? 'SAVE CHANGES' : 'SUBMIT',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),

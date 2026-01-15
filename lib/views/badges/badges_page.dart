@@ -353,10 +353,10 @@ class _UserBadgesSheet extends ConsumerWidget {
                       itemCount: assignedBadges.length,
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
+                            crossAxisCount: 2,
                             mainAxisSpacing: 14,
                             crossAxisSpacing: 14,
-                            childAspectRatio: 0.8,
+                            childAspectRatio: 1,
                           ),
                       itemBuilder: (context, index) {
                         final badge = assignedBadges[index];
@@ -364,17 +364,17 @@ class _UserBadgesSheet extends ConsumerWidget {
                         return Column(
                           children: [
                             SizedBox(
-                              width: 340,
-                              height: 90,
+                              width: 120,
+                              height: 120,
                               child: Stack(
                                 children: [
                                   // Glass card
                                   Card(
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18),
+                                      borderRadius: BorderRadius.circular(200),
                                       side: BorderSide(
-                                        color: Colors.grey.withOpacity(0.2),
-                                        width: 1.5,
+                                        color: Colors.grey.withOpacity(0.3),
+                                        width: 2.5,
                                       ),
                                     ),
                                     child: Center(

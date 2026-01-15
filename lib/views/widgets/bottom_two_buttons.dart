@@ -29,7 +29,7 @@ class BottomTwoButtons extends StatelessWidget {
                 color: colors.error,
                 width: 2.0,
               ),
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(200.0),
               ),
@@ -51,7 +51,7 @@ class BottomTwoButtons extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: colors.primary,
               foregroundColor: colors.onPrimary,
-              padding: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(200.0),
                 side: BorderSide(

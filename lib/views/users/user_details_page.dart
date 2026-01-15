@@ -3,10 +3,7 @@ import 'package:dsv360/models/task.dart';
 import 'package:dsv360/models/users.dart';
 import 'package:dsv360/repositories/project_repository.dart';
 import 'package:dsv360/repositories/task_repository.dart';
-import 'package:dsv360/views/widgets/RoleChip.dart';
-import 'package:dsv360/views/widgets/TopHeaderBar.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
-import 'package:dsv360/views/widgets/WorkStatusChip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -18,13 +15,21 @@ class UserDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return DefaultTabController(
       length: 3,
       child: Scaffold(
+        appBar: AppBar(
+          title: Text(
+            "${user.firstName} ${user.lastName}",
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: colors.surface,
+        ),
         body: SafeArea(
           child: Column(
             children: [
-              TopHeaderBar(heading: "${user.firstName} ${user.lastName}"),
               _UserTabs(),
               Expanded(
                 child: TabBarView(
@@ -46,21 +51,43 @@ class UserDetailsPage extends StatelessWidget {
 class _UserTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = Theme.of(context).colorScheme;
 
-    return Container(
-      color: theme.scaffoldBackgroundColor,
-      child: TabBar(
-        labelColor: theme.colorScheme.primary,
-        unselectedLabelColor: theme.textTheme.bodyMedium?.color,
-        indicatorColor: theme.colorScheme.primary,
-        indicatorWeight: 3,
-        indicatorSize: TabBarIndicatorSize.tab,
-        tabs: const [
-          Tab(text: "Info"),
-          Tab(text: "Projects"),
-          Tab(text: "Tasks"),
-        ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12.0,
+        vertical: 8.0
+      ),
+      child: Container(
+        height: 52,
+        decoration: BoxDecoration(
+          color: colors.surfaceVariant.withOpacity(0.7), // light grey background
+          borderRadius: BorderRadius.circular(14),
+        ),
+        padding: EdgeInsets.all(4.0),
+        child: TabBar(
+          indicator: BoxDecoration(
+            color: colors.secondary, // white pill
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          indicatorSize: TabBarIndicatorSize.tab,
+          labelColor: colors.primary,
+          unselectedLabelColor: colors.onSurfaceVariant,
+          labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+          dividerColor: Colors.transparent, // removes bottom line
+          tabs: const [
+            Tab(text: "Info"),
+            Tab(text: "Projects"),
+            Tab(text: "Tasks"),
+          ],
+        ),
       ),
     );
   }
@@ -73,12 +100,16 @@ class _InfoTab extends StatelessWidget {
   late IconData verificationStatusIcon;
   late Color verificationStatusColor;
 
+  late String workStatusText;
+  late Color workStatusColor;
+
   _InfoTab({required this.user});
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final verificationStatus = user.verificationStatus;
+    final workStatus = user.workStatus;
 
     switch (verificationStatus) {
       case VerificationStatus.verified:
@@ -93,6 +124,17 @@ class _InfoTab extends StatelessWidget {
         break;
     }
 
+    switch (workStatus) {
+      case WorkStatus.active:
+        workStatusText = "Active";
+        workStatusColor = Colors.green;
+        break;
+      case WorkStatus.inactive:
+        workStatusText = "Inactive";
+        workStatusColor =  Color.fromARGB(255, 255, 0, 0);
+        break;
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -100,7 +142,7 @@ class _InfoTab extends StatelessWidget {
         children: [
           _SectionTitle(title: "Personal Information"),
           _InfoTile(
-            icon: Icons.person,
+            icon: Icons.person_outline_outlined,
             label: "Full Name",
             value: "${user.firstName} ${user.lastName}",
           ),
@@ -111,14 +153,18 @@ class _InfoTab extends StatelessWidget {
               crossAxisCount: 2, // ✅ 2 columns
               crossAxisSpacing: 0,
               mainAxisSpacing: 0,
-              childAspectRatio: 2.2, // adjust for tile height
+              childAspectRatio: 2.1, // adjust for tile height
             ),
             children: [
-              _InfoTile(icon: Icons.badge, label: "User Id", value: "U12345"),
-              _InfoTileCustom(
+              _InfoTile(
+                icon: Icons.badge, 
+                label: "User Id", 
+                value: user.userId,
+              ),
+              _InfoTile(
                 icon: Icons.verified_user,
                 label: "Verification",
-                widget: CustomChip(
+                child: CustomChip(
                   label: verificationStatusText,
                   color: verificationStatusColor,
                   icon: verificationStatusIcon,
@@ -133,18 +179,26 @@ class _InfoTab extends StatelessWidget {
               crossAxisCount: 2, // ✅ 2 columns
               crossAxisSpacing: 0,
               mainAxisSpacing: 0,
-              childAspectRatio: 2.2, // adjust for tile height
+              childAspectRatio: 2.1, // adjust for tile height
             ),
             children: [
-              _InfoTileCustom(
+              _InfoTile(
                 icon: Icons.work,
                 label: "Role",
-                widget: RoleChip(text: user.role),
+                child: CustomChip(
+                  color: colors.primary,
+                  label: user.role,
+                  icon: null
+                ),
               ),
-              _InfoTileCustom(
+              _InfoTile(
                 icon: Icons.business_center,
                 label: "Status",
-                widget: WorkStatusChip(status: user.workStatus),
+                child: CustomChip(
+                  label: workStatusText, 
+                  color: workStatusColor, 
+                  icon: null,
+                ),
               ),
             ],
           ),
@@ -184,82 +238,65 @@ class _SectionTitle extends StatelessWidget {
 class _InfoTile extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String value;
+  final String? value;   // for normal text
+  final Widget? child;   // for chips, buttons, etc
 
   const _InfoTile({
+    super.key,
     required this.icon,
     required this.label,
-    required this.value,
-  });
+    this.value,
+    this.child,
+  }) : assert(value != null || child != null,
+        'Either value or child must be provided');
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Row(
-        children: [
-          Icon(icon, size: 28),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: textTheme.bodyMedium?.copyWith(
-                  fontSize: 14,
-                  color: colors.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(value, style: textTheme.titleMedium),
-            ],
-          ),
-        ],
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: Colors.grey.withOpacity(0.2),
+          width: 1.5,
+        ),
       ),
-    );
-  }
-}
-
-class _InfoTileCustom extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Widget widget;
-
-  const _InfoTileCustom({
-    required this.icon,
-    required this.label,
-    required this.widget,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Row(
-        children: [
-          Icon(icon, size: 28),
-          const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: textTheme.bodyMedium?.copyWith(
-                  fontSize: 14,
-                  color: colors.onSurfaceVariant,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              backgroundColor: colors.primary.withOpacity(0.4),
+              child: Icon(icon, size: 28, color: colors.primary),
+            ),
+            const SizedBox(width: 8.0),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontSize: 14,
+                    color: colors.tertiary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              widget,
-            ],
-          ),
-        ],
+                if (value == null)
+                  const SizedBox(height: 6),
+
+                // 👇 Either text OR custom widget
+                if (value != null)
+                  Text(value!, style: textTheme.titleMedium)
+                else
+                  child!,
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -311,7 +348,13 @@ class _ProjectCard extends StatelessWidget {
     final textTheme = theme.textTheme;
 
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: Colors.grey.withOpacity(0.2),
+          width: 1.5,
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -426,6 +469,13 @@ class _TaskCard extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: Colors.grey.withOpacity(0.2),
+          width: 1.5,
+        ),
+      ),
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),

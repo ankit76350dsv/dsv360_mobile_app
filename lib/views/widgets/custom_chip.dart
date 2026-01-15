@@ -23,8 +23,8 @@ class CustomChip extends StatelessWidget {
             label,
             style: TextStyle(
               color: color.withOpacity(0.7),
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],

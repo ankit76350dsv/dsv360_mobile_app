@@ -1,6 +1,9 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/models/users.dart';
 import 'package:dsv360/views/widgets/TopHeaderBar.dart';
+import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
+import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 
 class AddEditUserPage extends StatefulWidget {
@@ -42,16 +45,24 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          widget.user == null ? 'Add User' : 'Edit User',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: colors.surface,
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TopHeaderBar(heading: isEditing ? 'Edit User' : 'Add User'),
             Padding(
-              padding: const EdgeInsets.only(left: 16.0),
+              padding: const EdgeInsets.symmetric(
+                vertical: 12.0,
+                horizontal: 16.0,
+              ),
               child: Text(
                 "User Information",
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -62,41 +73,49 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       /// First Name
-                      TextFormField(
+                      CustomInputField(
                         controller: _firstNameController,
-                        decoration: _inputDecoration(context, 'First Name'),
-                        style: TextStyle(color: colors.onSurface),
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Enter first name'
-                            : null,
+                        hintText: 'Enter First Name',
+                        labelText: 'First Name',
+                        prefixIcon: Icons.person,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Enter first name';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 16),
 
                       /// Last Name
-                      TextFormField(
+                      CustomInputField(
                         controller: _lastNameController,
-                        decoration: _inputDecoration(context, 'Last Name'),
-                        style: TextStyle(color: colors.onSurface),
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Enter last name'
-                            : null,
+                        hintText: 'Enter Last Name',
+                        labelText: 'Last Name',
+                        prefixIcon: Icons.person,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Enter last name';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 16),
 
                       /// Role
-                      DropdownButtonFormField<String>(
-                        value: _role,
-                        decoration: _inputDecoration(context, 'Role'),
-                        dropdownColor: colors.surface,
-                        style: TextStyle(color: colors.onSurface),
-                        items: const [
+                      CustomDropDownField(
+                        hintText: "Select Role",
+                        labelText: "tole",
+                        prefixIcon: Icons.business,
+                        selectedOption: _role,
+                        options: [
                           DropdownMenuItem(
                             value: 'Admin',
                             child: Text('Admin'),
@@ -115,17 +134,16 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
                           ),
                         ],
                         onChanged: (value) => setState(() => _role = value),
-                        validator: (value) =>
-                            value == null ? 'Select role' : null,
                       ),
                       const SizedBox(height: 16),
 
                       /// Email
-                      TextFormField(
+                      CustomInputField(
                         controller: _emailController,
-                        readOnly: isEditing,
-                        decoration: _inputDecoration(context, 'Email ID'),
-                        style: TextStyle(color: colors.onSurface),
+                        hintText: 'Enter Email ID',
+                        enabled: isEditing,
+                        labelText: 'Email ID',
+                        prefixIcon: Icons.email,
                         keyboardType: TextInputType.emailAddress,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -140,61 +158,17 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
 
                       const SizedBox(height: 32),
                       // buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                foregroundColor: Colors.red,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  side: const BorderSide(
-                                    color: Colors.red,
-                                    width: 1.2,
-                                  ),
-                                ),
-                              ),
-                              child: const Text(
-                                'CANCEL',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: colors.primary,
-                                foregroundColor: colors.onPrimary,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              onPressed: () {
-                                if (_formKey.currentState!.validate()) {
-                                  // TODO: Add / Update user logic
-                                }
-                              },
-                              child: Text(
-                                isEditing ? 'SAVE CHANGES' : 'ADD USER',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                      BottomTwoButtons(
+                        button1Text: "cancel", 
+                        button2Text: isEditing ? 'SAVE CHANGES' : 'ADD USER',
+                        button1Function: () {
+                          Navigator.pop(context);
+                        },
+                        button2Function: () {
+                          if (_formKey.currentState!.validate()) {
+                            // TODO: Add / Update user logic
+                          }
+                        },
                       ),
                     ],
                   ),

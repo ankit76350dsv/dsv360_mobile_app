@@ -7,7 +7,7 @@ import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
 import 'package:dsv360/views/users/add_edit_user_page.dart';
 import 'package:dsv360/views/users/user_details_page.dart';
-import 'package:dsv360/views/widgets/RoleChip.dart';
+import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/custom_input_search.dart';
@@ -267,11 +267,11 @@ class _UserCardState extends ConsumerState<UserCard> {
                             activeUser != null &&
                                     _canManageUsers(activeUser.role)
                                 ? SizedBox(
-                                    width: 42,
+                                    width: 38,
                                     height: 18,
                                     child: Transform.scale(
                                     scale:
-                                        0.85, 
+                                        0.70, 
                                     child: Switch(
                                       value: _isActive,
 
@@ -325,13 +325,9 @@ class _UserCardState extends ConsumerState<UserCard> {
                         
                         Row(
                           children: [
-                            Container(
-                              decoration: BoxDecoration(
-                                color: colors.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: IconButton(
-                              onPressed: () {
+                            CustomCardButton(
+                              icon: Icons.account_circle,
+                              onTap: () {
                                 // TODO: Handle user card action
 
                                 ScaffoldMessenger.of(context)
@@ -356,21 +352,11 @@ class _UserCardState extends ConsumerState<UserCard> {
                                     ),
                                   );
                               },
-                              icon: Icon(
-                                Icons.account_circle,
-                                color: colors.primary,
-                              ),
-                              color: colors.onSurface,
-                              iconSize: 20,
-                            ),),
+                            ),
                             const SizedBox(width: 5.0,),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: colors.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: IconButton(
-                              onPressed: () {
+                            CustomCardButton(
+                              icon: Icons.edit,
+                              onTap: () {
                                 // TODO: Handle edit action
                                 Navigator.push(
                                   context,
@@ -380,30 +366,18 @@ class _UserCardState extends ConsumerState<UserCard> {
                                   ),
                                 );
                               },
-                              icon: Icon(
-                                Icons.edit,
-                                color: colors.primary,
-                              ),
-                              color: colors.onSurface,
-                              iconSize: 20,
-                            ),),
+                            ),
                             const SizedBox(width: 5.0,),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: colors.error.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: IconButton(
-                              onPressed: () {
+                            CustomCardButton(
+                              icon: Icons.delete,
+                              onTap: () {
                                 _showDeleteUserSheet(
                                   context,
                                   user: widget.user, // List<Task>
                                 );
                               },
-                              icon: const Icon(Icons.delete),
                               color: colors.error,
-                              iconSize: 20,
-                            ),),
+                            )
                           ],
                         ),
                       ],
