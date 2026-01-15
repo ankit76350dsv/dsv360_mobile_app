@@ -5,7 +5,7 @@ import 'package:dsv360/views/projects/projects_screen.dart'; // project
 import 'package:dsv360/views/task/tasks_screen.dart'; // task
 import 'package:dsv360/views/issues/issues_screen.dart'; // issue
 import 'package:dsv360/views/feedback/feedbacks_screen.dart'; // Feedbacks
-import 'package:dsv360/views/people/people_page.dart';
+import 'package:dsv360/views/people/people_page.dart'; 
 import 'package:dsv360/views/profile/profile_page.dart';
 import 'package:dsv360/views/settings/settings_page.dart';
 import 'package:dsv360/views/users/users_page.dart';

@@ -1,3 +1,5 @@
+import 'package:dsv360/views/dashboard/dashboard_page.dart';
+import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/task_model.dart';
@@ -15,11 +17,7 @@ class TasksScreen extends StatefulWidget {
   final String? projectId;
   final String? projectName;
 
-  const TasksScreen({
-    super.key,
-    this.projectId,
-    this.projectName,
-  });
+  const TasksScreen({super.key, this.projectId, this.projectName});
 
   @override
   State<TasksScreen> createState() => _TasksScreenState();
@@ -117,10 +115,12 @@ class _TasksScreenState extends State<TasksScreen> {
         filteredTasks = tasks;
       } else {
         filteredTasks = tasks
-            .where((task) =>
-                task.taskName.toLowerCase().contains(query.toLowerCase()) ||
-                task.id.toLowerCase().contains(query.toLowerCase()) ||
-                task.status.toLowerCase().contains(query.toLowerCase()))
+            .where(
+              (task) =>
+                  task.taskName.toLowerCase().contains(query.toLowerCase()) ||
+                  task.id.toLowerCase().contains(query.toLowerCase()) ||
+                  task.status.toLowerCase().contains(query.toLowerCase()),
+            )
             .toList();
       }
     });
@@ -129,10 +129,8 @@ class _TasksScreenState extends State<TasksScreen> {
   Future<void> _showAddTaskDialog({TaskModel? task}) async {
     final result = await Navigator.of(context).push<TaskModel>(
       MaterialPageRoute(
-        builder: (context) => AddTaskDialog(
-          task: task,
-          projectId: widget.projectId ?? 'P001',
-        ),
+        builder: (context) =>
+            AddTaskDialog(task: task, projectId: widget.projectId ?? 'P001'),
       ),
     );
 
@@ -155,7 +153,9 @@ class _TasksScreenState extends State<TasksScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              task == null ? 'Task added successfully' : 'Task updated successfully',
+              task == null
+                  ? 'Task added successfully'
+                  : 'Task updated successfully',
             ),
             backgroundColor: AppColors.primary,
           ),
@@ -214,44 +214,46 @@ class _TasksScreenState extends State<TasksScreen> {
       body: Column(
         children: [
           // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 32, 16, 16),
-            child: Row(
+          Container(
+            padding: const EdgeInsets.only(top: 48, bottom: 12),
+            child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.checklist_outlined,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                // ---------- Top bar ----------
+                TopBar(
+                  title: 'Tasks',
+                  onBack: () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    } else {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const DashboardPage(),
+                        ),
+                      );
+                    }
+                  },
+                  onInfoTap: () {
+                    // hook for info action
+                    // you can open a dialog or screen here
+                  },
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Tasks',
-                    style: const TextStyle(
-                      color: AppColors.textPrimary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+
+                //Padding(
+                //   padding: const EdgeInsets.symmetric(
+                //     horizontal: 16,
+                //     vertical: 8,
+                //   ),
+                //   child: CustomSearchBar(
+                //     controller: _searchController,
+                //     onChanged: _filterTasks,
+                //     hintText: 'Search task',
+                //   ),
+                // ),
               ],
             ),
           ),
-          
+
           // Search Bar
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -261,7 +263,7 @@ class _TasksScreenState extends State<TasksScreen> {
               hintText: 'Search task',
             ),
           ),
-          
+
           // Task List
           Expanded(
             child: filteredTasks.isEmpty
@@ -287,7 +289,10 @@ class _TasksScreenState extends State<TasksScreen> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     itemCount: filteredTasks.length,
                     itemBuilder: (context, index) {
                       final task = filteredTasks[index];
@@ -315,9 +320,10 @@ class _TasksScreenState extends State<TasksScreen> {
                                         context: context,
                                         isScrollControlled: true,
                                         backgroundColor: Colors.transparent,
-                                        builder: (context) => AttachmentListModal(
-                                          attachments: task.attachments,
-                                        ),
+                                        builder: (context) =>
+                                            AttachmentListModal(
+                                              attachments: task.attachments,
+                                            ),
                                       );
                                     }
                                   : null,
@@ -333,7 +339,8 @@ class _TasksScreenState extends State<TasksScreen> {
                                     builder: (context) => AddTimeEntryDialog(
                                       taskId: task.id,
                                       taskName: task.taskName,
-                                      currentUser: task.assignedTo ?? 'Unassigned',
+                                      currentUser:
+                                          task.assignedTo ?? 'Unassigned',
                                     ),
                                   ),
                                 );
@@ -346,7 +353,8 @@ class _TasksScreenState extends State<TasksScreen> {
                               context: context,
                               isScrollControlled: true,
                               backgroundColor: Colors.transparent,
-                              builder: (context) => TaskDetailsDialog(task: task),
+                              builder: (context) =>
+                                  TaskDetailsDialog(task: task),
                             );
                           },
                           onEdit: () => _showAddTaskDialog(task: task),
@@ -362,11 +370,7 @@ class _TasksScreenState extends State<TasksScreen> {
         onPressed: () => _showAddTaskDialog(),
         backgroundColor: AppColors.primary,
         shape: const CircleBorder(),
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 28,
-        ),
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
