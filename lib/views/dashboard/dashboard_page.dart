@@ -5,6 +5,7 @@ import 'package:dsv360/views/dashboard/StatGrid.dart';
 import 'package:dsv360/views/dashboard/TaskStatusCard.dart';
 import 'package:dsv360/views/dashboard/TopHeader.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
+import 'package:dsv360/views/profile/profile_page.dart';
 import 'package:flutter/material.dart';
 
 class DashboardPage extends StatelessWidget {
@@ -83,6 +84,14 @@ class _DashboardScaffold extends StatelessWidget {
               );
             },
             icon: const Icon(Icons.notifications_none),
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const ProfilePage()));
+            },
+            icon: const Icon(Icons.account_circle_outlined),
           ),
           const SizedBox(width: 12),
         ],
