@@ -45,6 +45,7 @@ dependencies:
   url_launcher: ^6.3.2
   syncfusion_flutter_pdfviewer: ^32.1.22
   flutter_speed_dial: ^7.0.0
+  zcatalyst_sdk: ^2.2.1
   
 
 dev_dependencies:
