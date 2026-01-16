@@ -1,4 +1,5 @@
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/views/dashboard/ProjectAnalyticsCard.dart';
 import 'package:dsv360/views/dashboard/StatGrid.dart';
 import 'package:dsv360/views/dashboard/TaskStatusCard.dart';
@@ -52,7 +53,9 @@ class _DashboardScaffold extends StatelessWidget {
         elevation: 0,
         backgroundColor: Colors.transparent,
         automaticallyImplyLeading: false, // Hide default hamburger
-        title: const Text('DSV-360'),
+        title: Text(
+          'DSV360 - ${AuthManager.instance.currentUser?.firstName ?? "User"}',
+        ),
         leading: Builder(
           builder: (context) {
             return GestureDetector(
@@ -62,7 +65,11 @@ class _DashboardScaffold extends StatelessWidget {
                 child: const CircleAvatar(
                   radius: 16,
                   backgroundColor: Colors.white12,
-                  child: Icon(Icons.person_outline, size: 18, color: Colors.white),
+                  child: Icon(
+                    Icons.person_outline,
+                    size: 18,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             );
@@ -72,9 +79,7 @@ class _DashboardScaffold extends StatelessWidget {
           IconButton(
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const NotificationPage(),
-                ),
+                MaterialPageRoute(builder: (_) => const NotificationPage()),
               );
             },
             icon: const Icon(Icons.notifications_none),
@@ -117,7 +122,10 @@ class _DashboardScaffold extends StatelessWidget {
                             ? Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: const [
-                                  Expanded(flex: 2, child: ProjectAnalyticsCard()),
+                                  Expanded(
+                                    flex: 2,
+                                    child: ProjectAnalyticsCard(),
+                                  ),
                                   SizedBox(width: 12),
                                   Expanded(flex: 1, child: TaskStatusCard()),
                                 ],
