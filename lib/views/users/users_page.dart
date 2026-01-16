@@ -73,7 +73,7 @@ class _UsersPageState extends ConsumerState<UsersPage> {
               child: CustomInputSearch(
                 searchProvider: usersSearchQueryProvider,
                 hint: "Search users",
-              )
+              ),
             ),
             Expanded(
               child: Padding(
@@ -99,10 +99,7 @@ class _UsersPageState extends ConsumerState<UsersPage> {
                     return ListView.builder(
                       itemCount: filteredUsers.length,
                       itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: UserCard(user: filteredUsers[index]),
-                        );
+                        return UserCard(user: filteredUsers[index]);
                       },
                     );
                   },
@@ -171,107 +168,105 @@ class _UserCardState extends ConsumerState<UserCard> {
           ),
         ),
         child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colors.primary,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(widget.user.userId,
-                          style: TextStyle(
-                            color: theme.colorScheme.surface
-                          )),
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
                         ),
-                        const Spacer(),
-                        CustomChip(
-                          label: widget.user.role,
+                        decoration: BoxDecoration(
                           color: colors.primary,
-                          icon: null,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        const SizedBox(width: 6.0),
-                        CustomChip(
-                          label: verificationStatusText,
-                          color: verificationStatusColor,
-                          icon: verificationStatusIcon,
+                        child: Text(
+                          widget.user.userId,
+                          style: TextStyle(color: theme.colorScheme.surface),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                      const Spacer(),
+                      CustomChip(
+                        label: widget.user.role,
+                        color: colors.primary,
+                        icon: null,
+                      ),
+                      const SizedBox(width: 6.0),
+                      CustomChip(
+                        label: verificationStatusText,
+                        color: verificationStatusColor,
+                        icon: verificationStatusIcon,
+                      ),
+                    ],
+                  ),
+                ],
               ),
+            ),
 
-              // Divider
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: Colors.grey.withOpacity(0.2),
-              ),
+            // Divider
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: Colors.grey.withOpacity(0.2),
+            ),
 
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "${widget.user.firstName} ${widget.user.lastName}",
-                                style: theme.textTheme.bodyLarge,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(
-                                height: 2.0,
-                              ),
-                              _userInfoRow(Icons.email, widget.user.emailAddress),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // Divider
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: Colors.grey.withOpacity(0.2),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child:
-                    Column(
-                      children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            activeUser != null &&
-                                    _canManageUsers(activeUser.role)
-                                ? SizedBox(
-                                    width: 38,
-                                    height: 18,
-                                    child: Transform.scale(
-                                    scale:
-                                        0.70, 
+                            Text(
+                              "${widget.user.firstName} ${widget.user.lastName}",
+                              style: theme.textTheme.bodyLarge,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2.0),
+                            _userInfoRow(Icons.email, widget.user.emailAddress),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Divider
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: Colors.grey.withOpacity(0.2),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          activeUser != null && _canManageUsers(activeUser.role)
+                              ? SizedBox(
+                                  width: 38,
+                                  height: 18,
+                                  child: Transform.scale(
+                                    scale: 0.70,
                                     child: Switch(
                                       value: _isActive,
 
@@ -307,87 +302,86 @@ class _UserCardState extends ConsumerState<UserCard> {
                                           );
                                       },
                                     ),
-                                  ),)
-                                : SizedBox(),
-                            const SizedBox(width: 8),
-                            Text(
-                              _isActive ? 'Active' : 'Inactive',
-                              style: TextStyle(
-                                color: _isActive
-                                    ? colors.primary
-                                    : colors.onSurfaceVariant,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
+                                  ),
+                                )
+                              : SizedBox(),
+                          const SizedBox(width: 8),
+                          Text(
+                            _isActive ? 'Active' : 'Inactive',
+                            style: TextStyle(
+                              color: _isActive
+                                  ? colors.primary
+                                  : colors.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
                             ),
-                          ],
-                        ),
-                        
-                        Row(
-                          children: [
-                            CustomCardButton(
-                              icon: Icons.account_circle,
-                              onTap: () {
-                                // TODO: Handle user card action
+                          ),
+                        ],
+                      ),
 
-                                ScaffoldMessenger.of(context)
-                                  ..hideCurrentSnackBar()
-                                  ..showSnackBar(
-                                    const SnackBar(
-                                      content: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.info_outline,
-                                            color: Colors.white,
-                                            size: 20,
-                                          ),
-                                          SizedBox(width: 12),
-                                          Text(
-                                            'Re-invitation sent successfully',
-                                          ),
-                                        ],
-                                      ),
-                                      behavior: SnackBarBehavior.floating,
-                                      duration: Duration(seconds: 2),
+                      Row(
+                        children: [
+                          CustomCardButton(
+                            icon: Icons.account_circle,
+                            onTap: () {
+                              // TODO: Handle user card action
+
+                              ScaffoldMessenger.of(context)
+                                ..hideCurrentSnackBar()
+                                ..showSnackBar(
+                                  const SnackBar(
+                                    content: Row(
+                                      children: [
+                                        Icon(
+                                          Icons.info_outline,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                        SizedBox(width: 12),
+                                        Text('Re-invitation sent successfully'),
+                                      ],
                                     ),
-                                  );
-                              },
-                            ),
-                            const SizedBox(width: 5.0,),
-                            CustomCardButton(
-                              icon: Icons.edit,
-                              onTap: () {
-                                // TODO: Handle edit action
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        AddEditUserPage(user: widget.user),
+                                    behavior: SnackBarBehavior.floating,
+                                    duration: Duration(seconds: 2),
                                   ),
                                 );
-                              },
-                            ),
-                            const SizedBox(width: 5.0,),
-                            CustomCardButton(
-                              icon: Icons.delete,
-                              onTap: () {
-                                _showDeleteUserSheet(
-                                  context,
-                                  user: widget.user, // List<Task>
-                                );
-                              },
-                              color: colors.error,
-                            )
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                            },
+                          ),
+                          const SizedBox(width: 5.0),
+                          CustomCardButton(
+                            icon: Icons.edit,
+                            onTap: () {
+                              // TODO: Handle edit action
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      AddEditUserPage(user: widget.user),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 5.0),
+                          CustomCardButton(
+                            icon: Icons.delete,
+                            onTap: () {
+                              _showDeleteUserSheet(
+                                context,
+                                user: widget.user, // List<Task>
+                              );
+                            },
+                            color: colors.error,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
     );
   }
 
@@ -411,15 +405,14 @@ class _UserCardState extends ConsumerState<UserCard> {
 
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 18,
-          color: theme.colorScheme.tertiary,
-        ),
+        Icon(icon, size: 18, color: theme.colorScheme.tertiary),
         const SizedBox(width: 8),
-        Text(text, style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.tertiary,
-        ),),
+        Text(
+          text,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.tertiary,
+          ),
+        ),
       ],
     );
   }

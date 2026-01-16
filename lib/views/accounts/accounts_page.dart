@@ -4,6 +4,7 @@ import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/accounts/add_edit_accounts_page.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
+import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -83,10 +84,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
                   ),
                   filled: true,
                   fillColor: colors.surfaceVariant,
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: Colors.grey,
-                  ),
+                  prefixIcon: Icon(Icons.search, color: Colors.grey),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide(
@@ -134,10 +132,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
                     return ListView.builder(
                       itemCount: filteredAccounts.length,
                       itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: AccountsCard(account: filteredAccounts[index]),
-                        );
+                        return AccountsCard(account: filteredAccounts[index]);
                       },
                     );
                   },
@@ -232,62 +227,36 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Divider
-            Divider(
-              height: 1,
-              thickness: 1,
-              color: Colors.grey.withOpacity(0.2),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        // TODO: Handle edit action
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                AddEditAccountsPage(account: widget.account),
+                      Row(
+                        children: [
+                          CustomCardButton(
+                            onTap: () {
+                              // TODO: Handle edit action
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AddEditAccountsPage(
+                                    account: widget.account,
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: Icons.edit,
                           ),
-                        );
-                      },
-                      icon: Icon(Icons.edit, color: colors.primary),
-                      color: colors.onSurface,
-                      iconSize: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 5.0),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: colors.error.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        _showDeleteDialog(context, widget.account.orgName);
-                      },
-                      icon: const Icon(Icons.delete),
-                      color: colors.error,
-                      iconSize: 20,
-                    ),
+                          const SizedBox(width: 5.0),
+                          CustomCardButton(
+                            onTap: () {
+                              _showDeleteDialog(
+                                context,
+                                widget.account.orgName,
+                              );
+                            },
+                            icon: Icons.delete,
+                            color: colors.error,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),

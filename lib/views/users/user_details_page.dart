@@ -54,14 +54,13 @@ class _UserTabs extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12.0,
-        vertical: 8.0
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
       child: Container(
         height: 52,
         decoration: BoxDecoration(
-          color: colors.surfaceVariant.withOpacity(0.7), // light grey background
+          color: colors.surfaceVariant.withOpacity(
+            0.7,
+          ), // light grey background
           borderRadius: BorderRadius.circular(14),
         ),
         padding: EdgeInsets.all(4.0),
@@ -131,7 +130,7 @@ class _InfoTab extends StatelessWidget {
         break;
       case WorkStatus.inactive:
         workStatusText = "Inactive";
-        workStatusColor =  Color.fromARGB(255, 255, 0, 0);
+        workStatusColor = Color.fromARGB(255, 255, 0, 0);
         break;
     }
 
@@ -157,8 +156,8 @@ class _InfoTab extends StatelessWidget {
             ),
             children: [
               _InfoTile(
-                icon: Icons.badge, 
-                label: "User Id", 
+                icon: Icons.badge,
+                label: "User Id",
                 value: user.userId,
               ),
               _InfoTile(
@@ -179,7 +178,7 @@ class _InfoTab extends StatelessWidget {
               crossAxisCount: 2, // ✅ 2 columns
               crossAxisSpacing: 0,
               mainAxisSpacing: 0,
-              childAspectRatio: 2.1, // adjust for tile height
+              childAspectRatio: 2, // adjust for tile height
             ),
             children: [
               _InfoTile(
@@ -188,15 +187,15 @@ class _InfoTab extends StatelessWidget {
                 child: CustomChip(
                   color: colors.primary,
                   label: user.role,
-                  icon: null
+                  icon: null,
                 ),
               ),
               _InfoTile(
                 icon: Icons.business_center,
                 label: "Status",
                 child: CustomChip(
-                  label: workStatusText, 
-                  color: workStatusColor, 
+                  label: workStatusText,
+                  color: workStatusColor,
                   icon: null,
                 ),
               ),
@@ -238,8 +237,8 @@ class _SectionTitle extends StatelessWidget {
 class _InfoTile extends StatelessWidget {
   final IconData icon;
   final String label;
-  final String? value;   // for normal text
-  final Widget? child;   // for chips, buttons, etc
+  final String? value; // for normal text
+  final Widget? child; // for chips, buttons, etc
 
   const _InfoTile({
     super.key,
@@ -247,8 +246,10 @@ class _InfoTile extends StatelessWidget {
     required this.label,
     this.value,
     this.child,
-  }) : assert(value != null || child != null,
-        'Either value or child must be provided');
+  }) : assert(
+         value != null || child != null,
+         'Either value or child must be provided',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -258,21 +259,19 @@ class _InfoTile extends StatelessWidget {
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        side: BorderSide(
-          color: Colors.grey.withOpacity(0.2),
-          width: 1.5,
-        ),
+        side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12.0),
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             CircleAvatar(
+              radius: 18,
               backgroundColor: colors.primary.withOpacity(0.4),
-              child: Icon(icon, size: 28, color: colors.primary),
+              child: Icon(icon, size: 20, color: colors.primary),
             ),
-            const SizedBox(width: 8.0),
+            const SizedBox(width: 12.0),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
@@ -280,13 +279,11 @@ class _InfoTile extends StatelessWidget {
                 Text(
                   label,
                   style: textTheme.bodyMedium?.copyWith(
-                    fontSize: 14,
                     color: colors.tertiary,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
-                if (value == null)
-                  const SizedBox(height: 6),
+                if (value == null) const SizedBox(height: 6),
 
                 // 👇 Either text OR custom widget
                 if (value != null)
@@ -350,10 +347,7 @@ class _ProjectCard extends StatelessWidget {
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        side: BorderSide(
-          color: Colors.grey.withOpacity(0.2),
-          width: 1.5,
-        ),
+        side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -471,10 +465,7 @@ class _TaskCard extends StatelessWidget {
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        side: BorderSide(
-          color: Colors.grey.withOpacity(0.2),
-          width: 1.5,
-        ),
+        side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
       ),
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(

@@ -58,10 +58,8 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
             onTap: () {
               // open create badge
               Navigator.push(
-                context, 
-                MaterialPageRoute(
-                  builder: (_) => AddEditBadgePage(),
-                ),
+                context,
+                MaterialPageRoute(builder: (_) => AddEditBadgePage()),
               );
             },
           ),
@@ -72,10 +70,8 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
             onTap: () {
               // assign badges to user
               Navigator.push(
-                context, 
-                MaterialPageRoute(
-                  builder: (_) => AssignBadgesPage(),
-                ),
+                context,
+                MaterialPageRoute(builder: (_) => AssignBadgesPage()),
               );
             },
           ),
@@ -127,10 +123,7 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
                     return ListView.builder(
                       itemCount: filteredUsers.length,
                       itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: UserBadgeCard(user: filteredUsers[index]),
-                        );
+                        return UserBadgeCard(user: filteredUsers[index]);
                       },
                     );
                   },

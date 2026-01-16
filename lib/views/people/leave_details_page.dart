@@ -1,6 +1,8 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/models/leave_details.dart';
 import 'package:dsv360/models/leave_summary.dart';
+import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:flutter/material.dart';
 
 class LeaveDetailsPage extends StatelessWidget {
@@ -11,26 +13,29 @@ class LeaveDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
+    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
 
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Leave Details'),
+        backgroundColor: colors.surface,
+      ),
       body: SafeArea(
         bottom: true,
         child: Column(
           children: [
-            const _TopHeader(),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Request Information',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: colors.primary,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -40,46 +45,55 @@ class LeaveDetailsPage extends StatelessWidget {
                       shrinkWrap: true,
                       crossAxisCount: 2,
                       crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      childAspectRatio: 2,
+                      mainAxisSpacing: 0,
+                      childAspectRatio: 2.1,
                       physics: const NeverScrollableScrollPhysics(),
                       children: [
                         _InfoBox(
                           title: 'Leave Type',
                           value: leave.formattedLeaveType,
+                          icon: Icons.leave_bags_at_home,
                         ),
                         _InfoBox(
                           title: 'Start Date',
                           value: leave.formattedStartDate,
+                          icon: Icons.calendar_month_outlined,
                         ),
                         _InfoBox(
                           title: 'End Date',
                           value: leave.formattedEndDate,
+                          icon: Icons.calendar_month_outlined,
                         ),
-                        _InfoBox(title: 'Status', value: leave.formattedStatus),
+                        _InfoBox(
+                          title: 'Status',
+                          value: leave.formattedStatus,
+                          icon: Icons.star_outline_sharp,
+                        ),
                         _InfoBox(
                           title: 'LeaveCnt',
                           value: leave.formattedLeaveCnt,
+                          icon: Icons.format_list_numbered_outlined,
                         ),
                         _InfoBox(
                           title: 'ActionBy',
                           value: leave.formattedActionBy,
+                          icon: Icons.ac_unit_outlined,
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
 
                     /// Reason
                     _LargeInfoBox(
                       title: 'Reason',
                       value: leave.formattedReason,
+                      icon: Icons.new_releases_outlined,
                     ),
-                    const SizedBox(height: 16),
 
                     /// Cancellation Reason
                     _LargeInfoBox(
                       title: 'Cancellation Reason',
                       value: leave.formattedCancellationReason,
+                      icon: Icons.new_releases_outlined,
                     ),
                     const SizedBox(height: 20),
 
@@ -98,63 +112,16 @@ class LeaveDetailsPage extends StatelessWidget {
                             "Total_Paid_Leave": "20",
                           }),
                     ),
+
+                    const SizedBox(height: 32.0),
+
+                    BottomTwoButtons(
+                      button1Text: "reject",
+                      button2Text: "approve",
+                      button1Function: () => _showRejectDialog(context),
+                      button2Function: () {},
+                    ),
                   ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Theme(
-                data: Theme.of(context).copyWith(
-                  splashColor: Colors.red.withOpacity(0.1),
-                  highlightColor: Colors.red.withOpacity(0.1),
-                ),
-                child: TextButton(
-                  onPressed: () => _showRejectDialog(context),
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    foregroundColor: Colors.red,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      side: const BorderSide(color: Colors.red, width: 1.5),
-                    ),
-                  ),
-                  child: const Text(
-                    'REJECT',
-                    style: TextStyle(
-                      color: Colors.red,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                onPressed: () {
-                  // if (_formKey.currentState!.validate()) {
-                  //   // Submit logic
-                  // }
-                },
-                child: const Text(
-                  'APPROVE',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -299,71 +266,42 @@ class _RejectLeaveDialogState extends State<_RejectLeaveDialog> {
   }
 }
 
-class _TopHeader extends StatelessWidget {
-  const _TopHeader();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.successDark, AppColors.primary],
-        ),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios, size: 26),
-            onPressed: () => Navigator.pop(context),
-          ),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Text(
-              'Leave Details',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Small info box (grid items)
 class _InfoBox extends StatelessWidget {
   final String title;
   final String value;
+  final IconData icon;
 
-  const _InfoBox({required this.title, required this.value});
+  const _InfoBox({
+    required this.title,
+    required this.value,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.white54),
-        borderRadius: BorderRadius.circular(10),
-      ),
+    final theme = Theme.of(context);
+
+    return Card(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontWeight: FontWeight.w600,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: theme.colorScheme.tertiary),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  color: theme.colorScheme.tertiary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(color: Colors.white, fontSize: 16),
-          ),
+          Text(value, style: TextStyle(fontSize: 14.0)),
         ],
       ),
     );
@@ -374,34 +312,41 @@ class _InfoBox extends StatelessWidget {
 class _LargeInfoBox extends StatelessWidget {
   final String title;
   final String value;
+  final IconData icon;
 
-  const _LargeInfoBox({required this.title, required this.value});
+  const _LargeInfoBox({
+    required this.title,
+    required this.value,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.white54),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontWeight: FontWeight.w600,
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: theme.colorScheme.tertiary),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: theme.colorScheme.tertiary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(color: Colors.white, fontSize: 16),
-          ),
-        ],
+            const SizedBox(height: 10),
+            Text(value, style: const TextStyle(fontSize: 14.0)),
+          ],
+        ),
       ),
     );
   }
@@ -415,58 +360,78 @@ class _LeaveBalanceSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Current Leave Balance',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: theme.colorScheme.tertiary,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 8.0),
+        Card(
+          // color: AppColors.bg,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 18.0),
+            child: Column(
+              children: [
+                _LeaveBalanceItem(
+                  title: 'Paid Leaves',
+                  usage: '${leaveSummary.usedPaidLeave} days used',
+                  badge:
+                      '${leaveSummary.remainingPaidLeaves} remaining / ${leaveSummary.totalPaidLeave} total',
+                  badgeColor: Colors.green,
+                ),
 
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            // color: const Color(0xFF2A2A2A),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white54, width: 1.5),
-          ),
-          child: Column(
-            children: [
-              _LeaveBalanceItem(
-                title: 'Paid Leaves',
-                usage: '${leaveSummary.usedPaidLeave} days used',
-                badge:
-                    '${leaveSummary.remainingPaidLeaves} remaining / ${leaveSummary.totalPaidLeave} total',
-                badgeColor: Colors.green,
-              ),
-              const Divider(color: Colors.white24, height: 24),
-              _LeaveBalanceItem(
-                title: 'Sick Leaves',
-                usage: '${leaveSummary.usedSickLeave} days used',
-                badge:
-                    '${leaveSummary.remainingSickLeaves} remaining / ${leaveSummary.totalSickLeave} total',
-                badgeColor: Colors.orange,
-              ),
-              const Divider(color: Colors.white24, height: 24),
-              _LeaveBalanceItem(
-                title: 'Unpaid Leaves Used',
-                badge: 'Used: ${leaveSummary.usedUnpaidLeave}',
-                badgeColor: Colors.lightBlue,
-              ),
-              const Divider(color: Colors.white24, height: 24),
-              _LeaveBalanceItem(
-                title: 'Total Remaining',
-                badge: '${leaveSummary.remainingTotalLeaves} days',
-                badgeColor: Colors.green,
-                showCheckmark: true,
-              ),
-            ],
+                // Divider
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Colors.grey.withOpacity(0.2),
+                ),
+
+                _LeaveBalanceItem(
+                  title: 'Sick Leaves',
+                  usage: '${leaveSummary.usedSickLeave} days used',
+                  badge:
+                      '${leaveSummary.remainingSickLeaves} remaining / ${leaveSummary.totalSickLeave} total',
+                  badgeColor: Colors.orange,
+                ),
+
+                // Divider
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Colors.grey.withOpacity(0.2),
+                ),
+
+                _LeaveBalanceItem(
+                  title: 'Unpaid Leaves Used',
+                  badge: 'Used: ${leaveSummary.usedUnpaidLeave}',
+                  badgeColor: Colors.lightBlue,
+                ),
+
+                // Divider
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Colors.grey.withOpacity(0.2),
+                ),
+
+                _LeaveBalanceItem(
+                  title: 'Total Remaining',
+                  badge: '${leaveSummary.remainingTotalLeaves} days',
+                  badgeColor: Colors.green,
+                  showCheckmark: true,
+                ),
+              ],
+            ),
           ),
         ),
       ],
@@ -481,6 +446,7 @@ class _LeaveBalanceItem extends StatelessWidget {
   final String badge;
   final Color badgeColor;
   final bool showCheckmark;
+  final IconData? icon;
 
   const _LeaveBalanceItem({
     required this.title,
@@ -488,61 +454,40 @@ class _LeaveBalanceItem extends StatelessWidget {
     required this.badge,
     required this.badgeColor,
     this.showCheckmark = false,
+    this.icon = Icons.check_circle,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              if (usage != null) ...[
-                const SizedBox(height: 4),
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 10.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  usage!,
-                  style: const TextStyle(fontSize: 14, color: Colors.white70),
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.tertiary,
+                  ),
                 ),
+                if (usage != null) ...[
+                  const SizedBox(height: 4),
+                  Text(usage!, style: TextStyle(fontSize: 14)),
+                ],
               ],
-            ],
+            ),
           ),
-        ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: badgeColor.withOpacity(0.2),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: badgeColor.withOpacity(0.5)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (showCheckmark) ...[
-                Icon(Icons.check_circle, size: 16, color: badgeColor),
-                const SizedBox(width: 4),
-              ],
-              Text(
-                badge,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: badgeColor,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+          CustomChip(label: badge, color: badgeColor, icon: icon),
+        ],
+      ),
     );
   }
 }

@@ -4,9 +4,10 @@ import 'package:dsv360/models/time_logs.dart';
 import 'package:dsv360/repositories/leaves_repository.dart';
 import 'package:dsv360/repositories/time_logs_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
-import 'package:dsv360/views/people/apply_leave_page.dart';
+import 'package:dsv360/views/people/apply_edit_leave_page.dart';
 import 'package:dsv360/views/people/leave_details_page.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -37,7 +38,6 @@ class _PeoplePageState extends State<PeoplePage>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -484,7 +484,7 @@ class _LeaveTab extends ConsumerWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => ApplyLeavePage(leave: null),
+                        builder: (_) => ApplyEditLeavePage(leave: null),
                       ),
                     );
                   },
@@ -558,7 +558,7 @@ class _LeaveTab extends ConsumerWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => ApplyLeavePage(leave: leave),
+                            builder: (_) => ApplyEditLeavePage(leave: leave),
                           ),
                         );
                       },
@@ -600,7 +600,7 @@ class LeaveSummaryCard extends StatelessWidget {
         side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
       ),
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.only(left: 14.0, top: 14.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -650,12 +650,12 @@ class LeaveTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
       ),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
@@ -672,27 +672,43 @@ class LeaveTile extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            Text(
-              "From $start",
-              style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
-            ),
-            Text(
-              "to $end",
-              style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: MediaQuery.of(context).size.width * 0.7, // 80% of screen
-              child: BottomTwoButtons(
-                button1Text: "edit",
-                button2Text: "view details",
-                button1Function: onEditTap!,
-                button2Function: onTap!,
+          ),
+
+          // Divider
+          Divider(height: 1, thickness: 1, color: Colors.grey.withOpacity(0.2)),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "From $start",
+                      style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
+                    ),
+                    Text(
+                      "to $end",
+                      style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
+                child: Row(
+                  children: [
+                    CustomCardButton(icon: Icons.edit, onTap: onEditTap!),
+                    const SizedBox(width: 8),
+                    CustomCardButton(icon: Icons.remove_red_eye, onTap: onTap!),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

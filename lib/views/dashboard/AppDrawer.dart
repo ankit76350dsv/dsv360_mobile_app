@@ -18,30 +18,52 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Drawer(
-      child: Container(
-        color: const Color(0xFF0B0C0D),
-        child: Column(
-          children: [
-            DrawerHeader(
-              child: Row(
-                children: const [
-                  Icon(Icons.cloud, size: 36, color: Colors.white),
-                  SizedBox(width: 12),
-                  Text(
-                    'DSV-360',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return SizedBox(
+      width: MediaQuery.of(context).size.width * 0.8, // 80% screen
+      child: Drawer(
+        child: SafeArea(
+          bottom: false,
+          child: CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Image.asset(
+                          "assets/images/dsv.png",
+                          width: 40,
+                          height: 50,
+                          fit: BoxFit.fitWidth,
+                        ),
+                        SizedBox(width: 6.0),
+                        Text(
+                          'DSV-360',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xff004aae),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
+                    SizedBox(height: 32.0),
+                  ],
+                ),
               ),
-            ),
-            Expanded(
-              child: ListView(
-                children: [
+
+              SliverToBoxAdapter(child: ProfileCardUi(context)),
+
+              const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+              // Menu items
+              SliverList(
+                delegate: SliverChildListDelegate([
                   _DrawerItem(
                     icon: Icons.grid_on,
                     label: 'Dashboard',
@@ -58,7 +80,9 @@ class AppDrawer extends StatelessWidget {
                       // Do NOT close drawer
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const ProjectsScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const ProjectsScreen(),
+                        ),
                       );
                     },
                   ),
@@ -158,7 +182,9 @@ class AppDrawer extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const FeedbacksScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => const FeedbacksScreen(),
+                        ),
                       );
                     },
                   ),
@@ -172,15 +198,91 @@ class AppDrawer extends StatelessWidget {
                       );
                     },
                   ),
-                ],
+                ]),
               ),
-            ),
-            const Padding(
-              padding: EdgeInsets.all(12),
-              child: Text('v1.0.0', style: TextStyle(color: Colors.white30)),
-            ),
-          ],
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    'v1.0.0',
+                    style: TextStyle(color: Colors.white30),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget ProfileCardUi(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 18.0),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Column(
+        // mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Avatar with white border
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colors.surface,
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.onSurface.withOpacity(0.15),
+                      blurRadius: 35,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: CircleAvatar(
+                  radius: 42,
+                  backgroundImage: NetworkImage(
+                    'https://thumbs.dreamstime.com/b/online-text-12658616.jpg',
+                  ),
+                ),
+              ),
+
+              // Online dot
+              if (true)
+                Positioned(
+                  bottom: 4,
+                  right: 4,
+                  child: Container(
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.green,
+                      border: Border.all(color: Colors.white, width: 3),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          Text(
+            "Aman Jain",
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+          ),
+
+          Text("Manager", style: textTheme.bodyMedium),
+        ],
       ),
     );
   }
@@ -189,20 +291,63 @@ class AppDrawer extends StatelessWidget {
 class _DrawerItem extends StatelessWidget {
   final IconData icon;
   final String label;
-  final Function onTap;
+  final VoidCallback onTap;
+
   const _DrawerItem({
+    super.key,
     required this.icon,
     required this.label,
     required this.onTap,
   });
 
   @override
-  Widget build(BuildContext context) => ListTile(
-    leading: Icon(icon, color: Colors.white70),
-    title: Text(label, style: const TextStyle(color: Colors.white70)),
-    onTap: () {
-      // Navigator.pop(context); // Handled by parent
-      onTap();
-    },
-  );
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      child: Material(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(8),
+        clipBehavior: Clip.antiAlias, // 👈 clips splash inside radius
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 18.0, 
+              vertical: 8.0,
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 22, color: colors.onSurfaceVariant),
+
+                const SizedBox(width: 16),
+
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: colors.onSurfaceVariant,
+                      ),
+                    ),
+                    Text(
+                      "subtext",
+                      style: theme.textTheme.bodyMedium
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
