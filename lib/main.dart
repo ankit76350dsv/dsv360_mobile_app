@@ -1,5 +1,6 @@
 // lib/main.dart
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/views/splash/splash_screen.dart';
 import 'package:dsv360/views/accounts/accounts_page.dart';
 import 'package:dsv360/views/badges/badges_page.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
@@ -37,9 +38,9 @@ class MyApp extends StatelessWidget {
               // home: const IssuesScreen(),
               // home: const FeedbacksScreen(),
               // home: const ProfilePage(),
-              // home: const DashboardPage(),
+              home: const SplashScreen(),
               // home: const AccountsPage(),
-              home: const BadgesPage(),
+              // home: const BadgesPage(),
               // home: const UsersPage(),
               routes: {'/settings': (_) => const SettingsPage()},
             );
