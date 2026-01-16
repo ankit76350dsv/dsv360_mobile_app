@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
@@ -50,6 +51,8 @@ class _SplashScreenState extends State<SplashScreen>
         if (isLoggedIn) {
           // Pre-fetch user details
           await AuthManager.instance.fetchUser();
+          // Fetch access token
+          await TokenManager.instance.fetchToken();
         }
 
         if (mounted) {
