@@ -1,3 +1,5 @@
+import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
+import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:flutter/material.dart';
 
@@ -15,11 +17,7 @@ class WelcomePage extends StatelessWidget {
             children: [
               const Spacer(flex: 2),
               // Logo
-              Image.asset(
-                'assets/images/FI_logo.png',
-                width: 150,
-                height: 150,
-              ),
+              Image.asset('assets/images/FI_logo.png', width: 150, height: 150),
               const SizedBox(height: 24),
               // Welcome Text
               const Text(
@@ -35,10 +33,7 @@ class WelcomePage extends StatelessWidget {
               const Text(
                 'Manage your projects, tasks, and issues all in one place.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
               const Spacer(flex: 3),
               // Login Button
@@ -46,12 +41,19 @@ class WelcomePage extends StatelessWidget {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Navigate to Dashboard for now as Login placeholder
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const DashboardPage()),
-                    );
+                  onPressed: () async {
+                    await AppInitManager.instance.catalystApp.login();
+                    // Fetch user details after successful login
+                    await AuthManager.instance.fetchUser();
+
+                    if (context.mounted) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DashboardPage(),
+                        ),
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2857A4),
