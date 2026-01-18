@@ -89,7 +89,7 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
         ),
         dropdownColor: colors.surface,
         decoration: InputDecoration(
-          labelText: widget.hintText,
+          labelText: widget.labelText,
           labelStyle: TextStyle(
             color: _isFocused
                 ? Colors.grey.withOpacity(0.9)

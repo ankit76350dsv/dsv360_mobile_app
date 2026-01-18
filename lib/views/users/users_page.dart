@@ -4,6 +4,7 @@ import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/repositories/task_repository.dart';
 import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
 import 'package:dsv360/views/users/add_edit_user_page.dart';
 import 'package:dsv360/views/users/user_details_page.dart';
@@ -30,6 +31,19 @@ class _UsersPageState extends ConsumerState<UsersPage> {
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
+              );
+            }
+          },
+        ),
         elevation: 0,
         title: const Text('DSV-360'),
         actions: [
@@ -136,7 +150,7 @@ class _UserCardState extends ConsumerState<UserCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final activeUser = ref.watch(activeUserRepositoryProvider).asData?.value;
+    final activeUser = ref.watch(activeUserRepositoryProvider);
     final verificationStatus = widget.user.verificationStatus;
 
     switch (verificationStatus) {
@@ -186,7 +200,7 @@ class _UserCardState extends ConsumerState<UserCard> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
-                          widget.user.userId,
+                          "U${widget.user.userId.substring(widget.user.userId.length - 4)}",
                           style: TextStyle(color: theme.colorScheme.surface),
                         ),
                       ),
@@ -261,7 +275,7 @@ class _UserCardState extends ConsumerState<UserCard> {
                     children: [
                       Row(
                         children: [
-                          activeUser != null && _canManageUsers(activeUser.role)
+                          activeUser != null && _canManageUsers(activeUser.userType!)
                               ? SizedBox(
                                   width: 38,
                                   height: 18,
@@ -435,8 +449,7 @@ class _DeleteUserBottomSheetState
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final tasksAsync = ref.watch(taskRepositoryProvider);
-    // 👆 ideally scoped by userId
+    final tasksAsync = ref.watch(tasksListRepositoryProvider(widget.user.userId));
 
     return SafeArea(
       top: true,
@@ -570,7 +583,7 @@ class _TaskAssignmentView extends StatelessWidget {
               /// Task name
               Expanded(
                 child: Text(
-                  task.taskName,
+                  task.taskName ?? "",
                   style: TextStyle(color: colors.onSurface),
                 ),
               ),
@@ -589,7 +602,7 @@ class _TaskAssignmentView extends StatelessWidget {
                     if (value == null) return;
 
                     // ✅ STORE assignment
-                    reassignment[task.taskName] = value;
+                    reassignment[task.taskName ?? ""] = value;
 
                     // ✅ notify parent
                     onChanged();

@@ -47,7 +47,7 @@ class WelcomePage extends StatelessWidget {
                     // Fetch user details after successful login
                     await AuthManager.instance.fetchUser();
                     // Fetch access token
-                    await TokenManager.instance.fetchToken();
+                    await TokenManager.instance.getToken();
 
                     if (context.mounted) {
                       Navigator.pushReplacement(

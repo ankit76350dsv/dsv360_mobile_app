@@ -6,19 +6,45 @@ class TokenManager {
   static final TokenManager _instance = TokenManager._internal();
   static TokenManager get instance => _instance;
 
-  String? accessToken;
+  String? _accessToken;
+  Future<String?>? _fetchingFuture;
+
+  Future<String?> getToken() async {
+    // Token already available
+    if (_accessToken != null) {
+      return _accessToken;
+    }
+
+    // Token fetch already in progress
+    // used to prevent the race condition between many api calss
+    if (_fetchingFuture != null) {
+      return await _fetchingFuture;
+    }
+
+    // Start new fetch
+    _fetchingFuture = _fetchTokenInternal();
+    final token = await _fetchingFuture;
+    _fetchingFuture = null;
+    return token;
+  }
 
   /// Fetch the current user's access token and store it
-  Future<void> fetchToken() async {
+  Future<String?> _fetchTokenInternal() async {
     try {
       final app = AppInitManager.instance.catalystApp;
       // Fetch access token
       final token = await app.getAccessToken();
-      accessToken = token;
+      _accessToken = token;
       debugPrint('✅ Access Token fetched: $token');
+      return token;
     } catch (e) {
       debugPrint('❌ Failed to fetch access token: $e');
-      accessToken = null;
+      _accessToken = null;
+      return null;
     }
+  }
+
+  void clearToken() {
+    _accessToken = null;
   }
 }

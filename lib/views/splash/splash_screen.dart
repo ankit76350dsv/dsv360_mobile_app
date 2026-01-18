@@ -2,18 +2,21 @@ import 'dart:async';
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/token_manager.dart';
+import 'package:dsv360/models/active_user.dart';
+import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<ConsumerStatefulWidget> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<ConsumerStatefulWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
@@ -49,10 +52,17 @@ class _SplashScreenState extends State<SplashScreen>
             .isUserLoggedIn();
 
         if (isLoggedIn) {
-          // Pre-fetch user details
-          await AuthManager.instance.fetchUser();
+          // Pre-fetch current catalystUser details
+          // and setting it as the current Active User in the provider for access in whole application
+          final catalystUser = await AuthManager.instance.fetchUser();
+          if (catalystUser != null) {
+            final activeUser = ActiveUserModel.fromCatalystUser(catalystUser);
+            ref.read(activeUserRepositoryProvider.notifier).setUser(activeUser);
+          } else {
+            ref.read(activeUserRepositoryProvider.notifier).clear();
+          }
           // Fetch access token
-          await TokenManager.instance.fetchToken();
+          await TokenManager.instance.getToken();
         }
 
         if (mounted) {

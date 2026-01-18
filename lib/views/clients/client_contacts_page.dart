@@ -27,6 +27,14 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
+        ),
         elevation: 0,
         title: const Text('DSV-360'),
         actions: [
@@ -137,7 +145,7 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final activeUser = ref.watch(activeUserRepositoryProvider).asData?.value;
+    final activeUser = ref.watch(activeUserRepositoryProvider);
 
     return GestureDetector(
       onTap: () {},

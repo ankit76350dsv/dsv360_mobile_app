@@ -1,6 +1,5 @@
 import 'package:dsv360/models/client_contacts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 
 class ClientContactsRepository extends AsyncNotifier<List<ClientContacts>> {
   @override

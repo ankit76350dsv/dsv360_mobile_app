@@ -1,9 +1,14 @@
+import 'package:dsv360/models/active_user.dart';
 import 'package:dsv360/models/project.dart';
 import 'package:dsv360/models/task.dart';
 import 'package:dsv360/models/users.dart';
 import 'package:dsv360/repositories/project_repository.dart';
 import 'package:dsv360/repositories/task_repository.dart';
+import 'package:dsv360/repositories/users_repository.dart';
+import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
+import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -36,7 +41,7 @@ class UserDetailsPage extends StatelessWidget {
                   children: [
                     _InfoTab(user: user),
                     _ProjectsTab(),
-                    _TasksTab(),
+                    _TasksTab(user: user),
                   ],
                 ),
               ),
@@ -92,7 +97,7 @@ class _UserTabs extends StatelessWidget {
   }
 }
 
-class _InfoTab extends StatelessWidget {
+class _InfoTab extends ConsumerWidget {
   final UsersModel user;
 
   late String verificationStatusText;
@@ -105,10 +110,23 @@ class _InfoTab extends StatelessWidget {
   _InfoTab({required this.user});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).colorScheme;
     final verificationStatus = user.verificationStatus;
     final workStatus = user.workStatus;
+    final usersAsync = ref.watch(usersRepositoryProvider);
+
+    final List<DropdownMenuItem<String>> userOptions = usersAsync.when(
+      data: (users) => users.map((u) {
+        return DropdownMenuItem<String>(
+          value: u.userId,
+          child: Text("${u.firstName} ${u.lastName}"),
+        );
+      }).toList(),
+
+      loading: () => [],
+      error: (_, __) => [],
+    );
 
     switch (verificationStatus) {
       case VerificationStatus.verified:
@@ -149,8 +167,8 @@ class _InfoTab extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2, // ✅ 2 columns
-              crossAxisSpacing: 0,
+              crossAxisCount: 2,
+              crossAxisSpacing: 8,
               mainAxisSpacing: 0,
               childAspectRatio: 2.1, // adjust for tile height
             ),
@@ -158,7 +176,7 @@ class _InfoTab extends StatelessWidget {
               _InfoTile(
                 icon: Icons.badge,
                 label: "User Id",
-                value: user.userId,
+                value: "U${user.userId.substring(user.userId.length - 4)}",
               ),
               _InfoTile(
                 icon: Icons.verified_user,
@@ -171,40 +189,51 @@ class _InfoTab extends StatelessWidget {
               ),
             ],
           ),
-          GridView(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2, // ✅ 2 columns
-              crossAxisSpacing: 0,
-              mainAxisSpacing: 0,
-              childAspectRatio: 2, // adjust for tile height
+          _InfoTile(
+            icon: Icons.work,
+            label: "Role",
+            child: CustomChip(
+              color: colors.primary,
+              label: user.role,
+              icon: null,
             ),
-            children: [
-              _InfoTile(
-                icon: Icons.work,
-                label: "Role",
-                child: CustomChip(
-                  color: colors.primary,
-                  label: user.role,
-                  icon: null,
-                ),
-              ),
-              _InfoTile(
-                icon: Icons.business_center,
-                label: "Status",
-                child: CustomChip(
-                  label: workStatusText,
-                  color: workStatusColor,
-                  icon: null,
-                ),
-              ),
-            ],
+          ),
+          _InfoTile(
+            icon: Icons.business_center,
+            label: "Status",
+            child: CustomChip(
+              label: workStatusText,
+              color: workStatusColor,
+              icon: null,
+            ),
           ),
           _InfoTile(
             icon: Icons.email,
             label: "Email Address",
             value: user.emailAddress,
+          ),
+          _InfoTile(
+            icon: Icons.report_gmailerrorred,
+            label: "Reporting To",
+            value: user.reporterName,
+            buttonWidget: CustomCardButton(
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(16),
+                    ),
+                  ),
+                  builder: (_) => ReportingManagerBottomSheet(
+                    usersAsync: usersAsync,
+                    userOptions: userOptions,
+                  ),
+                );
+              },
+              icon: Icons.edit,
+            ),
           ),
         ],
       ),
@@ -239,6 +268,7 @@ class _InfoTile extends StatelessWidget {
   final String label;
   final String? value; // for normal text
   final Widget? child; // for chips, buttons, etc
+  final Widget? buttonWidget; // button widget
 
   const _InfoTile({
     super.key,
@@ -246,6 +276,7 @@ class _InfoTile extends StatelessWidget {
     required this.label,
     this.value,
     this.child,
+    this.buttonWidget,
   }) : assert(
          value != null || child != null,
          'Either value or child must be provided',
@@ -262,35 +293,161 @@ class _InfoTile extends StatelessWidget {
         side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: colors.primary.withOpacity(0.4),
-              child: Icon(icon, size: 20, color: colors.primary),
-            ),
-            const SizedBox(width: 12.0),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
+            Row(
               children: [
-                Text(
-                  label,
-                  style: textTheme.bodyMedium?.copyWith(
-                    color: colors.tertiary,
-                    fontWeight: FontWeight.w500,
-                  ),
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: colors.primary.withOpacity(0.4),
+                  child: Icon(icon, size: 20, color: colors.primary),
                 ),
-                if (value == null) const SizedBox(height: 6),
+                const SizedBox(width: 12.0),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      label,
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colors.tertiary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    if (value == null) const SizedBox(height: 6),
 
-                // 👇 Either text OR custom widget
-                if (value != null)
-                  Text(value!, style: textTheme.titleMedium)
-                else
-                  child!,
+                    // 👇 Either text OR custom widget
+                    if (value != null)
+                      Text(value!, style: textTheme.titleMedium)
+                    else
+                      child!,
+                  ],
+                ),
               ],
+            ),
+            if (buttonWidget != null) buttonWidget!,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// reporting manager selection provider
+class ReportingManagerSelection {
+  final String? id;
+  final String? name;
+
+  const ReportingManagerSelection({this.id, this.name});
+}
+
+final reportingManagerProvider =
+    NotifierProvider<ReportingManagerNotifier, ReportingManagerSelection?>(
+      ReportingManagerNotifier.new,
+    );
+
+class ReportingManagerNotifier extends Notifier<ReportingManagerSelection?> {
+  @override
+  ReportingManagerSelection? build() => null;
+
+  void setManager({required String id, required String name}) {
+    state = ReportingManagerSelection(id: id, name: name);
+  }
+
+  void clear() {
+    state = null;
+  }
+}
+
+class ReportingManagerBottomSheet extends ConsumerWidget {
+  final AsyncValue<List<UsersModel>> usersAsync;
+  final List<DropdownMenuItem<String>> userOptions;
+
+  const ReportingManagerBottomSheet({
+    super.key,
+    required this.usersAsync,
+    required this.userOptions,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final selectedManager = ref.watch(reportingManagerProvider);
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Drag handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade400,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+
+            Text(
+              'Select Reporting Manager',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+
+            const SizedBox(height: 16),
+
+            CustomDropDownField(
+              options: userOptions,
+              hintText: "Select Reporting Manager",
+              labelText: "Reporting Manager",
+              prefixIcon: Icons.report_gmailerrorred,
+              onChanged: (value) {
+                if (value == null) return;
+
+                usersAsync.whenData((users) {
+                  final selectedUser = users.firstWhere(
+                    (u) => u.userId == value,
+                  );
+
+                  ref
+                      .read(reportingManagerProvider.notifier)
+                      .setManager(
+                        id: selectedUser.userId!,
+                        name:
+                            '${selectedUser.firstName ?? ''} ${selectedUser.lastName ?? ''}'
+                                .trim(),
+                      );
+                });
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            if (selectedManager != null)
+              Text(
+                'Selected: ${selectedManager.name}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+
+            const SizedBox(height: 10),
+            // bottom buttons
+            BottomTwoButtons(
+              button1Text: 'Cancel',
+              button2Text: 'save changes',
+              button1Function: () => Navigator.pop(context),
+              button2Function: () {},
             ),
           ],
         ),
@@ -316,10 +473,7 @@ class _ProjectsTab extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           itemCount: projects.length,
           itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _ProjectCard(project: projects[index]),
-            );
+            return _ProjectCard(project: projects[index]);
           },
         );
       },
@@ -396,11 +550,12 @@ class _ProjectCard extends StatelessWidget {
 }
 
 class _TasksTab extends ConsumerWidget {
-  const _TasksTab();
+  final UsersModel user;
+  const _TasksTab({required this.user});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tasksAsync = ref.watch(taskRepositoryProvider);
+    final tasksAsync = ref.watch(tasksListRepositoryProvider(user.userId));
 
     return tasksAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -414,10 +569,7 @@ class _TasksTab extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           itemCount: tasks.length,
           itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _TaskCard(task: tasks[index]),
-            );
+            return _TaskCard(task: tasks[index]);
           },
         );
       },
@@ -503,15 +655,10 @@ class _TaskCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 // Status chip
-                Chip(
-                  label: Text(task.status),
-                  backgroundColor: colors.primaryContainer,
-                  labelStyle: TextStyle(color: colors.onPrimaryContainer),
-                  visualDensity: VisualDensity.compact,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  side: BorderSide(color: colors.primaryContainer, width: 1),
+                CustomChip(
+                  label: task.status, 
+                  color: colors.primaryContainer, 
+                  icon: null,
                 ),
 
                 // Date range
@@ -538,7 +685,8 @@ class _TaskCard extends StatelessWidget {
     );
   }
 
-  String _fmt(DateTime d) {
-    return "${d.day}/${d.month}/${d.year}";
+  String _fmt(DateTime? date) {
+    if (date == null) return '—';
+    return "${date.day}/${date.month}/${date.year}";
   }
 }

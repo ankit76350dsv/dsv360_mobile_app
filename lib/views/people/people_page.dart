@@ -41,13 +41,19 @@ class _PeoplePageState extends State<PeoplePage>
     final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
-      // backgroundColor: const Color(0xFF121212),
       drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
+        ),
         title: const Text('People'),
         backgroundColor: colors.surface,
       ),
-
       body: Column(
         children: [
           /// �️ TABS

@@ -1,3 +1,4 @@
+import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/views/dashboard/ProjectAnalyticsCard.dart';
@@ -6,6 +7,7 @@ import 'package:dsv360/views/dashboard/TaskStatusCard.dart';
 import 'package:dsv360/views/dashboard/TopHeader.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -18,34 +20,37 @@ class DashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // This page is a self-contained MaterialApp like your NotificationPage,
     // so it will use the same dark theme and constrained centered layout.
-    return MaterialApp(
-      title: 'DSV-360 Dashboard',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0B0B0D),
-        cardColor: const Color(0xFF0F1113),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: false,
-          titleTextStyle: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-          iconTheme: IconThemeData(color: Colors.white),
-        ),
-      ),
-      home: const _DashboardScaffold(),
-    );
+    // return MaterialApp(
+    //   title: 'DSV-360 Dashboard',
+    //   debugShowCheckedModeBanner: false,
+    //   theme: ThemeData.dark().copyWith(
+    //     scaffoldBackgroundColor: const Color(0xFF0B0B0D),
+    //     cardColor: const Color(0xFF0F1113),
+    //     appBarTheme: const AppBarTheme(
+    //       backgroundColor: Colors.transparent,
+    //       elevation: 0,
+    //       centerTitle: false,
+    //       titleTextStyle: TextStyle(
+    //         color: Colors.white,
+    //         fontSize: 18,
+    //         fontWeight: FontWeight.w600,
+    //       ),
+    //       iconTheme: IconThemeData(color: Colors.white),
+    //     ),
+    //   ),
+    //   home: const _DashboardScaffold(),
+    // );
+    return _DashboardScaffold();
   }
 }
 
-class _DashboardScaffold extends StatelessWidget {
+class _DashboardScaffold extends ConsumerWidget {
   const _DashboardScaffold();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeUser = ref.watch(activeUserRepositoryProvider);
+
     // keep the drawer and navigation behavior the same as before
     return Scaffold(
       drawer: const AppDrawer(),
@@ -54,7 +59,7 @@ class _DashboardScaffold extends StatelessWidget {
         backgroundColor: Colors.transparent,
         automaticallyImplyLeading: false, // Hide default hamburger
         title: Text(
-          'DSV360 - ${AuthManager.instance.currentUser?.firstName ?? "User"}',
+          'DSV360 - ${activeUser?.firstName ?? "User"}',
         ),
         leading: Builder(
           builder: (context) {

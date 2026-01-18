@@ -3,6 +3,7 @@ import 'package:dsv360/repositories/accounts_list_repository.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/accounts/add_edit_accounts_page.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
 import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
@@ -27,6 +28,14 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
+        ),
         elevation: 0,
         title: const Text('DSV-360'),
         actions: [
@@ -158,7 +167,7 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final activeUser = ref.watch(activeUserRepositoryProvider).asData?.value;
+    final activeUser = ref.watch(activeUserRepositoryProvider);
 
     return GestureDetector(
       onTap: () {},

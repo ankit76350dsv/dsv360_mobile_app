@@ -1,4 +1,3 @@
-import 'package:dsv360/models/dsvbadge.dart';
 import 'package:dsv360/repositories/all_badges_list.dart';
 import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
@@ -6,7 +5,6 @@ import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 
 class AssignBadgesPage extends ConsumerStatefulWidget {
   const AssignBadgesPage({super.key});

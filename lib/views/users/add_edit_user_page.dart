@@ -1,21 +1,23 @@
-import 'package:dsv360/core/constants/theme.dart';
+import 'package:dio/dio.dart';
+import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/models/users.dart';
-import 'package:dsv360/views/widgets/TopHeaderBar.dart';
+import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AddEditUserPage extends StatefulWidget {
+class AddEditUserPage extends ConsumerStatefulWidget {
   final UsersModel? user;
 
   const AddEditUserPage({super.key, this.user});
 
   @override
-  State<AddEditUserPage> createState() => _AddEditUserPageState();
+  ConsumerState<AddEditUserPage> createState() => _AddEditUserPageState();
 }
 
-class _AddEditUserPageState extends State<AddEditUserPage> {
+class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
   final _formKey = GlobalKey<FormState>();
 
   late bool isEditing;
@@ -40,6 +42,15 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
       _emailController.text = user.emailAddress;
       _role = user.role;
     }
+  }
+
+  Map<String, dynamic> _buildRequestBody() {
+    return {
+      "first_name": _firstNameController.text.trim(),
+      "last_name": _lastNameController.text.trim(),
+      "email_id": _emailController.text.trim(),
+      "role_id": _role, // this is roleId not label
+    };
   }
 
   @override
@@ -116,21 +127,23 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
                         prefixIcon: Icons.business,
                         selectedOption: _role,
                         options: [
+                          // these are hardcoded, need to change here
+                          // ✍️✍️✍️✍️✍️✍️✍️✍️✍️✍️✍️✍️
                           DropdownMenuItem(
-                            value: 'Admin',
+                            value: '17682000000035329',
                             child: Text('Admin'),
                           ),
                           DropdownMenuItem(
-                            value: 'Manager',
-                            child: Text('Manager'),
+                            value: '17682000000035348',
+                            child: Text('Manager/Team Lead'),
                           ),
                           DropdownMenuItem(
-                            value: 'Intern',
+                            value: '17682000000035343',
                             child: Text('Intern'),
                           ),
                           DropdownMenuItem(
-                            value: 'Business Analyst',
-                            child: Text('Business Analyst'),
+                            value: '17682000000035358',
+                            child: Text('Developer'),
                           ),
                         ],
                         onChanged: (value) => setState(() => _role = value),
@@ -141,7 +154,7 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
                       CustomInputField(
                         controller: _emailController,
                         hintText: 'Enter Email ID',
-                        enabled: isEditing,
+                        enabled: !isEditing,
                         labelText: 'Email ID',
                         prefixIcon: Icons.email,
                         keyboardType: TextInputType.emailAddress,
@@ -159,14 +172,44 @@ class _AddEditUserPageState extends State<AddEditUserPage> {
                       const SizedBox(height: 32),
                       // buttons
                       BottomTwoButtons(
-                        button1Text: "cancel", 
+                        button1Text: "cancel",
                         button2Text: isEditing ? 'SAVE CHANGES' : 'ADD USER',
                         button1Function: () {
                           Navigator.pop(context);
                         },
-                        button2Function: () {
-                          if (_formKey.currentState!.validate()) {
-                            // TODO: Add / Update user logic
+                        button2Function: () async {
+                          if (!_formKey.currentState!.validate()) return;
+
+                          final body = _buildRequestBody();
+
+                          try {
+                            if (isEditing) {
+                              // UPDATE USER (example)
+                              // await DioClient.instance.put(
+                              //   '/server/time_entry_management_application_function/UpdateEmployee',
+                              //   : body,
+                              // );
+                            } else {
+                              // ADD USER
+                              final formData = FormData.fromMap(body);
+                              await DioClient.instance.post(
+                                '/server/time_entry_management_application_function/AddEmployees',
+                                formData: formData,
+                              );
+                            }
+
+                            Navigator.pop(context, true); // success
+
+                            // throw current state and rebuild it from scratch
+                            ref.invalidate(usersRepositoryProvider);
+                          } catch (e) {
+                            debugPrint('❌ Failed to submit user: $e');
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Failed to save user'),
+                              ),
+                            );
                           }
                         },
                       ),
