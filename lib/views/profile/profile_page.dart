@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dsv360/views/profile/AboutMe.dart';
-
+import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
+import 'package:dsv360/views/welcome/welcome_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -8,7 +9,7 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Corporate Dark Theme Colors
-    const kBackgroundColor = Color(0xFF121212); 
+    const kBackgroundColor = Color(0xFF121212);
     const kCardColor = Color(0xFF1E1E1E);
     const kAccentColor = Color(0xFF00C853); // Corporate Green
     const kTextColor = Colors.white;
@@ -49,11 +50,12 @@ class ProfilePage extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
                 // Profile Avatar with Status
                 Positioned(
                   bottom: -50,
-                  left: 24, // Aligned left as per screenshot interpretation or design choice. Screenshot showed left alignment for info.
+                  left:
+                      24, // Aligned left as per screenshot interpretation or design choice. Screenshot showed left alignment for info.
                   child: Stack(
                     children: [
                       Container(
@@ -78,7 +80,10 @@ class ProfilePage extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: kAccentColor,
                             shape: BoxShape.circle,
-                            border: Border.all(color: kBackgroundColor, width: 3),
+                            border: Border.all(
+                              color: kBackgroundColor,
+                              width: 3,
+                            ),
                           ),
                         ),
                       ),
@@ -89,7 +94,6 @@ class ProfilePage extends StatelessWidget {
             ),
 
             const SizedBox(height: 60), // Space for avatar
-
             // --- User Info & Actions ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -99,44 +103,57 @@ class ProfilePage extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                       const Text(
-                          'Ankit Kumar',
-                          style: TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: kTextColor,
-                          ),
+                      const Text(
+                        'Ankit Kumar',
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                          color: kTextColor,
                         ),
-                        const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: kAccentColor.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(20),
-                                border: Border.all(color: kAccentColor.withOpacity(0.5)),
-                              ),
-                              child: const Text(
-                                'Admin',
-                                style: TextStyle(
-                                  color: kAccentColor,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: kAccentColor.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: kAccentColor.withOpacity(0.5),
                               ),
                             ),
-                            _buildCompactActionButton('Password', Icons.lock_outline, kAccentColor),
-                            _buildCompactActionButton('Edit', Icons.edit_outlined, kAccentColor),
-                            // _buildCompactActionButton('Theme', Icons.palette_outlined, kAccentColor),
-                          ],
-                        ),
+                            child: const Text(
+                              'Admin',
+                              style: TextStyle(
+                                color: kAccentColor,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          _buildCompactActionButton(
+                            'Password',
+                            Icons.lock_outline,
+                            kAccentColor,
+                          ),
+                          _buildCompactActionButton(
+                            'Edit',
+                            Icons.edit_outlined,
+                            kAccentColor,
+                          ),
+                          // _buildCompactActionButton('Theme', Icons.palette_outlined, kAccentColor),
+                        ],
+                      ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 24),
 
                   // About Me Section
@@ -161,29 +178,48 @@ class ProfilePage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                         Row(
-                           children: [
-                             Container(
-                               width: 4, height: 20,
-                               decoration: BoxDecoration(color: kAccentColor, borderRadius: BorderRadius.circular(2)),
-                             ),
-                             const SizedBox(width: 8),
-                             const Text(
-                               'Contact Information',
-                               style: TextStyle(
-                                 color: kAccentColor,
-                                 fontSize: 16,
-                                 fontWeight: FontWeight.bold,
-                               ),
-                             ),
-                           ],
-                         ),
-                         const SizedBox(height: 20),
-                         _buildContactRow(Icons.email_outlined, 'Email', 'aj637061@gmail.com', kSubTextColor),
-                         const Divider(color: Colors.white10, height: 24),
-                         _buildContactRow(Icons.phone_outlined, 'Phone', '+91 9984237401', kSubTextColor),
-                         const Divider(color: Colors.white10, height: 24),
-                         _buildContactRow(Icons.location_on_outlined, 'Address', 'Kanpur Nagar Uttar Pradesh', kSubTextColor),
+                        Row(
+                          children: [
+                            Container(
+                              width: 4,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: kAccentColor,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Contact Information',
+                              style: TextStyle(
+                                color: kAccentColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        _buildContactRow(
+                          Icons.email_outlined,
+                          'Email',
+                          'aj637061@gmail.com',
+                          kSubTextColor,
+                        ),
+                        const Divider(color: Colors.white10, height: 24),
+                        _buildContactRow(
+                          Icons.phone_outlined,
+                          'Phone',
+                          '+91 9984237401',
+                          kSubTextColor,
+                        ),
+                        const Divider(color: Colors.white10, height: 24),
+                        _buildContactRow(
+                          Icons.location_on_outlined,
+                          'Address',
+                          'Kanpur Nagar Uttar Pradesh',
+                          kSubTextColor,
+                        ),
                       ],
                     ),
                   ),
@@ -201,23 +237,27 @@ class ProfilePage extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                         Row(
-                           children: [
-                             Container(
-                               width: 4, height: 20,
-                               decoration: BoxDecoration(color: kAccentColor, borderRadius: BorderRadius.circular(2)),
-                             ),
-                             const SizedBox(width: 8),
-                             const Text(
-                               'Skills',
-                               style: TextStyle(
-                                 color: kAccentColor,
-                                 fontSize: 16,
-                                 fontWeight: FontWeight.bold,
-                               ),
-                             ),
-                           ],
-                         ),
+                        Row(
+                          children: [
+                            Container(
+                              width: 4,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: kAccentColor,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Skills',
+                              style: TextStyle(
+                                color: kAccentColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
                         const SizedBox(height: 16),
                         Wrap(
                           spacing: 12,
@@ -246,7 +286,9 @@ class ProfilePage extends StatelessWidget {
                         backgroundColor: kAccentColor,
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
                         elevation: 0,
                       ),
                     ),
@@ -262,7 +304,40 @@ class ProfilePage extends StatelessWidget {
                         foregroundColor: kAccentColor,
                         side: BorderSide(color: kAccentColor),
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Logout Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        await AppInitManager.instance.catalystApp.logout();
+                        if (context.mounted) {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (context) => const WelcomePage(),
+                            ),
+                            (route) => false,
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.logout),
+                      label: const Text('Logout'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.redAccent,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        elevation: 0,
                       ),
                     ),
                   ),
@@ -303,7 +378,12 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildContactRow(IconData icon, String label, String value, Color textColor) {
+  Widget _buildContactRow(
+    IconData icon,
+    String label,
+    String value,
+    Color textColor,
+  ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -322,13 +402,7 @@ class ProfilePage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                value,
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 14,
-                ),
-              ),
+              Text(value, style: TextStyle(color: textColor, fontSize: 14)),
             ],
           ),
         ),
@@ -344,13 +418,7 @@ class ProfilePage extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 13,
-        ),
-      ),
+      child: Text(label, style: TextStyle(color: textColor, fontSize: 13)),
     );
   }
 }

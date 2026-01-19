@@ -1,5 +1,8 @@
 import 'package:dsv360/models/client_contacts.dart';
 import 'package:dsv360/views/widgets/TopHeaderBar.dart';
+import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
+import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -29,25 +32,30 @@ class _AddClientContactsPageState extends State<AddClientContactsPage> {
   @override
   void initState() {
     super.initState();
-
-    isEditing = false;
+    isEditing = widget.clientContacts != null;
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          isEditing ? 'Edit Client Contact' : 'Add New Client Contact',
+          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: colors.surface,
+      ),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TopHeaderBar(
-              heading: isEditing ? 'Edit Client Contact' : 'Add Client Contact',
-            ),
             Padding(
-              padding: const EdgeInsets.only(left: 16.0),
+              padding: const EdgeInsets.only(
+                left: 16.0,
+                top: 12.0,
+              ),
               child: Text(
                 "Client Contact Information",
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -64,35 +72,42 @@ class _AddClientContactsPageState extends State<AddClientContactsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      /// First Name
-                      TextFormField(
+                      // First Name
+                      CustomInputField(
                         controller: _firstNameController,
-                        decoration: _inputDecoration(context, 'First Name'),
-                        style: TextStyle(color: colors.onSurface),
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Enter first name'
-                            : null,
+                        hintText: 'Enter First Name',
+                        labelText: 'First Name',
+                        prefixIcon: Icons.person,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter first name';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 16),
 
-                      /// Last Name
-                      TextFormField(
+                      // Last Name
+                      CustomInputField(
                         controller: _lastNameController,
-                        decoration: _inputDecoration(context, 'Last Name'),
-                        style: TextStyle(color: colors.onSurface),
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Enter last name'
-                            : null,
+                        hintText: 'Enter Last Name',
+                        labelText: 'Last Name',
+                        prefixIcon: Icons.person,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter last name';
+                          }
+                          return null;
+                        },
                       ),
                       const SizedBox(height: 16),
 
-                      /// Email
-                      TextFormField(
+                      // Email
+                      CustomInputField(
                         controller: _emailController,
-                        readOnly: isEditing,
-                        decoration: _inputDecoration(context, 'Email ID'),
-                        style: TextStyle(color: colors.onSurface),
-                        keyboardType: TextInputType.emailAddress,
+                        hintText: 'Email Address',
+                        labelText: 'Email Address',
+                        prefixIcon: Icons.email,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Enter email';
@@ -102,50 +117,46 @@ class _AddClientContactsPageState extends State<AddClientContactsPage> {
                           }
                           return null;
                         },
+                        keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 16),
 
-                      /// Role
-                      DropdownButtonFormField<String>(
-                        value: _organization,
-                        decoration: _inputDecoration(context, 'Organization'),
-                        dropdownColor: colors.surface,
-                        style: TextStyle(color: colors.onSurface),
-                        items: const [
+
+                      // Organization
+                      CustomDropDownField(
+                        hintText: "Organization",
+                        labelText: "Organization",
+                        prefixIcon: Icons.business,
+                        selectedOption: _organization,
+                        options: [
                           DropdownMenuItem(
-                            value: 'Admin',
-                            child: Text('Admin'),
+                            value: 'Wipro',
+                            child: Text('Wipro'),
                           ),
                           DropdownMenuItem(
-                            value: 'Manager',
-                            child: Text('Manager'),
+                            value: 'TCS',
+                            child: Text('TCS'),
                           ),
                           DropdownMenuItem(
-                            value: 'Intern',
-                            child: Text('Intern'),
+                            value: 'Accenture',
+                            child: Text('Accenture'),
                           ),
                           DropdownMenuItem(
-                            value: 'Business Analyst',
-                            child: Text('Business Analyst'),
+                            value: 'Fristine',
+                            child: Text('Fristine'),
                           ),
                         ],
                         onChanged: (value) =>
                             setState(() => _organization = value),
-                        validator: (value) =>
-                            value == null ? 'Select Organization' : null,
                       ),
                       const SizedBox(height: 16),
 
-                      /// Contact Number
-                      TextFormField(
+                      // Contact Number
+                      CustomInputField(
                         controller: _contactNumberController,
-                        readOnly: isEditing,
-                        decoration: _inputDecoration(context, 'Contact Number'),
-                        style: TextStyle(color: colors.onSurface),
-                        keyboardType: TextInputType.phone,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
+                        hintText: 'Contact Number',
+                        labelText: 'Contact Number',
+                        prefixIcon: Icons.contact_emergency_outlined,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Enter contact number';
@@ -165,70 +176,26 @@ class _AddClientContactsPageState extends State<AddClientContactsPage> {
 
                           return null;
                         },
+                        keyboardType: TextInputType.phone,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
                       ),
 
                       const SizedBox(height: 32),
-                      // buttons
-                      Row(
-                        children: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 30.0,
-                              ),
-                              foregroundColor: Colors.red,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                                side: const BorderSide(
-                                  color: Colors.red,
-                                  width: 1.2,
-                                ),
-                              ),
-                            ),
-                            child: const Text(
-                              'CANCEL',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: colors.primary,
-                                foregroundColor: colors.onPrimary,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
-                              onPressed: () {
-                                if (_formKey.currentState!.validate()) {
-                                  // TODO: Add / Update user logic
-                                }
-                              },
-                              child: Text(
-                                isEditing
-                                    ? 'SAVE CHANGES'
-                                    : 'ADD CLIENT CONTACT',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                softWrap: true,
-                                maxLines: 2,
-                                overflow: TextOverflow.visible,
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          ),
-                        ],
+
+                      //buttons
+                      BottomTwoButtons(
+                        button1Text: "Cancel",
+                        button2Text: isEditing ? "save changes" : "add client",
+                        button1Function: () {
+                          Navigator.pop(context);
+                        },
+                        button2Function: () {
+                          if (_formKey.currentState!.validate()) {
+                            // TODO: Add / Update user logic
+                          }
+                        },
                       ),
                     ],
                   ),

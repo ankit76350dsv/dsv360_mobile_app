@@ -6,6 +6,8 @@ import 'package:dsv360/repositories/time_logs_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/people/apply_leave_page.dart';
 import 'package:dsv360/views/people/leave_details_page.dart';
+import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -36,33 +38,58 @@ class _PeoplePageState extends State<PeoplePage>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = Theme.of(context).colorScheme;
 
     return Scaffold(
       // backgroundColor: const Color(0xFF121212),
       drawer: const AppDrawer(),
       appBar: AppBar(
         title: const Text('People'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        backgroundColor: colors.surface,
       ),
 
       body: Column(
         children: [
           /// �️ TABS
-          TabBar(
-            controller: _tabController,
-            indicatorColor: theme.colorScheme.primary,
-            labelColor: theme.colorScheme.primary,
-            unselectedLabelColor: theme.textTheme.bodyMedium?.color,
-            indicatorSize: TabBarIndicatorSize.tab,
-            indicatorWeight: 3,
-            tabs: const [
-              Tab(text: 'Check In'),
-              Tab(text: 'Activities'),
-              Tab(text: 'Leave'),
-              Tab(text: 'Attendance'),
-              Tab(text: 'Attendance Tracker'),
-            ],
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12.0,
+              vertical: 8.0,
+            ),
+            child: Container(
+              height: 52,
+              decoration: BoxDecoration(
+                color: colors.surface.withOpacity(0.7), // light grey background
+                borderRadius: BorderRadius.circular(14),
+              ),
+              padding: EdgeInsets.all(4.0),
+              child: TabBar(
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  color: colors.secondary, // white pill
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                labelColor: colors.primary,
+                unselectedLabelColor: colors.onSurfaceVariant,
+                labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+                dividerColor: Colors.transparent,
+                tabs: const [
+                  Tab(text: 'Check In'),
+                  Tab(text: 'Activities'),
+                  Tab(text: 'Leave'),
+                  Tab(text: 'Attendance'),
+                  Tab(text: 'Attendance Tracker'),
+                ],
+              ),
+            ),
           ),
 
           /// 📄 TAB CONTENT
@@ -451,7 +478,8 @@ class _LeaveTab extends ConsumerWidget {
                   "Recent Leave Requests",
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
-                ElevatedButton.icon(
+                const Spacer(),
+                ElevatedButton(
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -463,14 +491,25 @@ class _LeaveTab extends ConsumerWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
                     foregroundColor: theme.colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10.0,
+                      horizontal: 20.0,
+                    ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(200.0),
+                      side: BorderSide(
+                        width: 2.0,
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
                   ),
-                  icon: const Icon(Icons.calendar_today, size: 16),
-                  label: const Text(
-                    "Request Leave",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  child: Text(
+                    "Request Leave".toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
               ],
@@ -556,6 +595,10 @@ class LeaveSummaryCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
+      ),
       child: Container(
         padding: const EdgeInsets.all(14),
         child: Column(
@@ -603,6 +646,10 @@ class LeaveTile extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
+      ),
       child: Container(
         padding: const EdgeInsets.all(14),
         child: Column(
@@ -618,101 +665,31 @@ class LeaveTile extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    status,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.surface,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                CustomChip(
+                  label: status,
+                  color: theme.colorScheme.primary,
+                  icon: null,
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              "From $start to $end",
+              "From $start",
+              style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
+            ),
+            Text(
+              "to $end",
               style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                SizedBox(
-                  width: 100,
-                  child: Theme(
-                    data: Theme.of(context).copyWith(
-                      splashColor: Colors.red.withOpacity(0.1),
-                      highlightColor: Colors.red.withOpacity(0.1),
-                    ),
-                    child: TextButton(
-                      onPressed: onEditTap,
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          side: BorderSide(
-                            color: theme.colorScheme.primary,
-                            width: 1.5,
-                          ),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Icon(
-                              Icons.edit,
-                              color: theme.colorScheme.primary,
-                            ),
-                          ),
-                          SizedBox(width: 6.0),
-                          Text(
-                            'EDIT',
-                            style: TextStyle(
-                              color: theme.colorScheme.primary,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                SizedBox(
-                  width: 150,
-                  child: TextButton(
-                    onPressed: onTap,
-                    style: TextButton.styleFrom(
-                      foregroundColor: theme.colorScheme.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        side: BorderSide(
-                          color: theme.colorScheme.primary,
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                    child: Text(
-                      'VIEW DETAILS',
-                      style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+            SizedBox(
+              width: MediaQuery.of(context).size.width * 0.7, // 80% of screen
+              child: BottomTwoButtons(
+                button1Text: "edit",
+                button2Text: "view details",
+                button1Function: onEditTap!,
+                button2Function: onTap!,
+              ),
             ),
           ],
         ),
@@ -1303,88 +1280,92 @@ class _AttendanceTrackerTabState extends State<_AttendanceTrackerTab> {
                   date: endDate,
                   onTap: () => _pickDate(isStart: false),
                 ),
-              ),              
+              ),
             ],
           ),
 
           const SizedBox(height: 30),
 
-          Row(children:[Expanded(
-            child:TextButton(
-                onPressed: () {
-                  // TODO: Fetch attendance
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: colors.primary,
-                  foregroundColor: colors.onPrimary,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 28,
-                    vertical: 18,
+          Row(
+            children: [
+              Expanded(
+                child: TextButton(
+                  onPressed: () {
+                    // TODO: Fetch attendance
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colors.primary,
+                    foregroundColor: colors.onPrimary,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 28,
+                      vertical: 18,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  child: const Text(
+                    'Submit',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                child: const Text(
-                  'Submit',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),),]),
-
-              const SizedBox(height: 16),
-
-          // Attendance List
-        Expanded(
-          child: ListView(
-
-            children: const [
-              AttendanceTile(
-                day: "Sun",
-                date: "21 Dec",
-                status: "Weekend",
-                statusColor: Colors.red,
-                highlight: true,
-              ),
-              AttendanceTile(
-                day: "Mon",
-                date: "22 Dec",
-                status: "Absent",
-                statusColor: Colors.red,
-              ),
-              AttendanceTile(
-                day: "Tue",
-                date: "23 Dec",
-                status: "Absent",
-                statusColor: Colors.red,
-              ),
-              AttendanceTile(
-                day: "Wed",
-                date: "24 Dec",
-                status: "Absent",
-                statusColor: Colors.red,
-              ),
-              AttendanceTile(
-                day: "Thu",
-                date: "25 Dec",
-                status: "Absent",
-                statusColor: Colors.red,
-              ),
-              AttendanceTile(
-                day: "Fri",
-                date: "26 Dec",
-                status: "Present",
-                statusColor: Colors.green,
-              ),
-              AttendanceTile(
-                day: "Sat",
-                date: "27 Dec",
-                status: "Weekend",
-                statusColor: Colors.red,
-                highlight: true,
               ),
             ],
           ),
-        ),
+
+          const SizedBox(height: 16),
+
+          // Attendance List
+          Expanded(
+            child: ListView(
+              children: const [
+                AttendanceTile(
+                  day: "Sun",
+                  date: "21 Dec",
+                  status: "Weekend",
+                  statusColor: Colors.red,
+                  highlight: true,
+                ),
+                AttendanceTile(
+                  day: "Mon",
+                  date: "22 Dec",
+                  status: "Absent",
+                  statusColor: Colors.red,
+                ),
+                AttendanceTile(
+                  day: "Tue",
+                  date: "23 Dec",
+                  status: "Absent",
+                  statusColor: Colors.red,
+                ),
+                AttendanceTile(
+                  day: "Wed",
+                  date: "24 Dec",
+                  status: "Absent",
+                  statusColor: Colors.red,
+                ),
+                AttendanceTile(
+                  day: "Thu",
+                  date: "25 Dec",
+                  status: "Absent",
+                  statusColor: Colors.red,
+                ),
+                AttendanceTile(
+                  day: "Fri",
+                  date: "26 Dec",
+                  status: "Present",
+                  statusColor: Colors.green,
+                ),
+                AttendanceTile(
+                  day: "Sat",
+                  date: "27 Dec",
+                  status: "Weekend",
+                  statusColor: Colors.red,
+                  highlight: true,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

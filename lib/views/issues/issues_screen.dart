@@ -10,6 +10,7 @@ import '../attachments/attachment_list_modal.dart';
 import 'assignee_modal.dart';
 import 'add_issue_form_screen.dart';
 import 'issue_details_modal_sheet.dart';
+import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 
 class IssuesScreen extends StatefulWidget {
@@ -231,26 +232,26 @@ class _IssuesScreenState extends State<IssuesScreen> {
                     if (Navigator.canPop(context)) {
                       Navigator.pop(context);
                     } else {
-                      Navigator.pushReplacement(
+                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const DashboardPage(),
-                        ),
+                        MaterialPageRoute(builder: (_) => const DashboardPage()),
                       );
                     }
                   },
+                  onInfoTap: () {
+                    // hook for info action
+                  },
+                ),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: CustomSearchBar(
+                    controller: _searchController,
+                    hintText: 'Search Issues',
+                    onChanged: _filterIssues,
+                  ),
                 ),
               ],
-            ),
-          ),
-
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: CustomSearchBar(
-              controller: _searchController,
-              onChanged: _filterIssues,
-              hintText: 'Search issues',
             ),
           ),
 

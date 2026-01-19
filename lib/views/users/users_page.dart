@@ -7,9 +7,10 @@ import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
 import 'package:dsv360/views/users/add_edit_user_page.dart';
 import 'package:dsv360/views/users/user_details_page.dart';
-import 'package:dsv360/views/widgets/RoleChip.dart';
-import 'package:dsv360/views/widgets/VerificationStatusChip.dart';
+import 'package:dsv360/views/widgets/custom_card_button.dart';
+import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -69,30 +70,10 @@ class _UsersPageState extends ConsumerState<UsersPage> {
                 horizontal: 16.0,
                 vertical: 12.0,
               ),
-              child: TextField(
-                onChanged: (value) {
-                  ref.read(usersSearchQueryProvider.notifier).state = value
-                      .trim();
-                },
-                decoration: InputDecoration(
-                  hintText: "Search users",
-                  filled: true,
-                  fillColor: colors.surfaceVariant,
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: colors.onSurfaceVariant,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.transparent),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.transparent),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-              ),
+              child: CustomInputSearch(
+                searchProvider: usersSearchQueryProvider,
+                hint: "Search users",
+              )
             ),
             Expanded(
               child: Padding(
@@ -144,6 +125,9 @@ class UserCard extends ConsumerStatefulWidget {
 
 class _UserCardState extends ConsumerState<UserCard> {
   late bool _isActive;
+  late String verificationStatusText;
+  late IconData verificationStatusIcon;
+  late Color verificationStatusColor;
 
   @override
   void initState() {
@@ -156,6 +140,20 @@ class _UserCardState extends ConsumerState<UserCard> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final activeUser = ref.watch(activeUserRepositoryProvider).asData?.value;
+    final verificationStatus = widget.user.verificationStatus;
+
+    switch (verificationStatus) {
+      case VerificationStatus.verified:
+        verificationStatusText = "Verified";
+        verificationStatusIcon = Icons.verified;
+        verificationStatusColor = Colors.green;
+        break;
+      case VerificationStatus.pending:
+        verificationStatusText = "Pending";
+        verificationStatusIcon = Icons.hourglass_top;
+        verificationStatusColor = Colors.orange;
+        break;
+    }
 
     return GestureDetector(
       onTap: () {
@@ -165,186 +163,231 @@ class _UserCardState extends ConsumerState<UserCard> {
         );
       },
       child: Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        child: SizedBox(
-          height: 220.00,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: colors.primary.withOpacity(0.15),
-                      child: Icon(
-                        Icons.person,
-                        size: 28,
-                        color: colors.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "${widget.user.firstName} ${widget.user.lastName}",
-                            style: theme.textTheme.titleMedium,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            widget.user.userId,
-                            style: theme.textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    RoleChip(text: widget.user.role),
-                    VerificationStatusChip(
-                      status: widget.user.verificationStatus,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        activeUser != null && _canManageUsers(activeUser.role)
-                            ? Transform.scale(
-                                scale:
-                                    0.85, // 👈 change this (0.7 – 1.2 usually)
-                                child: Switch(
-                                  value: _isActive,
-
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _isActive = value;
-                                      // TODO: Update workStatus in backend
-                                    });
-
-                                    final message = value
-                                        ? 'Employee is active'
-                                        : 'Employee is inactive';
-
-                                    ScaffoldMessenger.of(context)
-                                      ..hideCurrentSnackBar()
-                                      ..showSnackBar(
-                                        SnackBar(
-                                          content: Row(
-                                            children: [
-                                              const Icon(
-                                                Icons.info_outline,
-                                                color: Colors.white,
-                                                size: 20,
-                                              ),
-                                              const SizedBox(width: 12),
-                                              Text(message),
-                                            ],
-                                          ),
-                                          duration: const Duration(seconds: 2),
-                                        ),
-                                      );
-                                  },
-                                ),
-                              )
-                            : SizedBox(),
-                        const SizedBox(width: 8),
-                        Text(
-                          _isActive ? 'Active' : 'Inactive',
-                          style: TextStyle(
-                            color: _isActive
-                                ? colors.primary
-                                : colors.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () {
-                            // TODO: Handle user card action
-
-                            ScaffoldMessenger.of(context)
-                              ..hideCurrentSnackBar()
-                              ..showSnackBar(
-                                const SnackBar(
-                                  content: Row(
-                                    children: [
-                                      Icon(
-                                        Icons.info_outline,
-                                        color: Colors.white,
-                                        size: 20,
-                                      ),
-                                      SizedBox(width: 12),
-                                      Text('Re-invitation sent successfully'),
-                                    ],
-                                  ),
-                                  behavior: SnackBarBehavior.floating,
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                          },
-                          icon: Icon(
-                            Icons.account_circle_outlined,
-                            color: colors.primary,
-                          ),
-                          color: colors.onSurface,
-                          iconSize: 20,
-                        ),
-
-                        IconButton(
-                          onPressed: () {
-                            // TODO: Handle edit action
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) =>
-                                    AddEditUserPage(user: widget.user),
-                              ),
-                            );
-                          },
-                          icon: Icon(
-                            Icons.edit_outlined,
-                            color: colors.primary,
-                          ),
-                          color: colors.onSurface,
-                          iconSize: 20,
-                        ),
-                        IconButton(
-                          onPressed: () {
-                            _showDeleteUserSheet(
-                              context,
-                              user: widget.user, // List<Task>
-                            );
-                          },
-                          icon: const Icon(Icons.delete_outline),
-                          color: colors.error,
-                          iconSize: 20,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(
+            color: Colors.grey.withOpacity(0.2), // 👈 border color
+            width: 1.5,
           ),
         ),
-      ),
+        child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colors.primary,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(widget.user.userId,
+                          style: TextStyle(
+                            color: theme.colorScheme.surface
+                          )),
+                        ),
+                        const Spacer(),
+                        CustomChip(
+                          label: widget.user.role,
+                          color: colors.primary,
+                          icon: null,
+                        ),
+                        const SizedBox(width: 6.0),
+                        CustomChip(
+                          label: verificationStatusText,
+                          color: verificationStatusColor,
+                          icon: verificationStatusIcon,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Divider
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: Colors.grey.withOpacity(0.2),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "${widget.user.firstName} ${widget.user.lastName}",
+                                style: theme.textTheme.bodyLarge,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(
+                                height: 2.0,
+                              ),
+                              _userInfoRow(Icons.email, widget.user.emailAddress),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              // Divider
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: Colors.grey.withOpacity(0.2),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child:
+                    Column(
+                      children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            activeUser != null &&
+                                    _canManageUsers(activeUser.role)
+                                ? SizedBox(
+                                    width: 38,
+                                    height: 18,
+                                    child: Transform.scale(
+                                    scale:
+                                        0.70, 
+                                    child: Switch(
+                                      value: _isActive,
+
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _isActive = value;
+                                          // TODO: Update workStatus in backend
+                                        });
+
+                                        final message = value
+                                            ? 'Employee is active'
+                                            : 'Employee is inactive';
+
+                                        ScaffoldMessenger.of(context)
+                                          ..hideCurrentSnackBar()
+                                          ..showSnackBar(
+                                            SnackBar(
+                                              content: Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.info_outline,
+                                                    color: Colors.white,
+                                                    size: 20,
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  Text(message),
+                                                ],
+                                              ),
+                                              duration: const Duration(
+                                                seconds: 2,
+                                              ),
+                                            ),
+                                          );
+                                      },
+                                    ),
+                                  ),)
+                                : SizedBox(),
+                            const SizedBox(width: 8),
+                            Text(
+                              _isActive ? 'Active' : 'Inactive',
+                              style: TextStyle(
+                                color: _isActive
+                                    ? colors.primary
+                                    : colors.onSurfaceVariant,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                        
+                        Row(
+                          children: [
+                            CustomCardButton(
+                              icon: Icons.account_circle,
+                              onTap: () {
+                                // TODO: Handle user card action
+
+                                ScaffoldMessenger.of(context)
+                                  ..hideCurrentSnackBar()
+                                  ..showSnackBar(
+                                    const SnackBar(
+                                      content: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.info_outline,
+                                            color: Colors.white,
+                                            size: 20,
+                                          ),
+                                          SizedBox(width: 12),
+                                          Text(
+                                            'Re-invitation sent successfully',
+                                          ),
+                                        ],
+                                      ),
+                                      behavior: SnackBarBehavior.floating,
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                              },
+                            ),
+                            const SizedBox(width: 5.0,),
+                            CustomCardButton(
+                              icon: Icons.edit,
+                              onTap: () {
+                                // TODO: Handle edit action
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        AddEditUserPage(user: widget.user),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 5.0,),
+                            CustomCardButton(
+                              icon: Icons.delete,
+                              onTap: () {
+                                _showDeleteUserSheet(
+                                  context,
+                                  user: widget.user, // List<Task>
+                                );
+                              },
+                              color: colors.error,
+                            )
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
     );
   }
 
@@ -360,6 +403,24 @@ class _UserCardState extends ConsumerState<UserCard> {
       builder: (_) {
         return _DeleteUserBottomSheet(user: user);
       },
+    );
+  }
+
+  Widget _userInfoRow(IconData icon, String text) {
+    final theme = Theme.of(context);
+
+    return Row(
+      children: [
+        Icon(
+          icon,
+          size: 18,
+          color: theme.colorScheme.tertiary,
+        ),
+        const SizedBox(width: 8),
+        Text(text, style: theme.textTheme.bodyMedium?.copyWith(
+          color: theme.colorScheme.tertiary,
+        ),),
+      ],
     );
   }
 }
@@ -430,7 +491,7 @@ class _DeleteUserBottomSheetState
 
                   BottomTwoButtons(
                     button1Text: "Cancel",
-                    button2Text: "DELETE USER",
+                    button2Text: "delete user",
                     button1Function: () {
                       Navigator.pop(context);
                     },

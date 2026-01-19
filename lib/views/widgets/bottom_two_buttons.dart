@@ -25,17 +25,21 @@ class BottomTwoButtons extends StatelessWidget {
             onPressed: button1Function,
             style: TextButton.styleFrom(
               foregroundColor: colors.error,
-              side: BorderSide(color: colors.error),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              side: BorderSide(
+                color: colors.error,
+                width: 2.0,
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 10),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(200.0),
               ),
             ),
             child: Text(
               button1Text.toUpperCase(),
               style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
               ),
             ),
           ),
@@ -47,16 +51,21 @@ class BottomTwoButtons extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: colors.primary,
               foregroundColor: colors.onPrimary,
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              padding: const EdgeInsets.symmetric(vertical: 10),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(200.0),
+                side: BorderSide(
+                  width: 2.0,
+                  color: colors.primary
+                )
               ),
             ),
             child: Text(
               button2Text.toUpperCase(),
               style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
               ),
             ),
           ),

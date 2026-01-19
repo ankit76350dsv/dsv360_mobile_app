@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+import 'package:flutter/services.dart';
+import '/core/constants/app_colors.dart';
 
 class CustomInputField extends StatefulWidget {
   final TextEditingController? controller;
@@ -9,6 +10,7 @@ class CustomInputField extends StatefulWidget {
   final int? maxLines;
   final int? minLines;
   final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
   final bool enabled;
@@ -27,6 +29,7 @@ class CustomInputField extends StatefulWidget {
     this.validator,
     this.enabled = true,
     this.prefixIcon,
+    this.inputFormatters,
   });
 
   @override
@@ -59,6 +62,8 @@ class _CustomInputFieldState extends State<CustomInputField> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
@@ -68,14 +73,14 @@ class _CustomInputFieldState extends State<CustomInputField> {
                   color: Colors.grey.withOpacity(0.2),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
-                )
+                ),
               ]
             : [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
-                )
+                ),
               ],
       ),
       child: TextFormField(
@@ -87,89 +92,82 @@ class _CustomInputFieldState extends State<CustomInputField> {
         minLines: widget.minLines,
         maxLength: widget.maxLength,
         focusNode: _focusNode,
-        style: const TextStyle(
-          color: AppColors.textPrimary,
+        style: TextStyle(
+          color: colors.tertiary,
           fontSize: 16,
           fontWeight: FontWeight.w500,
         ),
         decoration: InputDecoration(
           hintText: widget.hintText,
-          hintStyle: const TextStyle(
-            color: AppColors.textHint,
+          hintStyle: TextStyle(
+            color: Colors.grey,
             fontSize: 15,
             fontWeight: FontWeight.w400,
           ),
           labelText: widget.labelText,
           alignLabelWithHint: widget.isMultiline,
           labelStyle: TextStyle(
-            color: _isFocused ? Colors.grey[400] : AppColors.textSecondary,
+            color: _isFocused
+                ? Colors.grey.withOpacity(0.9)
+                : Colors.grey.withOpacity(0.8),
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
           prefixIcon: widget.prefixIcon != null && !widget.isMultiline
               ? Icon(
                   widget.prefixIcon,
-                  color: _isFocused ? Colors.grey[400] : AppColors.textSecondary,
+                  color: _isFocused
+                      ? Colors.grey.withOpacity(0.9)
+                      : Colors.grey.withOpacity(0.8),
                   size: 20,
                 )
               : null,
-          prefixIconConstraints: widget.isMultiline 
+          prefixIconConstraints: widget.isMultiline
               ? const BoxConstraints(minWidth: 0, minHeight: 0)
               : null,
           filled: true,
-          fillColor: _isFocused
-              ? AppColors.inputFill
-              : AppColors.inputFill,
+          fillColor: colors.secondary,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: AppColors.inputBorder,
+            borderSide: BorderSide(
+              color: Colors.grey.withOpacity(0.6),
               width: 1.5,
             ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: AppColors.inputBorder,
+            borderSide: BorderSide(
+              color: Colors.grey.withOpacity(0.6),
               width: 1.5,
             ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(
-              color: Colors.grey[400]!,
+              color: Colors.grey.withOpacity(0.9),
               width: 2,
             ),
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: AppColors.error,
-              width: 1.5,
-            ),
+            borderSide: BorderSide(color: colors.error, width: 1.5),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: AppColors.error,
-              width: 2,
-            ),
+            borderSide: BorderSide(color: colors.error, width: 2),
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(
-              color: AppColors.inputBorder,
+            borderSide: BorderSide(
+              color: Colors.grey.withOpacity(0.4),
               width: 1.5,
             ),
           ),
           contentPadding: widget.isMultiline
               ? const EdgeInsets.fromLTRB(18, 20, 18, 16)
-              : const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 12,
-                ),
-          errorStyle: const TextStyle(
-            color: AppColors.error,
+              : const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          errorStyle: TextStyle(
+            color: colors.error,
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),
