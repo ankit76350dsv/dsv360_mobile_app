@@ -130,16 +130,10 @@ class _FeedbacksScreenState extends State<FeedbacksScreen> {
                   //   ),
                   // ),
                   // SizedBox(height: 8),
-                  Text(
-                    'Manage and review all customer feedbacks',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+                 
                 ],
               ),
-              const SizedBox(height: 20),
+
 
               // Search Bar
               CustomSearchBar(

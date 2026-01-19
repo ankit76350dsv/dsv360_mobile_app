@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import '../../core/constants/app_colors.dart';
 
 /// --- Top bar widget (back button left, centered title, info ':' on right) ---
 class TopBar extends StatelessWidget {
@@ -24,7 +25,7 @@ class TopBar extends StatelessWidget {
             child: IconButton(
               onPressed: onBack,
               icon: const Icon(Icons.arrow_back_ios, size: 18),
-              color: const Color.fromARGB(179, 255, 255, 255),
+              color: AppColors.textPrimary,
               splashRadius: 20,
             ),
           ),
@@ -34,8 +35,9 @@ class TopBar extends StatelessWidget {
             child: Text(
               title,
               style: const TextStyle(
-                color: Color.fromARGB(179, 255, 255, 255),
+                color: AppColors.textPrimary,
                 fontWeight: FontWeight.w600,
+                fontSize: 18,
               ),
             ),
           ),
@@ -47,7 +49,7 @@ class TopBar extends StatelessWidget {
                 child: IconButton(
                   onPressed: onInfoTap,
                   icon: Icon(Platform.isAndroid ? Icons.more_vert : Icons.more_horiz,size: 18),
-                  color: const Color.fromARGB(179, 255, 255, 255),
+                  color: AppColors.textPrimary,
                   splashRadius: 20,
                 // ),
               ),
