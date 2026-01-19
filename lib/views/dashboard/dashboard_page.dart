@@ -2,6 +2,7 @@ import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/DashboardTitle.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/views/dashboard/ProjectAnalyticsCard.dart';
 import 'package:dsv360/views/dashboard/StatGrid.dart';
 import 'package:dsv360/views/dashboard/TaskStatusCard.dart';
@@ -71,11 +72,11 @@ class _DashboardScaffold extends ConsumerWidget {
                 margin: const EdgeInsets.all(8.0),
                 child: const CircleAvatar(
                   radius: 16,
-                  backgroundColor: Colors.white12,
+                  backgroundColor: AppColors.inputFill,
                   child: Icon(
                     Icons.person_outline,
                     size: 18,
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),

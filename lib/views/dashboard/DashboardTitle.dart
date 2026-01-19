@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:dsv360/core/constants/app_colors.dart';
 
 class DashboardTitle extends StatelessWidget {
   const DashboardTitle({super.key});
@@ -17,7 +18,7 @@ class DashboardTitle extends StatelessWidget {
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 4),
@@ -25,7 +26,7 @@ class DashboardTitle extends StatelessWidget {
           dateString,
           style: TextStyle(
             fontSize: 16,
-            color: Colors.white.withOpacity(0.7),
+            color: AppColors.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),

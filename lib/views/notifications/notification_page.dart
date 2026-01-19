@@ -1,27 +1,10 @@
-import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
+import 'package:dsv360/core/constants/app_colors.dart';
 
 
 class NotificationPage extends StatelessWidget {
   const NotificationPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Notifications',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0B0B0D),
-        cardColor: const Color(0xFF0F1113),
-      ),
-      home: const NotificationListWithTopBarPage(),
-    );
-  }
-}
-
-class NotificationListWithTopBarPage extends StatelessWidget {
-  const NotificationListWithTopBarPage({super.key});
 
   final double horizontalPadding = 14;
 
@@ -32,7 +15,7 @@ class NotificationListWithTopBarPage extends StatelessWidget {
           title: 'Your casual leave request for 12 Nov has been approved',
           subtitle: 'By HR Team',
           logoText: 'L',
-          logoColor: Colors.green,
+          logoColor: Colors.green, // Keep specific status colors
         ),
         NotificationItem.logo(
           tag: 'Leave Rejected',
@@ -91,51 +74,28 @@ class NotificationListWithTopBarPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = _items();
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              children: [
-                // ---------- Top bar ----------
-                  TopBar(
-                  title: 'Notifications',
-                  onBack: () {
-                    if (Navigator.canPop(context)) {
-                      debugPrint("pop-pop-pop-pop-pop-pop-pop-pop-pop");
-                      Navigator.pop(context);
-                    } else {
-                      debugPrint("pushReplacement-pushReplacementpush-Replacement");
-
-                       Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const DashboardPage()),
-                      );
-                    }
-                  },
-                  onInfoTap: () {
-                    // hook for info action
-                    // you can open a dialog or screen here
-                  },
-                ),
-
-                // ---------- Notifications list only ----------
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                    child: ListView.separated(
-                      padding: const EdgeInsets.only(top: 18, bottom: 24),
-                      itemCount: items.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        return _NotificationCard(item: items[index]);
-                      },
-                    ),
-                  ),
-                ),
-              ],
+        child: Column(
+          children: [
+            TopBar(
+              title: 'Notifications',
+              onBack: () => Navigator.pop(context),
             ),
-          ),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                child: ListView.separated(
+                  padding: const EdgeInsets.only(top: 18, bottom: 24),
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    return _NotificationCard(item: items[index]);
+                  },
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -220,10 +180,10 @@ class _NotificationCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFF0F1113),
+          color: AppColors.cardBackground,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white10),
-          boxShadow: const [
+          border: Border.all(color: AppColors.divider),
+          boxShadow: [
             BoxShadow(
               color: Colors.black26,
               blurRadius: 4,
@@ -250,7 +210,7 @@ class _NotificationCard extends StatelessWidget {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       height: 1.25,
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   if (item.subtitle.isNotEmpty) ...[
@@ -258,7 +218,7 @@ class _NotificationCard extends StatelessWidget {
                     Text(
                       item.subtitle,
                       style: const TextStyle(
-                        color: Color(0xFF9CA3AF),
+                        color: AppColors.textSecondary,
                         fontSize: 13,
                       ),
                     ),
@@ -286,15 +246,15 @@ class _NotificationCard extends StatelessWidget {
           child: Text(
             item.logoText ?? '',
             style: const TextStyle(
-                fontWeight: FontWeight.bold, color: Colors.white),
+                fontWeight: FontWeight.bold, color: AppColors.textWhite),
           ),
         );
       case LeadingType.check:
         return Container(
           width: 44,
           height: 44,
-          decoration: const BoxDecoration(
-            color: Color(0xFF0B1220),
+          decoration: BoxDecoration(
+            color: AppColors.inputFill,
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.check_circle, color: Color(0xFF24C16E)),
@@ -304,9 +264,9 @@ class _NotificationCard extends StatelessWidget {
           radius: 22,
           backgroundImage:
               item.avatarUrl != null ? NetworkImage(item.avatarUrl!) : null,
-          backgroundColor: const Color(0xFF2A2A2A),
+          backgroundColor: AppColors.inputFill,
           child: item.avatarUrl == null
-              ? const Icon(Icons.person, color: Colors.white54)
+              ? const Icon(Icons.person, color: AppColors.textHint)
               : null,
         );
     }

@@ -2,24 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:dsv360/views/profile/AboutMe.dart';
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
+import 'package:dsv360/core/constants/app_colors.dart';
+import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/views/widgets/TopBar.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Corporate Dark Theme Colors
-    const kBackgroundColor = Color(0xFF121212);
-    const kCardColor = Color(0xFF1E1E1E);
-    const kAccentColor = Color(0xFF00C853); // Corporate Green
-    const kTextColor = Colors.white;
-    const kSubTextColor = Colors.white70;
+    final user = AuthManager.instance.currentUser;
+    final fullName = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
+    final email = user?.emailId ?? 'No Email';
+    final role = user?.role?.name ?? 'User';
 
     return Scaffold(
-      backgroundColor: kBackgroundColor,
-      body: SingleChildScrollView(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
         child: Column(
           children: [
+            TopBar(
+              title: 'Profile',
+              onBack: () => Navigator.pop(context),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
             // --- Header Section ---
             Stack(
               clipBehavior: Clip.none,
@@ -44,7 +53,7 @@ class ProfilePage extends StatelessWidget {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          kBackgroundColor.withOpacity(0.8),
+                          AppColors.background.withOpacity(0.8),
                         ],
                       ),
                     ),
@@ -61,7 +70,7 @@ class ProfilePage extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: kBackgroundColor,
+                          color: AppColors.background,
                           shape: BoxShape.circle,
                         ),
                         child: const CircleAvatar(
@@ -78,10 +87,10 @@ class ProfilePage extends StatelessWidget {
                           width: 20,
                           height: 20,
                           decoration: BoxDecoration(
-                            color: kAccentColor,
+                            color: AppColors.statusCompleted,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: kBackgroundColor,
+                              color: AppColors.background,
                               width: 3,
                             ),
                           ),
@@ -103,12 +112,12 @@ class ProfilePage extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Ankit Kumar',
-                        style: TextStyle(
+                      Text(
+                        fullName.isNotEmpty ? fullName : 'User',
+                        style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
-                          color: kTextColor,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -123,16 +132,16 @@ class ProfilePage extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: kAccentColor.withOpacity(0.2),
+                              color: AppColors.statusCompleted.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: kAccentColor.withOpacity(0.5),
+                                color: AppColors.statusCompleted.withOpacity(0.5),
                               ),
                             ),
-                            child: const Text(
-                              'Admin',
-                              style: TextStyle(
-                                color: kAccentColor,
+                            child: Text(
+                              role,
+                              style: const TextStyle(
+                                color: AppColors.statusCompleted,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -141,14 +150,14 @@ class ProfilePage extends StatelessWidget {
                           _buildCompactActionButton(
                             'Password',
                             Icons.lock_outline,
-                            kAccentColor,
+                            AppColors.statusCompleted,
                           ),
                           _buildCompactActionButton(
                             'Edit',
                             Icons.edit_outlined,
-                            kAccentColor,
+                            AppColors.statusCompleted,
                           ),
-                          // _buildCompactActionButton('Theme', Icons.palette_outlined, kAccentColor),
+                          // _buildCompactActionButton('Theme', Icons.palette_outlined, AppColors.statusCompleted),
                         ],
                       ),
                     ],
@@ -160,9 +169,9 @@ class ProfilePage extends StatelessWidget {
                   const AboutMe(
                     title: 'About Me',
                     content: 'Admin Profile',
-                    backgroundColor: kCardColor,
-                    textColor: kTextColor,
-                    accentColor: kAccentColor,
+                    backgroundColor: AppColors.cardBackground,
+                    textColor: AppColors.textPrimary,
+                    accentColor: AppColors.statusCompleted,
                   ),
 
                   const SizedBox(height: 24),
@@ -172,7 +181,7 @@ class ProfilePage extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: kCardColor,
+                      color: AppColors.cardBackground,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -184,7 +193,7 @@ class ProfilePage extends StatelessWidget {
                               width: 4,
                               height: 20,
                               decoration: BoxDecoration(
-                                color: kAccentColor,
+                                color: AppColors.statusCompleted,
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -192,7 +201,7 @@ class ProfilePage extends StatelessWidget {
                             const Text(
                               'Contact Information',
                               style: TextStyle(
-                                color: kAccentColor,
+                                color: AppColors.statusCompleted,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -203,22 +212,22 @@ class ProfilePage extends StatelessWidget {
                         _buildContactRow(
                           Icons.email_outlined,
                           'Email',
-                          'aj637061@gmail.com',
-                          kSubTextColor,
+                          email,
+                          AppColors.textSecondary,
                         ),
-                        const Divider(color: Colors.white10, height: 24),
+                        const Divider(color: AppColors.divider, height: 24),
                         _buildContactRow(
                           Icons.phone_outlined,
                           'Phone',
                           '+91 9984237401',
-                          kSubTextColor,
+                          AppColors.textSecondary,
                         ),
-                        const Divider(color: Colors.white10, height: 24),
+                        const Divider(color: AppColors.divider, height: 24),
                         _buildContactRow(
                           Icons.location_on_outlined,
                           'Address',
                           'Kanpur Nagar Uttar Pradesh',
-                          kSubTextColor,
+                          AppColors.textSecondary,
                         ),
                       ],
                     ),
@@ -231,7 +240,7 @@ class ProfilePage extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: kCardColor,
+                      color: AppColors.cardBackground,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -243,7 +252,7 @@ class ProfilePage extends StatelessWidget {
                               width: 4,
                               height: 20,
                               decoration: BoxDecoration(
-                                color: kAccentColor,
+                                color: AppColors.statusCompleted,
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
@@ -251,7 +260,7 @@ class ProfilePage extends StatelessWidget {
                             const Text(
                               'Skills',
                               style: TextStyle(
-                                color: kAccentColor,
+                                color: AppColors.statusCompleted,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -263,10 +272,10 @@ class ProfilePage extends StatelessWidget {
                           spacing: 12,
                           runSpacing: 12,
                           children: [
-                            _buildSkillChip('html', kSubTextColor),
-                            _buildSkillChip('css', kSubTextColor),
-                            _buildSkillChip('react', kSubTextColor),
-                            _buildSkillChip('nodejs', kSubTextColor),
+                            _buildSkillChip('html', AppColors.textSecondary),
+                            _buildSkillChip('css', AppColors.textSecondary),
+                            _buildSkillChip('react', AppColors.textSecondary),
+                            _buildSkillChip('nodejs', AppColors.textSecondary),
                           ],
                         ),
                       ],
@@ -283,7 +292,7 @@ class ProfilePage extends StatelessWidget {
                       icon: const Icon(Icons.cloud_upload_outlined),
                       label: const Text('Update CV'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: kAccentColor,
+                        backgroundColor: AppColors.statusCompleted,
                         foregroundColor: Colors.black,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -301,8 +310,8 @@ class ProfilePage extends StatelessWidget {
                       icon: const Icon(Icons.visibility_outlined),
                       label: const Text('View CV'),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: kAccentColor,
-                        side: BorderSide(color: kAccentColor),
+                        foregroundColor: AppColors.statusCompleted,
+                        side: const BorderSide(color: AppColors.statusCompleted),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
@@ -331,7 +340,7 @@ class ProfilePage extends StatelessWidget {
                       icon: const Icon(Icons.logout),
                       label: const Text('Logout'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
+                        backgroundColor: AppColors.error,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
@@ -344,6 +353,10 @@ class ProfilePage extends StatelessWidget {
 
                   const SizedBox(height: 40),
                 ],
+              ),
+            ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -387,7 +400,7 @@ class ProfilePage extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: const Color(0xFF00C853)),
+        Icon(icon, size: 20, color: AppColors.statusCompleted),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
@@ -396,7 +409,7 @@ class ProfilePage extends StatelessWidget {
               Text(
                 label,
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
@@ -414,9 +427,9 @@ class ProfilePage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: AppColors.textWhite.withOpacity(0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: AppColors.textWhite.withOpacity(0.1)),
       ),
       child: Text(label, style: TextStyle(color: textColor, fontSize: 13)),
     );

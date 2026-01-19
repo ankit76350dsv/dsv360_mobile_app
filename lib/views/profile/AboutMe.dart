@@ -29,14 +29,7 @@ class AboutMe extends StatelessWidget {
             Container(
               decoration: BoxDecoration(
                 color: backgroundColor,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.45),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(16),
               ),
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
               child: Row(
