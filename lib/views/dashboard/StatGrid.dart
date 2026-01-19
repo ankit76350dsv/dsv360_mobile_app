@@ -39,18 +39,30 @@ class _StatCard extends StatelessWidget {
       elevation: 2,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircleAvatar(backgroundColor: color.withOpacity(0.18), child: Icon(icon, color: color)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text(value, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 6),
-                Text(title, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-              ]),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                CircleAvatar(
+                  backgroundColor: color.withOpacity(0.18),
+                  child: Icon(icon, color: color),
+                  radius: 18,
+                ),
+              ],
             ),
-            const Icon(Icons.more_vert, color: Colors.white24),
+            const Spacer(),
+            Text(
+              title,
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
+            ),
           ],
         ),
       ),

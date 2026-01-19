@@ -18,7 +18,7 @@ class TopHeader extends StatelessWidget {
         ? 1.0
         : 1.15;
 
-    final height = (isLarge ? 140.0 : 180.0) * 0.5;
+    final height = (isLarge ? 140.0 : 180.0) * 0.55;
     // reserve a fixed width on the right for stacked metrics
     final rightColumnWidth = (w * 0.22).clamp(96.0, 140.0);
 
@@ -44,66 +44,25 @@ class TopHeader extends StatelessWidget {
         vertical: 12 * scale,
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          // left icon
-          Container(
-            width: 56 * scale,
-            height: 56 * scale,
-            decoration: BoxDecoration(
-              color: Colors.white12,
-              borderRadius: BorderRadius.circular(12 * scale),
-            ),
-            child: Icon(Icons.dashboard, size: 28 * scale, color: Colors.white),
+          _RightMetric(
+            percentText: '55%',
+            smallLabel: '0 of 1',
+            label: 'Project Closed',
+            scale: scale,
           ),
-
-          SizedBox(width: 14 * scale),
-
-          // title + subtitle (takes available space but won't overlap metrics)
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Dashboard',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20 * scale,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                SizedBox(height: 6 * scale),
-                Text(
-                  'November 13, 2025',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13 * scale,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
+          _RightMetric(
+            percentText: '0%',
+            smallLabel: '0 of 1',
+            label: 'Tasks Completed',
+            scale: scale,
           ),
-
-          // vertical metrics column on the right
-          SizedBox(width: 12 * scale),
-          SizedBox(
-            width: rightColumnWidth,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _RightMetric(
-                  percentText: '0%',
-                  smallLabel: '0 of 1',
-                  scale: scale,
-                ),
-                _RightMetric(
-                  percentText: '0%',
-                  smallLabel: '0 of 4',
-                  scale: scale,
-                ),
-              ],
-            ),
+          _RightMetric(
+            percentText: '0%',
+            smallLabel: '0 of 4',
+            label: 'Issue Resolved',
+            scale: scale,
           ),
         ],
       ),
@@ -114,11 +73,13 @@ class TopHeader extends StatelessWidget {
 class _RightMetric extends StatelessWidget {
   final String percentText;
   final String smallLabel;
+  final String label;
   final double scale;
 
   const _RightMetric({
     required this.percentText,
     required this.smallLabel,
+    required this.label,
     required this.scale
   });
 
@@ -156,6 +117,15 @@ class _RightMetric extends StatelessWidget {
           smallLabel,
           textAlign: TextAlign.center,
           style: TextStyle(color: Colors.white70, fontSize: 11 * scale),
+        ),
+        SizedBox(height: 2 * scale),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+              color: Colors.white,
+              fontSize: 10 * scale,
+              fontWeight: FontWeight.w500),
         ),
       ],
     );

@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 
@@ -18,7 +19,7 @@ class TaskStatusCard extends StatelessWidget {
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(child: Icon(Icons.schedule)),
               title: Text(
-                'Task Status erfger',
+                'Task Status',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               trailing: Icon(Icons.filter_list),
@@ -37,12 +38,62 @@ class TaskStatusCard extends StatelessWidget {
 class TaskStatusContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-      Expanded(child: Center(child: Text('0', style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white70)))),
-      const Text('Total Tasks', style: TextStyle(color: Colors.white70)),
-      const SizedBox(height: 8),
-      Row(mainAxisAlignment: MainAxisAlignment.center, children: const [_LegendDot(color: Colors.green, label: 'Completed'), SizedBox(width: 8), _LegendDot(color: Colors.orange, label: 'Open'), SizedBox(width: 8), _LegendDot(color: Colors.red, label: 'In Progress')])
-    ]);
+    return Row(
+      children: [
+        Expanded(
+          child: PieChart(
+            PieChartData(
+              sectionsSpace: 0,
+              centerSpaceRadius: 30,
+              sections: [
+                PieChartSectionData(
+                  color: Colors.green,
+                  value: 40,
+                  title: '40%',
+                  radius: 40,
+                  titleStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+                PieChartSectionData(
+                  color: Colors.orange,
+                  value: 30,
+                  title: '30%',
+                  radius: 40,
+                  titleStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+                PieChartSectionData(
+                  color: Colors.red,
+                  value: 30,
+                  title: '30%',
+                  radius: 40,
+                  titleStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            _LegendDot(color: Colors.green, label: 'Completed'),
+            SizedBox(height: 8),
+            _LegendDot(color: Colors.orange, label: 'Open'),
+            SizedBox(height: 8),
+            _LegendDot(color: Colors.red, label: 'In Progress'),
+          ],
+        ),
+      ],
+    );
   }
 }
 
@@ -55,6 +106,14 @@ class _LegendDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [Container(width: 10, height: 10, decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(4))), const SizedBox(width: 6), Text(label, style: const TextStyle(fontSize: 12, color: Colors.white70))]);
+    return Row(children: [
+      Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+              color: color, borderRadius: BorderRadius.circular(4))),
+      const SizedBox(width: 6),
+      Text(label, style: const TextStyle(fontSize: 12, color: Colors.white70))
+    ]);
   }
 }
