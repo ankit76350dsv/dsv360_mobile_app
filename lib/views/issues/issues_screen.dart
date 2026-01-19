@@ -7,6 +7,8 @@ import '../widgets/custom_search_bar.dart';
 import '../widgets/generic_card.dart';
 import 'add_issue_form_screen.dart';
 import 'issue_details_modal_sheet.dart';
+import 'package:dsv360/views/widgets/TopBar.dart';
+import 'package:dsv360/views/dashboard/dashboard_page.dart';
 
 class IssuesScreen extends StatefulWidget {
   const IssuesScreen({super.key});
@@ -216,49 +218,37 @@ class _IssuesScreenState extends State<IssuesScreen> {
       body: Column(
         children: [
           // Header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(24, 32, 16, 16),
-            child: Row(
+          Container(
+            padding: const EdgeInsets.only(top: 48, bottom: 12),
+            child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 5),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.warning_outlined,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                // ---------- Top bar ----------
+                TopBar(
+                  title: 'Issues',
+                  onBack: () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    } else {
+                       Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (_) => const DashboardPage()),
+                      );
+                    }
+                  },
+                  onInfoTap: () {
+                    // hook for info action
+                  },
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Issues',
-                    style: AppTextStyles.bodyLarge.copyWith(
-                      color: AppColors.textPrimary,
-                    ),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: CustomSearchBar(
+                    controller: _searchController,
+                    hintText: 'Search Issues',
+                    onChanged: _filterIssues,
                   ),
                 ),
               ],
-            ),
-          ),
-
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: CustomSearchBar(
-              controller: _searchController,
-              onChanged: _filterIssues,
-              hintText: 'Search issues',
             ),
           ),
 
