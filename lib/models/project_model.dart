@@ -52,22 +52,46 @@ class ProjectModel {
   }
 
   // Create from JSON
+  // Create from JSON
   factory ProjectModel.fromJson(Map<String, dynamic> json) {
     return ProjectModel(
-      id: json['id'],
-      projectName: json['projectName'],
-      status: json['status'],
-      client: json['client'],
-      startDate: DateTime.parse(json['startDate']),
-      endDate: DateTime.parse(json['endDate']),
-      assignedTo: json['assignedTo'],
-      description: json['description'],
-      owner: json['owner'],
-      progress: json['progress'] ?? 0,
-      attachments: List<String>.from(json['attachments'] ?? []),
+      id: json['ROWID']?.toString() ?? json['id']?.toString() ?? '',
+      projectName: json['Project_Name']?.toString() ?? json['projectName']?.toString() ?? 'Unknown Project',
+      status: json['Status']?.toString() ?? json['status']?.toString() ?? 'Unknown',
+      client: json['Client_Name']?.toString() ?? json['client']?.toString() ?? 'Unknown Client',
+      startDate: _parseDate(json['Start_Date'] ?? json['startDate']),
+      endDate: _parseDate(json['End_Date'] ?? json['endDate']),
+      assignedTo: json['Assigned_To']?.toString() ?? json['assignedTo']?.toString(),
+      description: json['Description']?.toString() ?? json['description']?.toString(),
+      owner: json['Owner']?.toString() ?? json['owner']?.toString(),
+      progress: json['progress'] ?? 0, // API doesn't seem to return progress, defaulting to 0
+      attachments: _parseAttachments(json['Files'] ?? json['attachments']),
       tasksCount: json['tasksCount'] ?? 0,
       timeEntriesCount: json['timeEntriesCount'] ?? 0,
     );
+  }
+
+  static DateTime _parseDate(dynamic date) {
+    if (date == null) return DateTime.now();
+    if (date is DateTime) return date;
+    try {
+      return DateTime.parse(date.toString());
+    } catch (_) {
+      return DateTime.now();
+    }
+  }
+
+  static List<String> _parseAttachments(dynamic files) {
+    if (files == null) return [];
+    if (files is List) return List<String>.from(files);
+    if (files is String && files.isNotEmpty) {
+      // Assuming comma separated if string, or just a single file URL? 
+      // The sample showed "Files": "", so safe to default to empty list if empty string.
+      // If actual URLs come as string, we might need logic here. 
+      // For now treating non-empty string as single item list if it looks like a url/path.
+      return [files];
+    }
+    return [];
   }
 
   // Copy with method for updates

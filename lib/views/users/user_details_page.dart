@@ -1,7 +1,7 @@
-import 'package:dsv360/models/project.dart';
+import 'package:dsv360/models/project_model.dart';
 import 'package:dsv360/models/task.dart';
 import 'package:dsv360/models/users.dart';
-import 'package:dsv360/repositories/project_repository.dart';
+import 'package:dsv360/providers/project_provider.dart';
 import 'package:dsv360/repositories/task_repository.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:flutter/material.dart';
@@ -305,7 +305,7 @@ class _InfoTile extends StatelessWidget {
 class _ProjectsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final projectsAsync = ref.watch(projectsRepositoryProvider);
+    final projectsAsync = ref.watch(projectListProvider);
 
     return projectsAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -331,7 +331,7 @@ class _ProjectsTab extends ConsumerWidget {
 }
 
 class _ProjectCard extends StatelessWidget {
-  final Project project;
+  final ProjectModel project;
 
   const _ProjectCard({required this.project});
 
@@ -365,7 +365,7 @@ class _ProjectCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    project.name,
+                    project.projectName,
                     style: textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: colors.onSurface,

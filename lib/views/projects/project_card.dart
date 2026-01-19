@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/project_model.dart';
-import '../../core/services/auth_service.dart';
+import '../../core/constants/auth_manager.dart';
 import '../attachments/attachment_list_modal.dart';
 // import '../../screens/tasks_screen.dart';
 import '../task/tasks_screen.dart';
 import '../issues/issues_screen.dart';
-import 'generic_card.dart';
+import '../widgets/generic_card.dart';
 
 class ProjectCard extends StatelessWidget {
   final ProjectModel project;
@@ -28,7 +28,8 @@ class ProjectCard extends StatelessWidget {
     final dateRange =
         '${dateFormat.format(project.startDate)} - ${dateFormat.format(project.endDate)}';
     
-    final isAdmin = AuthService().isAdmin;
+    final user = AuthManager.instance.currentUser;
+    final isAdmin = user?.role?.name == 'Admin';
 
     // Build chips list based on user role
     final chipsList = <CardChip>[
@@ -93,7 +94,9 @@ class ProjectCard extends StatelessWidget {
     ];
 
     return GenericCard(
-      id: project.id,
+      id: project.id.length > 4 
+          ? 'P${project.id.substring(project.id.length - 4)}' 
+          : 'P${project.id}',
       name: project.projectName,
       status: project.status,
       subtitleIcon: 'business',
