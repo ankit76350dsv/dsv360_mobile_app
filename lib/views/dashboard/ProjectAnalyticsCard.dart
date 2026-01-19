@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dsv360/core/constants/app_colors.dart';
 
 class ProjectAnalyticsCard extends StatelessWidget {
   const ProjectAnalyticsCard({super.key});
@@ -8,6 +9,8 @@ class ProjectAnalyticsCard extends StatelessWidget {
     // constrain chart height so it doesn't overflow on small devices
     final chartHeight = MediaQuery.of(context).size.height * 0.35;
     return Card(
+      elevation: 0,
+      color: AppColors.cardBackground,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -16,19 +19,22 @@ class ProjectAnalyticsCard extends StatelessWidget {
           children: [
             const ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: CircleAvatar(child: Icon(Icons.bar_chart)),
+              leading: CircleAvatar(
+                backgroundColor: AppColors.background,
+                child: Icon(Icons.bar_chart, color: AppColors.textPrimary),
+              ),
               title: Text(
                 'Project Analytics',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
               ),
-              trailing: Icon(Icons.filter_list),
+              trailing: Icon(Icons.filter_list, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 8),
             Container(
               height: chartHeight,
               child: ListView.separated(
                 itemCount: 12,
-                separatorBuilder: (ctx, i) => const Divider(color: Colors.white10),
+                separatorBuilder: (ctx, i) => const Divider(color: AppColors.divider),
                 itemBuilder: (context, index) {
                   return _MonthAnalyticsRow(monthIndex: index);
                 },
@@ -38,11 +44,11 @@ class ProjectAnalyticsCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: const [
-                _LegendDot(color: Colors.green, label: 'Open'),
+                _LegendDot(color: AppColors.statusCompleted, label: 'Open'),
                 SizedBox(width: 8),
-                _LegendDot(color: Colors.orange, label: 'Working'),
+                _LegendDot(color: AppColors.statusInProgress, label: 'Working'),
                 SizedBox(width: 8),
-                _LegendDot(color: Colors.red, label: 'Closed'),
+                _LegendDot(color: AppColors.error, label: 'Closed'),
               ],
             ),
           ],
@@ -80,7 +86,7 @@ class _MonthAnalyticsRow extends StatelessWidget {
             width: 40,
             child: Text(
               monthName,
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white70),
+              style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textSecondary),
             ),
           ),
           const SizedBox(width: 12),
@@ -88,11 +94,11 @@ class _MonthAnalyticsRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _HorizontalBar(label: 'Open', value: open, color: Colors.green),
+                _HorizontalBar(label: 'Open', value: open, color: AppColors.statusCompleted),
                 const SizedBox(height: 4),
-                _HorizontalBar(label: 'Working', value: working, color: Colors.orange),
+                _HorizontalBar(label: 'Working', value: working, color: AppColors.statusInProgress),
                 const SizedBox(height: 4),
-                _HorizontalBar(label: 'Closed', value: closed, color: Colors.red),
+                _HorizontalBar(label: 'Closed', value: closed, color: AppColors.error),
               ],
             ),
           ),
@@ -127,7 +133,7 @@ class _HorizontalBar extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           '${value.toInt()}',
-          style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.6)),
+          style: TextStyle(fontSize: 10, color: AppColors.textPrimary.withOpacity(0.6)),
         ),
       ],
     );
@@ -154,7 +160,7 @@ class _LegendDot extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           label,
-          style: const TextStyle(fontSize: 12, color: Colors.white70),
+          style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
       ],
     );

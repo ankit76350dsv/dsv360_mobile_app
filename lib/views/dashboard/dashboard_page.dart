@@ -1,6 +1,7 @@
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/DashboardTitle.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/views/dashboard/ProjectAnalyticsCard.dart';
 import 'package:dsv360/views/dashboard/StatGrid.dart';
 import 'package:dsv360/views/dashboard/TaskStatusCard.dart';
@@ -23,19 +24,19 @@ class DashboardPage extends StatelessWidget {
     return MaterialApp(
       title: 'DSV-360 Dashboard',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0B0B0D),
-        cardColor: const Color(0xFF0F1113),
+      theme: ThemeData(
+        scaffoldBackgroundColor: AppColors.background,
+        cardColor: AppColors.cardBackground,
         appBarTheme: const AppBarTheme(
           backgroundColor: Colors.transparent,
           elevation: 0,
           centerTitle: false,
           titleTextStyle: TextStyle(
-            color: Colors.white,
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.w600,
           ),
-          iconTheme: IconThemeData(color: Colors.white),
+          iconTheme: IconThemeData(color: AppColors.textPrimary),
         ),
       ),
       home: const _DashboardScaffold(),
@@ -67,11 +68,11 @@ class _DashboardScaffold extends StatelessWidget {
                 margin: const EdgeInsets.all(8.0),
                 child: const CircleAvatar(
                   radius: 16,
-                  backgroundColor: Colors.white12,
+                  backgroundColor: AppColors.inputFill,
                   child: Icon(
                     Icons.person_outline,
                     size: 18,
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),

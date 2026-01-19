@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/projects/projects_screen.dart';
 import 'package:dsv360/views/task/tasks_screen.dart';
@@ -20,20 +21,20 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Drawer(
       child: Container(
-        color: const Color(0xFF0B0C0D),
+        color: AppColors.background,
         child: Column(
           children: [
             DrawerHeader(
               child: Row(
                 children: const [
-                  Icon(Icons.cloud, size: 36, color: Colors.white),
+                  Icon(Icons.cloud, size: 36, color: AppColors.textPrimary),
                   SizedBox(width: 12),
                   Text(
                     'DSV-360',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -177,7 +178,7 @@ class AppDrawer extends StatelessWidget {
             ),
             const Padding(
               padding: EdgeInsets.all(12),
-              child: Text('v1.0.0', style: TextStyle(color: Colors.white30)),
+              child: Text('v1.0.0', style: TextStyle(color: AppColors.textHint)),
             ),
           ],
         ),
@@ -198,8 +199,8 @@ class _DrawerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListTile(
-    leading: Icon(icon, color: Colors.white70),
-    title: Text(label, style: const TextStyle(color: Colors.white70)),
+    leading: Icon(icon, color: AppColors.textSecondary),
+    title: Text(label, style: const TextStyle(color: AppColors.textSecondary)),
     onTap: () {
       // Navigator.pop(context); // Handled by parent
       onTap();

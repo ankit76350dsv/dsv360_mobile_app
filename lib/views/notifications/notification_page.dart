@@ -1,6 +1,7 @@
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
+import 'package:dsv360/core/constants/app_colors.dart';
 
 
 class NotificationPage extends StatelessWidget {
@@ -11,9 +12,9 @@ class NotificationPage extends StatelessWidget {
     return MaterialApp(
       title: 'Notifications',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0B0B0D),
-        cardColor: const Color(0xFF0F1113),
+      theme: ThemeData(
+        scaffoldBackgroundColor: AppColors.background,
+        cardColor: AppColors.cardBackground,
       ),
       home: const NotificationListWithTopBarPage(),
     );
@@ -32,7 +33,7 @@ class NotificationListWithTopBarPage extends StatelessWidget {
           title: 'Your casual leave request for 12 Nov has been approved',
           subtitle: 'By HR Team',
           logoText: 'L',
-          logoColor: Colors.green,
+          logoColor: Colors.green, // Keep specific status colors
         ),
         NotificationItem.logo(
           tag: 'Leave Rejected',
@@ -220,10 +221,10 @@ class _NotificationCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFF0F1113),
+          color: AppColors.cardBackground,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white10),
-          boxShadow: const [
+          border: Border.all(color: AppColors.divider),
+          boxShadow: [
             BoxShadow(
               color: Colors.black26,
               blurRadius: 4,
@@ -250,7 +251,7 @@ class _NotificationCard extends StatelessWidget {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       height: 1.25,
-                      color: Colors.white,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   if (item.subtitle.isNotEmpty) ...[
@@ -258,7 +259,7 @@ class _NotificationCard extends StatelessWidget {
                     Text(
                       item.subtitle,
                       style: const TextStyle(
-                        color: Color(0xFF9CA3AF),
+                        color: AppColors.textSecondary,
                         fontSize: 13,
                       ),
                     ),
@@ -286,15 +287,15 @@ class _NotificationCard extends StatelessWidget {
           child: Text(
             item.logoText ?? '',
             style: const TextStyle(
-                fontWeight: FontWeight.bold, color: Colors.white),
+                fontWeight: FontWeight.bold, color: AppColors.textWhite),
           ),
         );
       case LeadingType.check:
         return Container(
           width: 44,
           height: 44,
-          decoration: const BoxDecoration(
-            color: Color(0xFF0B1220),
+          decoration: BoxDecoration(
+            color: AppColors.inputFill,
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.check_circle, color: Color(0xFF24C16E)),
@@ -304,9 +305,9 @@ class _NotificationCard extends StatelessWidget {
           radius: 22,
           backgroundImage:
               item.avatarUrl != null ? NetworkImage(item.avatarUrl!) : null,
-          backgroundColor: const Color(0xFF2A2A2A),
+          backgroundColor: AppColors.inputFill,
           child: item.avatarUrl == null
-              ? const Icon(Icons.person, color: Colors.white54)
+              ? const Icon(Icons.person, color: AppColors.textHint)
               : null,
         );
     }

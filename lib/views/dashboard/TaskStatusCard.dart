@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:dsv360/core/constants/app_colors.dart';
 
 
 
@@ -10,6 +11,8 @@ class TaskStatusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height * 0.28;
     return Card(
+      elevation: 0,
+      color: AppColors.cardBackground,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
@@ -17,12 +20,15 @@ class TaskStatusCard extends StatelessWidget {
           children: [
             const ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: CircleAvatar(child: Icon(Icons.schedule)),
+              leading: CircleAvatar(
+                backgroundColor: AppColors.background,
+                child: Icon(Icons.schedule, color: AppColors.textPrimary),
+              ),
               title: Text(
                 'Task Status',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
               ),
-              trailing: Icon(Icons.filter_list),
+              trailing: Icon(Icons.filter_list, color: AppColors.textSecondary),
             ),
             ConstrainedBox(
               constraints: BoxConstraints(maxHeight: height, minHeight: 140),
@@ -47,34 +53,34 @@ class TaskStatusContent extends StatelessWidget {
               centerSpaceRadius: 30,
               sections: [
                 PieChartSectionData(
-                  color: Colors.green,
+                  color: AppColors.statusCompleted,
                   value: 40,
                   title: '40%',
                   radius: 40,
                   titleStyle: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white),
+                      color: AppColors.textWhite),
                 ),
                 PieChartSectionData(
-                  color: Colors.orange,
+                  color: AppColors.statusInProgress,
                   value: 30,
                   title: '30%',
                   radius: 40,
                   titleStyle: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white),
+                      color: AppColors.textWhite),
                 ),
                 PieChartSectionData(
-                  color: Colors.red,
+                  color: AppColors.error,
                   value: 30,
                   title: '30%',
                   radius: 40,
                   titleStyle: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white),
+                      color: AppColors.textWhite),
                 ),
               ],
             ),
@@ -85,11 +91,11 @@ class TaskStatusContent extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: const [
-            _LegendDot(color: Colors.green, label: 'Completed'),
+            _LegendDot(color: AppColors.statusCompleted, label: 'Completed'),
             SizedBox(height: 8),
-            _LegendDot(color: Colors.orange, label: 'Open'),
+            _LegendDot(color: AppColors.statusInProgress, label: 'Open'),
             SizedBox(height: 8),
-            _LegendDot(color: Colors.red, label: 'In Progress'),
+            _LegendDot(color: AppColors.error, label: 'In Progress'),
           ],
         ),
       ],
@@ -113,7 +119,7 @@ class _LegendDot extends StatelessWidget {
           decoration: BoxDecoration(
               color: color, borderRadius: BorderRadius.circular(4))),
       const SizedBox(width: 6),
-      Text(label, style: const TextStyle(fontSize: 12, color: Colors.white70))
+      Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))
     ]);
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dsv360/core/constants/app_colors.dart';
 
 class StatGrid extends StatelessWidget {
   final bool isLarge;
@@ -36,7 +37,8 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
+      elevation: 0,
+      color: AppColors.cardBackground,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
         child: Column(
@@ -49,7 +51,7 @@ class _StatCard extends StatelessWidget {
                 Text(
                   value,
                   style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold),
+                      fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                 ),
                 CircleAvatar(
                   backgroundColor: color.withOpacity(0.18),
@@ -61,7 +63,7 @@ class _StatCard extends StatelessWidget {
             const Spacer(),
             Text(
               title,
-              style: const TextStyle(color: Colors.white70, fontSize: 13),
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
           ],
         ),

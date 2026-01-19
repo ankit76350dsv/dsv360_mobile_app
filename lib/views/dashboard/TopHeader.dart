@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dsv360/core/constants/app_colors.dart';
 
 class TopHeader extends StatelessWidget {
   final bool isLarge;
@@ -98,13 +99,13 @@ class _RightMetric extends StatelessWidget {
               CircularProgressIndicator(
                 value: 0.0,
                 strokeWidth: 5 * scale,
-                color: Colors.white24,
-                backgroundColor: Colors.white12,
+                color: AppColors.textWhite.withOpacity(0.24), // Colors.white24
+                backgroundColor: AppColors.textWhite.withOpacity(0.12), // Colors.white12
               ),
               Text(
                 percentText,
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.textWhite,
                   fontSize: 12 * scale,
                   fontWeight: FontWeight.bold,
                 ),
@@ -116,14 +117,14 @@ class _RightMetric extends StatelessWidget {
         Text(
           smallLabel,
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.white70, fontSize: 11 * scale),
+          style: TextStyle(color: AppColors.textWhite.withOpacity(0.7), fontSize: 11 * scale),
         ),
         SizedBox(height: 2 * scale),
         Text(
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-              color: Colors.white,
+              color: AppColors.textWhite,
               fontSize: 10 * scale,
               fontWeight: FontWeight.w500),
         ),

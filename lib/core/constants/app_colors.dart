@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 // ==================== THEME SELECTOR ====================
 
-typedef AppColors = AppColorsDark;  
-// typedef AppColors = AppColorsLight;  
+// typedef AppColors = AppColorsDark;  
+typedef AppColors = AppColorsLight;  
 
 
 // ==================== DARK THEME COLORS ====================
