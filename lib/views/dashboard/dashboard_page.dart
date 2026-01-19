@@ -1,11 +1,13 @@
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/views/dashboard/DashboardTitle.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/views/dashboard/ProjectAnalyticsCard.dart';
 import 'package:dsv360/views/dashboard/StatGrid.dart';
 import 'package:dsv360/views/dashboard/TaskStatusCard.dart';
 import 'package:dsv360/views/dashboard/TopHeader.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
+import 'package:dsv360/views/profile/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -89,6 +91,14 @@ class _DashboardScaffold extends ConsumerWidget {
             },
             icon: const Icon(Icons.notifications_none),
           ),
+          IconButton(
+            onPressed: () {
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const ProfilePage()));
+            },
+            icon: const Icon(Icons.account_circle_outlined),
+          ),
           const SizedBox(width: 12),
         ],
       ),
@@ -106,11 +116,16 @@ class _DashboardScaffold extends ConsumerWidget {
                       child: Padding(
                         padding: const EdgeInsets.all(16),
                         child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            TopHeader(isLarge: isLarge),
-                            const SizedBox(height: 16),
+                            const DashboardTitle(),
+                            const SizedBox(height: 24),
+                            // TopHeader(isLarge: isLarge),
+                            // const SizedBox(height: 16),
                             StatGrid(isLarge: isLarge),
                             const SizedBox(height: 16),
+                            TopHeader(isLarge: isLarge),
+                            // const SizedBox(height: 16),
                           ],
                         ),
                       ),

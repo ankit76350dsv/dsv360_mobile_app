@@ -1,57 +1,61 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 
-/// --- Top bar widget (back button left, centered title, info ':' on right) ---
 class TopBar extends StatelessWidget {
   final String title;
   final VoidCallback? onBack;
   final VoidCallback? onInfoTap;
 
-  const TopBar({required this.title, this.onBack, this.onInfoTap});
+  const TopBar({
+    super.key,
+    required this.title,
+    this.onBack,
+    this.onInfoTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 64,
-      // padding: const EdgeInsets.symmetric(horizontal: 6),
-      // keep visually minimal like your screenshot
-      child: Stack(
-        alignment: Alignment.center,
+    return SizedBox(
+      height: 56,
+      child: Row(
         children: [
-          // Back button (left)
-          Positioned(
-            left: 0,
-            child: IconButton(
-              onPressed: onBack,
-              icon: const Icon(Icons.arrow_back_ios, size: 18),
-              color: const Color.fromARGB(179, 255, 255, 255),
-              splashRadius: 20,
+          /// Back button
+          IconButton(
+            splashRadius: 20,
+            onPressed: onBack,
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              size: 18,
             ),
+            color: Colors.white70,
           ),
 
-          // Center title
-          Center(
+          /// Title
+          Expanded(
             child: Text(
               title,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                color: Color.fromARGB(179, 255, 255, 255),
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
+                color: Colors.white70,
               ),
             ),
           ),
 
-          // more info inside a small circle on right
-          Positioned(
-            right: 4,
-            child: GestureDetector(
-                child: IconButton(
-                  onPressed: onInfoTap,
-                  icon: Icon(Platform.isAndroid ? Icons.more_vert : Icons.more_horiz,size: 18),
-                  color: const Color.fromARGB(179, 255, 255, 255),
-                  splashRadius: 20,
-                // ),
-              ),
+          /// More / Info button
+          IconButton(
+            splashRadius: 20,
+            onPressed: onInfoTap,
+            icon: Icon(
+              Platform.isAndroid
+                  ? Icons.more_vert
+                  : Icons.more_horiz,
+              size: 18,
             ),
+            color: Colors.white70,
           ),
         ],
       ),

@@ -243,7 +243,7 @@ class _ProjectsScreenState extends State<ProjectsScreen> {
                   },
                 ),
 
-              
+               // Search Bar
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: CustomSearchBar(

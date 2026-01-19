@@ -12,6 +12,7 @@ import '../attachments/attachment_list_modal.dart';
 import 'add_task_dialog.dart';
 import 'task_details_dialog.dart';
 // import '../../screens/add_time_entry_dialog.dart';
+import 'package:dsv360/views/dashboard/AppDrawer.dart';
 
 class TasksScreen extends StatefulWidget {
   final String? projectId;
@@ -211,6 +212,7 @@ class _TasksScreenState extends State<TasksScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
+      drawer: const AppDrawer(),
       body: Column(
         children: [
           // Header
@@ -239,30 +241,23 @@ class _TasksScreenState extends State<TasksScreen> {
                   },
                 ),
 
-                //Padding(
-                //   padding: const EdgeInsets.symmetric(
-                //     horizontal: 16,
-                //     vertical: 8,
-                //   ),
-                //   child: CustomSearchBar(
-                //     controller: _searchController,
-                //     onChanged: _filterTasks,
-                //     hintText: 'Search task',
-                //   ),
-                // ),
+                // Search Bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: CustomSearchBar(
+                    controller: _searchController,
+                    onChanged: _filterTasks,
+                    hintText: 'Search task',
+                  ),
+                ),
               ],
             ),
           ),
 
-          // Search Bar
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: CustomSearchBar(
-              controller: _searchController,
-              onChanged: _filterTasks,
-              hintText: 'Search task',
-            ),
-          ),
+    
 
           // Task List
           Expanded(

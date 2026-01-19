@@ -99,7 +99,7 @@ class NotificationListWithTopBarPage extends StatelessWidget {
               children: [
                 // ---------- Top bar ----------
                   TopBar(
-                  title: 'Projects',
+                  title: 'Notifications',
                   onBack: () {
                     if (Navigator.canPop(context)) {
                       debugPrint("pop-pop-pop-pop-pop-pop-pop-pop-pop");
