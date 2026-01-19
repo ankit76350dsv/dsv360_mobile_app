@@ -11,6 +11,8 @@ class LeaveDetailsPage extends StatelessWidget {
 
   const LeaveDetailsPage({super.key, required this.leave, this.leaveSummary});
 
+  final String bottomTwoButtonsLoadingKey = 'leave_details_key';
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -116,6 +118,7 @@ class LeaveDetailsPage extends StatelessWidget {
                     const SizedBox(height: 32.0),
 
                     BottomTwoButtons(
+                      loadingKey: bottomTwoButtonsLoadingKey,
                       button1Text: "reject",
                       button2Text: "approve",
                       button1Function: () => _showRejectDialog(context),

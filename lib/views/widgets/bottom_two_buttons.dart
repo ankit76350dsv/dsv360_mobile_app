@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class BottomTwoButtons extends StatelessWidget {
+final submitLoadingProvider = StateProvider.family<bool, String>((ref, key) => false);
+
+class BottomTwoButtons extends ConsumerWidget {
+  final String loadingKey; 
   final String button1Text;
   final String button2Text;
   final VoidCallback button1Function;
@@ -8,6 +12,7 @@ class BottomTwoButtons extends StatelessWidget {
 
   const BottomTwoButtons({
     super.key,
+    required this.loadingKey,
     required this.button1Text,
     required this.button2Text,
     required this.button1Function,
@@ -15,8 +20,9 @@ class BottomTwoButtons extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).colorScheme;
+    final isLoading = ref.watch(submitLoadingProvider(loadingKey));
 
     return Row(
       children: [
@@ -47,7 +53,7 @@ class BottomTwoButtons extends StatelessWidget {
         const SizedBox(width: 12),
         Expanded(
           child: ElevatedButton(
-            onPressed: button2Function,
+            onPressed: isLoading ? (){} : button2Function,
             style: ElevatedButton.styleFrom(
               backgroundColor: colors.primary,
               foregroundColor: colors.onPrimary,
@@ -60,7 +66,16 @@ class BottomTwoButtons extends StatelessWidget {
                 )
               ),
             ),
-            child: Text(
+            child: isLoading
+                ? SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(
               button2Text.toUpperCase(),
               style: const TextStyle(
                 fontSize: 14,

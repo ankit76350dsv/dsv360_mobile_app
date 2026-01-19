@@ -21,6 +21,7 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
   String? _selectedBadgeLevel;
   String? _selectedUserName;
   String? _selectedBadgeName;
+  String bottomTwoButtonsLoadingKey = 'assign_badge_key';
 
   final selectedBadgeNameProvider = StateProvider<String?>((ref) => null);
   final selectedBadgeLevelProvider = StateProvider<String?>((ref) => null);
@@ -230,6 +231,7 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
                       const SizedBox(height: 32),
                       // buttons
                       BottomTwoButtons(
+                        loadingKey: bottomTwoButtonsLoadingKey,
                         button1Text: "cancel",
                         button2Text: "assign badge",
                         button1Function: () {

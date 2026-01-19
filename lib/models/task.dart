@@ -1,5 +1,6 @@
 class Task {
   final String taskName;
+  final String taskId;
   final String description;
   final String status;
   final String projectId;
@@ -11,6 +12,7 @@ class Task {
 
   Task({
     required this.taskName,
+    required this.taskId,
     required this.description,
     required this.status,
     required this.projectId,
@@ -24,6 +26,7 @@ class Task {
   factory Task.fromJson(Map<String, dynamic> json) {
     return Task(
       taskName: json['Task_Name']?.toString() ?? "",
+      taskId: json['ROWID']?.toString() ?? "",
       description: json['Description']?.toString() ?? "",
       status: json['Status']?.toString() ?? "",
       projectId: json['ProjectID']?.toString() ?? "",

@@ -212,29 +212,30 @@ class _InfoTab extends ConsumerWidget {
             label: "Email Address",
             value: user.emailAddress,
           ),
-          _InfoTile(
-            icon: Icons.report_gmailerrorred,
-            label: "Reporting To",
-            value: user.reporterName,
-            buttonWidget: CustomCardButton(
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(16),
-                    ),
-                  ),
-                  builder: (_) => ReportingManagerBottomSheet(
-                    usersAsync: usersAsync,
-                    userOptions: userOptions,
-                  ),
-                );
-              },
-              icon: Icons.edit,
-            ),
-          ),
+          // _InfoTile(
+          //   icon: Icons.report_gmailerrorred,
+          //   label: "Reporting To",
+          //   value: user.reporterName,
+          //   buttonWidget: CustomCardButton(
+          //     onTap: () {
+          //       showModalBottomSheet(
+          //         context: context,
+          //         isScrollControlled: true,
+          //         shape: const RoundedRectangleBorder(
+          //           borderRadius: BorderRadius.vertical(
+          //             top: Radius.circular(16),
+          //           ),
+          //         ),
+          //         builder: (_) => ReportingManagerBottomSheet(
+          //           usersAsync: usersAsync,
+          //           userOptions: userOptions,
+          //         ),
+          //       );
+          //     },
+          //     icon: Icons.edit,
+          //   ),
+          // ),
+        
         ],
       ),
     );
@@ -372,6 +373,8 @@ class ReportingManagerBottomSheet extends ConsumerWidget {
     required this.userOptions,
   });
 
+  final String bottomTwoButtonsLoadingKey = 'reporting_manager_key';
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedManager = ref.watch(reportingManagerProvider);
@@ -444,6 +447,7 @@ class ReportingManagerBottomSheet extends ConsumerWidget {
             const SizedBox(height: 10),
             // bottom buttons
             BottomTwoButtons(
+              loadingKey: bottomTwoButtonsLoadingKey,
               button1Text: 'Cancel',
               button2Text: 'save changes',
               button1Function: () => Navigator.pop(context),
@@ -656,8 +660,8 @@ class _TaskCard extends StatelessWidget {
               children: [
                 // Status chip
                 CustomChip(
-                  label: task.status, 
-                  color: colors.primaryContainer, 
+                  label: task.status,
+                  color: colors.primaryContainer,
                   icon: null,
                 ),
 

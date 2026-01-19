@@ -31,9 +31,9 @@ class DioClient {
     );
 
     // Automatically logs: Request URL, Headers, Body, Response body
-    // _dio.interceptors.add(
-    //   LogInterceptor(requestBody: true, responseBody: true),
-    // );
+    _dio.interceptors.add(
+      LogInterceptor(requestBody: true, responseBody: true),
+    );
   }
 
   Future<Response> get(
@@ -94,12 +94,12 @@ class DioClient {
   Future<Response?> post(
     String path,
     {
-      FormData? formData,
+      dynamic data,
       Map<String, dynamic>? queryParameters,
       Options? options,
       List<MultipartFile>? attachments}) async {
     try {
-      // // Token interceptor added ONCE here
+      // Token interceptor added ONCE here
       // _dio.interceptors.add(InterceptorsWrapper(
       //   onRequest: (options, handler) {
       //     // final token = TokenManager.instance.token;
@@ -112,7 +112,7 @@ class DioClient {
 
       final response = await _dio.post(
         path,
-        data: formData,
+        data: data,
         options: options,
         queryParameters: queryParameters
       );

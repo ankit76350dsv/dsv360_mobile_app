@@ -37,6 +37,14 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
   }
 
   @override
+  void didUpdateWidget(covariant CustomDropDownField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedOption != widget.selectedOption) {
+      _selectedOption = widget.selectedOption;
+    }
+  }
+
+  @override
   void dispose() {
     _focusNode.removeListener(_updateFocusState);
     _focusNode.dispose();
@@ -135,6 +143,7 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
         items: widget.options,
         onChanged: (value) {
           setState(() => _selectedOption = value);
+          widget.onChanged(value);
         },
       ),
     );

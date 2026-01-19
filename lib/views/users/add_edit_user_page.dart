@@ -26,7 +26,7 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
 
-  String? _role;
+  String? _roleId;
 
   @override
   void initState() {
@@ -40,7 +40,7 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
       _lastNameController.text = user.lastName;
 
       _emailController.text = user.emailAddress;
-      _role = user.role;
+      _roleId = user.roleId;
     }
   }
 
@@ -49,13 +49,38 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
       "first_name": _firstNameController.text.trim(),
       "last_name": _lastNameController.text.trim(),
       "email_id": _emailController.text.trim(),
-      "role_id": _role, // this is roleId not label
+      "role_id": _roleId.toString(), // this is roleId not label
     };
   }
+
+  String bottomTwoButtonsLoadingKey = 'add_edit_user';
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+
+    const Map<String, String> rolesMap = {
+      "App Administrator": "17682000000037211",
+      "App User": "17682000000037213",
+      "Admin": "17682000000035329",
+      "Super Admin": "17682000000035338",
+      "Intern": "17682000000035343",
+      "Manager/Team Lead": "17682000000035348",
+      "Team Lead": "17682000000035353",
+      "Developer": "17682000000035358",
+      "Contacts": "17682000000035363",
+      "Business Analyst": "17682000000035368",
+      "MIS Analyst": "17682000000434126",
+      "Sales": "17682000000659420",
+      "Pre Sales": "17682000000659425",
+    };
+
+    final roleOptions = rolesMap.entries.map((entry) {
+      return DropdownMenuItem<String>(
+        value: entry.value, // 👈 role_id (IMPORTANT)
+        child: Text(entry.key), // 👈 role name
+      );
+    }).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -123,30 +148,11 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
                       /// Role
                       CustomDropDownField(
                         hintText: "Select Role",
-                        labelText: "tole",
+                        labelText: "Role",
                         prefixIcon: Icons.business,
-                        selectedOption: _role,
-                        options: [
-                          // these are hardcoded, need to change here
-                          // ✍️✍️✍️✍️✍️✍️✍️✍️✍️✍️✍️✍️
-                          DropdownMenuItem(
-                            value: '17682000000035329',
-                            child: Text('Admin'),
-                          ),
-                          DropdownMenuItem(
-                            value: '17682000000035348',
-                            child: Text('Manager/Team Lead'),
-                          ),
-                          DropdownMenuItem(
-                            value: '17682000000035343',
-                            child: Text('Intern'),
-                          ),
-                          DropdownMenuItem(
-                            value: '17682000000035358',
-                            child: Text('Developer'),
-                          ),
-                        ],
-                        onChanged: (value) => setState(() => _role = value),
+                        selectedOption: _roleId,
+                        options: roleOptions,
+                        onChanged: (value) => setState(() => _roleId = value),
                       ),
                       const SizedBox(height: 16),
 
@@ -172,6 +178,7 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
                       const SizedBox(height: 32),
                       // buttons
                       BottomTwoButtons(
+                        loadingKey: bottomTwoButtonsLoadingKey,
                         button1Text: "cancel",
                         button2Text: isEditing ? 'SAVE CHANGES' : 'ADD USER',
                         button1Function: () {
@@ -179,26 +186,41 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
                         },
                         button2Function: () async {
                           if (!_formKey.currentState!.validate()) return;
+                          ref
+                                  .read(
+                                    submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier,
+                                  )
+                                  .state =
+                              true;
 
                           final body = _buildRequestBody();
-
                           try {
                             if (isEditing) {
                               // UPDATE USER (example)
-                              // await DioClient.instance.put(
-                              //   '/server/time_entry_management_application_function/UpdateEmployee',
-                              //   : body,
-                              // );
+                              await DioClient.instance.post(
+                                '/server/time_entry_management_application_function/UpdateEmployee/${widget.user!.userId}',
+                                data: body,
+                              );
                             } else {
-                              // ADD USER
                               final formData = FormData.fromMap(body);
+                              // ADD USER
                               await DioClient.instance.post(
                                 '/server/time_entry_management_application_function/AddEmployees',
-                                formData: formData,
+                                data: formData,
                               );
                             }
 
                             Navigator.pop(context, true); // success
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  isEditing
+                                      ? 'User updated successfully'
+                                      : 'User added successfully',
+                                ),
+                              ),
+                            );
 
                             // throw current state and rebuild it from scratch
                             ref.invalidate(usersRepositoryProvider);
@@ -210,6 +232,15 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
                                 content: Text('Failed to save user'),
                               ),
                             );
+                          } finally {
+                            ref
+                                .read(
+                                  submitLoadingProvider(
+                                    bottomTwoButtonsLoadingKey,
+                                  ).notifier,
+                                )
+                                .state =
+                            false;
                           }
                         },
                       ),

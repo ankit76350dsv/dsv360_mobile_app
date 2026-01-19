@@ -33,6 +33,8 @@ class _ApplyEditLeavePageState extends State<ApplyEditLeavePage> {
     return _endDate!.difference(_startDate!).inDays + 1;
   }
 
+  String bottomTwoButtonsLoadingKey = 'apply_edit_leave_key';
+
   @override
   void initState() {
     super.initState();
@@ -130,28 +132,28 @@ class _ApplyEditLeavePageState extends State<ApplyEditLeavePage> {
 
                       /// Start Date
                       CustomPickerField(
-                        label: 'Start Date', 
+                        label: 'Start Date',
                         valueText: _startDate == null
-      ? null
-      : DateFormat('dd/MM/yyyy').format(_startDate!),
-  placeholder: 'dd/mm/yyyy',
-  onTap: () => _pickDate(true),
+                            ? null
+                            : DateFormat('dd/MM/yyyy').format(_startDate!),
+                        placeholder: 'dd/mm/yyyy',
+                        onTap: () => _pickDate(true),
                       ),
                       const SizedBox(height: 16),
 
                       /// End Date
                       CustomPickerField(
-                        label: 'End Date', 
+                        label: 'End Date',
                         valueText: _endDate == null
-      ? null
-      : DateFormat('dd/MM/yyyy').format(_endDate!),
-  placeholder: 'dd/mm/yyyy',
-  onTap: () => _pickDate(false),
+                            ? null
+                            : DateFormat('dd/MM/yyyy').format(_endDate!),
+                        placeholder: 'dd/mm/yyyy',
+                        onTap: () => _pickDate(false),
                       ),
                       const SizedBox(height: 16),
 
                       /// Reason
-                       CustomInputField(
+                      CustomInputField(
                         controller: _reasonController,
                         hintText: 'Enter Reason',
                         labelText: 'Reason',
@@ -170,6 +172,7 @@ class _ApplyEditLeavePageState extends State<ApplyEditLeavePage> {
                       const SizedBox(height: 32),
                       // buttons
                       BottomTwoButtons(
+                        loadingKey: bottomTwoButtonsLoadingKey,
                         button1Text: "cancel",
                         button2Text: isEditing ? 'SAVE CHANGES' : 'SUBMIT',
                         button1Function: () {

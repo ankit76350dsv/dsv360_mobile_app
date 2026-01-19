@@ -23,6 +23,8 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
   String? _badgeLevel;
   String? _badgeLogo;
 
+  String bottomTwoButtonsLoadingKey = 'add_edit_badge_key';
+
   @override
   void initState() {
     super.initState();
@@ -154,6 +156,7 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
                       const SizedBox(height: 32),
                       // buttons
                       BottomTwoButtons(
+                        loadingKey: bottomTwoButtonsLoadingKey,
                         button1Text: "cancel", 
                         button2Text: isEditing ? "save changes" : "add badge",
                         button1Function: () {
