@@ -4,6 +4,7 @@ import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/views/widgets/TopBar.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -17,9 +18,17 @@ class ProfilePage extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: SingleChildScrollView(
+      body: SafeArea(
         child: Column(
           children: [
+            TopBar(
+              title: 'Profile',
+              onBack: () => Navigator.pop(context),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
             // --- Header Section ---
             Stack(
               clipBehavior: Clip.none,
@@ -344,6 +353,10 @@ class ProfilePage extends StatelessWidget {
 
                   const SizedBox(height: 40),
                 ],
+              ),
+            ),
+                  ],
+                ),
               ),
             ),
           ],

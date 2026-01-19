@@ -1,4 +1,3 @@
-import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/core/constants/app_colors.dart';
@@ -6,23 +5,6 @@ import 'package:dsv360/core/constants/app_colors.dart';
 
 class NotificationPage extends StatelessWidget {
   const NotificationPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Notifications',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        scaffoldBackgroundColor: AppColors.background,
-        cardColor: AppColors.cardBackground,
-      ),
-      home: const NotificationListWithTopBarPage(),
-    );
-  }
-}
-
-class NotificationListWithTopBarPage extends StatelessWidget {
-  const NotificationListWithTopBarPage({super.key});
 
   final double horizontalPadding = 14;
 
@@ -92,51 +74,28 @@ class NotificationListWithTopBarPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = _items();
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: Column(
-              children: [
-                // ---------- Top bar ----------
-                  TopBar(
-                  title: 'Notifications',
-                  onBack: () {
-                    if (Navigator.canPop(context)) {
-                      debugPrint("pop-pop-pop-pop-pop-pop-pop-pop-pop");
-                      Navigator.pop(context);
-                    } else {
-                      debugPrint("pushReplacement-pushReplacementpush-Replacement");
-
-                       Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (_) => const DashboardPage()),
-                      );
-                    }
-                  },
-                  onInfoTap: () {
-                    // hook for info action
-                    // you can open a dialog or screen here
-                  },
-                ),
-
-                // ---------- Notifications list only ----------
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                    child: ListView.separated(
-                      padding: const EdgeInsets.only(top: 18, bottom: 24),
-                      itemCount: items.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        return _NotificationCard(item: items[index]);
-                      },
-                    ),
-                  ),
-                ),
-              ],
+        child: Column(
+          children: [
+            TopBar(
+              title: 'Notifications',
+              onBack: () => Navigator.pop(context),
             ),
-          ),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                child: ListView.separated(
+                  padding: const EdgeInsets.only(top: 18, bottom: 24),
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    return _NotificationCard(item: items[index]);
+                  },
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
