@@ -31,29 +31,4 @@ class Account {
       rowId: json['ROWID']?.toString() ?? '',
     );
   }
-
-  /// Convert model back to JSON (optional)
-  Map<String, dynamic> toJson() => {
-        'Org_Name': orgName,
-        'Status': status,
-        'Email': email,
-        'Org_Img': orgImg ?? '',
-        'Website': website,
-        'Org_Type': orgType,
-        'ROWID': rowId,
-      };
-
-  // ------------------
-  // Helper getters (UI friendly)
-  // ------------------
-
-  bool get hasLogo => orgImg != null && orgImg!.isNotEmpty;
-
-  String get formattedOrgType => orgType;
-
-  String get formattedStatus => status;
-
-  String get displayEmail => email;
-
-  String get displayWebsite => website.isEmpty ? 'N/A' : website;
 }

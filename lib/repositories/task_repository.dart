@@ -19,7 +19,7 @@ class TasksListRepository extends _$TasksListRepository {
   Future<List<Task>> fetchTasks(String userId) async {
     try {
       final response = await DioClient.instance.get(
-        '/server/time_entry_management_application_function/emp/$userId',
+        'time_entry_management_application_function/emp/$userId',
       );
       debugPrint("Response From fetchTasks: $response");
 

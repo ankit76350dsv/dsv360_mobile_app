@@ -183,4 +183,35 @@ class DioClient {
       throw Exception('Unexpected error in GET request: $e');
     }
   }
+
+  /// Public method to make a DELETE request
+  Future<Response> delete(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    dynamic data,
+  }) async {
+    try {
+      final response = await _dio.delete(
+        path,
+        queryParameters: queryParameters,
+        options: options,
+        data: data, // optional body (some APIs need this)
+      );
+
+      debugPrint("DioClient response: ${response.data}");
+      debugPrint("DioClient response code: ${response.statusCode}");
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return response;
+      } else {
+        throw Exception('Unexpected status code: ${response.statusCode}');
+      }
+    } on DioException catch (e, trace) {
+      throw Exception('Dio DELETE request failed: ${e.message} $trace');
+    } catch (e, trace) {
+      throw Exception('Unexpected error in DELETE request: $e $trace');
+    }
+  }
+
 }
