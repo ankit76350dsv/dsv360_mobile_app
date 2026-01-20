@@ -17,14 +17,13 @@ import 'package:dsv360/views/settings/settings_page.dart';
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
+
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.8, // 80% screen
       child: Drawer(
+        backgroundColor: AppColors.background,
         child: SafeArea(
           bottom: false,
           child: CustomScrollView(
@@ -35,7 +34,7 @@ class AppDrawer extends StatelessWidget {
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 6),
                       decoration: BoxDecoration(
-                        color: colors.surface,
+                        color: AppColors.surfaceBackground,
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                       height: 56, // standard app bar height
@@ -47,7 +46,7 @@ class AppDrawer extends StatelessWidget {
                           Positioned(
                             left: 0,
                             child: IconButton(
-                              icon: const Icon(Icons.arrow_back),
+                              icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
                               onPressed: () {
                                 Navigator.pop(context);
                               },
@@ -70,7 +69,7 @@ class AppDrawer extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xff004aae),
+                                  color: AppColors.primary,
                                 ),
                               ),
                             ],
@@ -91,7 +90,6 @@ class AppDrawer extends StatelessWidget {
                     label: 'Dashboard',
                     subLabel: 'Overview & stats',
                     onTap: () {
-                      // For Dashboard, we DO want to close the drawer and go to root
                       Navigator.pop(context);
                       Navigator.popUntil(context, (route) => route.isFirst);
                     },
@@ -101,7 +99,6 @@ class AppDrawer extends StatelessWidget {
                     label: 'Projects',
                     subLabel: 'Manage ongoing work',
                     onTap: () {
-                      // Do NOT close drawer
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -243,21 +240,29 @@ class AppDrawer extends StatelessWidget {
                       Text(
                         'Made by DSV-360',
                         textAlign: TextAlign.center,
-                        style: textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600
+                        style: TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14, // bodyLarge approximation
                         ),
                       ),
                       const SizedBox(height: 30.0),
                       Text(
                         'DSV-360 — A unified platform to manage people, projects, and performance.',
                         textAlign: TextAlign.center,
-                        style: textTheme.bodySmall,
+                        style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12, // bodySmall approximation
+                        ),
                       ),
                       const SizedBox(height: 20),
                       Text(
                         textAlign: TextAlign.center,
                         'v1.0.0',
-                        style: textTheme.bodySmall,
+                        style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12, // bodySmall approximation
+                        ),
                       ),
                     ],
                   ),
@@ -271,14 +276,11 @@ class AppDrawer extends StatelessWidget {
   }
 
   Widget ProfileCardUi(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
-
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
       padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: colors.surface,
+        color: AppColors.surfaceBackground,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -298,9 +300,9 @@ class AppDrawer extends StatelessWidget {
                   width: 14,
                   height: 14,
                   decoration: BoxDecoration(
-                    color: Colors.green,
+                    color: AppColors.statusCompleted,
                     shape: BoxShape.circle,
-                    border: Border.all(color: colors.surface, width: 2),
+                    border: Border.all(color: AppColors.surfaceBackground, width: 2),
                   ),
                 ),
               ),
@@ -309,13 +311,18 @@ class AppDrawer extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             "Aman Jain",
-            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            style: TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
+                fontSize: 16, // titleMedium approximation
+            ),
           ),
           const SizedBox(height: 2),
           Text(
             "Manager",
-            style: textTheme.bodySmall?.copyWith(
-              color: colors.onSurfaceVariant,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12, // bodySmall approximation
             ),
           ),
         ],
@@ -340,13 +347,10 @@ class _DrawerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
-
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       child: Material(
-        color: colors.surface,
+        color: AppColors.surfaceBackground,
         borderRadius: BorderRadius.circular(8),
         clipBehavior: Clip.antiAlias, // 👈 clips splash inside radius
         child: InkWell(
@@ -362,7 +366,7 @@ class _DrawerItem extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(icon, size: 20, color: colors.onSurfaceVariant),
+                    Icon(icon, size: 20, color: AppColors.textSecondary),
 
                     const SizedBox(width: 16),
 
@@ -370,8 +374,8 @@ class _DrawerItem extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(label, style: theme.textTheme.bodyMedium),
-                        Text(subLabel, style: theme.textTheme.bodySmall),
+                        Text(label, style: TextStyle(color: AppColors.textPrimary, fontSize: 14)),
+                        Text(subLabel, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                       ],
                     ),
                   ],
@@ -379,7 +383,7 @@ class _DrawerItem extends StatelessWidget {
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 18,
-                  color: colors.onSurfaceVariant,
+                  color: AppColors.textSecondary,
                 ),
               ],
             ),

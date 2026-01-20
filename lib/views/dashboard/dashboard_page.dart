@@ -54,8 +54,10 @@ class _DashboardScaffold extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final activeUser = ref.watch(activeUserRepositoryProvider);
 
+
     // keep the drawer and navigation behavior the same as before
     return Scaffold(
+      backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       appBar: AppBar(
         elevation: 0,
@@ -63,6 +65,7 @@ class _DashboardScaffold extends ConsumerWidget {
         automaticallyImplyLeading: false, // Hide default hamburger
         title: Text(
           'DSV360 - ${activeUser?.firstName ?? "User"}',
+          style: const TextStyle(color: AppColors.textPrimary),
         ),
         leading: Builder(
           builder: (context) {
@@ -90,7 +93,7 @@ class _DashboardScaffold extends ConsumerWidget {
                 MaterialPageRoute(builder: (_) => const NotificationPage()),
               );
             },
-            icon: const Icon(Icons.notifications_none),
+            icon: const Icon(Icons.notifications_none, color: AppColors.textPrimary),
           ),
           IconButton(
             onPressed: () {
@@ -98,7 +101,7 @@ class _DashboardScaffold extends ConsumerWidget {
                 context,
               ).push(MaterialPageRoute(builder: (_) => const ProfilePage()));
             },
-            icon: const Icon(Icons.account_circle_outlined),
+            icon: const Icon(Icons.account_circle_outlined, color: AppColors.textPrimary),
           ),
           const SizedBox(width: 12),
         ],
