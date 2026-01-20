@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
+import 'package:dsv360/providers/dashboard_provider.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/DashboardTitle.dart';
@@ -19,34 +20,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
-  // const theme = dark;
-
-  // const theme = light;
-
   @override
   Widget build(BuildContext context) {
-    // This page is a self-contained MaterialApp like your NotificationPage,
-    // so it will use the same dark theme and constrained centered layout.
-    // return MaterialApp(
-    //   title: 'DSV-360 Dashboard',
-    //   debugShowCheckedModeBanner: false,
-    //   theme: ThemeData.dark().copyWith(
-    //     scaffoldBackgroundColor: const Color(0xFF0B0B0D),
-    //     cardColor: const Color(0xFF0F1113),
-    //     appBarTheme: const AppBarTheme(
-    //       backgroundColor: Colors.transparent,
-    //       elevation: 0,
-    //       centerTitle: false,
-    //       titleTextStyle: TextStyle(
-    //         color: Colors.white,
-    //         fontSize: 18,
-    //         fontWeight: FontWeight.w600,
-    //       ),
-    //       iconTheme: IconThemeData(color: Colors.white),
-    //     ),
-    //   ),
-    //   home: const _DashboardScaffold(),
-    // );
     return _DashboardScaffold();
   }
 }
@@ -59,6 +34,7 @@ class _DashboardScaffold extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final dashboardAsyncValue = ref.watch(dashboardDataProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -122,78 +98,99 @@ class _DashboardScaffold extends ConsumerWidget {
                 },
               );
             }
-            return RefreshIndicator(
-              onRefresh: () async {
-                // Invalidate providers here to re-fetch data
-                // ref.invalidate(projectListProvider);
-                // ref.invalidate(userListProvider);
-                 await Future.delayed(const Duration(seconds: 1)); // Mock delay
-              },
-              child: Center(
-                // Constrain the content width to match NotificationPage look & feel
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 420),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isLarge = constraints.maxWidth > 600;
-                      return CustomScrollView(
-                        slivers: [
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const DashboardTitle(),
-                                  const SizedBox(height: 24),
-                                  // TopHeader(isLarge: isLarge),
-                                  // const SizedBox(height: 16),
-                                  StatGrid(isLarge: isLarge),
-                                  const SizedBox(height: 16),
-                                  TopHeader(isLarge: isLarge),
-                                  // const SizedBox(height: 16),
-                                ],
+            // When connected, show dashboard data
+            return dashboardAsyncValue.when(
+              data: (dashboard) {
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    // Refetch data
+                     return await ref.refresh(dashboardDataProvider.future);
+                  },
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 420),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isLarge = constraints.maxWidth > 600;
+                          return CustomScrollView(
+                            slivers: [
+                              SliverToBoxAdapter(
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const DashboardTitle(),
+                                      const SizedBox(height: 24),
+                                      StatGrid(
+                                        isLarge: isLarge,
+                                        userCnt: dashboard.userCnt,
+                                        projectCnt: dashboard.projectCnt,
+                                        completedProjectCnt: dashboard.completedProjectCnt,
+                                        issueCnt: dashboard.issueCnt,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      TopHeader(
+                                        isLarge: isLarge,
+                                        projectCnt: dashboard.projectCnt,
+                                        completedProjectCnt: dashboard.completedProjectCnt,
+                                        taskCnt: dashboard.taskCnt,
+                                        taskClosedCnt: dashboard.yearTaskData.closed,
+                                        issueCnt: dashboard.issueCnt,
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
-                  
-                          // Analytics + Task status row
-                          SliverPadding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 8,
-                            ),
-                            sliver: SliverToBoxAdapter(
-                              child: isLarge
-                                  ? Row(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: const [
-                                        Expanded(
-                                          flex: 2,
-                                          child: ProjectAnalyticsCard(),
+                      
+                              // Analytics + Task status row
+                              SliverPadding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                  vertical: 8,
+                                ),
+                                sliver: SliverToBoxAdapter(
+                                  child: isLarge
+                                      ? Row(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              flex: 2,
+                                              child: ProjectAnalyticsCard(
+                                                  monthData: dashboard.yearMonthwiseUserProjects),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                                flex: 1,
+                                                child: TaskStatusCard(taskData: dashboard.yearTaskData)),
+                                          ],
+                                        )
+                                      : Column(
+                                          children: [
+                                            ProjectAnalyticsCard(
+                                                monthData: dashboard.yearMonthwiseUserProjects),
+                                            const SizedBox(height: 12),
+                                            TaskStatusCard(taskData: dashboard.yearTaskData),
+                                          ],
                                         ),
-                                        SizedBox(width: 12),
-                                        Expanded(flex: 1, child: TaskStatusCard()),
-                                      ],
-                                    )
-                                  : Column(
-                                      children: const [
-                                        ProjectAnalyticsCard(),
-                                        SizedBox(height: 12),
-                                        TaskStatusCard(),
-                                      ],
-                                    ),
-                            ),
-                          ),
-                  
-                          // Recent + Quick actions placeholder space
-                          SliverToBoxAdapter(child: const SizedBox(height: 40)),
-                        ],
-                      );
-                    },
+                                ),
+                              ),
+                      
+                              // Recent + Quick actions placeholder space
+                              SliverToBoxAdapter(child: const SizedBox(height: 40)),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
                   ),
-                ),
+                );
+              },
+              error: (error, stack) => GlobalError(
+                message: 'Failed to load dashboard data: $error',
+                onRetry: () => ref.refresh(dashboardDataProvider),
               ),
+              loading: () => const GlobalLoader(message: 'Loading dashboard...'),
             );
           },
           error: (error, stack) => GlobalError(
