@@ -1,3 +1,7 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/widgets/global_error.dart';
+import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/DashboardTitle.dart';
@@ -47,15 +51,15 @@ class DashboardPage extends StatelessWidget {
   }
 }
 
+
 class _DashboardScaffold extends ConsumerWidget {
   const _DashboardScaffold();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeUser = ref.watch(activeUserRepositoryProvider);
+    final connectivityStatus = ref.watch(connectivityStatusProvider);
 
-
-    // keep the drawer and navigation behavior the same as before
     return Scaffold(
       backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
@@ -107,70 +111,96 @@ class _DashboardScaffold extends ConsumerWidget {
         ],
       ),
       body: SafeArea(
-        child: Center(
-          // Constrain the content width to match NotificationPage look & feel
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 420),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isLarge = constraints.maxWidth > 600;
-                return CustomScrollView(
-                  slivers: [
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const DashboardTitle(),
-                            const SizedBox(height: 24),
-                            // TopHeader(isLarge: isLarge),
-                            // const SizedBox(height: 16),
-                            StatGrid(isLarge: isLarge),
-                            const SizedBox(height: 16),
-                            TopHeader(isLarge: isLarge),
-                            // const SizedBox(height: 16),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    // Analytics + Task status row
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8,
-                      ),
-                      sliver: SliverToBoxAdapter(
-                        child: isLarge
-                            ? Row(
+        child: connectivityStatus.when(
+          data: (results) {
+            if (results.contains(ConnectivityResult.none)) {
+              return GlobalError(
+                message: 'Please check your internet connection.',
+                isNetworkError: true,
+                onRetry: () {
+                   ref.invalidate(connectivityStatusProvider);
+                },
+              );
+            }
+            return RefreshIndicator(
+              onRefresh: () async {
+                // Invalidate providers here to re-fetch data
+                // ref.invalidate(projectListProvider);
+                // ref.invalidate(userListProvider);
+                 await Future.delayed(const Duration(seconds: 1)); // Mock delay
+              },
+              child: Center(
+                // Constrain the content width to match NotificationPage look & feel
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isLarge = constraints.maxWidth > 600;
+                      return CustomScrollView(
+                        slivers: [
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
-                                  Expanded(
-                                    flex: 2,
-                                    child: ProjectAnalyticsCard(),
-                                  ),
-                                  SizedBox(width: 12),
-                                  Expanded(flex: 1, child: TaskStatusCard()),
-                                ],
-                              )
-                            : Column(
-                                children: const [
-                                  ProjectAnalyticsCard(),
-                                  SizedBox(height: 12),
-                                  TaskStatusCard(),
+                                children: [
+                                  const DashboardTitle(),
+                                  const SizedBox(height: 24),
+                                  // TopHeader(isLarge: isLarge),
+                                  // const SizedBox(height: 16),
+                                  StatGrid(isLarge: isLarge),
+                                  const SizedBox(height: 16),
+                                  TopHeader(isLarge: isLarge),
+                                  // const SizedBox(height: 16),
                                 ],
                               ),
-                      ),
-                    ),
-
-                    // Recent + Quick actions placeholder space
-                    SliverToBoxAdapter(child: const SizedBox(height: 40)),
-                  ],
-                );
-              },
-            ),
+                            ),
+                          ),
+                  
+                          // Analytics + Task status row
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 8,
+                            ),
+                            sliver: SliverToBoxAdapter(
+                              child: isLarge
+                                  ? Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: const [
+                                        Expanded(
+                                          flex: 2,
+                                          child: ProjectAnalyticsCard(),
+                                        ),
+                                        SizedBox(width: 12),
+                                        Expanded(flex: 1, child: TaskStatusCard()),
+                                      ],
+                                    )
+                                  : Column(
+                                      children: const [
+                                        ProjectAnalyticsCard(),
+                                        SizedBox(height: 12),
+                                        TaskStatusCard(),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                  
+                          // Recent + Quick actions placeholder space
+                          SliverToBoxAdapter(child: const SizedBox(height: 40)),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
+          error: (error, stack) => GlobalError(
+            message: 'Failed to check connectivity: $error',
+            onRetry: () => ref.invalidate(connectivityStatusProvider),
           ),
+          loading: () => const GlobalLoader(message: 'Checking connection...'),
         ),
       ),
     );
