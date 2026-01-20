@@ -8,7 +8,7 @@ final projectRepositoryProvider = Provider<ProjectRepository>((ref) {
 });
 
 // Project List Provider
-final projectListProvider = FutureProvider.autoDispose<List<ProjectModel>>((ref) async {
+final projectListProvider = FutureProvider<List<ProjectModel>>((ref) async {
   final repository = ref.watch(projectRepositoryProvider);
   return repository.fetchProjects();
 });
