@@ -1,9 +1,12 @@
+import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/models/client_contacts.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/repositories/client_contacts_repository.dart';
 import 'package:dsv360/views/clients/add_client_contacts_page.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
+import 'package:dsv360/views/widgets/app_snackbar.dart';
 import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
@@ -27,44 +30,43 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
+        toolbarHeight: 35.0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
+          icon: const Icon(Icons.arrow_back_ios, size: 18),
           onPressed: () {
             if (Navigator.canPop(context)) {
               Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
+              );
             }
           },
         ),
+        centerTitle: true,
         elevation: 0,
-        title: const Text('DSV-360'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const NotificationPage()),
-              );
-            },
-            icon: const Icon(Icons.notifications_none),
-          ),
-          const SizedBox(width: 8),
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.white12,
-            child: const Icon(Icons.person_outline, size: 18),
-          ),
-          const SizedBox(width: 12),
-        ],
+        title: Text(
+          'Clients Contacts',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        // if needed can add the icon as well here
+        // hook for info action
+        // you can open a dialog or screen here
+        actions: [],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(),
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => AddClientContactsPage(clientContacts: null),
-            ),
-          );
+          // do nothing for the moment
+
+          // Navigator.push(
+          //   context,
+          //   MaterialPageRoute(
+          //     builder: (_) => AddClientContactsPage(clientContacts: null),
+          //   ),
+          // );
         },
         child: Icon(Icons.filter_alt, size: 22),
       ),
@@ -195,41 +197,14 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
                   Row(
                     children: [
                       SizedBox(
-                        width: 40,
+                        width: 38,
                         height: 18,
                         child: Transform.scale(
-                          scale: 0.80,
+                          scale: 0.70,
                           child: Switch(
-                            value: clientStatus,
-
-                            onChanged: (value) {
-                              setState(() {
-                                clientStatus = value;
-                                // TODO: Update workStatus in backend
-                              });
-
-                              final message = value
-                                  ? 'Employee is active'
-                                  : 'Employee is inactive';
-
-                              ScaffoldMessenger.of(context)
-                                ..hideCurrentSnackBar()
-                                ..showSnackBar(
-                                  SnackBar(
-                                    content: Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.info_outline,
-                                          color: Colors.white,
-                                          size: 20,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Text(message),
-                                      ],
-                                    ),
-                                    duration: const Duration(seconds: 2),
-                                  ),
-                                );
+                            value: widget.clientContacts.status,
+                            onChanged: (value) async {
+                              // do nothing for the moment
                             },
                           ),
                         ),
@@ -237,10 +212,12 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
                       SizedBox(width: 12.0),
                       CustomCardButton(
                         onTap: () {
-                          _showDeleteDialog(
-                            context,
-                            "${widget.clientContacts.firstName} ${widget.clientContacts.lastName}",
-                          );
+                          // do nothing for the moment
+
+                          // _showDeleteDialog(
+                          //   context,
+                          //   "${widget.clientContacts.firstName} ${widget.clientContacts.lastName}",
+                          // );
                         },
                         icon: Icons.delete,
                         color: colors.error,
@@ -276,11 +253,6 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
         ),
       ),
     );
-  }
-
-  /// Centralized role rule
-  bool _canManageUsers(String role) {
-    return role == 'Admin' || role == 'Manager';
   }
 
   Widget _clientInfoRow(IconData icon, String text) {

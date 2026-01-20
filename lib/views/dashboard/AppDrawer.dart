@@ -1,4 +1,8 @@
+import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
+import 'package:dsv360/core/services/auth_service.dart';
+import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/feedback/feedback_form_screen.dart';
+import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
@@ -14,18 +18,19 @@ import 'package:dsv360/views/teams/teams_page.dart';
 import 'package:dsv360/views/ai/dsv_ai_page.dart';
 import 'package:dsv360/views/feedback/feedbacks_screen.dart';
 import 'package:dsv360/views/settings/settings_page.dart';
-import 'package:dsv360/core/services/auth_service.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
 
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.8, // 80% screen
       child: Drawer(
-        backgroundColor: AppColors.background,
         child: SafeArea(
           bottom: false,
           child: CustomScrollView(
@@ -36,7 +41,7 @@ class AppDrawer extends StatelessWidget {
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceBackground,
+                        color: colors.surface,
                         borderRadius: BorderRadius.circular(8.0),
                       ),
                       height: 56, // standard app bar height
@@ -48,7 +53,10 @@ class AppDrawer extends StatelessWidget {
                           Positioned(
                             left: 0,
                             child: IconButton(
-                              icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
+                              icon: Icon(
+                                Icons.arrow_back_rounded,
+                                color: colors.tertiary,
+                              ),
                               onPressed: () {
                                 Navigator.pop(context);
                               },
@@ -79,11 +87,11 @@ class AppDrawer extends StatelessWidget {
                         ],
                       ),
                     ),
+                    profileCardUi(context, ref),
                   ],
                 ),
               ),
 
-              SliverToBoxAdapter(child: ProfileCardUi(context)),
               // Menu items
               SliverList(
                 delegate: SliverChildListDelegate([
@@ -91,6 +99,9 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.grid_on,
                     label: 'Dashboard',
                     subLabel: 'Overview & stats',
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(8.0),
+                    ),
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.popUntil(context, (route) => route.isFirst);
@@ -234,6 +245,30 @@ class AppDrawer extends StatelessWidget {
                         MaterialPageRoute(builder: (_) => const SettingsPage()),
                       );
                     },
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(8.0),
+                    ),
+                  ),
+                  const SizedBox(height: 6.0),
+                  _DrawerItem(
+                    icon: Icons.logout,
+                    label: 'Logout',
+                    subLabel: 'Sign out of your account',
+                    isDestructive: true,
+                    onTap: () async {
+                      // Close drawer first
+                      Navigator.pop(context);
+
+                      await AppInitManager.instance.catalystApp.logout();
+                      if (context.mounted) {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                            builder: (context) => const WelcomePage(),
+                          ),
+                          (route) => false,
+                        );
+                      }
+                    },
                   ),
                 ]),
               ),
@@ -245,10 +280,8 @@ class AppDrawer extends StatelessWidget {
                       Text(
                         'Made by DSV-360',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14, // bodyLarge approximation
+                        style: textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                       const SizedBox(height: 30.0),
@@ -256,8 +289,8 @@ class AppDrawer extends StatelessWidget {
                         'DSV-360 — A unified platform to manage people, projects, and performance.',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12, // bodySmall approximation
+                          color: AppColors.textSecondary,
+                          fontSize: 12, // bodySmall approximation
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -265,8 +298,8 @@ class AppDrawer extends StatelessWidget {
                         textAlign: TextAlign.center,
                         'v1.0.0',
                         style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12, // bodySmall approximation
+                          color: AppColors.textSecondary,
+                          fontSize: 12, // bodySmall approximation
                         ),
                       ),
                     ],
@@ -280,13 +313,18 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  Widget ProfileCardUi(BuildContext context) {
+  Widget profileCardUi(BuildContext context, WidgetRef ref) {
+    final colors = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+    final activeUser = ref.watch(activeUserRepositoryProvider);
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 1, left: 6.0, right: 6.0),
       padding: const EdgeInsets.symmetric(vertical: 20),
       decoration: BoxDecoration(
-        color: AppColors.surfaceBackground,
-        borderRadius: BorderRadius.circular(8),
+        color: colors.surface,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(8.0)),
       ),
       child: Column(
         children: [
@@ -294,9 +332,13 @@ class AppDrawer extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 36,
-                backgroundImage: NetworkImage(
-                  'https://thumbs.dreamstime.com/b/online-text-12658616.jpg',
-                ),
+                backgroundImage:
+                    (activeUser != null &&
+                        activeUser.profilePic != null &&
+                        activeUser.profilePic!.isNotEmpty)
+                    ? NetworkImage(activeUser.profilePic!)
+                    : const AssetImage("assets/icons/profile.png")
+                          as ImageProvider,
               ),
               Positioned(
                 bottom: 2,
@@ -305,9 +347,9 @@ class AppDrawer extends StatelessWidget {
                   width: 14,
                   height: 14,
                   decoration: BoxDecoration(
-                    color: AppColors.statusCompleted,
+                    color: Colors.green,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.surfaceBackground, width: 2),
+                    border: Border.all(color: colors.surface, width: 2),
                   ),
                 ),
               ),
@@ -315,19 +357,14 @@ class AppDrawer extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            "Aman Jain",
-            style: TextStyle(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w600,
-                fontSize: 16, // titleMedium approximation
-            ),
+            "${activeUser?.firstName} ${activeUser?.lastName}",
+            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 2),
           Text(
-            "Manager",
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12, // bodySmall approximation
+            "${activeUser?.roleName}",
+            style: textTheme.bodySmall?.copyWith(
+              color: colors.onSurfaceVariant,
             ),
           ),
         ],
@@ -340,7 +377,9 @@ class _DrawerItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final String subLabel;
+  final BorderRadius? borderRadius;
   final VoidCallback onTap;
+  final bool isDestructive;
 
   const _DrawerItem({
     super.key,
@@ -348,39 +387,55 @@ class _DrawerItem extends StatelessWidget {
     required this.label,
     required this.subLabel,
     required this.onTap,
+    this.borderRadius,
+    this.isDestructive = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      margin: const EdgeInsets.symmetric(horizontal: 6),
       child: Material(
-        color: AppColors.surfaceBackground,
-        borderRadius: BorderRadius.circular(8),
-        clipBehavior: Clip.antiAlias, // 👈 clips splash inside radius
+        color: isDestructive ? colors.error.withOpacity(0.8) : colors.surface,
+        borderRadius: borderRadius ?? BorderRadius.all(Radius.circular(8.0)),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: borderRadius ?? BorderRadius.all(Radius.circular(8.0)),
           child: Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 18.0,
-              vertical: 8.0,
+              vertical: 14.0,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
-                    Icon(icon, size: 20, color: AppColors.textSecondary),
-
+                    Icon(
+                      icon,
+                      size: 20,
+                      color: isDestructive
+                          ? Colors.white
+                          : colors.onSurfaceVariant,
+                    ),
                     const SizedBox(width: 16),
-
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(label, style: TextStyle(color: AppColors.textPrimary, fontSize: 14)),
-                        Text(subLabel, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                        Text(
+                          label,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: isDestructive
+                                ? Colors.white
+                                : colors.onSurfaceVariant,
+                          ),
+                        ),
+                        // Text(subLabel, style: theme.textTheme.bodySmall),
                       ],
                     ),
                   ],
@@ -388,7 +443,7 @@ class _DrawerItem extends StatelessWidget {
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 18,
-                  color: AppColors.textSecondary,
+                  color: isDestructive ? Colors.white : colors.onSurfaceVariant,
                 ),
               ],
             ),

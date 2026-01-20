@@ -32,29 +32,30 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
+        toolbarHeight: 35.0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
+          icon: const Icon(Icons.arrow_back_ios, size: 18),
           onPressed: () {
             if (Navigator.canPop(context)) {
               Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
+              );
             }
           },
         ),
+        centerTitle: true,
         elevation: 0,
-        title: const Text('DSV-360'),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none),
-          ),
-          const SizedBox(width: 8),
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.white12,
-            child: const Icon(Icons.person_outline, size: 18),
-          ),
-          const SizedBox(width: 12),
-        ],
+        title: Text(
+          'Badges',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        // if needed can add the icon as well here
+        // hook for info action
+        // you can open a dialog or screen here
+        actions: [],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: SpeedDial(
@@ -65,11 +66,13 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
             child: const Icon(Icons.person_add_alt_1),
             label: 'Add Badge',
             onTap: () {
+              // do nothing for the moment
+
               // open create badge
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => AddEditBadgePage()),
-              );
+              // Navigator.push(
+              //   context,
+              //   MaterialPageRoute(builder: (_) => AddEditBadgePage()),
+              // );
             },
           ),
 
@@ -77,11 +80,13 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
             child: const Icon(Icons.badge_outlined),
             label: 'Assign Badges',
             onTap: () {
+              // do nothing for the moment
+
               // assign badges to user
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => AssignBadgesPage()),
-              );
+              // Navigator.push(
+              //   context,
+              //   MaterialPageRoute(builder: (_) => AssignBadgesPage()),
+              // );
             },
           ),
 
@@ -89,6 +94,8 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
             child: const Icon(Icons.emoji_events_outlined),
             label: 'Show Badges',
             onTap: () {
+              // do nothing for the moment
+
               // view all badges of user
             },
           ),
@@ -207,7 +214,10 @@ class _UserBadgeCardState extends ConsumerState<UserBadgeCard> {
                         ),
                       ),
                       InkWell(
-                        onTap: _openUserBadges,
+                        // onTap: _openUserBadges,
+                        onTap: () {
+                          // do nothing for the moment
+                        },
                         borderRadius: BorderRadius.circular(14),
                         child: Container(
                           padding: const EdgeInsets.symmetric(

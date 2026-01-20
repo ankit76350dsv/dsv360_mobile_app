@@ -57,12 +57,14 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(),
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => AddEditAccountsPage(account: null),
-            ),
-          );
+          // do nothing for the moment
+
+          // Navigator.push(
+          //   context,
+          //   MaterialPageRoute(
+          //     builder: (_) => AddEditAccountsPage(account: null),
+          //   ),
+          // );
         },
         child: Icon(Icons.apartment, size: 22),
       ),
@@ -237,25 +239,28 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
                         children: [
                           CustomCardButton(
                             onTap: () {
-                              // TODO: Handle edit action
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => AddEditAccountsPage(
-                                    account: widget.account,
-                                  ),
-                                ),
-                              );
+                              // do nothing for the moment
+
+                              // Navigator.push(
+                              //   context,
+                              //   MaterialPageRoute(
+                              //     builder: (_) => AddEditAccountsPage(
+                              //       account: widget.account,
+                              //     ),
+                              //   ),
+                              // );
                             },
                             icon: Icons.edit,
                           ),
                           const SizedBox(width: 5.0),
                           CustomCardButton(
                             onTap: () {
-                              _showDeleteDialog(
-                                context,
-                                widget.account.orgName,
-                              );
+                              // do nothing for the moment
+
+                              // _showDeleteDialog(
+                              //   context,
+                              //   widget.account.orgName,
+                              // );
                             },
                             icon: Icons.delete,
                             color: colors.error,
@@ -266,54 +271,6 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Centralized role rule
-  bool _canManageUsers(String role) {
-    return role == 'Admin' || role == 'Manager';
-  }
-
-  /// Small helper for label-value rows
-  Widget _infoRow(String label, String value) {
-    final theme = Theme.of(context);
-
-    final isWebsite = label.toLowerCase() == 'website';
-    final websiteUrl = value.startsWith('http') ? value : 'https://$value';
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: RichText(
-        text: TextSpan(
-          style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
-          children: [
-            TextSpan(
-              text: "$label: ",
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            TextSpan(
-              text: value,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontSize: 14,
-                color: isWebsite ? theme.colorScheme.primary : null,
-                decoration: isWebsite ? TextDecoration.underline : null,
-              ),
-              recognizer: isWebsite
-                  ? (TapGestureRecognizer()
-                      ..onTap = () async {
-                        final uri = Uri.parse(websiteUrl);
-                        if (await canLaunchUrl(uri)) {
-                          await launchUrl(
-                            uri,
-                            mode: LaunchMode.externalApplication,
-                          );
-                        }
-                      })
-                  : null,
             ),
           ],
         ),

@@ -44,32 +44,4 @@ class ClientContacts {
       status: json['status'] == true,
     );
   }
-
-  /// Convert back to JSON (optional)
-  Map<String, dynamic> toJson() => {
-        'CREATORID': creatorId,
-        'First_Name': firstName,
-        'Last_Name': lastName,
-        'Org_Name': orgName,
-        'OrgID': orgId,
-        'UserID': userId,
-        'Email': email,
-        'Phone': phone,
-        'MODIFIEDTIME': modifiedTime,
-        'CREATEDTIME': createdTime,
-        'ROWID': rowId,
-        'status': status,
-      };
-
-  // ------------------
-  // Helper getters (UI friendly)
-  // ------------------
-
-  String get fullName => '$firstName $lastName'.trim();
-
-  String get displayPhone => phone.isEmpty ? 'N/A' : phone;
-
-  String get displayEmail => email.isEmpty ? 'N/A' : email;
-
-  String get formattedStatus => status ? 'Active' : 'Inactive';
 }
