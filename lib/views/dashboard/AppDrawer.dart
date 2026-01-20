@@ -245,16 +245,11 @@ class AppDrawer extends ConsumerWidget {
                         MaterialPageRoute(builder: (_) => const SettingsPage()),
                       );
                     },
-                    borderRadius: BorderRadius.vertical(
-                      bottom: Radius.circular(8.0),
-                    ),
                   ),
-                  const SizedBox(height: 6.0),
                   _DrawerItem(
                     icon: Icons.logout,
                     label: 'Logout',
                     subLabel: 'Sign out of your account',
-                    isDestructive: true,
                     onTap: () async {
                       // Close drawer first
                       Navigator.pop(context);
@@ -269,6 +264,9 @@ class AppDrawer extends ConsumerWidget {
                         );
                       }
                     },
+                    borderRadius: BorderRadius.vertical(
+                      bottom: Radius.circular(8.0),
+                    ),
                   ),
                 ]),
               ),
@@ -379,7 +377,6 @@ class _DrawerItem extends StatelessWidget {
   final String subLabel;
   final BorderRadius? borderRadius;
   final VoidCallback onTap;
-  final bool isDestructive;
 
   const _DrawerItem({
     super.key,
@@ -388,7 +385,6 @@ class _DrawerItem extends StatelessWidget {
     required this.subLabel,
     required this.onTap,
     this.borderRadius,
-    this.isDestructive = false,
   });
 
   @override
@@ -399,7 +395,7 @@ class _DrawerItem extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 6),
       child: Material(
-        color: isDestructive ? colors.error.withOpacity(0.8) : colors.surface,
+        color: colors.surface,
         borderRadius: borderRadius ?? BorderRadius.all(Radius.circular(8.0)),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -418,9 +414,7 @@ class _DrawerItem extends StatelessWidget {
                     Icon(
                       icon,
                       size: 20,
-                      color: isDestructive
-                          ? Colors.white
-                          : colors.onSurfaceVariant,
+                      color: colors.onSurfaceVariant,
                     ),
                     const SizedBox(width: 16),
                     Column(
@@ -430,9 +424,7 @@ class _DrawerItem extends StatelessWidget {
                         Text(
                           label,
                           style: theme.textTheme.bodyMedium?.copyWith(
-                            color: isDestructive
-                                ? Colors.white
-                                : colors.onSurfaceVariant,
+                            color: colors.onSurfaceVariant,
                           ),
                         ),
                         // Text(subLabel, style: theme.textTheme.bodySmall),
@@ -443,7 +435,7 @@ class _DrawerItem extends StatelessWidget {
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 18,
-                  color: isDestructive ? Colors.white : colors.onSurfaceVariant,
+                  color: colors.onSurfaceVariant,
                 ),
               ],
             ),

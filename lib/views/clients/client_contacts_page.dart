@@ -1,4 +1,8 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/network/dio_client.dart';
+import 'package:dsv360/core/widgets/global_error.dart';
+import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/client_contacts.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/repositories/client_contacts_repository.dart';
@@ -26,6 +30,7 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
     );
     final query = ref.watch(clientContactsSearchQueryProvider);
     final colors = Theme.of(context).colorScheme;
+    final connectivityStatus = ref.watch(connectivityStatusProvider);
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -56,69 +61,109 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
         actions: [],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(
-        shape: const CircleBorder(),
-        onPressed: () {
-          // do nothing for the moment
+      floatingActionButton: connectivityStatus.when(
+        data: (results) {
+          if (results.contains(ConnectivityResult.none)) {
+            return null; // FAB hidden when no internet
+          }
 
-          // Navigator.push(
-          //   context,
-          //   MaterialPageRoute(
-          //     builder: (_) => AddClientContactsPage(clientContacts: null),
-          //   ),
-          // );
+          return FloatingActionButton(
+            shape: const CircleBorder(),
+            onPressed: () {
+              // do nothing for the moment
+
+              // Navigator.push(
+              //   context,
+              //   MaterialPageRoute(
+              //     builder: (_) => AddClientContactsPage(clientContacts: null),
+              //   ),
+              // );
+            },
+            child: Icon(Icons.filter_alt, size: 22),
+          );
         },
-        child: Icon(Icons.filter_alt, size: 22),
+        loading: () => null, // hide FAB while checking
+        error: (_, __) => null, // hide FAB on error
       ),
 
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsetsGeometry.symmetric(
-                horizontal: 16.0,
-                vertical: 12.0,
-              ),
-              child: CustomInputSearch(
-                hint: "Search client contacts",
-                searchProvider: clientContactsSearchQueryProvider,
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsetsGeometry.symmetric(horizontal: 16.0),
-                child: clientContactsListAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
-                  data: (clientContactsList) {
-                    final filteredClientContacts = clientContactsList.where((
-                      c,
-                    ) {
-                      final q = query.toLowerCase();
-                      return c.orgName.toLowerCase().contains(q) ||
-                          c.email.toLowerCase().contains(q) ||
-                          c.firstName.toLowerCase().contains(q) ||
-                          c.lastName.toLowerCase().contains(q);
-                    }).toList();
+        child: connectivityStatus.when(
+          data: (results) {
+            if (results.contains(ConnectivityResult.none)) {
+              return GlobalError(
+                message: 'Please check your internet connection.',
+                isNetworkError: true,
+                onRetry: () {
+                  ref.invalidate(connectivityStatusProvider);
+                },
+              );
+            }
 
-                    if (filteredClientContacts.isEmpty) {
-                      return const Center(child: Text('No accounts found'));
-                    }
+            // When connected, show client contacts data
+            return Column(
+              children: [
+                Padding(
+                  padding: EdgeInsetsGeometry.symmetric(
+                    horizontal: 16.0,
+                    vertical: 12.0,
+                  ),
+                  child: CustomInputSearch(
+                    hint: "Search client contacts",
+                    searchProvider: clientContactsSearchQueryProvider,
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsetsGeometry.symmetric(horizontal: 16.0),
+                    child: clientContactsListAsync.when(
+                      loading: () => const GlobalLoader(
+                        message: 'Loading client contacts info...',
+                      ),
+                      error: (error, stack) => GlobalError(
+                        message: 'Failed to load client contacts data: $error',
+                        onRetry: () =>
+                            ref.refresh(clientContactsListRepositoryProvider),
+                      ),
+                      data: (clientContactsList) {
+                        final filteredClientContacts = clientContactsList.where(
+                          (c) {
+                            final q = query.toLowerCase();
+                            return c.orgName.toLowerCase().contains(q) ||
+                                c.email.toLowerCase().contains(q) ||
+                                c.firstName.toLowerCase().contains(q) ||
+                                c.lastName.toLowerCase().contains(q);
+                          },
+                        ).toList();
 
-                    return ListView.builder(
-                      itemCount: filteredClientContacts.length,
-                      itemBuilder: (context, index) {
-                        return ClientContactsCard(
-                          clientContacts: filteredClientContacts[index],
+                        if (filteredClientContacts.isEmpty) {
+                          return const Center(child: Text('No accounts found'));
+                        }
+
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            ref.refresh(clientContactsListRepositoryProvider);
+                          },
+                          child: ListView.builder(
+                            itemCount: filteredClientContacts.length,
+                            itemBuilder: (context, index) {
+                              return ClientContactsCard(
+                                clientContacts: filteredClientContacts[index],
+                              );
+                            },
+                          ),
                         );
                       },
-                    );
-                  },
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
+          error: (error, stack) => GlobalError(
+            message: 'Failed to check connectivity: $error',
+            onRetry: () => ref.invalidate(connectivityStatusProvider),
+          ),
+          loading: () => const GlobalLoader(message: 'Checking connection...'),
         ),
       ),
     );

@@ -84,11 +84,23 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
 
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 35.0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, size: 18),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        centerTitle: true,
+        elevation: 0,
         title: Text(
           widget.user == null ? 'Add User' : 'Edit User',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
-        backgroundColor: colors.surface,
+        // if needed can add the icon as well here
+        // hook for info action
+        // you can open a dialog or screen here
+        actions: [],
       ),
       body: SafeArea(
         child: Column(

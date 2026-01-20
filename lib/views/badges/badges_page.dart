@@ -1,3 +1,7 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/widgets/global_error.dart';
+import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/users.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/repositories/all_badges_list.dart';
@@ -28,6 +32,7 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
     final colors = Theme.of(context).colorScheme;
     final query = ref.watch(usersSearchQueryProvider);
     final usersAsync = ref.watch(usersRepositoryProvider);
+    final connectivityStatus = ref.watch(connectivityStatusProvider);
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -58,95 +63,133 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
         actions: [],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: SpeedDial(
-        icon: Icons.add, // The icon for the main button
-        activeIcon: Icons.close, // The icon when the menu is open
-        children: [
-          SpeedDialChild(
-            child: const Icon(Icons.person_add_alt_1),
-            label: 'Add Badge',
-            onTap: () {
-              // do nothing for the moment
+      floatingActionButton: connectivityStatus.when(
+        data: (results) {
+          if (results.contains(ConnectivityResult.none)) {
+            return null; // FAB hidden when no internet
+          }
 
-              // open create badge
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(builder: (_) => AddEditBadgePage()),
-              // );
-            },
-          ),
+          return SpeedDial(
+            icon: Icons.add, // The icon for the main button
+            activeIcon: Icons.close, // The icon when the menu is open
+            children: [
+              SpeedDialChild(
+                child: const Icon(Icons.person_add_alt_1),
+                label: 'Add Badge',
+                onTap: () {
+                  // do nothing for the moment
 
-          SpeedDialChild(
-            child: const Icon(Icons.badge_outlined),
-            label: 'Assign Badges',
-            onTap: () {
-              // do nothing for the moment
+                  // open create badge
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(builder: (_) => AddEditBadgePage()),
+                  // );
+                },
+              ),
 
-              // assign badges to user
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(builder: (_) => AssignBadgesPage()),
-              // );
-            },
-          ),
+              SpeedDialChild(
+                child: const Icon(Icons.badge_outlined),
+                label: 'Assign Badges',
+                onTap: () {
+                  // do nothing for the moment
 
-          SpeedDialChild(
-            child: const Icon(Icons.emoji_events_outlined),
-            label: 'Show Badges',
-            onTap: () {
-              // do nothing for the moment
+                  // assign badges to user
+                  // Navigator.push(
+                  //   context,
+                  //   MaterialPageRoute(builder: (_) => AssignBadgesPage()),
+                  // );
+                },
+              ),
 
-              // view all badges of user
-            },
-          ),
-        ],
+              SpeedDialChild(
+                child: const Icon(Icons.emoji_events_outlined),
+                label: 'Show Badges',
+                onTap: () {
+                  // do nothing for the moment
+
+                  // view all badges of user
+                },
+              ),
+            ],
+          );
+        },
+        loading: () => null, // hide FAB while checking
+        error: (_, __) => null, // hide FAB on error
       ),
 
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsetsGeometry.symmetric(
-                horizontal: 16.0,
-                vertical: 12.0,
-              ),
-              child: CustomInputSearch(
-                hint: "Search users",
-                searchProvider: usersSearchQueryProvider,
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsetsGeometry.symmetric(horizontal: 16.0),
-                child: usersAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
-                  data: (users) {
-                    final filteredUsers = users.where((u) {
-                      final q = query.toLowerCase();
-                      return u.firstName.toLowerCase().contains(q) ||
-                          u.lastName.toLowerCase().contains(q) ||
-                          u.userId.toLowerCase().contains(q) ||
-                          u.emailAddress.toLowerCase().contains(q) ||
-                          u.role.toLowerCase().contains(q);
-                    }).toList();
-
-                    if (filteredUsers.isEmpty) {
-                      return const Center(child: Text('No users found'));
-                    }
-
-                    return ListView.builder(
-                      itemCount: filteredUsers.length,
-                      itemBuilder: (context, index) {
-                        return UserBadgeCard(user: filteredUsers[index]);
-                      },
-                    );
-                  },
+        child: connectivityStatus.when(
+          data: (results) {
+            if (results.contains(ConnectivityResult.none)) {
+              return GlobalError(
+                message: 'Please check your internet connection.',
+                isNetworkError: true,
+                onRetry: () {
+                  ref.invalidate(connectivityStatusProvider);
+                },
+              );
+            }
+            // When connected, show badges data
+            return Column(
+              children: [
+                Padding(
+                  padding: EdgeInsetsGeometry.symmetric(
+                    horizontal: 16.0,
+                    vertical: 12.0,
+                  ),
+                  child: CustomInputSearch(
+                    hint: "Search users",
+                    searchProvider: usersSearchQueryProvider,
+                  ),
                 ),
-              ),
-            ),
-          ],
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsetsGeometry.symmetric(horizontal: 16.0),
+                    child: usersAsync.when(
+                      loading: () => const GlobalLoader(
+                        message: 'Loading users badges...',
+                      ),
+                      error: (error, stack) => GlobalError(
+                        message: 'Failed to users badges data: $error',
+                        onRetry: () => ref.refresh(usersRepositoryProvider),
+                      ),
+                      data: (users) {
+                        final filteredUsers = users.where((u) {
+                          final q = query.toLowerCase();
+                          return u.firstName.toLowerCase().contains(q) ||
+                              u.lastName.toLowerCase().contains(q) ||
+                              u.userId.toLowerCase().contains(q) ||
+                              u.emailAddress.toLowerCase().contains(q) ||
+                              u.role.toLowerCase().contains(q);
+                        }).toList();
+
+                        if (filteredUsers.isEmpty) {
+                          return const Center(child: Text('No users found'));
+                        }
+
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            ref.refresh(usersRepositoryProvider);
+                          },
+                          child: ListView.builder(
+                            itemCount: filteredUsers.length,
+                            itemBuilder: (context, index) {
+                              return UserBadgeCard(user: filteredUsers[index]);
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+          error: (error, stack) => GlobalError(
+            message: 'Failed to check connectivity: $error',
+            onRetry: () => ref.invalidate(connectivityStatusProvider),
+          ),
+          loading: () => const GlobalLoader(message: 'Checking connection...'),
         ),
       ),
     );

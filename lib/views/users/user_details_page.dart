@@ -1,3 +1,7 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/widgets/global_error.dart';
+import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/project_model.dart';
 import 'package:dsv360/models/task.dart';
 import 'package:dsv360/models/users.dart';
@@ -8,6 +12,7 @@ import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
+import 'package:dsv360/views/widgets/info_row.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -25,11 +30,23 @@ class UserDetailsPage extends StatelessWidget {
       length: 3,
       child: Scaffold(
         appBar: AppBar(
+          toolbarHeight: 35.0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios, size: 18),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+          centerTitle: true,
+          elevation: 0,
           title: Text(
             "${user.firstName} ${user.lastName}",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
-          backgroundColor: colors.surface,
+          // if needed can add the icon as well here
+          // hook for info action
+          // you can open a dialog or screen here
+          actions: [],
         ),
         body: SafeArea(
           child: Column(
@@ -39,7 +56,7 @@ class UserDetailsPage extends StatelessWidget {
                 child: TabBarView(
                   children: [
                     _InfoTab(user: user),
-                    _ProjectsTab(),
+                    _ProjectsTab(user: user),
                     _TasksTab(user: user),
                   ],
                 ),
@@ -211,6 +228,7 @@ class _InfoTab extends ConsumerWidget {
             label: "Email Address",
             value: user.emailAddress,
           ),
+
           // _InfoTile(
           //   icon: Icons.report_gmailerrorred,
           //   label: "Reporting To",
@@ -234,7 +252,6 @@ class _InfoTab extends ConsumerWidget {
           //     icon: Icons.edit,
           //   ),
           // ),
-        
         ],
       ),
     );
@@ -460,26 +477,64 @@ class ReportingManagerBottomSheet extends ConsumerWidget {
 }
 
 class _ProjectsTab extends ConsumerWidget {
+  final UsersModel user;
+  const _ProjectsTab({required this.user});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final projectsAsync = ref.watch(projectListProvider);
+    final connectivityStatus = ref.watch(connectivityStatusProvider);
 
-    return projectsAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
-      data: (projects) {
-        if (projects.isEmpty) {
-          return const Center(child: _EmptyBox(text: "No projects assigned"));
+    return connectivityStatus.when(
+      data: (results) {
+        if (results.contains(ConnectivityResult.none)) {
+          return GlobalError(
+            message: 'Please check your internet connection.',
+            isNetworkError: true,
+            onRetry: () {
+              ref.invalidate(connectivityStatusProvider);
+            },
+          );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: projects.length,
-          itemBuilder: (context, index) {
-            return _ProjectCard(project: projects[index]);
+        return projectsAsync.when(
+          loading: () =>
+              const GlobalLoader(message: 'Loading projects info...'),
+          error: (error, stack) => GlobalError(
+            message: 'Failed to load projects data: $error',
+            onRetry: () => ref.refresh(projectListProvider),
+          ),
+          data: (projects) {
+            final userId = user.userId;
+
+            final assignedProjects = projects
+                .where((p) => p.assignedToId == userId)
+                .toList();
+
+            if (assignedProjects.isEmpty) {
+              return const Center(child: Text("No projects assigned"));
+            }
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                ref.refresh(projectListProvider);
+              },
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: assignedProjects.length,
+                itemBuilder: (context, index) {
+                  return _ProjectCard(project: projects[index]);
+                },
+              ),
+            );
           },
         );
       },
+      error: (error, stack) => GlobalError(
+        message: 'Failed to check connectivity: $error',
+        onRetry: () => ref.invalidate(connectivityStatusProvider),
+      ),
+      loading: () => const GlobalLoader(message: 'Checking connection...'),
     );
   }
 }
@@ -489,8 +544,8 @@ class _ProjectCard extends StatelessWidget {
 
   const _ProjectCard({required this.project});
 
-  String _formatDateRange() {
-    final startDate = DateFormat('MMM dd, yyyy').format(project.startDate!);
+  String _formatDateRange(DateTime date) {
+    final startDate = DateFormat('MMM dd, yyyy').format(date);
     final now = DateFormat('MMM dd, yyyy').format(DateTime.now());
     return '$startDate - $now';
   }
@@ -506,47 +561,79 @@ class _ProjectCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            // Left content
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    project.projectName,
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colors.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  if (project.startDate != null)
-                    Text(
-                      _formatDateRange(),
-                      style: textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    // project ID
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.primary,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        "P${project.id.substring(project.id.length - 4)}",
+                        style: TextStyle(color: theme.colorScheme.surface),
                       ),
                     ),
-                ],
-              ),
+                    const Spacer(),
+                    CustomChip(
+                      label: project.status,
+                      color: colors.primary,
+                      icon: null,
+                    ),
+                  ],
+                ),
+              ],
             ),
+          ),
 
-            // Status chip
-            Chip(
-              label: Text(project.status),
-              backgroundColor: colors.primaryContainer,
-              labelStyle: TextStyle(color: colors.onPrimaryContainer),
-              visualDensity: VisualDensity.compact,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              side: BorderSide(color: colors.primaryContainer, width: 1),
+          // Divider
+          Divider(height: 1, thickness: 1, color: Colors.grey.withOpacity(0.2)),
+
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            project.projectName,
+                            style: theme.textTheme.bodyLarge,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2.0),
+                          InfoRow(
+                            icon: Icons.description_outlined,
+                            text: project.description ?? '',
+                          ),
+                          InfoRow(
+                            icon: Icons.date_range,
+                            text: _formatDateRange(project.startDate),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -559,50 +646,52 @@ class _TasksTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tasksAsync = ref.watch(tasksListRepositoryProvider(user.userId));
+    final connectivityStatus = ref.watch(connectivityStatusProvider);
 
-    return tasksAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
-      data: (tasks) {
-        if (tasks.isEmpty) {
-          return const Center(child: _EmptyBox(text: "No tasks assigned"));
+    return connectivityStatus.when(
+      data: (results) {
+        if (results.contains(ConnectivityResult.none)) {
+          return GlobalError(
+            message: 'Please check your internet connection.',
+            isNetworkError: true,
+            onRetry: () {
+              ref.invalidate(connectivityStatusProvider);
+            },
+          );
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: tasks.length,
-          itemBuilder: (context, index) {
-            return _TaskCard(task: tasks[index]);
+        return tasksAsync.when(
+          loading: () => const GlobalLoader(message: 'Loading tasks info...'),
+          error: (error, stack) => GlobalError(
+            message: 'Failed to load dashboard data: $error',
+            onRetry: () =>
+                ref.refresh(tasksListRepositoryProvider(user.userId)),
+          ),
+          data: (tasks) {
+            if (tasks.isEmpty) {
+              return const Center(child: Text("No tasks assigned"));
+            }
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                ref.refresh(tasksListRepositoryProvider(user.userId));
+              },
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: tasks.length,
+                itemBuilder: (context, index) {
+                  return _TaskCard(task: tasks[index]);
+                },
+              ),
+            );
           },
         );
       },
-    );
-  }
-}
-
-class _EmptyBox extends StatelessWidget {
-  final String text;
-
-  const _EmptyBox({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final textTheme = theme.textTheme;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(12),
+      error: (error, stack) => GlobalError(
+        message: 'Failed to check connectivity: $error',
+        onRetry: () => ref.invalidate(connectivityStatusProvider),
       ),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: textTheme.bodyMedium?.copyWith(color: colors.onSurfaceVariant),
-      ),
+      loading: () => const GlobalLoader(message: 'Checking connection...'),
     );
   }
 }
@@ -616,6 +705,7 @@ class _TaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final theme = Theme.of(context);
 
     return Card(
       shape: RoundedRectangleBorder(
@@ -623,67 +713,84 @@ class _TaskCard extends StatelessWidget {
         side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
       ),
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Task title
-            Text(task.taskName, style: textTheme.titleMedium),
-
-            const SizedBox(height: 6),
-
-            // Project
-            Text(
-              task.projectName,
-              style: textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Description
-            Text(
-              task.description,
-              style: textTheme.bodyMedium?.copyWith(
-                color: colors.onSurfaceVariant,
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Bottom row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
               children: [
-                // Status chip
-                CustomChip(
-                  label: task.status,
-                  color: colors.primaryContainer,
-                  icon: null,
-                ),
-
-                // Date range
-                Text(
-                  "${_fmt(task.startDate)} → ${_fmt(task.endDate)}",
-                  style: textTheme.bodySmall,
+                Row(
+                  children: [
+                    // task ID
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.primary,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        "T${task.taskId.substring(task.taskId.length - 4)}",
+                        style: TextStyle(color: theme.colorScheme.surface),
+                      ),
+                    ),
+                    const Spacer(),
+                    CustomChip(
+                      label: task.status,
+                      color: colors.primary,
+                      icon: null,
+                    ),
+                  ],
                 ),
               ],
             ),
+          ),
 
-            const SizedBox(height: 8),
+          // Divider
+          Divider(height: 1, thickness: 1, color: Colors.grey.withOpacity(0.2)),
 
-            // Assigned to
-            Row(
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
               children: [
-                Icon(Icons.person, size: 16, color: colors.primary),
-                const SizedBox(width: 6),
-                Text(task.assignedTo, style: textTheme.bodySmall),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            task.taskName,
+                            style: theme.textTheme.bodyLarge,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2.0),
+                          InfoRow(
+                            icon: Icons.description_outlined,
+                            text: task.description,
+                          ),
+                          InfoRow(
+                            icon: Icons.date_range,
+                            text:
+                                "${_fmt(task.startDate)} → ${_fmt(task.endDate)}",
+                          ),
+                          InfoRow(
+                            icon: Icons.person,
+                            text: task.assignedTo ?? '',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
