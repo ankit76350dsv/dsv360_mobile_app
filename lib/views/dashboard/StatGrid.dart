@@ -3,15 +3,27 @@ import 'package:dsv360/core/constants/app_colors.dart';
 
 class StatGrid extends StatelessWidget {
   final bool isLarge;
-  const StatGrid({required this.isLarge});
+  final int userCnt;
+  final int projectCnt;
+  final int completedProjectCnt;
+  final int issueCnt;
+
+  const StatGrid({
+    super.key,
+    required this.isLarge,
+    required this.userCnt,
+    required this.projectCnt,
+    required this.completedProjectCnt,
+    required this.issueCnt,
+  });
 
   @override
   Widget build(BuildContext context) {
     final items = [
-      _StatCard(title: 'Total Employees', value: '107', icon: Icons.person_outline, color: Colors.indigo),
-      _StatCard(title: 'Total Projects', value: '1', icon: Icons.folder_outlined, color: Colors.cyan),
-      _StatCard(title: 'Completed Projects', value: '0', icon: Icons.school_outlined, color: Colors.green),
-      _StatCard(title: 'Total Issues', value: '0', icon: Icons.bug_report_outlined, color: Colors.orange),
+      _StatCard(title: 'Total Employees', value: '$userCnt', icon: Icons.person_outline, color: Colors.indigo),
+      _StatCard(title: 'Total Projects', value: '$projectCnt', icon: Icons.folder_outlined, color: Colors.cyan),
+      _StatCard(title: 'Completed Projects', value: '$completedProjectCnt', icon: Icons.school_outlined, color: Colors.green),
+      _StatCard(title: 'Total Issues', value: '$issueCnt', icon: Icons.bug_report_outlined, color: Colors.orange),
     ];
 
     return GridView.count(

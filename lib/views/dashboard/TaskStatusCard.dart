@@ -1,11 +1,12 @@
+import 'package:dsv360/models/dashboard_model.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/core/constants/app_colors.dart';
 
-
-
 class TaskStatusCard extends StatelessWidget {
-  const TaskStatusCard({super.key});
+  final YearTaskData taskData;
+
+  const TaskStatusCard({super.key, required this.taskData});
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +33,7 @@ class TaskStatusCard extends StatelessWidget {
             ),
             ConstrainedBox(
               constraints: BoxConstraints(maxHeight: height, minHeight: 140),
-              child: TaskStatusContent(),
+              child: TaskStatusContent(taskData: taskData),
             ),
           ],
         ),
@@ -42,8 +43,18 @@ class TaskStatusCard extends StatelessWidget {
 }
 
 class TaskStatusContent extends StatelessWidget {
+  final YearTaskData taskData;
+
+  const TaskStatusContent({super.key, required this.taskData});
+
   @override
   Widget build(BuildContext context) {
+    final total = taskData.open + taskData.inProgress + taskData.closed;
+    // Avoid division by zero
+    final openPct = total == 0 ? 0.0 : (taskData.open / total) * 100;
+    final inProgressPct = total == 0 ? 0.0 : (taskData.inProgress / total) * 100;
+    final closedPct = total == 0 ? 0.0 : (taskData.closed / total) * 100;
+
     return Row(
       children: [
         Expanded(
@@ -54,8 +65,8 @@ class TaskStatusContent extends StatelessWidget {
               sections: [
                 PieChartSectionData(
                   color: AppColors.statusCompleted,
-                  value: 40,
-                  title: '40%',
+                  value: closedPct,
+                  title: '${closedPct.toStringAsFixed(0)}%',
                   radius: 40,
                   titleStyle: const TextStyle(
                       fontSize: 12,
@@ -64,8 +75,8 @@ class TaskStatusContent extends StatelessWidget {
                 ),
                 PieChartSectionData(
                   color: AppColors.statusInProgress,
-                  value: 30,
-                  title: '30%',
+                  value: openPct,
+                  title: '${openPct.toStringAsFixed(0)}%',
                   radius: 40,
                   titleStyle: const TextStyle(
                       fontSize: 12,
@@ -74,8 +85,8 @@ class TaskStatusContent extends StatelessWidget {
                 ),
                 PieChartSectionData(
                   color: AppColors.error,
-                  value: 30,
-                  title: '30%',
+                  value: inProgressPct,
+                  title: '${inProgressPct.toStringAsFixed(0)}%',
                   radius: 40,
                   titleStyle: const TextStyle(
                       fontSize: 12,
@@ -90,12 +101,12 @@ class TaskStatusContent extends StatelessWidget {
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            _LegendDot(color: AppColors.statusCompleted, label: 'Completed'),
-            SizedBox(height: 8),
-            _LegendDot(color: AppColors.statusInProgress, label: 'Open'),
-            SizedBox(height: 8),
-            _LegendDot(color: AppColors.error, label: 'In Progress'),
+          children: [
+             _LegendDot(color: AppColors.statusCompleted, label: 'Completed (${taskData.closed})'),
+            const SizedBox(height: 8),
+             _LegendDot(color: AppColors.statusInProgress, label: 'Open (${taskData.open})'),
+            const SizedBox(height: 8),
+             _LegendDot(color: AppColors.error, label: 'In Progress (${taskData.inProgress})'),
           ],
         ),
       ],

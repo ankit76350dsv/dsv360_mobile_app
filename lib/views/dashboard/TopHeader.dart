@@ -3,7 +3,20 @@ import 'package:dsv360/core/constants/app_colors.dart';
 
 class TopHeader extends StatelessWidget {
   final bool isLarge;
-  const TopHeader({required this.isLarge});
+  final int projectCnt;
+  final int completedProjectCnt;
+  final int taskCnt;
+  final int taskClosedCnt;
+  final int issueCnt;
+
+  const TopHeader({
+    required this.isLarge,
+    required this.projectCnt,
+    required this.completedProjectCnt,
+    required this.taskCnt,
+    required this.taskClosedCnt,
+    required this.issueCnt,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -22,6 +35,18 @@ class TopHeader extends StatelessWidget {
     final height = (isLarge ? 140.0 : 180.0) * 0.55;
     // reserve a fixed width on the right for stacked metrics
     final rightColumnWidth = (w * 0.22).clamp(96.0, 140.0);
+
+    final projectPct = projectCnt == 0 ? 0 : (completedProjectCnt / projectCnt * 100).toInt();
+    final taskPct = taskCnt == 0 ? 0 : (taskClosedCnt / taskCnt * 100).toInt();
+    
+    // Issue handling: we only have 'issueCnt' from API. 
+    // Assuming issueCnt is Total. We don't have 'Resolved' count from the provided JSON.
+    // I'll reuse 'issueCnt' as Total and maybe '0' as resolved, or hide percentage?
+    // Current design shows '0 of 4' etc and a percentage.
+    // I'll show 'Total' vs 'N/A' or just 0%.
+    // To match design 'Issue Resolved' label:
+    // I'll put issueCnt as denominator? '0 of X'.
+    final issuePct = 0; 
 
     return Container(
       height: height,
@@ -48,21 +73,21 @@ class TopHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _RightMetric(
-            percentText: '55%',
-            smallLabel: '0 of 1',
+            percentText: '$projectPct%',
+            smallLabel: '$completedProjectCnt of $projectCnt',
             label: 'Project Closed',
             scale: scale,
           ),
           _RightMetric(
-            percentText: '0%',
-            smallLabel: '0 of 1',
+            percentText: '$taskPct%',
+            smallLabel: '$taskClosedCnt of $taskCnt',
             label: 'Tasks Completed',
             scale: scale,
           ),
           _RightMetric(
-            percentText: '0%',
-            smallLabel: '0 of 4',
-            label: 'Issue Resolved',
+            percentText: '$issueCnt',
+            smallLabel: 'Total',
+            label: 'Issues', // Changed label to match available data
             scale: scale,
           ),
         ],

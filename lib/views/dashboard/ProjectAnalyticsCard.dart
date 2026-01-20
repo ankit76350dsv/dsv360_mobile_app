@@ -1,8 +1,11 @@
+import 'package:dsv360/models/dashboard_model.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/core/constants/app_colors.dart';
 
 class ProjectAnalyticsCard extends StatelessWidget {
-  const ProjectAnalyticsCard({super.key});
+  final List<YearMonthProjectData> monthData;
+  
+  const ProjectAnalyticsCard({super.key, required this.monthData});
 
   @override
   Widget build(BuildContext context) {
@@ -33,10 +36,13 @@ class ProjectAnalyticsCard extends StatelessWidget {
             Container(
               height: chartHeight,
               child: ListView.separated(
-                itemCount: 12,
+                itemCount: monthData.length, // Should be 12
                 separatorBuilder: (ctx, i) => const Divider(color: AppColors.divider),
                 itemBuilder: (context, index) {
-                  return _MonthAnalyticsRow(monthIndex: index);
+                   // Ensure we don't go out of bounds if API returns fewer items
+                   if (index >= monthData.length) return const SizedBox.shrink();
+                   // API data might be index 0 = Jan? It's a list. Prompt shows 12 items.
+                   return _MonthAnalyticsRow(monthIndex: index, data: monthData[index]);
                 },
               ),
             ),
@@ -60,22 +66,19 @@ class ProjectAnalyticsCard extends StatelessWidget {
 
 class _MonthAnalyticsRow extends StatelessWidget {
   final int monthIndex;
+  final YearMonthProjectData data;
 
-  const _MonthAnalyticsRow({required this.monthIndex});
+  const _MonthAnalyticsRow({required this.monthIndex, required this.data});
 
   @override
   Widget build(BuildContext context) {
-    // Dummy patterns enforcing Open > Working > Closed
-    final openData =    [8.0, 7.0, 9.0, 6.0, 8.0, 7.0, 9.0, 8.0, 6.0, 7.0, 8.0, 7.0];
-    final workingData = [5.0, 4.0, 6.0, 3.0, 5.0, 4.0, 5.0, 4.0, 3.0, 4.0, 5.0, 4.0];
-    final closedData =  [2.0, 2.0, 3.0, 1.0, 2.0, 2.0, 2.0, 2.0, 1.0, 2.0, 2.0, 2.0];
-
-    final open = openData[monthIndex];
-    final working = workingData[monthIndex];
-    final closed = closedData[monthIndex];
+    final open = data.open.toDouble();
+    final working = data.inProgress.toDouble();
+    final closed = data.closed.toDouble();
 
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    final monthName = months[monthIndex];
+    // Safe lookup
+    final monthName = (monthIndex >= 0 && monthIndex < months.length) ? months[monthIndex] : '';
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
