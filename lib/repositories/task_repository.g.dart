@@ -7,7 +7,7 @@ part of 'task_repository.dart';
 // **************************************************************************
 
 String _$tasksListRepositoryHash() =>
-    r'ebc0474992627ff071fae263da749ae20993577b';
+    r'7e917368467e8d2ed6a2ae4486af7eae289a65f7';
 
 /// Copied from Dart SDK
 class _SystemHash {
