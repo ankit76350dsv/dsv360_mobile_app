@@ -4,6 +4,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../models/task_model.dart';
 import '../widgets/custom_input_field.dart';
+import '../widgets/custom_popup_dropdown.dart';
 
 class AddTaskDialog extends StatefulWidget {
   final TaskModel? task; // For edit mode
@@ -182,50 +183,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Project Dropdown
-                DropdownButtonFormField<String>(
+                CustomPopupDropdown(
                   value: _selectedProject,
-                  hint: const Text(
-                    'Project',
-                    style: TextStyle(color: AppColors.textHint),
-                  ),
-                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
-                  dropdownColor: AppColors.inputFill,
-                  decoration: InputDecoration(
-                    labelText: 'Project',
-                    labelStyle: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    filled: true,
-                    fillColor: AppColors.inputFill,
-                    prefixIcon: const Icon(Icons.folder_outlined, color: AppColors.textSecondary),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 12,
-                    ),
-                  ),
-                  items: _projectOptions.map((project) {
-                    return DropdownMenuItem(
-                      value: project,
-                      child: Text(project),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() => _selectedProject = value);
-                  },
+                  hint: 'Project',
+                  items: _projectOptions,
+                  icon: Icons.folder_outlined,
+                  onChanged: (value) => setState(() => _selectedProject = value),
                 ),
                 const SizedBox(height: 20),
 
@@ -245,50 +208,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 const SizedBox(height: 20),
 
                 // Status Dropdown
-                DropdownButtonFormField<String>(
+                CustomPopupDropdown(
                   value: _selectedStatus,
-                  hint: const Text(
-                    'Status',
-                    style: TextStyle(color: AppColors.textHint),
-                  ),
-                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
-                  dropdownColor: AppColors.inputFill,
-                  decoration: InputDecoration(
-                    labelText: 'Status',
-                    labelStyle: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    filled: true,
-                    fillColor: AppColors.inputFill,
-                    prefixIcon: const Icon(Icons.assignment_outlined, color: AppColors.textSecondary),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 12,
-                    ),
-                  ),
-                  items: _statusOptions.map((status) {
-                    return DropdownMenuItem(
-                      value: status,
-                      child: Text(status),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() => _selectedStatus = value);
-                  },
+                  hint: 'Status',
+                  items: _statusOptions,
+                  icon: Icons.assignment_outlined,
+                  onChanged: (value) => setState(() => _selectedStatus = value),
                 ),
                 const SizedBox(height: 20),
 
@@ -403,50 +328,12 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 const SizedBox(height: 20),
 
                 // Assign To Dropdown
-                DropdownButtonFormField<String>(
+                CustomPopupDropdown(
                   value: _selectedAssignTo,
-                  hint: const Text(
-                    'Assign To',
-                    style: TextStyle(color: AppColors.textHint),
-                  ),
-                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
-                  dropdownColor: AppColors.inputFill,
-                  decoration: InputDecoration(
-                    labelText: 'Associated',
-                    labelStyle: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    filled: true,
-                    fillColor: AppColors.inputFill,
-                    prefixIcon: const Icon(Icons.person_outline, color: AppColors.textSecondary),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 12,
-                    ),
-                  ),
-                  items: _assignToOptions.map((person) {
-                    return DropdownMenuItem(
-                      value: person,
-                      child: Text(person),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() => _selectedAssignTo = value);
-                  },
+                  hint: 'Assign To',
+                  items: _assignToOptions,
+                  icon: Icons.person_outline,
+                  onChanged: (value) => setState(() => _selectedAssignTo = value),
                 ),
                 const SizedBox(height: 20),
 

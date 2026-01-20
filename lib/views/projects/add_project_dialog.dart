@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/project_model.dart';
 import '../widgets/custom_input_field.dart';
+import '../widgets/custom_popup_dropdown.dart';
+import '../widgets/custom_popup_dropdown.dart';
 
 class AddProjectDialog extends StatefulWidget {
   final ProjectModel? project; // For edit mode
@@ -147,7 +149,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.textWhite,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(widget.project == null ? 'Add New Project' : 'Edit Project'),
         backgroundColor: AppColors.cardBackground,
@@ -177,47 +179,11 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                       const SizedBox(height: 20),
 
                       // Client Name Dropdown
-                      DropdownButtonFormField<String>(
+                      CustomPopupDropdown(
                         value: _selectedClient,
-                        hint: const Text(
-                          'Client Name',
-                          style: TextStyle(color: AppColors.textHint),
-                        ),
-                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
-                        dropdownColor: AppColors.inputFill,
-                        decoration: InputDecoration(
-                          labelText: 'Client',
-                          labelStyle: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          filled: true,
-                          fillColor: AppColors.inputFill,
-                          prefixIcon: const Icon(Icons.business_outlined, color: AppColors.textSecondary),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 12,
-                          ),
-                        ),
-                        items: _clientOptions.map((client) {
-                          return DropdownMenuItem(
-                            value: client,
-                            child: Text(client),
-                          );
-                        }).toList(),
+                        hint: 'Client Name',
+                        items: _clientOptions,
+                        icon: Icons.business_outlined,
                         onChanged: (value) {
                           setState(() => _selectedClient = value);
                         },
@@ -225,50 +191,12 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                       const SizedBox(height: 20),
 
                       // Status Dropdown
-                      DropdownButtonFormField<String>(
+                      CustomPopupDropdown(
                         value: _selectedStatus,
-                        hint: const Text(
-                          'Status',
-                          style: TextStyle(color: AppColors.textHint),
-                        ),
-                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
-                        dropdownColor: AppColors.inputFill,
-                        decoration: InputDecoration(
-                          labelText: 'Status',
-                          labelStyle: const TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          filled: true,
-                          fillColor: AppColors.inputFill,
-                          prefixIcon: const Icon(Icons.assignment_outlined, color: AppColors.textSecondary),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 12,
-                          ),
-                        ),
-                        items: _statusOptions.map((status) {
-                          return DropdownMenuItem(
-                            value: status,
-                            child: Text(status),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          setState(() => _selectedStatus = value);
-                        },
+                        hint: 'Status',
+                        items: _statusOptions,
+                        icon: Icons.assignment_outlined,
+                        onChanged: (value) => setState(() => _selectedStatus = value),
                       ),
                       const SizedBox(height: 20),
 
@@ -383,70 +311,14 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                       const SizedBox(height: 20),
 
                       // Assign To Dropdown
-                      PopupMenuButton<String>(
-                        position: PopupMenuPosition.under,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 330,
-                          maxWidth: 700,
-                        ),
-                        onSelected: (value) {
+                      CustomPopupDropdown(
+                        value: _selectedAssignTo,
+                        hint: 'Team Member',
+                        items: _assignToOptions,
+                        icon: Icons.person_outline,
+                        onChanged: (value) {
                           setState(() => _selectedAssignTo = value);
                         },
-                        itemBuilder: (BuildContext context) {
-                          return _assignToOptions.map((person) {
-                            return PopupMenuItem<String>(
-                              value: person,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-                                child: Text(
-                                  person,
-                                  style: const TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 16,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            );
-                          }).toList();
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: AppColors.inputFill,
-                            border: Border.all(
-                              color: AppColors.inputBorder,
-                              width: 1.5,
-                            ),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.person_outline, color: AppColors.textSecondary),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  _selectedAssignTo ?? 'Team Member',
-                                  style: TextStyle(
-                                    color: _selectedAssignTo == null ? AppColors.textHint : AppColors.textPrimary,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
-                            ],
-                          ),
-                        ),
                       ),
                       const SizedBox(height: 20),
 

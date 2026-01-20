@@ -5,6 +5,9 @@ import '../../core/constants/app_text_styles.dart';
 import '../../models/issue_model.dart';
 import '../widgets/custom_search_bar.dart';
 import '../widgets/generic_card.dart';
+import '../widgets/TopBar.dart';
+import '../attachments/attachment_list_modal.dart';
+import 'assignee_modal.dart';
 import 'add_issue_form_screen.dart';
 import 'issue_details_modal_sheet.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
@@ -299,11 +302,13 @@ class _IssuesScreenState extends State<IssuesScreen> {
                               count: '1',
                               isActive: true,
                               onTap: () {
-                                // TODO: Display assignee user name on tap
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Assigned to: ${issue.assignedTo ?? 'Unassigned'}'),
-                                    backgroundColor: AppColors.primary,
+                                showModalBottomSheet(
+                                  context: context,
+                                  isScrollControlled: true,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (context) => AssigneeModal(
+                                    assignedTo: issue.assignedTo ?? 'Unassigned',
+                                    owner: issue.owner ?? 'N/A',
                                   ),
                                 );
                               },
@@ -312,11 +317,19 @@ class _IssuesScreenState extends State<IssuesScreen> {
                               icon: Icons.attach_file,
                               count: issue.attachments.length.toString(),
                               isActive: issue.attachments.isNotEmpty,
-                            ),
-                            CardChip(
-                              icon: Icons.comment_outlined,
-                              count: issue.commentsCount.toString(),
-                              isActive: issue.commentsCount > 0,
+                              onTap: issue.attachments.isNotEmpty
+                                  ? () {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) =>
+                                            AttachmentListModal(
+                                              attachments: issue.attachments,
+                                            ),
+                                      );
+                                    }
+                                  : null,
                             ),
                           ],
                           onTap: () {

@@ -1,3 +1,4 @@
+import 'package:dsv360/views/feedback/feedback_form_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
@@ -13,6 +14,7 @@ import 'package:dsv360/views/teams/teams_page.dart';
 import 'package:dsv360/views/ai/dsv_ai_page.dart';
 import 'package:dsv360/views/feedback/feedbacks_screen.dart';
 import 'package:dsv360/views/settings/settings_page.dart';
+import 'package:dsv360/core/services/auth_service.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -211,10 +213,13 @@ class AppDrawer extends StatelessWidget {
                     label: 'Feedback',
                     subLabel: 'User suggestions',
                     onTap: () {
+                      final isAdmin = AuthService().isAdmin;
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const FeedbacksScreen(),
+                          builder: (_) => isAdmin
+                              ? const FeedbacksScreen()
+                              : const FeedbackFormScreen(),
                         ),
                       );
                     },
