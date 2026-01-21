@@ -1,7 +1,6 @@
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/core/services/auth_service.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
-import 'package:dsv360/views/feedback/feedback_form_screen.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/core/constants/app_colors.dart';
@@ -228,9 +227,7 @@ class AppDrawer extends ConsumerWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => isAdmin
-                              ? const FeedbacksScreen()
-                              : const FeedbackFormScreen(),
+                          builder: (_) => const FeedbacksScreen(),
                         ),
                       );
                     },
