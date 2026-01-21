@@ -4,6 +4,7 @@ import '../../models/time_entry_model.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../widgets/custom_input_field.dart';
+import '../widgets/TopBar.dart';
 import 'time_entries_screen.dart';
 
 class AddTimeEntryDialog extends StatefulWidget {
@@ -215,11 +216,19 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text('${widget.taskName} - Time Entries'),
-        backgroundColor: AppColors.cardBackground,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(120),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 24),
+          child: TopBar(
+            title: '${widget.taskName} - Time Entries',
+            onBack: () => Navigator.of(context).pop(),
+            onInfoTap: () {},
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -244,7 +253,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                   decoration: BoxDecoration(
-                    color: AppColors.inputFill,
+                    color: colors.secondary,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: AppColors.inputBorder, width: 1.5),
                     boxShadow: [
@@ -302,7 +311,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                         decoration: BoxDecoration(
-                          color: AppColors.inputFill,
+                          color: colors.secondary,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: AppColors.inputBorder, width: 1.5),
                           boxShadow: [
@@ -357,7 +366,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                         decoration: BoxDecoration(
-                          color: AppColors.inputFill,
+                          color: colors.secondary,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: AppColors.inputBorder, width: 1.5),
                           boxShadow: [
@@ -421,7 +430,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
-                dropdownColor: AppColors.inputFill,
+                dropdownColor: colors.secondary,
                 decoration: InputDecoration(
                   labelText: 'Type',
                   labelStyle: const TextStyle(
@@ -430,7 +439,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                     fontWeight: FontWeight.w600,
                   ),
                   filled: true,
-                  fillColor: AppColors.inputFill,
+                  fillColor: colors.secondary,
                   prefixIcon: const Icon(Icons.category_outlined, color: AppColors.textSecondary),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),

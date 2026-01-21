@@ -3,173 +3,45 @@ import 'dart:developer' as developer;
 
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/models/users.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 
 class UsersRepository extends AsyncNotifier<List<UsersModel>> {
-  int _start = 1;
-  int _end = 10;
-  bool _hasMore = true;
-
-  final List<UsersModel> _allUsers = [];
-
   @override
   FutureOr<List<UsersModel>> build() async {
-    // reset pagination
-    _start = 1;
-    _end = 10;
-    _hasMore = true;
-    _allUsers.clear();
-
     return await fetchUsers(isInitial: true);
   }
 
   Future<List<UsersModel>> fetchUsers({bool isInitial = false}) async {
     try {
       final response = await DioClient.instance.get(
-        '/server/esd_portal_function/getUsers?start=$_start&end=$_end',
+        'time_entry_management_application_function/employee',
       );
+      debugPrint("Response From fetchUsers: $response");
 
       final data = response.data;
-      final List<dynamic> newList = data['users'] ?? [];
+      final List<dynamic> list = data["users"];
+      final usersList = list.map((e) => UsersModel.fromJson(e)).toList();
 
-      final newUsers = newList.map((e) => UsersModel.fromJson(e)).toList();
-
-      if (isInitial) {
-        _allUsers.clear();
-      }
-
-      _allUsers.addAll(newUsers);
-
-      // If API returned fewer items than requested → no more data
-      if (newUsers.length < (_end - _start + 1)) {
-        _hasMore = false;
-      }
-
-      return _allUsers;
-    } catch (e, s) {
+      return usersList;
+    } catch (e, st) {
       developer.log(
-        "fetchUsers error: $e",
-        stackTrace: s,
+        "Error fetching users: $e",
         name: "UsersRepository",
       );
-      return _allUsers;
+      throw AsyncError(e, st);
     }
   }
 
-  Future<void> loadMore() async {
-    if (!_hasMore) return;
-
-    _start = _end + 1;
-    _end = _start + 9;
-
-    await fetchUsers();
-
-    // Important: notify UI
-    state = AsyncData(List.from(_allUsers));
-  }
-
-  void clearUsers() {
-    _allUsers.clear();
-    _hasMore = true;
-    state = const AsyncData([]);
+  Future<void> refresh() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(fetchUsers);
   }
 }
 
-// final usersRepositoryProvider =
-//     AsyncNotifierProvider<UsersRepository, List<UsersModel>>(
-//   UsersRepository.new,
-// );
-
-final usersRepositoryProvider = Provider<AsyncValue<List<UsersModel>>>((ref) {
-  // Simulate API data
-  final users = <UsersModel>[
-    UsersModel(
-      firstName: "Aman",
-      lastName: "Jain",
-      userId: "U5367",
-      emailAddress: "aman.jain@example.com",
-      role: "Admin",
-      profilePic:
-          "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png",
-      workStatus: WorkStatus.active,
-      verificationStatus: VerificationStatus.verified,
-    ),
-    UsersModel(
-      firstName: "Adsadas",
-      lastName: "Patel",
-      userId: "U4243",
-      emailAddress: "adsadas.patel@example.com",
-      role: "Intern",
-      profilePic:
-          "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png",
-      workStatus: WorkStatus.inactive,
-      verificationStatus: VerificationStatus.pending,
-    ),
-    UsersModel(
-      firstName: "Kaushal",
-      lastName: "Kishor",
-      userId: "U1227",
-      emailAddress: "kaushal.kishor@example.com",
-      role: "Manager",
-      profilePic:
-          "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png",
-      workStatus: WorkStatus.active,
-      verificationStatus: VerificationStatus.verified,
-    ),
-    UsersModel(
-      firstName: "Employee",
-      lastName: "Singh",
-      userId: "U3172",
-      emailAddress: "employee.singh@example.com",
-      role: "Intern",
-      profilePic:
-          "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png",
-      workStatus: WorkStatus.active,
-      verificationStatus: VerificationStatus.verified,
-    ),
-    UsersModel(
-      firstName: "Abhay",
-      lastName: "",
-      userId: "U4167",
-      emailAddress: "abhay@example.com",
-      role: "Manager/Team Lead",
-      profilePic:
-          "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png",
-      workStatus: WorkStatus.inactive,
-      verificationStatus: VerificationStatus.pending,
-    ),
-    UsersModel(
-      firstName: "Ujjwal",
-      lastName: "Mishra",
-      userId: "U4027",
-      emailAddress: "ujjwal.mishra@example.com",
-      role: "Business Analyst",
-      profilePic:
-          "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png",
-      workStatus: WorkStatus.active,
-      verificationStatus: VerificationStatus.verified,
-    ),
-  ];
-
-  return AsyncValue.data(users);
-});
-
-// final usersRepositoryProvider =
-//     FutureProvider<List<UsersModel>>((ref) async {
-//   await Future.delayed(const Duration(seconds: 2));
-
-//   return <UsersModel>[
-//     UsersModel(
-//       name: "Aman Jain",
-//       userId: "U5367",
-//       emailAddress: "aman.jain@example.com",
-//       role: "Admin",
-//       workStatus: WorkStatus.active,
-//       verificationStatus: VerificationStatus.verified,
-//     ),
-//     // ...rest
-//   ];
-// });
+final usersRepositoryProvider =
+    AsyncNotifierProvider<UsersRepository, List<UsersModel>>(
+  UsersRepository.new,
+);
 
 final usersSearchQueryProvider = StateProvider<String>((ref) => '');

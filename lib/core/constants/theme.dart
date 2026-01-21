@@ -48,7 +48,21 @@ ThemeData buildLightTheme(Color seedColor) {
       systemOverlayStyle: SystemUiOverlayStyle.dark,
     ),
 
-    cardTheme: const CardThemeData(color: Colors.white, elevation: 0),
+    cardTheme: CardThemeData(
+      color: Colors.white, 
+      elevation: 0,
+      margin: EdgeInsets.symmetric(
+        horizontal: 0.0,
+        vertical: 6.0
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: Colors.grey.withOpacity(0.2),
+          width: 1.5,
+        ),
+      ),
+    ),
 
     textTheme: const TextTheme(
       titleMedium: TextStyle(
@@ -66,6 +80,10 @@ ThemeData buildLightTheme(Color seedColor) {
         fontSize: 18,
         color: Colors.black54
       ),
+    ),
+
+    drawerTheme: const DrawerThemeData(
+      backgroundColor: Color(0xFFf6f6f6),
     ),
 
     switchTheme: SwitchThemeData(
@@ -134,9 +152,16 @@ ThemeData buildDarkTheme(Color seedColor) {
       systemOverlayStyle: SystemUiOverlayStyle.light,
     ),
 
-    cardTheme: const CardThemeData(
+    cardTheme: CardThemeData(
       color: Color.fromARGB(255, 27, 28, 29),
       elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(
+          color: Colors.grey.withOpacity(0.2),
+          width: 1.5,
+        ),
+      ),
     ),
 
     textTheme: const TextTheme(
@@ -151,6 +176,10 @@ ThemeData buildDarkTheme(Color seedColor) {
         fontSize: 18,
         color: Colors.white
       ),
+    ),
+
+    drawerTheme: const DrawerThemeData(
+      backgroundColor: Color(0xFF0B0B0D),
     ),
 
     switchTheme: SwitchThemeData(

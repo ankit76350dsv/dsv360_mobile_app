@@ -37,6 +37,14 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
   }
 
   @override
+  void didUpdateWidget(covariant CustomDropDownField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.selectedOption != widget.selectedOption) {
+      _selectedOption = widget.selectedOption;
+    }
+  }
+
+  @override
   void dispose() {
     _focusNode.removeListener(_updateFocusState);
     _focusNode.dispose();
@@ -89,7 +97,7 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
         ),
         dropdownColor: colors.surface,
         decoration: InputDecoration(
-          labelText: widget.hintText,
+          labelText: widget.labelText,
           labelStyle: TextStyle(
             color: _isFocused
                 ? Colors.grey.withOpacity(0.9)
@@ -135,6 +143,7 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
         items: widget.options,
         onChanged: (value) {
           setState(() => _selectedOption = value);
+          widget.onChanged(value);
         },
       ),
     );

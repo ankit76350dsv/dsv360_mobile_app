@@ -70,6 +70,14 @@ class _DsvAiPageState extends State<DsvAiPage> {
       drawer: const AppDrawer(),
       backgroundColor: const Color(0xFF0F0F11),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
+        ),
         title: const Text('DSV AI'),
         backgroundColor: Colors.transparent,
         elevation: 0,

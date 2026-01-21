@@ -28,6 +28,7 @@ class _AddClientContactsPageState extends State<AddClientContactsPage> {
       TextEditingController();
 
   String? _organization;
+  String bottomTwoButtonsLoadingKey = 'add_client_key';
 
   @override
   void initState() {
@@ -186,6 +187,7 @@ class _AddClientContactsPageState extends State<AddClientContactsPage> {
 
                       //buttons
                       BottomTwoButtons(
+                        loadingKey: bottomTwoButtonsLoadingKey,
                         button1Text: "Cancel",
                         button2Text: isEditing ? "save changes" : "add client",
                         button1Function: () {

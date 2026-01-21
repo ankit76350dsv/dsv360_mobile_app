@@ -7,6 +7,10 @@ class UsersModel {
   final String userId;
   final String emailAddress;
   final String role;
+  final String roleId;
+  final String reporterId;
+  final String reporterName;
+  final String reporterProfile;
   final String profilePic;
   final WorkStatus workStatus;
   final VerificationStatus verificationStatus;
@@ -17,6 +21,10 @@ class UsersModel {
     required this.userId,
     required this.emailAddress,
     required this.role,
+    required this.roleId,
+    required this.reporterId,
+    required this.reporterName,
+    required this.reporterProfile,
     required this.profilePic,
     required this.workStatus,
     required this.verificationStatus,
@@ -25,7 +33,7 @@ class UsersModel {
   /// API: status -> WorkStatus
   static WorkStatus _workStatusFromApi(dynamic value) {
     switch (value) {
-      case 'ENABLED':
+      case 'ACTIVE':
         return WorkStatus.active;
       case 'DISABLED':
         return WorkStatus.inactive;
@@ -48,6 +56,10 @@ class UsersModel {
       userId: json['user_id']?.toString() ?? '',
       emailAddress: json['email_id'] ?? '',
       role: json['role_details']?['role_name'] ?? '',
+      roleId: json['role_details']?['role_id'] ?? '',
+      reporterId: json['reporter_id'] ?? '',
+      reporterName: json['reporter_name'] ?? 'Not Set',
+      reporterProfile: json['reporter_profile'] ?? 'Not Set',
       profilePic: json['profile_pic'] ?? '',
       workStatus: _workStatusFromApi(json['status']),
       verificationStatus:
@@ -61,6 +73,9 @@ class UsersModel {
         'user_id': userId,
         'email_id': emailAddress,
         'role': role,
+        'roleId': roleId,
+        'reporterId': reporterId,
+        'reporterName': reporterName,
         'profile_pic': profilePic,
         'status': workStatus == WorkStatus.active
             ? 'ENABLED'

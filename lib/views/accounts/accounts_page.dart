@@ -3,7 +3,9 @@ import 'package:dsv360/repositories/accounts_list_repository.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/accounts/add_edit_accounts_page.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
+import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -26,25 +28,30 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
-        elevation: 0,
-        title: const Text('DSV-360'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const NotificationPage()),
+        toolbarHeight: 35.0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, size: 18),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
               );
-            },
-            icon: const Icon(Icons.notifications_none),
-          ),
-          const SizedBox(width: 8),
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.white12,
-            child: const Icon(Icons.person_outline, size: 18),
-          ),
-          const SizedBox(width: 12),
-        ],
+            }
+          },
+        ),
+        centerTitle: true,
+        elevation: 0,
+        title: Text(
+          'Accounts',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        // if needed can add the icon as well here
+        // hook for info action
+        // you can open a dialog or screen here
+        actions: [],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(
@@ -83,10 +90,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
                   ),
                   filled: true,
                   fillColor: colors.surfaceVariant,
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: Colors.grey,
-                  ),
+                  prefixIcon: Icon(Icons.search, color: Colors.grey),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide(
@@ -134,10 +138,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
                     return ListView.builder(
                       itemCount: filteredAccounts.length,
                       itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: AccountsCard(account: filteredAccounts[index]),
-                        );
+                        return AccountsCard(account: filteredAccounts[index]);
                       },
                     );
                   },
@@ -163,7 +164,7 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final activeUser = ref.watch(activeUserRepositoryProvider).asData?.value;
+    final activeUser = ref.watch(activeUserRepositoryProvider);
 
     return GestureDetector(
       onTap: () {},
@@ -232,62 +233,36 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
                           ],
                         ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Divider
-            Divider(
-              height: 1,
-              thickness: 1,
-              color: Colors.grey.withOpacity(0.2),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: colors.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        // TODO: Handle edit action
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                AddEditAccountsPage(account: widget.account),
+                      Row(
+                        children: [
+                          CustomCardButton(
+                            onTap: () {
+                              // TODO: Handle edit action
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AddEditAccountsPage(
+                                    account: widget.account,
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: Icons.edit,
                           ),
-                        );
-                      },
-                      icon: Icon(Icons.edit, color: colors.primary),
-                      color: colors.onSurface,
-                      iconSize: 20,
-                    ),
-                  ),
-                  const SizedBox(width: 5.0),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: colors.error.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        _showDeleteDialog(context, widget.account.orgName);
-                      },
-                      icon: const Icon(Icons.delete),
-                      color: colors.error,
-                      iconSize: 20,
-                    ),
+                          const SizedBox(width: 5.0),
+                          CustomCardButton(
+                            onTap: () {
+                              _showDeleteDialog(
+                                context,
+                                widget.account.orgName,
+                              );
+                            },
+                            icon: Icons.delete,
+                            color: colors.error,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -409,7 +384,13 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
           content: Text('Are you sure you want to delete Client "$orgName" ?'),
           actions: [
             OutlinedButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                try {
+                  ref.invalidate(accountsListRepositoryProvider);
+                } catch (e, st) {
+                  
+                }
+              },
               style: OutlinedButton.styleFrom(
                 foregroundColor: theme.colorScheme.primary,
                 side: BorderSide(color: theme.colorScheme.primary),

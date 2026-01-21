@@ -1,15 +1,20 @@
+import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/models/task.dart';
 import 'package:dsv360/models/users.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
+import 'package:dsv360/repositories/pending_tasks_repository.dart';
 import 'package:dsv360/repositories/task_repository.dart';
 import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
 import 'package:dsv360/views/users/add_edit_user_page.dart';
 import 'package:dsv360/views/users/user_details_page.dart';
+import 'package:dsv360/views/widgets/app_snackbar.dart';
 import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -30,25 +35,30 @@ class _UsersPageState extends ConsumerState<UsersPage> {
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
-        elevation: 0,
-        title: const Text('DSV-360'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const NotificationPage()),
+        toolbarHeight: 35.0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, size: 18),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
               );
-            },
-            icon: const Icon(Icons.notifications_none),
-          ),
-          const SizedBox(width: 8),
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.white12,
-            child: const Icon(Icons.person_outline, size: 18),
-          ),
-          const SizedBox(width: 12),
-        ],
+            }
+          },
+        ),
+        centerTitle: true,
+        elevation: 0,
+        title: Text(
+          'Users',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        // if needed can add the icon as well here
+        // hook for info action
+        // you can open a dialog or screen here
+        actions: [],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton(
@@ -68,12 +78,12 @@ class _UsersPageState extends ConsumerState<UsersPage> {
             Padding(
               padding: EdgeInsetsGeometry.symmetric(
                 horizontal: 16.0,
-                vertical: 12.0,
+                vertical: 8.0,
               ),
               child: CustomInputSearch(
                 searchProvider: usersSearchQueryProvider,
                 hint: "Search users",
-              )
+              ),
             ),
             Expanded(
               child: Padding(
@@ -99,9 +109,9 @@ class _UsersPageState extends ConsumerState<UsersPage> {
                     return ListView.builder(
                       itemCount: filteredUsers.length,
                       itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: UserCard(user: filteredUsers[index]),
+                        return UserCard(
+                          user: filteredUsers[index],
+                          userList: users,
                         );
                       },
                     );
@@ -118,29 +128,24 @@ class _UsersPageState extends ConsumerState<UsersPage> {
 
 class UserCard extends ConsumerStatefulWidget {
   final UsersModel user;
-  const UserCard({super.key, required this.user});
+  final List<UsersModel> userList;
+  const UserCard({super.key, required this.user, required this.userList});
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _UserCardState();
 }
 
 class _UserCardState extends ConsumerState<UserCard> {
-  late bool _isActive;
   late String verificationStatusText;
   late IconData verificationStatusIcon;
   late Color verificationStatusColor;
 
   @override
-  void initState() {
-    super.initState();
-    _isActive = widget.user.workStatus == WorkStatus.active;
-  }
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final activeUser = ref.watch(activeUserRepositoryProvider).asData?.value;
+    final activeUser = ref.watch(activeUserRepositoryProvider);
     final verificationStatus = widget.user.verificationStatus;
+    final isActive = widget.user.workStatus == WorkStatus.active;
 
     switch (verificationStatus) {
       case VerificationStatus.verified:
@@ -171,237 +176,252 @@ class _UserCardState extends ConsumerState<UserCard> {
           ),
         ),
         child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colors.primary,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(widget.user.userId,
-                          style: TextStyle(
-                            color: theme.colorScheme.surface
-                          )),
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
                         ),
-                        const Spacer(),
-                        CustomChip(
-                          label: widget.user.role,
+                        decoration: BoxDecoration(
                           color: colors.primary,
-                          icon: null,
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        const SizedBox(width: 6.0),
-                        CustomChip(
-                          label: verificationStatusText,
-                          color: verificationStatusColor,
-                          icon: verificationStatusIcon,
+                        child: Text(
+                          "U${widget.user.userId.substring(widget.user.userId.length - 4)}",
+                          style: TextStyle(color: theme.colorScheme.surface),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
+                      ),
+                      const Spacer(),
+                      CustomChip(
+                        label: widget.user.role,
+                        color: colors.primary,
+                        icon: null,
+                      ),
+                      const SizedBox(width: 6.0),
+                      CustomChip(
+                        label: verificationStatusText,
+                        color: verificationStatusColor,
+                        icon: verificationStatusIcon,
+                      ),
+                    ],
+                  ),
+                ],
               ),
+            ),
 
-              // Divider
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: Colors.grey.withOpacity(0.2),
-              ),
+            // Divider
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: Colors.grey.withOpacity(0.2),
+            ),
 
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "${widget.user.firstName} ${widget.user.lastName}",
-                                style: theme.textTheme.bodyLarge,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(
-                                height: 2.0,
-                              ),
-                              _userInfoRow(Icons.email, widget.user.emailAddress),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // Divider
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: Colors.grey.withOpacity(0.2),
-              ),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                child:
-                    Column(
-                      children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            activeUser != null &&
-                                    _canManageUsers(activeUser.role)
-                                ? SizedBox(
-                                    width: 38,
-                                    height: 18,
-                                    child: Transform.scale(
-                                    scale:
-                                        0.70, 
-                                    child: Switch(
-                                      value: _isActive,
-
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _isActive = value;
-                                          // TODO: Update workStatus in backend
-                                        });
-
-                                        final message = value
-                                            ? 'Employee is active'
-                                            : 'Employee is inactive';
-
-                                        ScaffoldMessenger.of(context)
-                                          ..hideCurrentSnackBar()
-                                          ..showSnackBar(
-                                            SnackBar(
-                                              content: Row(
-                                                children: [
-                                                  const Icon(
-                                                    Icons.info_outline,
-                                                    color: Colors.white,
-                                                    size: 20,
-                                                  ),
-                                                  const SizedBox(width: 12),
-                                                  Text(message),
-                                                ],
-                                              ),
-                                              duration: const Duration(
-                                                seconds: 2,
-                                              ),
-                                            ),
-                                          );
-                                      },
-                                    ),
-                                  ),)
-                                : SizedBox(),
-                            const SizedBox(width: 8),
                             Text(
-                              _isActive ? 'Active' : 'Inactive',
-                              style: TextStyle(
-                                color: _isActive
-                                    ? colors.primary
-                                    : colors.onSurfaceVariant,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
+                              "${widget.user.firstName} ${widget.user.lastName}",
+                              style: theme.textTheme.bodyLarge,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2.0),
+                            _userInfoRow(Icons.email, widget.user.emailAddress),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Divider
+            Divider(
+              height: 1,
+              thickness: 1,
+              color: Colors.grey.withOpacity(0.2),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 38,
+                            height: 18,
+                            child: Transform.scale(
+                              scale: 0.70,
+                              child: Switch(
+                                value: isActive,
+                                onChanged: (value) async {
+                                  // this value is after toggling value
+
+                                  // Optional: show loading indicator or disable switch
+                                  try {
+                                    // Call API based on switch value
+                                    final path = value
+                                        // to make it active (now value is true, previous was false)
+                                        ? '/server/time_entry_management_application_function/employee/DISABLED/${widget.user.userId}'
+
+                                        // to make it inactive (now value is false, previous was true)
+                                        : '/server/time_entry_management_application_function/employee/ACTIVE/${widget.user.userId}';
+                                    await DioClient.instance.post(path);
+
+                                    AppSnackBar.show(
+                                      context,
+                                      message: value
+                                          ? 'Employee is active'
+                                          : 'Employee is inactive',
+                                    );
+
+                                    // Refresh users provider (sync with backend)
+                                    ref.invalidate(usersRepositoryProvider);
+                                  } catch (e) {
+                                    AppSnackBar.show(
+                                      context,
+                                      message: 'Failed to update work status',
+                                      icon: Icons.error_outline,
+                                    );
+                                  }
+                                },
                               ),
                             ),
-                          ],
-                        ),
-                        
-                        Row(
-                          children: [
-                            CustomCardButton(
-                              icon: Icons.account_circle,
-                              onTap: () {
-                                // TODO: Handle user card action
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            isActive ? 'Active' : 'Inactive',
+                            style: TextStyle(
+                              color: isActive
+                                  ? colors.primary
+                                  : colors.onSurfaceVariant,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
 
-                                ScaffoldMessenger.of(context)
-                                  ..hideCurrentSnackBar()
-                                  ..showSnackBar(
-                                    const SnackBar(
-                                      content: Row(
-                                        children: [
-                                          Icon(
-                                            Icons.info_outline,
-                                            color: Colors.white,
-                                            size: 20,
-                                          ),
-                                          SizedBox(width: 12),
-                                          Text(
-                                            'Re-invitation sent successfully',
-                                          ),
-                                        ],
-                                      ),
-                                      behavior: SnackBarBehavior.floating,
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                              },
-                            ),
-                            const SizedBox(width: 5.0,),
-                            CustomCardButton(
-                              icon: Icons.edit,
-                              onTap: () {
-                                // TODO: Handle edit action
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        AddEditUserPage(user: widget.user),
-                                  ),
+                      Row(
+                        children: [
+                          widget.user.verificationStatus != VerificationStatus.verified
+                          ?
+                          CustomCardButton(
+                            icon: Icons.account_circle,
+                            onTap: () async {
+                              try {
+                                await DioClient.instance.post(
+                                  '/server/time_entry_management_application_function/reInviteEmployees',
+                                  data: {
+                                    'email_id': widget.user.emailAddress
+                                        .toString(),
+                                    'first_name': widget.user.firstName
+                                        .toString(),
+                                    'last_name': widget.user.lastName
+                                        .toString(),
+                                    'role_id': widget.user.roleId.toString(),
+                                    'user_id': widget.user.userId.toString(),
+                                  },
                                 );
-                              },
-                            ),
-                            const SizedBox(width: 5.0,),
-                            CustomCardButton(
-                              icon: Icons.delete,
-                              onTap: () {
-                                _showDeleteUserSheet(
+
+                                AppSnackBar.show(
                                   context,
-                                  user: widget.user, // List<Task>
+                                  message: 'Re-invitation sent successfully',
                                 );
-                              },
-                              color: colors.error,
-                            )
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                              } catch (e) {
+                                debugPrint('❌ Failed to sent invitation: $e');
+
+                                AppSnackBar.show(
+                                  context,
+                                  message: 'Failed to sent re-invitation.',
+                                );
+                              }
+                            },
+                          )
+                          :
+                          // nothing
+                          SizedBox(),
+                          
+                          const SizedBox(width: 5.0),
+                          CustomCardButton(
+                            icon: Icons.edit,
+                            onTap: () {
+                              // TODO: Handle edit action
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      AddEditUserPage(user: widget.user),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 5.0),
+                          CustomCardButton(
+                            icon: Icons.delete,
+                            onTap: () {
+                              _showDeleteUserSheet(
+                                context,
+                                user: widget.user, // List<Task>
+                                usersList: widget.userList,
+                              );
+                            },
+                            color: colors.error,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+      ),
     );
   }
 
   /// Centralized role rule
   bool _canManageUsers(String role) {
-    return role == 'Admin' || role == 'Manager';
+    // return role.contains('Admin') || role.contains('Manager');
+    return true;
   }
 
-  void _showDeleteUserSheet(BuildContext context, {required UsersModel user}) {
+  void _showDeleteUserSheet(
+    BuildContext context, {
+    required UsersModel user,
+    required List<UsersModel> usersList,
+  }) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      isScrollControlled: false,
       builder: (_) {
-        return _DeleteUserBottomSheet(user: user);
+        return _DeleteUserBottomSheet(user: user, usersList: usersList);
       },
     );
   }
@@ -411,15 +431,14 @@ class _UserCardState extends ConsumerState<UserCard> {
 
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 18,
-          color: theme.colorScheme.tertiary,
-        ),
+        Icon(icon, size: 18, color: theme.colorScheme.tertiary),
         const SizedBox(width: 8),
-        Text(text, style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.tertiary,
-        ),),
+        Text(
+          text,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.tertiary,
+          ),
+        ),
       ],
     );
   }
@@ -427,8 +446,9 @@ class _UserCardState extends ConsumerState<UserCard> {
 
 class _DeleteUserBottomSheet extends ConsumerStatefulWidget {
   final UsersModel user;
+  final List<UsersModel> usersList;
 
-  const _DeleteUserBottomSheet({required this.user});
+  const _DeleteUserBottomSheet({required this.user, required this.usersList});
 
   @override
   ConsumerState<_DeleteUserBottomSheet> createState() =>
@@ -439,74 +459,163 @@ class _DeleteUserBottomSheetState
     extends ConsumerState<_DeleteUserBottomSheet> {
   final Map<String, String> reassignment = {};
 
+  List<Map<String, dynamic>> _buildReassignmentPayload(
+    List<Task> tasks,
+    Map<String, String> reassignment,
+    List<UsersModel> users,
+  ) {
+    return tasks.map((task) {
+      final assignedUserId = reassignment[task.taskId];
+
+      final assignedUser = users.firstWhere((u) => u.userId == assignedUserId);
+
+      return {
+        "Task_ID": task.taskId,
+        "assigned_To_Id": assignedUser.userId,
+        "assigned_To": '${assignedUser.firstName} ${assignedUser.lastName}'
+            .trim(),
+      };
+    }).toList();
+  }
+
+  String bottomTwoButtonsLoadingKey = 'delete_user_sheet_key';
+
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final tasksAsync = ref.watch(taskRepositoryProvider);
-    // 👆 ideally scoped by userId
+    final pendingTasksAsync = ref.watch(
+      pendingTasksListRepositoryProvider(widget.user.userId),
+    );
 
     return SafeArea(
-      top: true,
-      child: SizedBox(
-        height: MediaQuery.of(context).size.height,
-        child: Container(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 16,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: tasksAsync.when(
-            loading: () => _LoadingView(colors),
-            error: (e, _) => _ErrorView(e.toString(), colors),
-            data: (tasks) {
-              final hasPendingTasks = tasks.isNotEmpty;
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 16,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ✅ Always visible
+            _dragHandle(colors),
 
-              return Column(
-                // mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _DragHandle(colors),
+            const SizedBox(height: 8),
 
-                  Text(
-                    hasPendingTasks ? 'Task Assignment' : 'No Tasks Pending?',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 12),
+            // ✅ Async-controlled content
+            pendingTasksAsync.when(
+              loading: () => _LoadingView(colors),
+              error: (e, _) => _ErrorView(e.toString(), colors),
+              data: (tasks) {
+                final hasPendingTasks = tasks.isNotEmpty;
 
-                  if (!hasPendingTasks)
-                    _NoTasksView(colors)
-                  else
-                    _TaskAssignmentView(
-                      tasks: tasks,
-                      reassignment: reassignment,
-                      onChanged: () => setState(() {}),
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      hasPendingTasks ? 'Task Assignment' : 'No Tasks Pending?',
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
+                    const SizedBox(height: 12),
 
-                  const SizedBox(height: 20),
+                    if (!hasPendingTasks)
+                      _noTasksView(colors)
+                    else
+                      _TaskAssignmentView(
+                        tasks: tasks,
+                        users: widget.usersList,
+                        currentUser: widget.user,
+                        reassignment: reassignment,
+                        onChanged: () => setState(() {}),
+                      ),
 
-                  BottomTwoButtons(
-                    button1Text: "Cancel",
-                    button2Text: "delete user",
-                    button1Function: () {
-                      Navigator.pop(context);
-                    },
-                    button2Function: () {
-                      (!hasPendingTasks || reassignment.length == tasks.length)
-                          ? () {
-                              Navigator.pop(context);
-                            }
-                          : null;
-                    },
-                  ),
-                ],
-              );
-            },
-          ),
+                    const SizedBox(height: 20),
+
+                    BottomTwoButtons(
+                      loadingKey: bottomTwoButtonsLoadingKey,
+                      button1Text: "Cancel",
+                      button2Text: "delete user",
+                      button1Function: () {
+                        Navigator.pop(context);
+                      },
+                      button2Function: () async {
+                        // Block only when pending tasks exist but reassignment is incomplete
+                        if (hasPendingTasks &&
+                            reassignment.length != tasks.length) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Please reassign all tasks before deleting the user',
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+
+                        ref
+                                .read(
+                                  submitLoadingProvider(
+                                    bottomTwoButtonsLoadingKey,
+                                  ).notifier,
+                                )
+                                .state =
+                            true;
+
+                        // ALWAYS build payload (empty [] if no tasks)
+                        final reassignmentPayload = _buildReassignmentPayload(
+                          tasks,
+                          reassignment,
+                          widget.usersList,
+                        );
+
+                        debugPrint(
+                          'Reassignment payload: $reassignmentPayload',
+                        );
+
+                        try {
+                          // ALWAYS hit delete API
+                          await DioClient.instance.post(
+                            '/server/time_entry_management_application_function/employee/${widget.user.userId}',
+                            data: reassignmentPayload,
+                          );
+
+                          Navigator.pop(context, true);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('User deleted successfully.'),
+                            ),
+                          );
+
+                          ref.invalidate(usersRepositoryProvider);
+                        } catch (e) {
+                          debugPrint('❌ Failed to delete user: $e');
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Failed to delete user'),
+                            ),
+                          );
+                        } finally {
+                          ref
+                                  .read(
+                                    submitLoadingProvider(
+                                      bottomTwoButtonsLoadingKey,
+                                    ).notifier,
+                                  )
+                                  .state =
+                              false;
+                        }
+                      },
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -529,9 +638,9 @@ Widget _ErrorView(String message, ColorScheme colors) {
   );
 }
 
-Widget _NoTasksView(ColorScheme colors) {
+Widget _noTasksView(ColorScheme colors) {
   return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 16),
+    padding: const EdgeInsets.symmetric(vertical: 8),
     child: Text(
       'This user has no pending tasks.\nYou can safely delete the user.',
       style: TextStyle(color: colors.onSurfaceVariant),
@@ -539,7 +648,7 @@ Widget _NoTasksView(ColorScheme colors) {
   );
 }
 
-Widget _DragHandle(ColorScheme colors) {
+Widget _dragHandle(ColorScheme colors) {
   return Center(
     child: Container(
       width: 40,
@@ -555,11 +664,16 @@ Widget _DragHandle(ColorScheme colors) {
 
 class _TaskAssignmentView extends StatelessWidget {
   final List<Task> tasks;
+  final List<UsersModel> users;
+  final UsersModel currentUser;
   final Map<String, String> reassignment;
   final VoidCallback onChanged;
 
   const _TaskAssignmentView({
+    super.key,
     required this.tasks,
+    required this.users,
+    required this.currentUser,
     required this.reassignment,
     required this.onChanged,
   });
@@ -568,40 +682,56 @@ class _TaskAssignmentView extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
 
+    tasks.forEach((task) {
+      debugPrint('TaskId: ${task.taskId}, TaskName: ${task.taskName}');
+    });
+
+    final assignableUsers = users
+        .where((u) => u.userId != currentUser.userId)
+        .toList();
+
+    final options = assignableUsers.map((u) {
+      return DropdownMenuItem<String>(
+        value: u.userId,
+        child: Text('${u.firstName} ${u.lastName}'.trim()),
+      );
+    }).toList();
+
     return Column(
       children: tasks.map((task) {
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               /// Task name
-              Expanded(
-                child: Text(
-                  task.taskName,
-                  style: TextStyle(color: colors.onSurface),
-                ),
+              Text(
+                "Task Name: ${task.taskName}",
+                textAlign: TextAlign.left,
+                style: TextStyle(color: colors.onSurface),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(height: 6),
 
               /// Employee selector
-              Expanded(
-                child: DropdownButtonFormField<String>(
-                  value: reassignment[task.taskName], // ✅ bind value
-                  hint: const Text('Select Employee'),
-                  items: const [
-                    DropdownMenuItem(value: '1', child: Text('Aman')),
-                    DropdownMenuItem(value: '2', child: Text('Riya')),
-                  ],
-                  onChanged: (value) {
-                    if (value == null) return;
+              CustomDropDownField(
+                key: ValueKey(task.taskId),
+                options: options,
+                selectedOption: reassignment[task.taskId],
+                hintText: "Employee",
+                labelText: "Reassign to",
+                prefixIcon: Icons.person,
+                onChanged: (value) {
+                  if (value == null) return;
 
-                    // ✅ STORE assignment
-                    reassignment[task.taskName] = value;
+                  // store reassignment: task -> userId
+                  reassignment[task.taskId] = value;
 
-                    // ✅ notify parent
-                    onChanged();
-                  },
-                ),
+                  debugPrint('Reassignment map: $reassignment');
+                  debugPrint('Tasks length: ${tasks.length}');
+                  debugPrint('Reassignment length: ${reassignment.length}');
+
+                  onChanged();
+                },
               ),
             ],
           ),

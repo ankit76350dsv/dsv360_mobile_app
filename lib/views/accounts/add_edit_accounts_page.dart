@@ -25,6 +25,8 @@ class _AddEditAccountsPageState extends State<AddEditAccountsPage> {
   String? _orgType;
   String? _orgStatus;
 
+  String  bottomTwoButtonsLoadingKey = 'add_edit_account_key';
+
   @override
   void initState() {
     super.initState();
@@ -187,6 +189,7 @@ class _AddEditAccountsPageState extends State<AddEditAccountsPage> {
                       const SizedBox(height: 32),
 
                       BottomTwoButtons(
+                        loadingKey: bottomTwoButtonsLoadingKey,
                         button1Text: "Cancel",
                         button2Text: isEditing ? "save changes" : "add account",
                         button1Function: () {

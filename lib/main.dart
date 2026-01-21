@@ -4,6 +4,7 @@ import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/views/splash/splash_screen.dart';
 import 'package:dsv360/views/accounts/accounts_page.dart';
 import 'package:dsv360/views/badges/badges_page.dart';
+import 'package:dsv360/views/clients/client_contacts_page.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/projects/projects_screen.dart'; // project
 import 'package:dsv360/views/task/tasks_screen.dart'; // task

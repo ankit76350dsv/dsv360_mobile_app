@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
-// import 'package:esd_mobile_app/core/constants/server_constant.dart';
+import 'package:dsv360/core/constants/server_constant.dart';
+import 'package:dsv360/core/constants/token_manager.dart';
 // import 'package:esd_mobile_app/core/constants/token_manager.dart';
 import 'package:flutter/material.dart';
 
@@ -10,23 +11,26 @@ class DioClient {
   late final Dio _dio = Dio();
 
   DioClient._internal() {
-    // _dio.options.baseUrl = ServerConstant.serverURL;
+    _dio.options.baseUrl = ServerConstant.serverURL;
+    // Maximum time Dio will wait to establish a connection.
     _dio.options.connectTimeout = const Duration(seconds: 10);
+    // Disables automatic HTTP redirects
     _dio.options.followRedirects = false;
 
     // Inject token once
     _dio.interceptors.add(
       InterceptorsWrapper(
-        onRequest: (options, handler) {
-          // final token = TokenManager.instance.token;
-          // if (token != null) {
-          //   options.headers['Authorization'] = 'Zoho-oauthtoken $token';
-          // }
+        onRequest: (options, handler) async {
+          final token = await TokenManager.instance.getToken();
+          if (token != null) {
+            options.headers['Authorization'] = 'Zoho-oauthtoken $token';
+          }
           return handler.next(options);
         },
       ),
     );
 
+    // Automatically logs: Request URL, Headers, Body, Response body
     _dio.interceptors.add(
       LogInterceptor(requestBody: true, responseBody: true),
     );
@@ -45,19 +49,11 @@ class DioClient {
       );
 
       debugPrint("DioClient response: " + response.data.toString());
+      debugPrint("DioClient response: " + response.statusCode.toString());
 
       if (response.statusCode == 200) {
-        final data = response.data;
-        if (data is Map &&
-            (data['success'] == true || data['status'] == 'success')) {
           return response;
-        } else {
-          throw Exception(
-            'API returned success = false: ${data['message'] ?? 'No message'}',
-          );
-        }
       } else {
-        debugPrint("DioClient statuscode not 200: " + response.data.toString());
         throw Exception('Unexpected status code: ${response.statusCode}');
       }
     } on DioException catch (e, trace) {
@@ -98,26 +94,25 @@ class DioClient {
   Future<Response?> post(
     String path,
     {
-      Map<String, dynamic>? data,
-      FormData? formData,
+      dynamic data,
       Map<String, dynamic>? queryParameters,
       Options? options,
       List<MultipartFile>? attachments}) async {
     try {
       // Token interceptor added ONCE here
-      _dio.interceptors.add(InterceptorsWrapper(
-        onRequest: (options, handler) {
-          // final token = TokenManager.instance.token;
-          // if (token != null) {
-          //   options.headers['Authorization'] = 'Zoho-oauthtoken $token';
-          // }
-          return handler.next(options);
-        },
-      ));
+      // _dio.interceptors.add(InterceptorsWrapper(
+      //   onRequest: (options, handler) {
+      //     // final token = TokenManager.instance.token;
+      //     // if (token != null) {
+      //     //   options.headers['Authorization'] = 'Zoho-oauthtoken $token';
+      //     // }
+      //     return handler.next(options);
+      //   },
+      // ));
 
       final response = await _dio.post(
         path,
-        data: formData,
+        data: data,
         options: options,
         queryParameters: queryParameters
       );
@@ -126,23 +121,14 @@ class DioClient {
 
       // Check for HTTP 200
       if (response.statusCode == 200) {
-        final data = response.data;
-
-        // Assuming API response format includes a key like 'success': true
-        if (data is Map) {
-          debugPrint("data: $data");
-          return response;
-        } else {
-          debugPrint("Unexpected error : No message");
-          throw Exception('API returned success = false: ${data['message'] ?? 'No message'}');
-        }
+        return response;
       } else {
-        debugPrint("Unexpected error : ${response.statusCode}");
         throw Exception('Unexpected status code: ${response.statusCode}');
       }
+    } on DioException catch (e, trace) {
+      throw Exception('Dio POST request failed: ${e.message} $trace');
     } catch (e) {
-      debugPrint("Unexpected error : ${e}");
-      throw Exception('Unexpected error in GET request: $e');
+      throw Exception('Unexpected error in POST request: $e');
     }
   }
 
@@ -197,4 +183,35 @@ class DioClient {
       throw Exception('Unexpected error in GET request: $e');
     }
   }
+
+  /// Public method to make a DELETE request
+  Future<Response> delete(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    dynamic data,
+  }) async {
+    try {
+      final response = await _dio.delete(
+        path,
+        queryParameters: queryParameters,
+        options: options,
+        data: data, // optional body (some APIs need this)
+      );
+
+      debugPrint("DioClient response: ${response.data}");
+      debugPrint("DioClient response code: ${response.statusCode}");
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return response;
+      } else {
+        throw Exception('Unexpected status code: ${response.statusCode}');
+      }
+    } on DioException catch (e, trace) {
+      throw Exception('Dio DELETE request failed: ${e.message} $trace');
+    } catch (e, trace) {
+      throw Exception('Unexpected error in DELETE request: $e $trace');
+    }
+  }
+
 }

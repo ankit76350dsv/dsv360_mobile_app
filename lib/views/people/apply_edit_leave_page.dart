@@ -1,20 +1,21 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/models/leave_details.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/views/widgets/custom_date_field.dart';
 import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-class ApplyLeavePage extends StatefulWidget {
+class ApplyEditLeavePage extends StatefulWidget {
   final LeaveDetails? leave;
-  const ApplyLeavePage({super.key, required this.leave});
+  const ApplyEditLeavePage({super.key, required this.leave});
 
   @override
-  State<ApplyLeavePage> createState() => _ApplyLeavePageState();
+  State<ApplyEditLeavePage> createState() => _ApplyEditLeavePageState();
 }
 
-class _ApplyLeavePageState extends State<ApplyLeavePage> {
+class _ApplyEditLeavePageState extends State<ApplyEditLeavePage> {
   final _formKey = GlobalKey<FormState>();
 
   String? _leaveType;
@@ -31,6 +32,8 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
     if (_startDate == null || _endDate == null) return 0;
     return _endDate!.difference(_startDate!).inDays + 1;
   }
+
+  String bottomTwoButtonsLoadingKey = 'apply_edit_leave_key';
 
   @override
   void initState() {
@@ -75,7 +78,7 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
         ),
         backgroundColor: colors.surface,
       ),
-      backgroundColor: AppColors.bg,
+      // backgroundColor: AppColors.bg,
       body: SafeArea(
         child: Column(
           children: [
@@ -128,35 +131,48 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
                       const SizedBox(height: 16),
 
                       /// Start Date
-                      _DateField(
+                      CustomPickerField(
                         label: 'Start Date',
-                        date: _startDate,
+                        valueText: _startDate == null
+                            ? null
+                            : DateFormat('dd/MM/yyyy').format(_startDate!),
+                        placeholder: 'dd/mm/yyyy',
                         onTap: () => _pickDate(true),
                       ),
                       const SizedBox(height: 16),
 
                       /// End Date
-                      _DateField(
+                      CustomPickerField(
                         label: 'End Date',
-                        date: _endDate,
+                        valueText: _endDate == null
+                            ? null
+                            : DateFormat('dd/MM/yyyy').format(_endDate!),
+                        placeholder: 'dd/mm/yyyy',
                         onTap: () => _pickDate(false),
                       ),
                       const SizedBox(height: 16),
 
                       /// Reason
-                      TextFormField(
+                      CustomInputField(
                         controller: _reasonController,
-                        maxLines: 4,
-                        decoration: _inputDecoration('Reason'),
-                        style: const TextStyle(color: Colors.white),
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Enter reason'
-                            : null,
+                        hintText: 'Enter Reason',
+                        labelText: 'Reason',
+                        maxLines: 5,
+                        minLines: 4,
+                        isMultiline: true,
+                        prefixIcon: Icons.new_releases_outlined,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Enter reason';
+                          }
+                          return null;
+                        },
                       ),
 
                       const SizedBox(height: 32),
                       // buttons
                       BottomTwoButtons(
+                        loadingKey: bottomTwoButtonsLoadingKey,
                         button1Text: "cancel",
                         button2Text: isEditing ? 'SAVE CHANGES' : 'SUBMIT',
                         button1Function: () {
@@ -190,83 +206,6 @@ class _ApplyLeavePageState extends State<ApplyLeavePage> {
       focusedBorder: OutlineInputBorder(
         borderSide: const BorderSide(color: Colors.white),
         borderRadius: BorderRadius.circular(6),
-      ),
-    );
-  }
-}
-
-class _TopHeader extends StatelessWidget {
-  final String title;
-  const _TopHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 8.0),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.successDark, AppColors.primary],
-        ),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back_ios, size: 26),
-            onPressed: () => Navigator.pop(context),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Date Field Widget
-class _DateField extends StatelessWidget {
-  final String label;
-  final DateTime? date;
-  final VoidCallback onTap;
-
-  const _DateField({
-    required this.label,
-    required this.date,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final formatted = date == null
-        ? 'dd/mm/yyyy'
-        : DateFormat('dd/MM/yyyy').format(date!);
-
-    return InkWell(
-      onTap: onTap,
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: const TextStyle(color: Colors.white70),
-          enabledBorder: OutlineInputBorder(
-            borderSide: const BorderSide(color: Colors.white54),
-            borderRadius: BorderRadius.circular(6),
-          ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(formatted, style: const TextStyle(color: Colors.white)),
-            const Icon(Icons.calendar_today, color: Colors.white70),
-          ],
-        ),
       ),
     );
   }

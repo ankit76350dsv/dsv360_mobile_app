@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+import 'package:dsv360/core/constants/app_colors.dart';
 
 class TopBar extends StatelessWidget {
   final String title;
@@ -28,7 +28,7 @@ class TopBar extends StatelessWidget {
               Icons.arrow_back_ios_new,
               size: 18,
             ),
-            color: Colors.white70,
+            color: AppColors.textPrimary,
           ),
 
           /// Title
@@ -41,7 +41,7 @@ class TopBar extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: Colors.white70,
+                color: AppColors.textPrimary,
               ),
             ),
           ),
@@ -56,7 +56,7 @@ class TopBar extends StatelessWidget {
                   : Icons.more_horiz,
               size: 18,
             ),
-            color: Colors.white70,
+            color: AppColors.textPrimary,
           ),
         ],
       ),

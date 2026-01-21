@@ -5,6 +5,7 @@ import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/views/badges/add_edit_badge_page.dart';
 import 'package:dsv360/views/badges/assign_badges_page.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -31,6 +32,14 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
+        ),
         elevation: 0,
         title: const Text('DSV-360'),
         actions: [
@@ -58,10 +67,8 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
             onTap: () {
               // open create badge
               Navigator.push(
-                context, 
-                MaterialPageRoute(
-                  builder: (_) => AddEditBadgePage(),
-                ),
+                context,
+                MaterialPageRoute(builder: (_) => AddEditBadgePage()),
               );
             },
           ),
@@ -72,10 +79,8 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
             onTap: () {
               // assign badges to user
               Navigator.push(
-                context, 
-                MaterialPageRoute(
-                  builder: (_) => AssignBadgesPage(),
-                ),
+                context,
+                MaterialPageRoute(builder: (_) => AssignBadgesPage()),
               );
             },
           ),
@@ -127,10 +132,7 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
                     return ListView.builder(
                       itemCount: filteredUsers.length,
                       itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: UserBadgeCard(user: filteredUsers[index]),
-                        );
+                        return UserBadgeCard(user: filteredUsers[index]);
                       },
                     );
                   },
@@ -167,7 +169,7 @@ class _UserBadgeCardState extends ConsumerState<UserBadgeCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final activeUser = ref.watch(activeUserRepositoryProvider).asData?.value;
+    final activeUser = ref.watch(activeUserRepositoryProvider);
 
     return GestureDetector(
       onTap: () {},

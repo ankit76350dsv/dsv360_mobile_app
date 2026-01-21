@@ -1,11 +1,10 @@
-import 'package:dsv360/models/accounts.dart';
 import 'package:dsv360/models/client_contacts.dart';
-import 'package:dsv360/repositories/accounts_list_repository.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/repositories/client_contacts_repository.dart';
 import 'package:dsv360/views/clients/add_client_contacts_page.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
+import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,6 +27,14 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          },
+        ),
         elevation: 0,
         title: const Text('DSV-360'),
         actions: [
@@ -73,7 +80,7 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
               child: CustomInputSearch(
                 hint: "Search client contacts",
                 searchProvider: clientContactsSearchQueryProvider,
-              )
+              ),
             ),
             Expanded(
               child: Padding(
@@ -100,11 +107,8 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
                     return ListView.builder(
                       itemCount: filteredClientContacts.length,
                       itemBuilder: (context, index) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: ClientContactsCard(
-                            clientContacts: filteredClientContacts[index],
-                          ),
+                        return ClientContactsCard(
+                          clientContacts: filteredClientContacts[index],
                         );
                       },
                     );
@@ -141,7 +145,7 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final activeUser = ref.watch(activeUserRepositoryProvider).asData?.value;
+    final activeUser = ref.watch(activeUserRepositoryProvider);
 
     return GestureDetector(
       onTap: () {},
@@ -151,27 +155,27 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
           side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
         ),
         child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
               padding: const EdgeInsets.all(16),
-              child: Column(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    CircleAvatar(
-                      radius: 28,
-                      backgroundColor: colors.primary.withOpacity(0.15),
-                      child: Icon(
-                        Icons.filter_alt,
-                        size: 28,
-                        color: colors.primary,
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: colors.primary.withOpacity(0.15),
+                        child: Icon(
+                          Icons.filter_alt,
+                          size: 22,
+                          color: colors.primary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
+                      const SizedBox(width: 12),
+
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
@@ -186,13 +190,68 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 40,
+                        height: 18,
+                        child: Transform.scale(
+                          scale: 0.80,
+                          child: Switch(
+                            value: clientStatus,
 
-              ],),),
+                            onChanged: (value) {
+                              setState(() {
+                                clientStatus = value;
+                                // TODO: Update workStatus in backend
+                              });
 
-              // Divider
+                              final message = value
+                                  ? 'Employee is active'
+                                  : 'Employee is inactive';
+
+                              ScaffoldMessenger.of(context)
+                                ..hideCurrentSnackBar()
+                                ..showSnackBar(
+                                  SnackBar(
+                                    content: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.info_outline,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(message),
+                                      ],
+                                    ),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                            },
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12.0),
+                      CustomCardButton(
+                        onTap: () {
+                          _showDeleteDialog(
+                            context,
+                            "${widget.clientContacts.firstName} ${widget.clientContacts.lastName}",
+                          );
+                        },
+                        icon: Icons.delete,
+                        color: colors.error,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Divider
             Divider(
               height: 1,
               thickness: 1,
@@ -203,90 +262,17 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                /// Details
-                _clientInfoRow(Icons.tag, widget.clientContacts.userId),
-                _clientInfoRow(Icons.email, widget.clientContacts.email),
-                _clientInfoRow(Icons.contact_emergency_outlined, widget.clientContacts.phone),
-
-              ],),),
-
-              // Divider
-            Divider(
-              height: 1,
-              thickness: 1,
-              color: Colors.grey.withOpacity(0.2),
-            ),
-
-                Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
+                  /// Details
+                  _clientInfoRow(Icons.tag, widget.clientContacts.userId),
+                  _clientInfoRow(Icons.email, widget.clientContacts.email),
+                  _clientInfoRow(
+                    Icons.contact_emergency_outlined,
+                    widget.clientContacts.phone,
+                  ),
+                ],
               ),
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    activeUser != null && _canManageUsers(activeUser.role)
-                        ? SizedBox(
-                                    width: 40,
-                                    height: 18,
-                                    child: Transform.scale(
-                                    scale:
-                                        0.80, 
-                                    child: Switch(
-                              value: clientStatus,
-
-                              onChanged: (value) {
-                                setState(() {
-                                  clientStatus = value;
-                                  // TODO: Update workStatus in backend
-                                });
-
-                                final message = value
-                                    ? 'Employee is active'
-                                    : 'Employee is inactive';
-
-                                ScaffoldMessenger.of(context)
-                                  ..hideCurrentSnackBar()
-                                  ..showSnackBar(
-                                    SnackBar(
-                                      content: Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.info_outline,
-                                            color: Colors.white,
-                                            size: 20,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Text(message),
-                                        ],
-                                      ),
-                                      duration: const Duration(seconds: 2),
-                                    ),
-                                  );
-                              },
-                            ),),
-                          )
-                        : SizedBox(),
-                    Container(
-                    decoration: BoxDecoration(
-                      color: colors.error.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        _showDeleteDialog(
-                          context,
-                          "${widget.clientContacts.firstName} ${widget.clientContacts.lastName}",
-                        );
-                      },
-                      icon: const Icon(Icons.delete),
-                      color: colors.error,
-                      iconSize: 20,
-                    ),),
-                  ],
-                ),
-        ),
-              ],
+            ),
+          ],
         ),
       ),
     );
@@ -326,7 +312,9 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
             borderRadius: BorderRadius.circular(12),
           ),
           title: Text('Delete Staff', style: theme.textTheme.titleMedium),
-          content: Text('Are you sure you want to delete Staff  "$clientContactName" ?'),
+          content: Text(
+            'Are you sure you want to delete Staff  "$clientContactName" ?',
+          ),
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.pop(context),

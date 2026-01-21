@@ -1,6 +1,8 @@
+import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/DashboardTitle.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/views/dashboard/ProjectAnalyticsCard.dart';
 import 'package:dsv360/views/dashboard/StatGrid.dart';
 import 'package:dsv360/views/dashboard/TaskStatusCard.dart';
@@ -8,6 +10,7 @@ import 'package:dsv360/views/dashboard/TopHeader.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
 import 'package:dsv360/views/profile/profile_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -20,44 +23,49 @@ class DashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // This page is a self-contained MaterialApp like your NotificationPage,
     // so it will use the same dark theme and constrained centered layout.
-    return MaterialApp(
-      title: 'DSV-360 Dashboard',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF0B0B0D),
-        cardColor: Colors.white,
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          centerTitle: false,
-          titleTextStyle: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-          iconTheme: IconThemeData(color: Colors.white),
-        ),
-      ),
-      home: const _DashboardScaffold(),
-    );
+    // return MaterialApp(
+    //   title: 'DSV-360 Dashboard',
+    //   debugShowCheckedModeBanner: false,
+    //   theme: ThemeData.dark().copyWith(
+    //     scaffoldBackgroundColor: const Color(0xFF0B0B0D),
+    //     cardColor: const Color(0xFF0F1113),
+    //     appBarTheme: const AppBarTheme(
+    //       backgroundColor: Colors.transparent,
+    //       elevation: 0,
+    //       centerTitle: false,
+    //       titleTextStyle: TextStyle(
+    //         color: Colors.white,
+    //         fontSize: 18,
+    //         fontWeight: FontWeight.w600,
+    //       ),
+    //       iconTheme: IconThemeData(color: Colors.white),
+    //     ),
+    //   ),
+    //   home: const _DashboardScaffold(),
+    // );
+    return _DashboardScaffold();
   }
 }
 
-class _DashboardScaffold extends StatelessWidget {
+class _DashboardScaffold extends ConsumerWidget {
   const _DashboardScaffold();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeUser = ref.watch(activeUserRepositoryProvider);
+
+
     // keep the drawer and navigation behavior the same as before
     return Scaffold(
+      backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
         automaticallyImplyLeading: false, // Hide default hamburger
         title: Text(
-          'DSV360 - ${AuthManager.instance.currentUser?.firstName ?? "User"}',
-          // ''
+          'DSV360 - ${activeUser?.firstName ?? "User"}',
+          style: const TextStyle(color: AppColors.textPrimary),
         ),
         leading: Builder(
           builder: (context) {
@@ -67,11 +75,11 @@ class _DashboardScaffold extends StatelessWidget {
                 margin: const EdgeInsets.all(8.0),
                 child: const CircleAvatar(
                   radius: 16,
-                  backgroundColor: Colors.white12,
+                  backgroundColor: AppColors.inputFill,
                   child: Icon(
                     Icons.person_outline,
                     size: 18,
-                    color: Colors.white,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ),
@@ -85,7 +93,7 @@ class _DashboardScaffold extends StatelessWidget {
                 MaterialPageRoute(builder: (_) => const NotificationPage()),
               );
             },
-            icon: const Icon(Icons.notifications_none),
+            icon: const Icon(Icons.notifications_none, color: AppColors.textPrimary),
           ),
           IconButton(
             onPressed: () {
@@ -93,7 +101,7 @@ class _DashboardScaffold extends StatelessWidget {
                 context,
               ).push(MaterialPageRoute(builder: (_) => const ProfilePage()));
             },
-            icon: const Icon(Icons.account_circle_outlined),
+            icon: const Icon(Icons.account_circle_outlined, color: AppColors.textPrimary),
           ),
           const SizedBox(width: 12),
         ],
