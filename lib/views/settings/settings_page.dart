@@ -1,5 +1,7 @@
-import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/constants/theme.dart' hide AppColors;
+import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 
 /// Simple settings page that lets the user toggle between
@@ -10,29 +12,45 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
-      appBar: AppBar(title: const Text('Settings')),
-      body: ValueListenableBuilder<ThemeMode>(
-        valueListenable: themeController.themeMode,
-        builder: (context, mode, _) {
-          final isDark = mode == ThemeMode.dark;
-          return ListView(
-            children: [
-              SwitchListTile(
-                title: const Text('Dark Mode'),
-                subtitle: Text(
-                  isDark ? 'Dark theme enabled' : 'Light theme enabled',
-                ),
-                value: isDark,
-                onChanged: (value) {
-                  themeController.themeMode.value = value
-                      ? ThemeMode.dark
-                      : ThemeMode.light;
+      body: SafeArea(
+        child: Column(
+          children: [
+            TopBar(
+              title: 'Settings',
+              onBack: () => Navigator.pop(context),
+            ),
+            Expanded(
+              child: ValueListenableBuilder<ThemeMode>(
+                valueListenable: themeController.themeMode,
+                builder: (context, mode, _) {
+                  final isDark = mode == ThemeMode.dark;
+                  return ListView(
+                    children: [
+                      SwitchListTile(
+                        title: Text(
+                          'Dark Mode',
+                          style: TextStyle(color: AppColors.textPrimary),
+                        ),
+                        subtitle: Text(
+                          isDark ? 'Dark theme enabled' : 'Light theme enabled',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                        value: isDark,
+                        onChanged: (value) {
+                          themeController.themeMode.value = value
+                              ? ThemeMode.dark
+                              : ThemeMode.light;
+                        },
+                      ),
+                    ],
+                  );
                 },
               ),
-            ],
-          );
-        },
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import '../../core/constants/app_colors.dart';
 import '../../models/feedback_model.dart';
 import '../widgets/custom_search_bar.dart';
 import '../widgets/feedback_card.dart';
+import '../../views/widgets/TopBar.dart';
 import 'feedback_detail_screen.dart';
 
 class FeedbacksScreen extends StatefulWidget {
@@ -100,102 +101,87 @@ class _FeedbacksScreenState extends State<FeedbacksScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Feedbacks'),
-        backgroundColor: AppColors.cardBackground,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Text(
-                  //   'Feedbacks',
-                  //   style: TextStyle(
-                  //     fontSize: 28,
-                  //     fontWeight: FontWeight.bold,
-                  //     color: AppColors.textPrimary,
-                  //   ),
-                  // ),
-                  // SizedBox(height: 8),
-                 
-                ],
-              ),
-
-
-              // Search Bar
-              CustomSearchBar(
-                controller: _searchController,
-                hintText: 'Search Feedbacks',
-                onChanged: _filterFeedbacks,
-              ),
-              const SizedBox(height: 24),
-
-              // Feedback Count
-              Text(
-                '${_filteredFeedbacks.length} Feedback${_filteredFeedbacks.length != 1 ? 's' : ''}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Feedbacks List
-              if (_filteredFeedbacks.isEmpty)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 40),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.inbox,
-                          size: 64,
-                          color: AppColors.textSecondary.withValues(alpha: 0.5),
+      body: SafeArea(
+        child: Column(
+          children: [
+            TopBar(
+              title: 'Feedbacks',
+              onBack: () => Navigator.pop(context),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header was here, now controlled by TopBar, removed empty Column
+                      
+                      // Search Bar
+                      CustomSearchBar(
+                        controller: _searchController,
+                        hintText: 'Search Feedbacks',
+                        onChanged: _filterFeedbacks,
+                      ),
+                      const SizedBox(height: 24),
+        
+                      // Feedback Count
+                      Text(
+                        '${_filteredFeedbacks.length} Feedback${_filteredFeedbacks.length != 1 ? 's' : ''}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No feedbacks found',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: AppColors.textSecondary.withValues(alpha: 0.7),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              else
-                Column(
-                  children: _filteredFeedbacks
-                      .map((feedback) => GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => FeedbackDetailScreen(feedback: feedback),
+                      ),
+                      const SizedBox(height: 16),
+        
+                      // Feedbacks List
+                      if (_filteredFeedbacks.isEmpty)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 40),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.inbox,
+                                  size: 64,
+                                  color: AppColors.textSecondary.withValues(alpha: 0.5),
                                 ),
-                              );
-                            },
-                            child: FeedbackCard(feedback: feedback),
-                          ))
-                      .toList(),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No feedbacks found',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: AppColors.textSecondary.withValues(alpha: 0.7),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        Column(
+                          children: _filteredFeedbacks
+                              .map((feedback) => GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => FeedbackDetailScreen(feedback: feedback),
+                                        ),
+                                      );
+                                    },
+                                    child: FeedbackCard(feedback: feedback),
+                                  ))
+                              .toList(),
+                        ),
+                    ],
+                  ),
                 ),
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
       ),
     );
