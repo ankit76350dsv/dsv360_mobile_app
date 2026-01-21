@@ -31,9 +31,10 @@ class DioClient {
     );
 
     // Automatically logs: Request URL, Headers, Body, Response body
-    _dio.interceptors.add(
-      LogInterceptor(requestBody: true, responseBody: true),
-    );
+    // Automatically logs: Request URL, Headers, Body, Response body
+    // _dio.interceptors.add(
+    //   LogInterceptor(requestBody: true, responseBody: true),
+    // );
   }
 
   Future<Response> get(
@@ -47,9 +48,6 @@ class DioClient {
         queryParameters: queryParameters,
         options: options,
       );
-
-      debugPrint("DioClient response: " + response.data.toString());
-      debugPrint("DioClient response: " + response.statusCode.toString());
 
       if (response.statusCode == 200) {
           return response;
@@ -117,7 +115,7 @@ class DioClient {
         queryParameters: queryParameters
       );
 
-      debugPrint("response:  $response");
+      // debugPrint("response:  $response");
 
       // Check for HTTP 200
       if (response.statusCode == 200) {
@@ -159,7 +157,7 @@ class DioClient {
     required CancelToken? cancelToken,
   }) async {
     try {
-      debugPrint("entered downloadFile");
+      // debugPrint("entered downloadFile");
 
       //no need to add the token, parameters and options or cookie here
       final response = await _dio.download(
@@ -168,9 +166,9 @@ class DioClient {
         cancelToken: cancelToken,
         onReceiveProgress: onReceiveProgress,
       );
-      debugPrint("response $response");
-      debugPrint("response.data: ${response.data}");
-      debugPrint("response.data: ${response.data}");
+      // debugPrint("response $response");
+      // debugPrint("response.data: ${response.data}");
+      // debugPrint("response.data: ${response.data}");
 
       // Check for HTTP 200
       if (response.statusCode == 200) {
@@ -199,8 +197,8 @@ class DioClient {
         data: data, // optional body (some APIs need this)
       );
 
-      debugPrint("DioClient response: ${response.data}");
-      debugPrint("DioClient response code: ${response.statusCode}");
+      // debugPrint("DioClient response: ${response.data}");
+      // debugPrint("DioClient response code: ${response.statusCode}");
 
       if (response.statusCode == 200 || response.statusCode == 204) {
         return response;

@@ -1,5 +1,6 @@
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:flutter/material.dart';
@@ -45,7 +46,12 @@ class WelcomePage extends StatelessWidget {
                   onPressed: () async {
                     await AppInitManager.instance.catalystApp.login();
                     // Fetch user details after successful login
-                    await AuthManager.instance.fetchUser();
+                    final user = await AuthManager.instance.fetchUser();
+                    
+                    if (user != null) {
+                       await UserManager.instance.fetchUserProfile(user.id);
+                    }
+                    
                     // Fetch access token
                     await TokenManager.instance.getToken();
 

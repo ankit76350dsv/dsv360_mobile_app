@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/views/profile/AboutMe.dart';
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
@@ -12,6 +13,8 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = AuthManager.instance.currentUser;
+    final userProfile = UserManager.instance.userProfile;
+
     final fullName = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
     final email = user?.emailId ?? 'No Email';
     final role = user?.role?.name ?? 'User';
@@ -147,17 +150,19 @@ class ProfilePage extends StatelessWidget {
                               ),
                             ),
                           ),
-                          _buildCompactActionButton(
-                            'Password',
-                            Icons.lock_outline,
-                            AppColors.statusCompleted,
-                          ),
-                          _buildCompactActionButton(
-                            'Edit',
-                            Icons.edit_outlined,
-                            AppColors.statusCompleted,
-                          ),
+                          //! Add them latter
+                          // _buildCompactActionButton(
+                          //   'Password',
+                          //   Icons.lock_outline,
+                          //   AppColors.statusCompleted,
+                          // ),
+                          // _buildCompactActionButton(
+                          //   'Edit',
+                          //   Icons.edit_outlined,
+                          //   AppColors.statusCompleted,
+                          // ),
                           // _buildCompactActionButton('Theme', Icons.palette_outlined, AppColors.statusCompleted),
+                          //! Add them latter
                         ],
                       ),
                     ],
@@ -166,9 +171,9 @@ class ProfilePage extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   // About Me Section
-                  const AboutMe(
+                  AboutMe(
                     title: 'About Me',
-                    content: 'Admin Profile',
+                    content: userProfile?.aboutMe ?? 'No description available.',
                     backgroundColor: AppColors.cardBackground,
                     textColor: AppColors.textPrimary,
                     accentColor: AppColors.statusCompleted,
@@ -219,14 +224,14 @@ class ProfilePage extends StatelessWidget {
                         _buildContactRow(
                           Icons.phone_outlined,
                           'Phone',
-                          '+91 9984237401',
+                          userProfile?.phone ?? 'No Phone details available.',
                           AppColors.textSecondary,
                         ),
                         const Divider(color: AppColors.divider, height: 24),
                         _buildContactRow(
                           Icons.location_on_outlined,
                           'Address',
-                          'Kanpur Nagar Uttar Pradesh',
+                          userProfile?.address ?? 'No Address available.',
                           AppColors.textSecondary,
                         ),
                       ],
