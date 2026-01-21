@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
+import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/models/active_user.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
@@ -97,7 +98,7 @@ class _SplashScreenState extends ConsumerState<ConsumerStatefulWidget>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.background,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -120,7 +121,7 @@ class _SplashScreenState extends ConsumerState<ConsumerStatefulWidget>
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     // color: Colors.white,
-                    color: const Color(0xFF2857A4),
+                    color: AppColors.primary,
                     letterSpacing: 1.2,
                   ),
                 ),
