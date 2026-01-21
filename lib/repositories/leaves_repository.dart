@@ -1,95 +1,182 @@
+import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/models/leave_details.dart';
+import 'package:dsv360/repositories/active_user_repository.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class LeaveDetailsListRepository extends AsyncNotifier<List<LeaveDetails>> {
   @override
   Future<List<LeaveDetails>> build() async {
-    return fetchLeaveDetails(isInitial: true) ?? [];
+    return fetchLeaveDetails();
   }
 
-  Future<List<LeaveDetails>> fetchLeaveDetails({bool isInitial = false}) async {
-    return [];
+  Future<List<LeaveDetails>> fetchLeaveDetails() async {
+    final activeUser = ref.read(activeUserRepositoryProvider);
+    if (activeUser == null) {
+      throw AsyncError("No active user found", StackTrace.current);
+    }
+
+    try {
+      final userId = activeUser.userId;
+      final response = await DioClient.instance.get(
+        'time_entry_management_application_function/leave/approval/$userId',
+      );
+
+      debugPrint("Response From fetchLeaveDetails: ${response.data}");
+
+      final data = response.data;
+      final List<dynamic> list = data["data"] ?? [];
+      final leaveDetailsList = list
+          .map((e) => LeaveDetails.fromJson(e))
+          .toList();
+
+      return leaveDetailsList;
+    } catch (e) {
+      debugPrint("Error fetching Leave Details: $e");
+      throw AsyncError(e, StackTrace.current);
+    }
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => fetchLeaveDetails());
+  }
+
+  Future<void> rejectLeave({
+    required String rowId,
+    required String actionById,
+    required String actionBy,
+    required String cancellationReason,
+  }) async {
+    try {
+      final response = await DioClient.instance.post(
+        'time_entry_management_application_function/leave/approval/$rowId',
+        data: {
+          "Status": "Rejected",
+          "ActionByID": actionById,
+          "ActionBy": actionBy,
+          "Cancellation_Reason": cancellationReason,
+        },
+      );
+
+      debugPrint("Response From rejectLeave: ${response.data}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await refresh();
+      } else {
+        throw Exception("Failed to reject leave: ${response.data}");
+      }
+    } catch (e) {
+      debugPrint("Error rejecting Leave: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> approveLeave({
+    required String rowId,
+    required String actionById,
+    required String actionBy,
+  }) async {
+    try {
+      final response = await DioClient.instance.post(
+        'time_entry_management_application_function/leave/approval/$rowId',
+        data: {
+          "Status": "Approved",
+          "ActionByID": actionById,
+          "ActionBy": actionBy,
+          "Cancellation_Reason": "",
+        },
+      );
+
+      debugPrint("Response From approveLeave: ${response.data}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await refresh();
+      } else {
+        throw Exception("Failed to approve leave: ${response.data}");
+      }
+    } catch (e) {
+      debugPrint("Error approving Leave: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> requestLeave({
+    required String userId,
+    required String username,
+    required String leaveType,
+    required String reason,
+    required String startDate,
+    required String endDate,
+    required String leaveCnt,
+  }) async {
+    try {
+      final response = await DioClient.instance.post(
+        'time_entry_management_application_function/leave/request',
+        data: {
+          "UserID": userId,
+          "Username": username,
+          "Leave_Type": leaveType,
+          "Reason": reason,
+          "End_Date": endDate,
+          "LeaveCnt": leaveCnt,
+          "Start_Date": startDate,
+          "Status": "Pending",
+        },
+      );
+
+      debugPrint("Response From requestLeave: ${response.data}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await refresh();
+      } else {
+        throw Exception("Failed to request leave: ${response.data}");
+      }
+    } catch (e) {
+      debugPrint("Error requesting Leave: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> updateLeave({
+    required String rowId,
+    required String userId,
+    required String username,
+    required String leaveType,
+    required String reason,
+    required String startDate,
+    required String endDate,
+    required String leaveCnt,
+  }) async {
+    try {
+      final response = await DioClient.instance.put(
+        'time_entry_management_application_function/leave/approval/$rowId',
+        data: {
+          "UserID": userId,
+          "Username": username,
+          "Leave_Type": leaveType,
+          "Reason": reason,
+          "End_Date": endDate,
+          "LeaveCnt": leaveCnt,
+          "Start_Date": startDate,
+        },
+      );
+
+      debugPrint("Response From updateLeave: ${response.data}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        await refresh();
+      } else {
+        throw Exception("Failed to update leave: ${response.data}");
+      }
+    } catch (e) {
+      debugPrint("Error updating Leave: $e");
+      rethrow;
+    }
   }
 }
 
 final leaveDetailsListRepositoryProvider =
-    Provider<AsyncValue<List<LeaveDetails>>>((ref) {
-      // Simulate API data
-      final leaveDetailsList = <LeaveDetails>[
-        LeaveDetails.fromJson({
-          "CREATORID": "1",
-          "Status": "Pending",
-          "ActionByID": null,
-          "Cancellation_Reason": null,
-          "End_Date": "2026-01-07",
-          "Reason": "Family vacation",
-          "ActionBy": null,
-          "LeaveCnt": "7",
-          "MODIFIEDTIME": "",
-          "Username": "Aman Jain",
-          "UserID": "101",
-          "Leave_Type": "Unpaid_Leave",
-          "CREATEDTIME": "2025-12-20",
-          "Start_Date": "2026-01-01",
-          "ROWID": "1",
-        }),
-        LeaveDetails.fromJson({
-          "CREATORID": "1",
-          "Status": "Approved",
-          "ActionByID": "200",
-          "Cancellation_Reason": null,
-          "End_Date": "2025-12-26",
-          "Reason": "Travel to hometown",
-          "ActionBy": "Manager",
-          "LeaveCnt": "5",
-          "MODIFIEDTIME": "",
-          "Username": "Aman Jain",
-          "UserID": "101",
-          "Leave_Type": "Unpaid_Leave",
-          "CREATEDTIME": "2025-12-15",
-          "Start_Date": "2025-12-22",
-          "ROWID": "2",
-        }),
-        LeaveDetails.fromJson({
-          "CREATORID": "1",
-          "Status": "Rejected",
-          "ActionByID": "200",
-          "Cancellation_Reason": "Project delivery",
-          "End_Date": "2025-12-19",
-          "Reason": "Personal work",
-          "ActionBy": "Manager",
-          "LeaveCnt": "3",
-          "MODIFIEDTIME": "",
-          "Username": "Aman Jain",
-          "UserID": "101",
-          "Leave_Type": "Unpaid_Leave",
-          "CREATEDTIME": "2025-12-10",
-          "Start_Date": "2025-12-17",
-          "ROWID": "3",
-        }),
-        LeaveDetails.fromJson({
-          "CREATORID": "1",
-          "Status": "Pending",
-          "ActionByID": null,
-          "Cancellation_Reason": null,
-          "End_Date": "2025-12-16",
-          "Reason": "Medical checkup",
-          "ActionBy": null,
-          "LeaveCnt": "5",
-          "MODIFIEDTIME": "",
-          "Username": "Aman Jain",
-          "UserID": "101",
-          "Leave_Type": "Paid_Leave",
-          "CREATEDTIME": "2025-12-08",
-          "Start_Date": "2025-12-12",
-          "ROWID": "4",
-        }),
-      ];
-
-      return AsyncValue.data(leaveDetailsList);
-    });
-
-
-// final leaveDetailsListRepositoryProvider = AsyncNotifierProvider<LeaveDetailsListRepository, List<LeaveDetails>>(
-//   LeaveDetailsListRepository.new,
-// );
+    AsyncNotifierProvider<LeaveDetailsListRepository, List<LeaveDetails>>(
+      LeaveDetailsListRepository.new,
+    );

@@ -52,7 +52,7 @@ class DioClient {
       debugPrint("DioClient response: " + response.statusCode.toString());
 
       if (response.statusCode == 200) {
-          return response;
+        return response;
       } else {
         throw Exception('Unexpected status code: ${response.statusCode}');
       }
@@ -64,40 +64,42 @@ class DioClient {
   }
 
   Future<Response> put(
-    String path) async {
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
     try {
       final response = await _dio.put(
-        path
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
       );
 
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data is Map &&
-            (data['success'] == true || data['status'] == 'success')) {
-          return response;
-        } else {
-          throw Exception(
-            'API returned success = false: ${data['message'] ?? 'No message'}',
-          );
-        }
+      debugPrint("DioClient response: ${response.data}");
+      debugPrint("DioClient response: ${response.statusCode}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response;
       } else {
         throw Exception('Unexpected status code: ${response.statusCode}');
       }
     } on DioException catch (e, trace) {
-      throw Exception('Dio GET request failed: ${e.message} $trace');
+      throw Exception('Dio PUT request failed: ${e.message} $trace');
     } catch (e, trace) {
-      throw Exception('Unexpected error in GET request: $e $trace');
+      throw Exception('Unexpected error in PUT request: $e $trace');
     }
   }
 
   // / Public method to make a POST request
-  Future<Response?> post(
-    String path,
-    {
-      dynamic data,
-      Map<String, dynamic>? queryParameters,
-      Options? options,
-      List<MultipartFile>? attachments}) async {
+  Future<Response> post(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    List<MultipartFile>? attachments,
+  }) async {
     try {
       // Token interceptor added ONCE here
       // _dio.interceptors.add(InterceptorsWrapper(
@@ -114,7 +116,7 @@ class DioClient {
         path,
         data: data,
         options: options,
-        queryParameters: queryParameters
+        queryParameters: queryParameters,
       );
 
       debugPrint("response:  $response");
@@ -137,7 +139,6 @@ class DioClient {
     try {
       //no need to add the token, parameters and options or cookie here
       final response = await _dio.get(path, options: options);
-
 
       // Check for HTTP 200
       if (response.statusCode == 200) {
@@ -213,5 +214,4 @@ class DioClient {
       throw Exception('Unexpected error in DELETE request: $e $trace');
     }
   }
-
 }

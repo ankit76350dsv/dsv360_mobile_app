@@ -48,22 +48,22 @@ class LeaveDetails {
   }
 
   factory LeaveDetails.fromJson(Map<String, dynamic> json) => LeaveDetails(
-        creatorId: json['CREATORID']?.toString() ?? '',
-        status: json['Status']?.toString() ?? '',
-        actionById: _parseNullableString(json['ActionByID']),
-        cancellationReason: _parseNullableString(json['Cancellation_Reason']),
-        endDate: json['End_Date']?.toString() ?? '',
-        reason: json['Reason']?.toString() ?? '',
-        actionBy: _parseNullableString(json['ActionBy']),
-        leaveCnt: _parseInt(json['LeaveCnt']),
-        modifiedTime: json['MODIFIEDTIME']?.toString() ?? '',
-        username: json['Username']?.toString() ?? '',
-        userId: json['UserID']?.toString() ?? '',
-        leaveType: json['Leave_Type']?.toString() ?? '',
-        createdTime: json['CREATEDTIME']?.toString() ?? '',
-        startDate: json['Start_Date']?.toString() ?? '',
-        rowId: json['ROWID']?.toString() ?? '',
-      );
+    creatorId: json['CREATORID']?.toString() ?? '',
+    status: json['Status']?.toString() ?? '',
+    actionById: _parseNullableString(json['ActionByID']),
+    cancellationReason: _parseNullableString(json['Cancellation_Reason']),
+    endDate: json['End_Date']?.toString() ?? '',
+    reason: json['Reason']?.toString() ?? '',
+    actionBy: _parseNullableString(json['ActionBy']),
+    leaveCnt: _parseInt(json['LeaveCnt']),
+    modifiedTime: json['MODIFIEDTIME']?.toString() ?? '',
+    username: json['Username']?.toString() ?? '',
+    userId: json['UserID']?.toString() ?? '',
+    leaveType: json['Leave_Type']?.toString() ?? '',
+    createdTime: json['CREATEDTIME']?.toString() ?? '',
+    startDate: json['Start_Date']?.toString() ?? '',
+    rowId: json['ROWID']?.toString() ?? '',
+  );
 
   Map<String, dynamic> toJson() => {
         'CREATORID': creatorId,

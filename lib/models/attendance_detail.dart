@@ -3,7 +3,7 @@ class AttendanceDetail {
   final String username;
   final DateTime checkIn;
   final DateTime? checkOut;
-  final String? totalTime;
+  final String? totalTime; // in minutes
 
   AttendanceDetail({
     required this.dayDate,
@@ -24,34 +24,5 @@ class AttendanceDetail {
           : null,
       totalTime: json['Total_Time']?.toString(),
     );
-  }
-
-  /// Convert back to JSON (if needed)
-  Map<String, dynamic> toJson() => {
-        'Day_Date': dayDate,
-        'Username': username,
-        'Check_In': checkIn.toIso8601String(),
-        'Check_Out': checkOut?.toIso8601String(),
-        'Total_Time': totalTime,
-      };
-
-  // ------------------
-  // Helper getters (UI friendly)
-  // ------------------
-
-  bool get isCheckedOut => checkOut != null;
-
-  String get formattedCheckIn =>
-      _formatDateTime(checkIn);
-
-  String get formattedCheckOut =>
-      checkOut != null ? _formatDateTime(checkOut!) : '—';
-
-  String get formattedTotalTime =>
-      totalTime ?? 'In Progress';
-
-  static String _formatDateTime(DateTime dateTime) {
-    return '${dateTime.hour.toString().padLeft(2, '0')}:'
-        '${dateTime.minute.toString().padLeft(2, '0')}';
   }
 }

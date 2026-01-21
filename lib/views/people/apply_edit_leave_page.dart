@@ -1,21 +1,24 @@
-import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/models/leave_details.dart';
+import 'package:dsv360/repositories/active_user_repository.dart';
+import 'package:dsv360/repositories/leaves_repository.dart';
+import 'package:dsv360/views/widgets/app_snackbar.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/custom_date_field.dart';
 import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-class ApplyEditLeavePage extends StatefulWidget {
+class ApplyEditLeavePage extends ConsumerStatefulWidget {
   final LeaveDetails? leave;
   const ApplyEditLeavePage({super.key, required this.leave});
 
   @override
-  State<ApplyEditLeavePage> createState() => _ApplyEditLeavePageState();
+  ConsumerState<ApplyEditLeavePage> createState() => _ApplyEditLeavePageState();
 }
 
-class _ApplyEditLeavePageState extends State<ApplyEditLeavePage> {
+class _ApplyEditLeavePageState extends ConsumerState<ApplyEditLeavePage> {
   final _formKey = GlobalKey<FormState>();
 
   String? _leaveType;
@@ -62,6 +65,11 @@ class _ApplyEditLeavePageState extends State<ApplyEditLeavePage> {
         } else {
           _endDate = picked;
         }
+
+        // Auto update number of days if both dates are set
+        if (_startDate != null && _endDate != null) {
+          _numberOfDaysLeaveController.text = numberOfDays.toString();
+        }
       });
     }
   }
@@ -69,16 +77,28 @@ class _ApplyEditLeavePageState extends State<ApplyEditLeavePage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 35.0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, size: 18),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        centerTitle: true,
+        elevation: 0,
         title: Text(
           isEditing ? 'Edit Leave' : 'Apply Leave',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
-        backgroundColor: colors.surface,
+        // if needed can add the icon as well here
+        // hook for info action
+        // you can open a dialog or screen here
+        actions: [],
       ),
-      // backgroundColor: AppColors.bg,
       body: SafeArea(
         child: Column(
           children: [
@@ -90,6 +110,14 @@ class _ApplyEditLeavePageState extends State<ApplyEditLeavePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Text(
+                        'Leave Information',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: colors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+
                       /// Leave Type
                       CustomDropDownField(
                         hintText: "Select Leave Type",
@@ -123,7 +151,7 @@ class _ApplyEditLeavePageState extends State<ApplyEditLeavePage> {
                         prefixIcon: Icons.calendar_month,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Enter first name';
+                            return 'Enter number of days';
                           }
                           return null;
                         },
@@ -178,9 +206,114 @@ class _ApplyEditLeavePageState extends State<ApplyEditLeavePage> {
                         button1Function: () {
                           Navigator.pop(context);
                         },
-                        button2Function: () {
+                        button2Function: () async {
                           if (_formKey.currentState!.validate()) {
-                            // TODO: Add / Update user logic
+                            if (_startDate == null || _endDate == null) {
+                              AppSnackBar.show(
+                                context,
+                                message: 'Please select start and end dates',
+                              );
+                              return;
+                            }
+
+                            if (_leaveType == null) {
+                              AppSnackBar.show(
+                                context,
+                                message: 'Please select leave type',
+                              );
+                              return;
+                            }
+
+                            final activeUser = ref.read(
+                              activeUserRepositoryProvider,
+                            );
+                            if (activeUser == null) return;
+
+                            final userId = activeUser.userId ?? '';
+                            final username =
+                                "${activeUser.firstName ?? ''} ${activeUser.lastName ?? ''}"
+                                    .trim();
+
+                            ref
+                                    .read(
+                                      submitLoadingProvider(
+                                        bottomTwoButtonsLoadingKey,
+                                      ).notifier,
+                                    )
+                                    .state =
+                                true;
+
+                            try {
+                              if (isEditing) {
+                                await ref
+                                    .read(
+                                      leaveDetailsListRepositoryProvider
+                                          .notifier,
+                                    )
+                                    .updateLeave(
+                                      rowId: widget.leave!.rowId,
+                                      userId: userId,
+                                      username: username,
+                                      leaveType: _leaveType!,
+                                      reason: _reasonController.text,
+                                      startDate: DateFormat(
+                                        'yyyy-MM-dd',
+                                      ).format(_startDate!),
+                                      endDate: DateFormat(
+                                        'yyyy-MM-dd',
+                                      ).format(_endDate!),
+                                      leaveCnt:
+                                          _numberOfDaysLeaveController.text,
+                                    );
+                              } else {
+                                await ref
+                                    .read(
+                                      leaveDetailsListRepositoryProvider
+                                          .notifier,
+                                    )
+                                    .requestLeave(
+                                      userId: userId,
+                                      username: username,
+                                      leaveType: _leaveType!,
+                                      reason: _reasonController.text,
+                                      startDate: DateFormat(
+                                        'yyyy-MM-dd',
+                                      ).format(_startDate!),
+                                      endDate: DateFormat(
+                                        'yyyy-MM-dd',
+                                      ).format(_endDate!),
+                                      leaveCnt:
+                                          _numberOfDaysLeaveController.text,
+                                    );
+                              }
+
+                              if (mounted) {
+                                Navigator.pop(context);
+                                AppSnackBar.show(
+                                  context,
+                                  message: isEditing
+                                      ? 'Leave updated successfully'
+                                      : 'Leave request submitted successfully',
+                                );
+                              }
+                            } catch (e) {
+                              debugPrint("Error requesting leave: $e");
+                              if (mounted) {
+                                AppSnackBar.show(
+                                  context,
+                                  message: 'Try again later',
+                                );
+                              }
+                            } finally {
+                              ref
+                                      .read(
+                                        submitLoadingProvider(
+                                          bottomTwoButtonsLoadingKey,
+                                        ).notifier,
+                                      )
+                                      .state =
+                                  false;
+                            }
                           }
                         },
                       ),
