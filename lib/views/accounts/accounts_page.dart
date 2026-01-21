@@ -1,3 +1,7 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/widgets/global_error.dart';
+import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/accounts.dart';
 import 'package:dsv360/repositories/accounts_list_repository.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
@@ -24,6 +28,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
     final accountsListAsync = ref.watch(accountsListRepositoryProvider);
     final query = ref.watch(accountsSearchQueryProvider);
     final colors = Theme.of(context).colorScheme;
+    final connectivityStatus = ref.watch(connectivityStatusProvider);
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -54,98 +59,142 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
         actions: [],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(
-        shape: const CircleBorder(),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => AddEditAccountsPage(account: null),
-            ),
+      floatingActionButton: connectivityStatus.when(
+        data: (results) {
+          if (results.contains(ConnectivityResult.none)) {
+            return null; // FAB hidden when no internet
+          }
+
+          return FloatingActionButton(
+            shape: const CircleBorder(),
+            onPressed: () {
+              // do nothing for the moment
+
+              // Navigator.push(
+              //   context,
+              //   MaterialPageRoute(
+              //     builder: (_) => AddEditAccountsPage(account: null),
+              //   ),
+              // );
+            },
+            child: Icon(Icons.apartment, size: 22),
           );
         },
-        child: Icon(Icons.apartment, size: 22),
+        loading: () => null, // hide FAB while checking
+        error: (_, __) => null, // hide FAB on error
       ),
 
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsetsGeometry.symmetric(
-                horizontal: 16.0,
-                vertical: 12.0,
-              ),
-              child: TextField(
-                style: TextStyle(color: colors.tertiary),
-                onChanged: (value) {
-                  ref.read(accountsSearchQueryProvider.notifier).state = value
-                      .trim();
+        child: connectivityStatus.when(
+          data: (results) {
+            if (results.contains(ConnectivityResult.none)) {
+              return GlobalError(
+                message: 'Please check your internet connection.',
+                isNetworkError: true,
+                onRetry: () {
+                  ref.invalidate(connectivityStatusProvider);
                 },
-                decoration: InputDecoration(
-                  hintText: "Search accounts",
-                  hintStyle: TextStyle(
-                    color: Colors.grey,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
+              );
+            }
+
+            // When connected, show accounts data
+            return Column(
+              children: [
+                Padding(
+                  padding: EdgeInsetsGeometry.symmetric(
+                    horizontal: 16.0,
+                    vertical: 12.0,
                   ),
-                  filled: true,
-                  fillColor: colors.surfaceVariant,
-                  prefixIcon: Icon(Icons.search, color: Colors.grey),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: Colors.grey.withOpacity(0.2),
-                      width: 1.5,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: Colors.grey.withOpacity(0.2),
-                      width: 1.5,
-                    ),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: Colors.grey.withOpacity(0.2),
-                      width: 1.5,
+                  child: TextField(
+                    style: TextStyle(color: colors.tertiary),
+                    onChanged: (value) {
+                      ref.read(accountsSearchQueryProvider.notifier).state =
+                          value.trim();
+                    },
+                    decoration: InputDecoration(
+                      hintText: "Search accounts",
+                      hintStyle: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      filled: true,
+                      fillColor: colors.surfaceVariant,
+                      prefixIcon: Icon(Icons.search, color: Colors.grey),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: Colors.grey.withOpacity(0.2),
+                          width: 1.5,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: Colors.grey.withOpacity(0.2),
+                          width: 1.5,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: Colors.grey.withOpacity(0.2),
+                          width: 1.5,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsetsGeometry.symmetric(horizontal: 16.0),
-                child: accountsListAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
-                  data: (accounts) {
-                    final filteredAccounts = accounts.where((a) {
-                      final q = query.toLowerCase();
-                      return a.orgName.toLowerCase().contains(q) ||
-                          a.email.toLowerCase().contains(q) ||
-                          a.website.toLowerCase().contains(q);
-                    }).toList();
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsetsGeometry.symmetric(horizontal: 16.0),
+                    child: accountsListAsync.when(
+                      loading: () => const GlobalLoader(
+                        message: 'Loading accounts info...',
+                      ),
+                      error: (error, stack) => GlobalError(
+                        message: 'Failed to load dashboard data: $error',
+                        onRetry: () =>
+                            ref.refresh(accountsListRepositoryProvider),
+                      ),
+                      data: (accounts) {
+                        final filteredAccounts = accounts.where((a) {
+                          final q = query.toLowerCase();
+                          return a.orgName.toLowerCase().contains(q) ||
+                              a.email.toLowerCase().contains(q) ||
+                              a.website.toLowerCase().contains(q);
+                        }).toList();
 
-                    if (filteredAccounts.isEmpty) {
-                      return const Center(child: Text('No accounts found'));
-                    }
+                        if (filteredAccounts.isEmpty) {
+                          return const Center(child: Text('No accounts found'));
+                        }
 
-                    return ListView.builder(
-                      itemCount: filteredAccounts.length,
-                      itemBuilder: (context, index) {
-                        return AccountsCard(account: filteredAccounts[index]);
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            ref.refresh(accountsListRepositoryProvider);
+                          },
+                          child: ListView.builder(
+                            itemCount: filteredAccounts.length,
+                            itemBuilder: (context, index) {
+                              return AccountsCard(
+                                account: filteredAccounts[index],
+                              );
+                            },
+                          ),
+                        );
                       },
-                    );
-                  },
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
+          error: (error, stack) => GlobalError(
+            message: 'Failed to check connectivity: $error',
+            onRetry: () => ref.invalidate(connectivityStatusProvider),
+          ),
+          loading: () => const GlobalLoader(message: 'Checking connection...'),
         ),
       ),
     );
@@ -237,25 +286,28 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
                         children: [
                           CustomCardButton(
                             onTap: () {
-                              // TODO: Handle edit action
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => AddEditAccountsPage(
-                                    account: widget.account,
-                                  ),
-                                ),
-                              );
+                              // do nothing for the moment
+
+                              // Navigator.push(
+                              //   context,
+                              //   MaterialPageRoute(
+                              //     builder: (_) => AddEditAccountsPage(
+                              //       account: widget.account,
+                              //     ),
+                              //   ),
+                              // );
                             },
                             icon: Icons.edit,
                           ),
                           const SizedBox(width: 5.0),
                           CustomCardButton(
                             onTap: () {
-                              _showDeleteDialog(
-                                context,
-                                widget.account.orgName,
-                              );
+                              // do nothing for the moment
+
+                              // _showDeleteDialog(
+                              //   context,
+                              //   widget.account.orgName,
+                              // );
                             },
                             icon: Icons.delete,
                             color: colors.error,
@@ -266,54 +318,6 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Centralized role rule
-  bool _canManageUsers(String role) {
-    return role == 'Admin' || role == 'Manager';
-  }
-
-  /// Small helper for label-value rows
-  Widget _infoRow(String label, String value) {
-    final theme = Theme.of(context);
-
-    final isWebsite = label.toLowerCase() == 'website';
-    final websiteUrl = value.startsWith('http') ? value : 'https://$value';
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: RichText(
-        text: TextSpan(
-          style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
-          children: [
-            TextSpan(
-              text: "$label: ",
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            TextSpan(
-              text: value,
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontSize: 14,
-                color: isWebsite ? theme.colorScheme.primary : null,
-                decoration: isWebsite ? TextDecoration.underline : null,
-              ),
-              recognizer: isWebsite
-                  ? (TapGestureRecognizer()
-                      ..onTap = () async {
-                        final uri = Uri.parse(websiteUrl);
-                        if (await canLaunchUrl(uri)) {
-                          await launchUrl(
-                            uri,
-                            mode: LaunchMode.externalApplication,
-                          );
-                        }
-                      })
-                  : null,
             ),
           ],
         ),
@@ -387,9 +391,7 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
               onPressed: () {
                 try {
                   ref.invalidate(accountsListRepositoryProvider);
-                } catch (e, st) {
-                  
-                }
+                } catch (e, st) {}
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor: theme.colorScheme.primary,

@@ -6,6 +6,7 @@ class ProjectModel {
   final DateTime startDate;
   final DateTime endDate;
   final String? assignedTo;
+  final String? assignedToId;
   final String? description;
   final String? owner;
   final int? progress;
@@ -22,6 +23,7 @@ class ProjectModel {
     required this.startDate,
     required this.endDate,
     this.assignedTo,
+    this.assignedToId,
     this.description,
     this.owner,
     this.progress,
@@ -41,6 +43,7 @@ class ProjectModel {
       'startDate': startDate.toIso8601String(),
       'endDate': endDate.toIso8601String(),
       'assignedTo': assignedTo,
+      'assignedToId': assignedToId,
       'description': description,
       'owner': owner,
       'progress': progress,
@@ -62,6 +65,7 @@ class ProjectModel {
       startDate: _parseDate(json['Start_Date'] ?? json['startDate']),
       endDate: _parseDate(json['End_Date'] ?? json['endDate']),
       assignedTo: json['Assigned_To']?.toString() ?? json['assignedTo']?.toString(),
+      assignedToId: json['Assigned_To_Id']?.toString() ?? json['Assigned_To_Id']?.toString(),
       description: json['Description']?.toString() ?? json['description']?.toString(),
       owner: json['Owner']?.toString() ?? json['owner']?.toString(),
       progress: json['progress'] ?? 0, // API doesn't seem to return progress, defaulting to 0

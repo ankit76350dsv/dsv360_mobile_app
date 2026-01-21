@@ -1,24 +1,28 @@
+import 'package:dio/dio.dart';
+import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/models/accounts.dart';
+import 'package:dsv360/repositories/accounts_list_repository.dart';
 import 'package:dsv360/views/widgets/TopHeaderBar.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AddEditAccountsPage extends StatefulWidget {
+class AddEditAccountsPage extends ConsumerStatefulWidget {
   final Account? account;
   const AddEditAccountsPage({super.key, required this.account});
 
   @override
-  State<AddEditAccountsPage> createState() => _AddEditAccountsPageState();
+  ConsumerState<AddEditAccountsPage> createState() => _AddEditAccountsPageState();
 }
 
-class _AddEditAccountsPageState extends State<AddEditAccountsPage> {
+class _AddEditAccountsPageState extends ConsumerState<AddEditAccountsPage> {
   final _formKey = GlobalKey<FormState>();
 
   late bool isEditing;
 
-  final TextEditingController _clientNameController = TextEditingController();
+  final TextEditingController _accountNameController = TextEditingController();
   final TextEditingController _websiteController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
 
@@ -35,12 +39,23 @@ class _AddEditAccountsPageState extends State<AddEditAccountsPage> {
     if (isEditing) {
       final account = widget.account!;
 
-      _clientNameController.text = account.orgName;
+      _accountNameController.text = account.orgName;
       _websiteController.text = account.website;
       _emailController.text = account.email;
       _orgType = account.orgType;
       _orgStatus = account.status;
     }
+  }
+
+  Map<String, dynamic> _buildRequestBody() {
+    return {
+      "Email": _emailController.text.trim(),
+      "Org_Img" : "",
+      "Org_Name" : _accountNameController.text.toString(),
+      "Org_Type" : _orgType.toString(),
+      "Status" : _orgStatus,
+      "Website" : _websiteController.text.toString()
+    };
   }
 
   @override
@@ -49,11 +64,24 @@ class _AddEditAccountsPageState extends State<AddEditAccountsPage> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: colors.surface,
+        toolbarHeight: 35.0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, size: 18),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        centerTitle: true,
+        elevation: 0,
         title: Text(
           widget.account == null ? 'Add New Account' : 'Edit Account',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
-        backgroundColor: colors.surface,
+        // if needed can add the icon as well here
+        // hook for info action
+        // you can open a dialog or screen here
+        actions: [],
       ),
       body: SafeArea(
         child: Column(
@@ -79,7 +107,7 @@ class _AddEditAccountsPageState extends State<AddEditAccountsPage> {
                     children: [
                       // Client Name
                       CustomInputField(
-                        controller: _clientNameController,
+                        controller: _accountNameController,
                         hintText: 'Client Name',
                         labelText: 'Client Name',
                         prefixIcon: Icons.person,
@@ -195,9 +223,62 @@ class _AddEditAccountsPageState extends State<AddEditAccountsPage> {
                         button1Function: () {
                           Navigator.pop(context);
                         },
-                        button2Function: () {
-                          if (_formKey.currentState!.validate()) {
-                            // TODO: Add / Update user logic
+                        button2Function: () async {
+                          if (!_formKey.currentState!.validate()) return;
+                          ref
+                                  .read(
+                                    submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier,
+                                  )
+                                  .state =
+                              true;
+
+                          final body = _buildRequestBody();
+                          try {
+                            if (isEditing) {
+                              // UPDATE ACCOUNTS (example)
+                              await DioClient.instance.post(
+                                '/server/time_entry_management_application_function//updateClient/${widget.account!.rowId}',
+                                data: body,
+                              );
+                            } else {
+                              // ADD ACCOUNTS
+                              await DioClient.instance.post(
+                                '/server/time_entry_management_application_function/createClient',
+                                data: body,
+                              );
+                            }
+
+                            Navigator.pop(context, true); // success
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  isEditing
+                                      ? 'Account updated successfully'
+                                      : 'Account added successfully',
+                                ),
+                              ),
+                            );
+
+                            // throw current state and rebuild it from scratch
+                            ref.invalidate(accountsListRepositoryProvider);
+                          } catch (e) {
+                            debugPrint('❌ Failed to submit user: $e');
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Failed to save account'),
+                              ),
+                            );
+                          } finally {
+                            ref
+                                .read(
+                                  submitLoadingProvider(
+                                    bottomTwoButtonsLoadingKey,
+                                  ).notifier,
+                                )
+                                .state =
+                            false;
                           }
                         },
                       ),

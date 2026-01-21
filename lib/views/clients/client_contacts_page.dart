@@ -1,9 +1,16 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/network/dio_client.dart';
+import 'package:dsv360/core/widgets/global_error.dart';
+import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/client_contacts.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/repositories/client_contacts_repository.dart';
 import 'package:dsv360/views/clients/add_client_contacts_page.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/notifications/notification_page.dart';
+import 'package:dsv360/views/widgets/app_snackbar.dart';
 import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
@@ -23,100 +30,140 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
     );
     final query = ref.watch(clientContactsSearchQueryProvider);
     final colors = Theme.of(context).colorScheme;
+    final connectivityStatus = ref.watch(connectivityStatusProvider);
 
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
+        toolbarHeight: 35.0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
+          icon: const Icon(Icons.arrow_back_ios, size: 18),
           onPressed: () {
             if (Navigator.canPop(context)) {
               Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
+              );
             }
           },
         ),
+        centerTitle: true,
         elevation: 0,
-        title: const Text('DSV-360'),
-        actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const NotificationPage()),
-              );
-            },
-            icon: const Icon(Icons.notifications_none),
-          ),
-          const SizedBox(width: 8),
-          CircleAvatar(
-            radius: 16,
-            backgroundColor: Colors.white12,
-            child: const Icon(Icons.person_outline, size: 18),
-          ),
-          const SizedBox(width: 12),
-        ],
+        title: Text(
+          'Clients Contacts',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        // if needed can add the icon as well here
+        // hook for info action
+        // you can open a dialog or screen here
+        actions: [],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(
-        shape: const CircleBorder(),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => AddClientContactsPage(clientContacts: null),
-            ),
+      floatingActionButton: connectivityStatus.when(
+        data: (results) {
+          if (results.contains(ConnectivityResult.none)) {
+            return null; // FAB hidden when no internet
+          }
+
+          return FloatingActionButton(
+            shape: const CircleBorder(),
+            onPressed: () {
+              // do nothing for the moment
+
+              // Navigator.push(
+              //   context,
+              //   MaterialPageRoute(
+              //     builder: (_) => AddClientContactsPage(clientContacts: null),
+              //   ),
+              // );
+            },
+            child: Icon(Icons.filter_alt, size: 22),
           );
         },
-        child: Icon(Icons.filter_alt, size: 22),
+        loading: () => null, // hide FAB while checking
+        error: (_, __) => null, // hide FAB on error
       ),
 
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsetsGeometry.symmetric(
-                horizontal: 16.0,
-                vertical: 12.0,
-              ),
-              child: CustomInputSearch(
-                hint: "Search client contacts",
-                searchProvider: clientContactsSearchQueryProvider,
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsetsGeometry.symmetric(horizontal: 16.0),
-                child: clientContactsListAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
-                  data: (clientContactsList) {
-                    final filteredClientContacts = clientContactsList.where((
-                      c,
-                    ) {
-                      final q = query.toLowerCase();
-                      return c.orgName.toLowerCase().contains(q) ||
-                          c.email.toLowerCase().contains(q) ||
-                          c.firstName.toLowerCase().contains(q) ||
-                          c.lastName.toLowerCase().contains(q);
-                    }).toList();
+        child: connectivityStatus.when(
+          data: (results) {
+            if (results.contains(ConnectivityResult.none)) {
+              return GlobalError(
+                message: 'Please check your internet connection.',
+                isNetworkError: true,
+                onRetry: () {
+                  ref.invalidate(connectivityStatusProvider);
+                },
+              );
+            }
 
-                    if (filteredClientContacts.isEmpty) {
-                      return const Center(child: Text('No accounts found'));
-                    }
+            // When connected, show client contacts data
+            return Column(
+              children: [
+                Padding(
+                  padding: EdgeInsetsGeometry.symmetric(
+                    horizontal: 16.0,
+                    vertical: 12.0,
+                  ),
+                  child: CustomInputSearch(
+                    hint: "Search client contacts",
+                    searchProvider: clientContactsSearchQueryProvider,
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsetsGeometry.symmetric(horizontal: 16.0),
+                    child: clientContactsListAsync.when(
+                      loading: () => const GlobalLoader(
+                        message: 'Loading client contacts info...',
+                      ),
+                      error: (error, stack) => GlobalError(
+                        message: 'Failed to load client contacts data: $error',
+                        onRetry: () =>
+                            ref.refresh(clientContactsListRepositoryProvider),
+                      ),
+                      data: (clientContactsList) {
+                        final filteredClientContacts = clientContactsList.where(
+                          (c) {
+                            final q = query.toLowerCase();
+                            return c.orgName.toLowerCase().contains(q) ||
+                                c.email.toLowerCase().contains(q) ||
+                                c.firstName.toLowerCase().contains(q) ||
+                                c.lastName.toLowerCase().contains(q);
+                          },
+                        ).toList();
 
-                    return ListView.builder(
-                      itemCount: filteredClientContacts.length,
-                      itemBuilder: (context, index) {
-                        return ClientContactsCard(
-                          clientContacts: filteredClientContacts[index],
+                        if (filteredClientContacts.isEmpty) {
+                          return const Center(child: Text('No accounts found'));
+                        }
+
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            ref.refresh(clientContactsListRepositoryProvider);
+                          },
+                          child: ListView.builder(
+                            itemCount: filteredClientContacts.length,
+                            itemBuilder: (context, index) {
+                              return ClientContactsCard(
+                                clientContacts: filteredClientContacts[index],
+                              );
+                            },
+                          ),
                         );
                       },
-                    );
-                  },
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
+          error: (error, stack) => GlobalError(
+            message: 'Failed to check connectivity: $error',
+            onRetry: () => ref.invalidate(connectivityStatusProvider),
+          ),
+          loading: () => const GlobalLoader(message: 'Checking connection...'),
         ),
       ),
     );
@@ -195,41 +242,14 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
                   Row(
                     children: [
                       SizedBox(
-                        width: 40,
+                        width: 38,
                         height: 18,
                         child: Transform.scale(
-                          scale: 0.80,
+                          scale: 0.70,
                           child: Switch(
-                            value: clientStatus,
-
-                            onChanged: (value) {
-                              setState(() {
-                                clientStatus = value;
-                                // TODO: Update workStatus in backend
-                              });
-
-                              final message = value
-                                  ? 'Employee is active'
-                                  : 'Employee is inactive';
-
-                              ScaffoldMessenger.of(context)
-                                ..hideCurrentSnackBar()
-                                ..showSnackBar(
-                                  SnackBar(
-                                    content: Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.info_outline,
-                                          color: Colors.white,
-                                          size: 20,
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Text(message),
-                                      ],
-                                    ),
-                                    duration: const Duration(seconds: 2),
-                                  ),
-                                );
+                            value: widget.clientContacts.status,
+                            onChanged: (value) async {
+                              // do nothing for the moment
                             },
                           ),
                         ),
@@ -237,10 +257,12 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
                       SizedBox(width: 12.0),
                       CustomCardButton(
                         onTap: () {
-                          _showDeleteDialog(
-                            context,
-                            "${widget.clientContacts.firstName} ${widget.clientContacts.lastName}",
-                          );
+                          // do nothing for the moment
+
+                          // _showDeleteDialog(
+                          //   context,
+                          //   "${widget.clientContacts.firstName} ${widget.clientContacts.lastName}",
+                          // );
                         },
                         icon: Icons.delete,
                         color: colors.error,
@@ -276,11 +298,6 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
         ),
       ),
     );
-  }
-
-  /// Centralized role rule
-  bool _canManageUsers(String role) {
-    return role == 'Admin' || role == 'Manager';
   }
 
   Widget _clientInfoRow(IconData icon, String text) {

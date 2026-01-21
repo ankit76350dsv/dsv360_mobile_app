@@ -1,26 +1,33 @@
 import 'dart:async';
+import 'package:dsv360/core/widgets/global_error.dart';
+import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/leave_summary.dart';
 import 'package:dsv360/models/time_logs.dart';
+import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/repositories/leaves_repository.dart';
 import 'package:dsv360/repositories/time_logs_repository.dart';
+import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/people/apply_edit_leave_page.dart';
 import 'package:dsv360/views/people/leave_details_page.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
+import 'package:dsv360/views/widgets/custom_date_field.dart';
+import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-class PeoplePage extends StatefulWidget {
+class PeoplePage extends ConsumerStatefulWidget {
   const PeoplePage({super.key});
 
   @override
-  State<PeoplePage> createState() => _PeoplePageState();
+  ConsumerState<PeoplePage> createState() => _PeoplePageState();
 }
 
-class _PeoplePageState extends State<PeoplePage>
+class _PeoplePageState extends ConsumerState<PeoplePage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
 
@@ -43,16 +50,30 @@ class _PeoplePageState extends State<PeoplePage>
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
+        toolbarHeight: 35.0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
+          icon: const Icon(Icons.arrow_back_ios, size: 18),
           onPressed: () {
             if (Navigator.canPop(context)) {
               Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
+              );
             }
           },
         ),
-        title: const Text('People'),
-        backgroundColor: colors.surface,
+        centerTitle: true,
+        elevation: 0,
+        title: Text(
+          'People',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        // if needed can add the icon as well here
+        // hook for info action
+        // you can open a dialog or screen here
+        actions: [],
       ),
       body: Column(
         children: [
@@ -730,7 +751,7 @@ class _AttendanceTab extends StatefulWidget {
 class _AttendanceTabState extends State<_AttendanceTab> {
   final List<String> options = [
     'This Week',
-    'Last Week',
+    'Previous Week',
     'This Month',
     'Last Month',
   ];
@@ -852,16 +873,18 @@ class _AttendanceTabState extends State<_AttendanceTab> {
   }
 }
 
-class _CheckInTab extends StatefulWidget {
+class _CheckInTab extends ConsumerStatefulWidget {
   const _CheckInTab();
 
   @override
-  State<_CheckInTab> createState() => _CheckInTabState();
+  ConsumerState<_CheckInTab> createState() => _CheckInTabState();
 }
 
-class _CheckInTabState extends State<_CheckInTab> {
+class _CheckInTabState extends ConsumerState<_CheckInTab> {
   Timer? _timer;
-  Duration _elapsed = Duration.zero;
+  Duration _remaining = const Duration(
+    hours: 8, // example: 8-hour workday
+  );
   bool _isCheckedIn = false;
 
   @override
@@ -872,16 +895,22 @@ class _CheckInTabState extends State<_CheckInTab> {
 
   void _toggleCheckIn() {
     if (_isCheckedIn) {
-      // ⛔ Stop timer
+      // ⛔ Stop countdown
       _timer?.cancel();
     } else {
-      // ▶️ Start timer
+      // ▶️ Start countdown
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (_remaining.inSeconds <= 0) {
+          _timer?.cancel();
+          return;
+        }
+
         setState(() {
-          _elapsed += const Duration(seconds: 1);
+          _remaining -= const Duration(seconds: 1);
         });
       });
     }
+
     setState(() {
       _isCheckedIn = !_isCheckedIn;
     });
@@ -899,6 +928,7 @@ class _CheckInTabState extends State<_CheckInTab> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    final activeUser = ref.watch(activeUserRepositoryProvider);
 
     return Container(
       decoration: const BoxDecoration(),
@@ -914,7 +944,7 @@ class _CheckInTabState extends State<_CheckInTab> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Text(
-                    'Aman Jain',
+                    "${activeUser?.firstName} ${activeUser?.lastName}",
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -925,192 +955,125 @@ class _CheckInTabState extends State<_CheckInTab> {
               ),
             ),
 
-            /// ⏱️ TIME ELAPSED
+            /// TIME ELAPSED
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 32,
-                  horizontal: 20,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
-                  gradient: LinearGradient(
-                    colors: [
-                      colors.primary.withOpacity(0.15),
-                      colors.primary.withOpacity(0.08),
-                    ],
-                  ),
-                  border: Border.all(
-                    color: colors.primary.withOpacity(0.3),
-                    width: 2,
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.timer_outlined,
-                          color: colors.primary.withOpacity(0.9),
-                          size: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'TIME ELAPSED',
-                          style: TextStyle(
-                            color: colors.primary,
-                            letterSpacing: 2,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      _formatDuration(_elapsed),
-                      style: TextStyle(
-                        fontSize: 52,
-                        fontWeight: FontWeight.w800,
-                        color: colors.primary,
-                        letterSpacing: 2,
-                        shadows: [
-                          Shadow(
-                            color: colors.primary.withOpacity(0.5),
-                            blurRadius: 15,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colors.primary.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
+              child: Card(
+                // decoration: BoxDecoration(
+                //   borderRadius: BorderRadius.circular(24),
+                //   gradient: LinearGradient(
+                //     colors: [
+                //       colors.primary.withOpacity(0.15),
+                //       colors.primary.withOpacity(0.08),
+                //     ],
+                //   ),
+                //   border: Border.all(
+                //     color: colors.primary.withOpacity(0.3),
+                //     width: 2,
+                //   ),
+                // ),
+                child: Padding(
+                  padding: EdgeInsetsGeometry.symmetric(vertical: 18.0),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.circle, size: 8, color: colors.primary),
+                          Icon(
+                            Icons.timer_outlined,
+                            color: colors.tertiary.withOpacity(0.9),
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           Text(
-                            _isCheckedIn ? 'Checked In' : 'Not Checked In',
+                            'TIME ELAPSED',
                             style: TextStyle(
-                              color: colors.primary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                              color: colors.tertiary,
+                              letterSpacing: 1,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 12.0),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          _TimeBox(value: _remaining.inDays, label: "Days"),
+                          _TimeBox(
+                            value: _remaining.inHours % 24,
+                            label: "Hrs",
+                          ),
+                          _TimeBox(
+                            value: _remaining.inMinutes % 60,
+                            label: "Mins",
+                          ),
+                          _TimeBox(
+                            value: _remaining.inSeconds % 60,
+                            label: "Secs",
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.primary.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.circle, size: 8, color: colors.primary),
+                            const SizedBox(width: 8),
+                            Text(
+                              _isCheckedIn ? 'Checked In' : 'Not Checked In',
+                              style: TextStyle(
+                                color: colors.primary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
 
             const SizedBox(height: 20),
-
-            /// 📊 QUICK INFO CARDS
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
                   Expanded(
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.schedule,
-                              color: colors.onSurface.withOpacity(0.5),
-                              size: 24,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '9:00 AM',
-                              style: textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text('Shift Start', style: textTheme.bodySmall),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.logout,
-                              color: colors.onSurface.withOpacity(0.5),
-                              size: 24,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              '7:00 PM',
-                              style: textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text('Shift End', style: textTheme.bodySmall),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: _toggleCheckIn,
+                      onPressed: () {},
+
+                      icon: Icon(_isCheckedIn ? Icons.logout : Icons.login),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: colors.primary,
                         foregroundColor: colors.onPrimary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+
+                        padding: const EdgeInsets.symmetric(vertical: 10),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(200.0),
+                          side: BorderSide(width: 2.0, color: colors.primary),
                         ),
-                      ),
-                      icon: Icon(
-                        _isCheckedIn
-                            ? Icons.logout
-                            : Icons
-                                  .login, // or Icons.check_circle, Icons.access_time
-                        size: 20,
                       ),
                       label: Text(
                         (_isCheckedIn ? 'CHECK OUT' : 'CHECK IN NOW')
                             .toUpperCase(),
                         style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
@@ -1145,6 +1108,40 @@ class _CheckInTabState extends State<_CheckInTab> {
       'Dec',
     ];
     return months[month - 1];
+  }
+}
+
+class _TimeBox extends StatelessWidget {
+  final int value;
+  final String label;
+
+  const _TimeBox({required this.value, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+
+    return Column(
+      children: [
+        Text(
+          value.toString().padLeft(2, '0'),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            fontSize: 26,
+            fontWeight: FontWeight.w800,
+            color: colors.tertiary,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            letterSpacing: 1.2,
+            color: colors.tertiary,
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -1219,24 +1216,25 @@ class AttendanceTile extends StatelessWidget {
   }
 }
 
-class _AttendanceTrackerTab extends StatefulWidget {
+class _AttendanceTrackerTab extends ConsumerStatefulWidget {
   const _AttendanceTrackerTab({super.key});
 
   @override
-  State<_AttendanceTrackerTab> createState() => _AttendanceTrackerTabState();
+  ConsumerState<_AttendanceTrackerTab> createState() =>
+      _AttendanceTrackerTabState();
 }
 
-class _AttendanceTrackerTabState extends State<_AttendanceTrackerTab> {
-  String? selectedEmployee;
-  DateTime startDate = DateTime.now();
-  DateTime endDate = DateTime.now();
+class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
+  String? selectedEmployeeId;
+  DateTime? _startDate;
+  DateTime? _endDate;
 
   final List<String> employees = ['Aman Jain', 'Abhay Singh', 'Ujjwal Mishra'];
 
   Future<void> _pickDate({required bool isStart}) async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: isStart ? startDate : endDate,
+      initialDate: isStart ? _startDate : _endDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
     );
@@ -1244,9 +1242,9 @@ class _AttendanceTrackerTabState extends State<_AttendanceTrackerTab> {
     if (picked != null) {
       setState(() {
         if (isStart) {
-          startDate = picked;
+          _startDate = picked;
         } else {
-          endDate = picked;
+          _endDate = picked;
         }
       });
     }
@@ -1256,140 +1254,166 @@ class _AttendanceTrackerTabState extends State<_AttendanceTrackerTab> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final usersAsync = ref.watch(usersRepositoryProvider);
 
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          /// Title
-          Text(
-            'Attendance Tracker',
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: colors.primary,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          /// Employee dropdown
-          DropdownButtonFormField<String>(
-            value: selectedEmployee,
-            decoration: _inputDecoration('Select Employee', colors),
-            items: employees
-                .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                .toList(),
-            onChanged: (value) {
-              setState(() => selectedEmployee = value);
-            },
-          ),
-          const SizedBox(height: 16),
-
-          /// Date range + submit
-          Row(
-            children: [
-              Expanded(
-                child: _DateField(
-                  label: 'Start Date',
-                  date: startDate,
-                  onTap: () => _pickDate(isStart: true),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _DateField(
-                  label: 'End Date',
-                  date: endDate,
-                  onTap: () => _pickDate(isStart: false),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 30),
-
-          Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () {
-                    // TODO: Fetch attendance
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.primary,
-                    foregroundColor: colors.onPrimary,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 28,
-                      vertical: 18,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Submit',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Attendance List
-          Expanded(
-            child: ListView(
-              children: const [
-                AttendanceTile(
-                  day: "Sun",
-                  date: "21 Dec",
-                  status: "Weekend",
-                  statusColor: Colors.red,
-                  highlight: true,
-                ),
-                AttendanceTile(
-                  day: "Mon",
-                  date: "22 Dec",
-                  status: "Absent",
-                  statusColor: Colors.red,
-                ),
-                AttendanceTile(
-                  day: "Tue",
-                  date: "23 Dec",
-                  status: "Absent",
-                  statusColor: Colors.red,
-                ),
-                AttendanceTile(
-                  day: "Wed",
-                  date: "24 Dec",
-                  status: "Absent",
-                  statusColor: Colors.red,
-                ),
-                AttendanceTile(
-                  day: "Thu",
-                  date: "25 Dec",
-                  status: "Absent",
-                  statusColor: Colors.red,
-                ),
-                AttendanceTile(
-                  day: "Fri",
-                  date: "26 Dec",
-                  status: "Present",
-                  statusColor: Colors.green,
-                ),
-                AttendanceTile(
-                  day: "Sat",
-                  date: "27 Dec",
-                  status: "Weekend",
-                  statusColor: Colors.red,
-                  highlight: true,
-                ),
-              ],
-            ),
-          ),
-        ],
+    return usersAsync.when(
+      loading: () => const GlobalLoader(message: 'Loading users info...'),
+      error: (error, stack) => GlobalError(
+        message: 'Failed to load users data: $error',
+        onRetry: () => ref.refresh(usersRepositoryProvider),
       ),
+      data: (users) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              /// Title
+              Text(
+                'Attendance Tracker',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: colors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              /// Employee dropdown
+              CustomDropDownField(
+                options: users.map((u) {
+                  return DropdownMenuItem<String>(
+                    value: u.userId,
+                    child: Text('${u.firstName} ${u.lastName}'.trim()),
+                  );
+                }).toList(),
+                onChanged: (value) =>
+                    setState(() => selectedEmployeeId = value),
+                hintText: 'Select Employee',
+                labelText: 'Select Employee',
+                prefixIcon: Icons.person_outline,
+              ),
+              const SizedBox(height: 16),
+
+              /// Date range + submit
+              Row(
+                children: [
+                  Expanded(
+                    child: CustomPickerField(
+                      label: 'Start Date',
+                      valueText: _startDate == null
+                          ? null
+                          : DateFormat('dd/MM/yyyy').format(_startDate!),
+                      placeholder: 'dd/mm/yyyy',
+                      onTap: () => _pickDate(isStart: true),
+                    ),
+                  ),
+                  const SizedBox(width: 8.0),
+
+                  /// End Date
+                  Expanded(
+                    child: CustomPickerField(
+                      label: 'End Date',
+                      valueText: _endDate == null
+                          ? null
+                          : DateFormat('dd/MM/yyyy').format(_endDate!),
+                      placeholder: 'dd/mm/yyyy',
+                      onTap: () => _pickDate(isStart: false),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 0.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () {},
+
+                        icon: Icon(Icons.assignment_turned_in_sharp),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: colors.primary,
+                          foregroundColor: colors.onPrimary,
+
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                            side: BorderSide(width: 2.0, color: colors.primary),
+                          ),
+                        ),
+                        label: Text(
+                          ('submit').toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Attendance List
+              Expanded(
+                child: ListView(
+                  children: const [
+                    AttendanceTile(
+                      day: "Sun",
+                      date: "21 Dec",
+                      status: "Weekend",
+                      statusColor: Colors.red,
+                      highlight: true,
+                    ),
+                    AttendanceTile(
+                      day: "Mon",
+                      date: "22 Dec",
+                      status: "Absent",
+                      statusColor: Colors.red,
+                    ),
+                    AttendanceTile(
+                      day: "Tue",
+                      date: "23 Dec",
+                      status: "Absent",
+                      statusColor: Colors.red,
+                    ),
+                    AttendanceTile(
+                      day: "Wed",
+                      date: "24 Dec",
+                      status: "Absent",
+                      statusColor: Colors.red,
+                    ),
+                    AttendanceTile(
+                      day: "Thu",
+                      date: "25 Dec",
+                      status: "Absent",
+                      statusColor: Colors.red,
+                    ),
+                    AttendanceTile(
+                      day: "Fri",
+                      date: "26 Dec",
+                      status: "Present",
+                      statusColor: Colors.green,
+                    ),
+                    AttendanceTile(
+                      day: "Sat",
+                      date: "27 Dec",
+                      status: "Weekend",
+                      statusColor: Colors.red,
+                      highlight: true,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

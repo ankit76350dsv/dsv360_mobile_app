@@ -1,4 +1,8 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/network/dio_client.dart';
+import 'package:dsv360/core/widgets/global_error.dart';
+import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/task.dart';
 import 'package:dsv360/models/users.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
@@ -31,6 +35,7 @@ class _UsersPageState extends ConsumerState<UsersPage> {
     final usersAsync = ref.watch(usersRepositoryProvider);
     final query = ref.watch(usersSearchQueryProvider);
     final colors = Theme.of(context).colorScheme;
+    final connectivityStatus = ref.watch(connectivityStatusProvider);
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -61,65 +66,103 @@ class _UsersPageState extends ConsumerState<UsersPage> {
         actions: [],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(
-        shape: const CircleBorder(),
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => AddEditUserPage(user: null)),
+      floatingActionButton: connectivityStatus.when(
+        data: (results) {
+          if (results.contains(ConnectivityResult.none)) {
+            return null; // FAB hidden when no internet
+          }
+
+          return FloatingActionButton(
+            shape: const CircleBorder(),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => AddEditUserPage(user: null)),
+              );
+            },
+            child: Icon(Icons.person_add, size: 22),
           );
         },
-        child: Icon(Icons.person_add, size: 22),
+        loading: () => null, // hide FAB while checking
+        error: (_, __) => null, // hide FAB on error
       ),
 
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: EdgeInsetsGeometry.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: CustomInputSearch(
-                searchProvider: usersSearchQueryProvider,
-                hint: "Search users",
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsetsGeometry.symmetric(horizontal: 16.0),
-                child: usersAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
-                  data: (users) {
-                    final filteredUsers = users.where((u) {
-                      final q = query.toLowerCase();
-                      return u.firstName.toLowerCase().contains(q) ||
-                          u.lastName.toLowerCase().contains(q) ||
-                          u.userId.toLowerCase().contains(q) ||
-                          u.emailAddress.toLowerCase().contains(q) ||
-                          u.role.toLowerCase().contains(q);
-                    }).toList();
+        child: connectivityStatus.when(
+          data: (results) {
+            if (results.contains(ConnectivityResult.none)) {
+              return GlobalError(
+                message: 'Please check your internet connection.',
+                isNetworkError: true,
+                onRetry: () {
+                  ref.invalidate(connectivityStatusProvider);
+                },
+              );
+            }
 
-                    if (filteredUsers.isEmpty) {
-                      return const Center(child: Text('No users found'));
-                    }
+            // When connected, show accounts data
+            return Column(
+              children: [
+                Padding(
+                  padding: EdgeInsetsGeometry.symmetric(
+                    horizontal: 16.0,
+                    vertical: 8.0,
+                  ),
+                  child: CustomInputSearch(
+                    searchProvider: usersSearchQueryProvider,
+                    hint: "Search users",
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsetsGeometry.symmetric(horizontal: 16.0),
+                    child: usersAsync.when(
+                      loading: () =>
+                          const GlobalLoader(message: 'Loading users info...'),
+                      error: (error, stack) => GlobalError(
+                        message: 'Failed to load users data: $error',
+                        onRetry: () => ref.refresh(usersRepositoryProvider),
+                      ),
+                      data: (users) {
+                        final filteredUsers = users.where((u) {
+                          final q = query.toLowerCase();
+                          return u.firstName.toLowerCase().contains(q) ||
+                              u.lastName.toLowerCase().contains(q) ||
+                              u.userId.toLowerCase().contains(q) ||
+                              u.emailAddress.toLowerCase().contains(q) ||
+                              u.role.toLowerCase().contains(q);
+                        }).toList();
 
-                    return ListView.builder(
-                      itemCount: filteredUsers.length,
-                      itemBuilder: (context, index) {
-                        return UserCard(
-                          user: filteredUsers[index],
-                          userList: users,
+                        if (filteredUsers.isEmpty) {
+                          return const Center(child: Text('No users found'));
+                        }
+
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            ref.refresh(usersRepositoryProvider);
+                          },
+                          child: ListView.builder(
+                            itemCount: filteredUsers.length,
+                            itemBuilder: (context, index) {
+                              return UserCard(
+                                user: filteredUsers[index],
+                                userList: users,
+                              );
+                            },
+                          ),
                         );
                       },
-                    );
-                  },
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
+          error: (error, stack) => GlobalError(
+            message: 'Failed to check connectivity: $error',
+            onRetry: () => ref.invalidate(connectivityStatusProvider),
+          ),
+          loading: () => const GlobalLoader(message: 'Checking connection...'),
         ),
       ),
     );
@@ -284,10 +327,9 @@ class _UserCardState extends ConsumerState<UserCard> {
                                     // Call API based on switch value
                                     final path = value
                                         // to make it active (now value is true, previous was false)
-                                        ? '/server/time_entry_management_application_function/employee/DISABLED/${widget.user.userId}'
-
+                                        ? 'time_entry_management_application_function/employee/DISABLED/${widget.user.userId}'
                                         // to make it inactive (now value is false, previous was true)
-                                        : '/server/time_entry_management_application_function/employee/ACTIVE/${widget.user.userId}';
+                                        : 'time_entry_management_application_function/employee/ACTIVE/${widget.user.userId}';
                                     await DioClient.instance.post(path);
 
                                     AppSnackBar.show(
@@ -326,44 +368,50 @@ class _UserCardState extends ConsumerState<UserCard> {
 
                       Row(
                         children: [
-                          widget.user.verificationStatus != VerificationStatus.verified
-                          ?
-                          CustomCardButton(
-                            icon: Icons.account_circle,
-                            onTap: () async {
-                              try {
-                                await DioClient.instance.post(
-                                  '/server/time_entry_management_application_function/reInviteEmployees',
-                                  data: {
-                                    'email_id': widget.user.emailAddress
-                                        .toString(),
-                                    'first_name': widget.user.firstName
-                                        .toString(),
-                                    'last_name': widget.user.lastName
-                                        .toString(),
-                                    'role_id': widget.user.roleId.toString(),
-                                    'user_id': widget.user.userId.toString(),
+                          widget.user.verificationStatus !=
+                                  VerificationStatus.verified
+                              ? CustomCardButton(
+                                  icon: Icons.account_circle,
+                                  onTap: () async {
+                                    try {
+                                      await DioClient.instance.post(
+                                        'time_entry_management_application_function/reInviteEmployees',
+                                        data: {
+                                          'email_id': widget.user.emailAddress
+                                              .toString(),
+                                          'first_name': widget.user.firstName
+                                              .toString(),
+                                          'last_name': widget.user.lastName
+                                              .toString(),
+                                          'role_id': widget.user.roleId
+                                              .toString(),
+                                          'user_id': widget.user.userId
+                                              .toString(),
+                                        },
+                                      );
+
+                                      AppSnackBar.show(
+                                        context,
+                                        message:
+                                            'Re-invitation sent successfully',
+                                      );
+                                    } catch (e) {
+                                      debugPrint(
+                                        '❌ Failed to sent invitation: $e',
+                                      );
+
+                                      AppSnackBar.show(
+                                        context,
+                                        message:
+                                            'Failed to sent re-invitation.',
+                                      );
+                                    }
                                   },
-                                );
+                                )
+                              :
+                                // nothing
+                                SizedBox(),
 
-                                AppSnackBar.show(
-                                  context,
-                                  message: 'Re-invitation sent successfully',
-                                );
-                              } catch (e) {
-                                debugPrint('❌ Failed to sent invitation: $e');
-
-                                AppSnackBar.show(
-                                  context,
-                                  message: 'Failed to sent re-invitation.',
-                                );
-                              }
-                            },
-                          )
-                          :
-                          // nothing
-                          SizedBox(),
-                          
                           const SizedBox(width: 5.0),
                           CustomCardButton(
                             icon: Icons.edit,
@@ -401,12 +449,6 @@ class _UserCardState extends ConsumerState<UserCard> {
         ),
       ),
     );
-  }
-
-  /// Centralized role rule
-  bool _canManageUsers(String role) {
-    // return role.contains('Admin') || role.contains('Manager');
-    return true;
   }
 
   void _showDeleteUserSheet(
@@ -578,7 +620,7 @@ class _DeleteUserBottomSheetState
                         try {
                           // ALWAYS hit delete API
                           await DioClient.instance.post(
-                            '/server/time_entry_management_application_function/employee/${widget.user.userId}',
+                            'time_entry_management_application_function/employee/${widget.user.userId}',
                             data: reassignmentPayload,
                           );
 
