@@ -44,6 +44,7 @@ class _DashboardScaffold extends ConsumerWidget {
         automaticallyImplyLeading: false, // Hide default hamburger
         title: Text(
           'DSV360 - ${activeUser?.firstName ?? "User"}',
+          // 'DSV360',
           style: const TextStyle(color: AppColors.textPrimary),
         ),
         leading: Builder(

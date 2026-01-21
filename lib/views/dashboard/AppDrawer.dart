@@ -353,6 +353,7 @@ class AppDrawer extends ConsumerWidget {
           const SizedBox(height: 10),
           Text(
             "${activeUser?.firstName} ${activeUser?.lastName}",
+            // "Priya Malhotra",
             style: textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -361,6 +362,7 @@ class AppDrawer extends ConsumerWidget {
           const SizedBox(height: 2),
           Text(
             "${activeUser?.roleName}",
+            // 'Operations Coordinator',
             style: textTheme.bodySmall?.copyWith(
               color: AppColors.textSecondary,
             ),
