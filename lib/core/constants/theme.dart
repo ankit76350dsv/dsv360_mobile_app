@@ -74,7 +74,6 @@ ThemeData buildLightTheme(Color seedColor) {
       bodyMedium: TextStyle(
         fontSize: 14,
         color: Colors.black,
-        // fontWeight: FontWeight.w700,
       ),
       bodyLarge: TextStyle(
         fontSize: 18,
