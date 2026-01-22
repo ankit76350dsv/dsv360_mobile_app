@@ -1,17 +1,23 @@
 import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/leave_summary.dart';
 import 'package:dsv360/models/time_logs.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
+import 'package:dsv360/repositories/leave_summary_repository.dart';
 import 'package:dsv360/repositories/leaves_repository.dart';
 import 'package:dsv360/repositories/time_logs_repository.dart';
+import 'package:dsv360/repositories/attendance_tracker_list.dart';
 import 'package:dsv360/repositories/users_repository.dart';
+
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/people/apply_edit_leave_page.dart';
 import 'package:dsv360/views/people/leave_details_page.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/views/widgets/single_button.dart';
 import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:dsv360/views/widgets/custom_date_field.dart';
@@ -435,166 +441,211 @@ class _LeaveTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final leaveDetailsListAsync = ref.watch(leaveDetailsListRepositoryProvider);
-    final theme = Theme.of(context);
+    final activeUser = ref.watch(activeUserRepositoryProvider);
+    final userId = activeUser?.userId ?? '';
+    final username =
+        "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}".trim();
 
-    // Mock leave summary data - replace with actual API call
-    final leaveSummary = LeaveSummary.fromJson({
-      "Remaining_Total_Leaves": "24",
-      "Remaining_Paid_Leaves": "20",
-      "Remaining_Sick_Leaves": "4",
-      "Used_Paid_Leave": "0",
-      "Used_Unpaid_Leave": "0",
-      "Used_Sick_Leave": "2",
-      "Total_Sick_Leave": "6",
-      "Total_Paid_Leave": "20",
-    });
+    final leaveDetailsListAsync = ref.watch(leaveDetailsListRepositoryProvider);
+    final leaveSummaryAsync = ref.watch(
+      leaveSummaryRepositoryProvider(userId: userId, username: username),
+    );
+
+    final theme = Theme.of(context);
+    final connectivityStatus = ref.watch(connectivityStatusProvider);
 
     return Scaffold(
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // Summary cards
-            GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.2,
-              children: [
-                LeaveSummaryCard(
-                  title: "Remaining",
-                  value: leaveSummary.remainingValue,
-                  subtitle: leaveSummary.remainingSubtitle,
-                  color: Colors.green,
-                  icon: Icons.eco,
-                ),
-                LeaveSummaryCard(
-                  title: "Paid",
-                  value: leaveSummary.paidValue,
-                  subtitle: leaveSummary.paidSubtitle,
-                  color: Colors.redAccent,
-                  icon: Icons.money_off,
-                ),
-                LeaveSummaryCard(
-                  title: "Sick",
-                  value: leaveSummary.sickValue,
-                  subtitle: leaveSummary.sickSubtitle,
-                  color: Colors.lightGreen,
-                  icon: Icons.local_hospital,
-                ),
-                LeaveSummaryCard(
-                  title: "Unpaid",
-                  value: leaveSummary.unpaidValue,
-                  subtitle: leaveSummary.unpaidSubtitle,
-                  color: Colors.lightBlue,
-                  icon: Icons.beach_access,
-                ),
-              ],
-            ),
+        child: connectivityStatus.when(
+          data: (results) {
+            if (results.contains(ConnectivityResult.none)) {
+              return GlobalError(
+                message: 'Please check your internet connection.',
+                isNetworkError: true,
+                onRetry: () {
+                  ref.invalidate(connectivityStatusProvider);
+                },
+              );
+            }
 
-            const SizedBox(height: 24),
-
-            // Header row
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  "Recent Leave Requests",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-                const Spacer(),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ApplyEditLeavePage(leave: null),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 10.0,
-                      horizontal: 20.0,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(200.0),
-                      side: BorderSide(
-                        width: 2.0,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                  child: Text(
-                    "Request Leave".toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            leaveDetailsListAsync.when(
-              loading: () => const Padding(
-                padding: EdgeInsets.all(16),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-              error: (error, _) => Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Error: $error',
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
-              data: (leaveList) {
-                if (leaveList.isEmpty) {
-                  return const Center(child: Text('No leave records found'));
-                }
-
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: leaveList.length,
-                  itemBuilder: (context, index) {
-                    final leave = leaveList[index];
-
-                    return LeaveTile(
-                      type: leave.formattedLeaveType,
-                      start: leave.formattedStartDate,
-                      end: leave.formattedEndDate,
-                      status: leave.formattedStatus,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => LeaveDetailsPage(leave: leave),
-                          ),
-                        );
-                      },
-                      onEditTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => ApplyEditLeavePage(leave: leave),
-                          ),
-                        );
-                      },
-                    );
-                  },
+            return RefreshIndicator(
+              onRefresh: () async {
+                ref.refresh(
+                  leaveSummaryRepositoryProvider(
+                    userId: userId,
+                    username: username,
+                  ).future,
                 );
+                ref.refresh(leaveDetailsListRepositoryProvider.future);
               },
-            ),
-          ],
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                children: [
+                  // Summary cards
+                  leaveSummaryAsync.when(
+                    loading: () =>
+                        const GlobalLoader(message: 'Loading leave summary...'),
+                    error: (error, stack) => GlobalError(
+                      message: 'Failed to load leave summary: Try Again later',
+                      onRetry: () => ref.refresh(
+                        leaveSummaryRepositoryProvider(
+                          userId: userId,
+                          username: username,
+                        ),
+                      ),
+                    ),
+                    data: (LeaveSummary leaveSummary) => GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 1.2,
+                      children: [
+                        LeaveSummaryCard(
+                          title: "Remaining",
+                          value: leaveSummary.remainingValue,
+                          subtitle: leaveSummary.remainingSubtitle,
+                          color: Colors.green,
+                          icon: Icons.eco,
+                        ),
+                        LeaveSummaryCard(
+                          title: "Paid",
+                          value: leaveSummary.paidValue,
+                          subtitle: leaveSummary.paidSubtitle,
+                          color: Colors.redAccent,
+                          icon: Icons.money_off,
+                        ),
+                        LeaveSummaryCard(
+                          title: "Sick",
+                          value: leaveSummary.sickValue,
+                          subtitle: leaveSummary.sickSubtitle,
+                          color: Colors.lightGreen,
+                          icon: Icons.local_hospital,
+                        ),
+                        LeaveSummaryCard(
+                          title: "Unpaid",
+                          value: leaveSummary.unpaidValue,
+                          subtitle: leaveSummary.unpaidSubtitle,
+                          color: Colors.lightBlue,
+                          icon: Icons.beach_access,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Header row
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Recent Leave Requests",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Spacer(),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ApplyEditLeavePage(leave: null),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primary,
+                          foregroundColor: theme.colorScheme.onPrimary,
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10.0,
+                            horizontal: 20.0,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(200.0),
+                            side: BorderSide(
+                              width: 2.0,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        child: Text(
+                          "Request Leave".toUpperCase(),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  leaveDetailsListAsync.when(
+                    loading: () =>
+                        const GlobalLoader(message: 'Loading leave details...'),
+                    error: (error, _) => GlobalError(
+                      message: 'Failed to load leave details: Try again later.',
+                      onRetry: () =>
+                          ref.refresh(leaveDetailsListRepositoryProvider),
+                    ),
+                    data: (leaveList) {
+                      if (leaveList.isEmpty) {
+                        return const Center(
+                          child: Text('No leave records found'),
+                        );
+                      }
+
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: leaveList.length,
+                        itemBuilder: (context, index) {
+                          final leave = leaveList[index];
+
+                          return LeaveTile(
+                            type: leave.formattedLeaveType,
+                            start: leave.formattedStartDate,
+                            end: leave.formattedEndDate,
+                            status: leave.formattedStatus,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      LeaveDetailsPage(leave: leave),
+                                ),
+                              );
+                            },
+                            onEditTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      ApplyEditLeavePage(leave: leave),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+          error: (error, stack) => GlobalError(
+            message: 'Failed to check connectivity: $error',
+            onRetry: () => ref.invalidate(connectivityStatusProvider),
+          ),
+          loading: () => const GlobalLoader(message: 'Checking connection...'),
         ),
       ),
     );
@@ -1228,6 +1279,9 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
   String? selectedEmployeeId;
   DateTime? _startDate;
   DateTime? _endDate;
+  String? _queryUserId;
+  String? _queryStartDate;
+  String? _queryEndDate;
 
   final List<String> employees = ['Aman Jain', 'Abhay Singh', 'Ujjwal Mishra'];
 
@@ -1326,34 +1380,32 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
               const SizedBox(height: 10.0),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 0.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () {},
-
-                        icon: Icon(Icons.assignment_turned_in_sharp),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: colors.primary,
-                          foregroundColor: colors.onPrimary,
-
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8.0),
-                            side: BorderSide(width: 2.0, color: colors.primary),
-                          ),
+                child: SingleButton(
+                  loadingKey: 'attendance_tracker',
+                  text: 'submit',
+                  icon: Icons.assignment_turned_in_sharp,
+                  onPressed: () {
+                    if (selectedEmployeeId == null ||
+                        _startDate == null ||
+                        _endDate == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please select employee and dates'),
                         ),
-                        label: Text(
-                          ('submit').toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                      );
+                      return;
+                    }
+
+                    setState(() {
+                      _queryUserId = selectedEmployeeId;
+                      _queryStartDate = DateFormat(
+                        'yyyy-MM-dd',
+                      ).format(_startDate!);
+                      _queryEndDate = DateFormat(
+                        'yyyy-MM-dd',
+                      ).format(_endDate!);
+                    });
+                  },
                 ),
               ),
 
@@ -1361,54 +1413,76 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
 
               // Attendance List
               Expanded(
-                child: ListView(
-                  children: const [
-                    AttendanceTile(
-                      day: "Sun",
-                      date: "21 Dec",
-                      status: "Weekend",
-                      statusColor: Colors.red,
-                      highlight: true,
-                    ),
-                    AttendanceTile(
-                      day: "Mon",
-                      date: "22 Dec",
-                      status: "Absent",
-                      statusColor: Colors.red,
-                    ),
-                    AttendanceTile(
-                      day: "Tue",
-                      date: "23 Dec",
-                      status: "Absent",
-                      statusColor: Colors.red,
-                    ),
-                    AttendanceTile(
-                      day: "Wed",
-                      date: "24 Dec",
-                      status: "Absent",
-                      statusColor: Colors.red,
-                    ),
-                    AttendanceTile(
-                      day: "Thu",
-                      date: "25 Dec",
-                      status: "Absent",
-                      statusColor: Colors.red,
-                    ),
-                    AttendanceTile(
-                      day: "Fri",
-                      date: "26 Dec",
-                      status: "Present",
-                      statusColor: Colors.green,
-                    ),
-                    AttendanceTile(
-                      day: "Sat",
-                      date: "27 Dec",
-                      status: "Weekend",
-                      statusColor: Colors.red,
-                      highlight: true,
-                    ),
-                  ],
-                ),
+                child:
+                    (_queryUserId == null ||
+                        _queryStartDate == null ||
+                        _queryEndDate == null)
+                    ? const Center(
+                        child: Text(
+                          "Select employee and dates to view attendance",
+                        ),
+                      )
+                    : ref
+                          .watch(
+                            attendanceTrackerListRepositoryProvider(
+                              userId: _queryUserId!,
+                              startDate: _queryStartDate!,
+                              endDate: _queryEndDate!,
+                            ),
+                          )
+                          .when(
+                            data: (attendanceList) {
+                              if (attendanceList.isEmpty) {
+                                return const Center(
+                                  child: Text("No attendance records found"),
+                                );
+                              }
+                              return RefreshIndicator(
+                                onRefresh: () async {
+                                  ref.refresh(
+                                    attendanceTrackerListRepositoryProvider(
+                                      userId: _queryUserId!,
+                                      startDate: _queryStartDate!,
+                                      endDate: _queryEndDate!,
+                                    ),
+                                  );
+                                },
+                                child: ListView.builder(
+                                  itemCount: attendanceList.length,
+                                  itemBuilder: (context, index) {
+                                    final detail = attendanceList[index];
+                                    final date =
+                                        DateTime.tryParse(detail.dayDate) ??
+                                        detail.checkIn;
+
+                                    return AttendanceTile(
+                                      day: DateFormat('EEE').format(date),
+                                      date: DateFormat('d MMM').format(date),
+                                      status: detail.checkOut != null
+                                          ? "Present"
+                                          : "P (In)",
+                                      statusColor: detail.checkOut != null
+                                          ? Colors.green
+                                          : Colors.orange,
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                            loading: () => const GlobalLoader(
+                              message: 'Loading attendance info...',
+                            ),
+                            error: (error, stack) => GlobalError(
+                              message: 'Failed to load attendance data: $error',
+                              onRetry: () => ref.refresh(
+                                attendanceTrackerListRepositoryProvider(
+                                  userId: _queryUserId!,
+                                  startDate: _queryStartDate!,
+                                  endDate: _queryEndDate!,
+                                ),
+                              ),
+                            ),
+                          ),
               ),
             ],
           ),
@@ -1466,27 +1540,6 @@ class _DateField extends StatelessWidget {
           style: TextStyle(color: colors.onSurface),
         ),
       ),
-    );
-  }
-}
-
-/// Table header row
-class _TableHeader extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final textStyle = Theme.of(
-      context,
-    ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold);
-
-    return Row(
-      children: const [
-        _HeaderCell('Name'),
-        _HeaderCell('Date'),
-        _HeaderCell('Check In'),
-        _HeaderCell('Check Out'),
-        _HeaderCell('Total Time'),
-        _HeaderCell('Status'),
-      ],
     );
   }
 }
