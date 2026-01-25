@@ -206,7 +206,10 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                   end: Alignment.centerRight,
                 ),
               ),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -218,7 +221,6 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 4),
                   Text(
                     'Choose AI model or RAG bot — Qwen text, coder, or vision',
                     style: TextStyle(
@@ -226,7 +228,7 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                       color: Colors.white.withOpacity(0.6),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8.0),
 
                   /// MODE SELECTION BUTTONS
                   Row(
@@ -243,7 +245,7 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                           },
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 8.0),
                       Expanded(
                         child: _ModeButton(
                           label: 'RAG Bot',
@@ -257,11 +259,13 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8.0),
 
                   /// MODEL DROPDOWN
                   Container(
+                    height: 42,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
@@ -270,6 +274,7 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                     child: DropdownButton<String>(
                       value: selectedModel,
                       isExpanded: true,
+                      isDense: true,
                       underline: const SizedBox(),
                       dropdownColor: Colors.white,
                       style: const TextStyle(
@@ -418,35 +423,12 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      // Image Picker Button
-                      if (selectedModel.contains('Vision Model'))
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Container(
-                            width: 54,
-                            height: 54,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1F1F1F),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: const Color(0xFF2563eb).withOpacity(0.3),
-                              ),
-                            ),
-                            child: IconButton(
-                              icon: const Icon(
-                                Icons.add_photo_alternate_outlined,
-                                color: Color(0xFF2563eb),
-                              ),
-                              onPressed: _pickImage,
-                            ),
-                          ),
-                        ),
                       Expanded(
                         child: CustomInputField(
                           controller: _messageController,
                           hintText: selectedMode == 'AI Model'
-                              ? 'Enter prompt for selected AI model...'
-                              : 'Enter prompt for selected RAG bot...',
+                              ? 'Enter prompt for AI model...'
+                              : 'Enter prompt for RAG bot...',
                           isMultiline: true,
                           minLines: 1,
                           maxLines: 5,
@@ -455,13 +437,33 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                           onFieldSubmitted: (_) => _sendMessage(),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      // Image Picker Button
+                      if (selectedModel.contains('Vision Model'))
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2563eb),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.add_photo_alternate_outlined,
+                                color: Colors.white,
+                              ),
+                              onPressed: _pickImage,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(width: 8),
                       Consumer(
                         builder: (context, ref, child) {
                           final isLoading = ref.watch(aiLoadingProvider);
                           return Container(
-                            width: 54,
-                            height: 54,
+                            width: 48,
+                            height: 48,
                             decoration: BoxDecoration(
                               color: const Color(0xFF2563eb),
                               borderRadius: BorderRadius.circular(12),
@@ -527,7 +529,7 @@ class _ModeButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16),
           decoration: BoxDecoration(
             color: isSelected ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(8),

@@ -1,4 +1,5 @@
 import 'package:dsv360/core/network/dio_client.dart';
+import 'package:dsv360/models/leave_calendar_event.dart';
 import 'package:dsv360/models/leave_details.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:flutter/foundation.dart';
@@ -179,4 +180,42 @@ class LeaveDetailsListRepository extends AsyncNotifier<List<LeaveDetails>> {
 final leaveDetailsListRepositoryProvider =
     AsyncNotifierProvider<LeaveDetailsListRepository, List<LeaveDetails>>(
       LeaveDetailsListRepository.new,
+    );
+
+class LeaveCalendarRepository extends AsyncNotifier<List<LeaveCalendarEvent>> {
+  @override
+  Future<List<LeaveCalendarEvent>> build() async {
+    return fetchCalendarData();
+  }
+
+  Future<List<LeaveCalendarEvent>> fetchCalendarData() async {
+    try {
+      final response = await DioClient.instance.get(
+        'time_entry_management_application_function/calendar',
+      );
+
+      debugPrint("Response From fetchCalendarData: ${response.data}");
+
+      final data = response.data;
+      final List<dynamic> list = data["data"] ?? [];
+      final calendarEvents = list
+          .map((e) => LeaveCalendarEvent.fromJson(e))
+          .toList();
+
+      return calendarEvents;
+    } catch (e) {
+      debugPrint("Error fetching Calendar Data: $e");
+      throw AsyncError(e, StackTrace.current);
+    }
+  }
+
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    state = await AsyncValue.guard(() => fetchCalendarData());
+  }
+}
+
+final leaveCalendarRepositoryProvider =
+    AsyncNotifierProvider<LeaveCalendarRepository, List<LeaveCalendarEvent>>(
+      LeaveCalendarRepository.new,
     );

@@ -3,6 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
+import 'package:dsv360/models/leave_calendar_event.dart';
 import 'package:dsv360/models/leave_summary.dart';
 import 'package:dsv360/models/time_logs.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
@@ -15,6 +16,7 @@ import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/people/apply_edit_leave_page.dart';
+import 'package:dsv360/views/people/holiday_calendar_page.dart';
 import 'package:dsv360/views/people/leave_details_page.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/single_button.dart';
@@ -40,7 +42,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
   }
 
   @override
@@ -79,7 +81,17 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
         // if needed can add the icon as well here
         // hook for info action
         // you can open a dialog or screen here
-        actions: [],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_month, size: 18),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const HolidayCalendarPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -120,6 +132,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
                   Tab(text: 'Leave'),
                   Tab(text: 'Attendance'),
                   Tab(text: 'Attendance Tracker'),
+                  Tab(text: 'Leave Calendar'),
                 ],
               ),
             ),
@@ -129,12 +142,13 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: const [
+              children: [
                 _CheckInTab(),
                 _ActivitiesTab(),
                 _LeaveTab(),
                 _AttendanceTab(),
                 _AttendanceTrackerTab(),
+                _LeaveCalendarTab(),
               ],
             ),
           ),
@@ -1309,183 +1323,210 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final usersAsync = ref.watch(usersRepositoryProvider);
+    final connectivityStatus = ref.watch(connectivityStatusProvider);
 
-    return usersAsync.when(
-      loading: () => const GlobalLoader(message: 'Loading users info...'),
-      error: (error, stack) => GlobalError(
-        message: 'Failed to load users data: $error',
-        onRetry: () => ref.refresh(usersRepositoryProvider),
+    return connectivityStatus.when(
+      loading: () => const GlobalLoader(message: 'Checking connection...'),
+      error: (err, stack) => Center(
+        child: GlobalError(
+          message: 'Failed to check connectivity: Try Again',
+          onRetry: () => ref.invalidate(connectivityStatusProvider),
+        ),
       ),
-      data: (users) {
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              /// Title
-              Text(
-                'Attendance Tracker',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: colors.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
+      data: (results) {
+        if (results.contains(ConnectivityResult.none)) {
+          return GlobalError(
+            message: 'Please check your internet connection.',
+            isNetworkError: true,
+            onRetry: () {
+              ref.invalidate(connectivityStatusProvider);
+            },
+          );
+        }
 
-              /// Employee dropdown
-              CustomDropDownField(
-                options: users.map((u) {
-                  return DropdownMenuItem<String>(
-                    value: u.userId,
-                    child: Text('${u.firstName} ${u.lastName}'.trim()),
-                  );
-                }).toList(),
-                onChanged: (value) =>
-                    setState(() => selectedEmployeeId = value),
-                hintText: 'Select Employee',
-                labelText: 'Select Employee',
-                prefixIcon: Icons.person_outline,
-              ),
-              const SizedBox(height: 16),
-
-              /// Date range + submit
-              Row(
+        return usersAsync.when(
+          loading: () => const GlobalLoader(message: 'Loading users info...'),
+          error: (error, stack) => GlobalError(
+            message: 'Failed to load users data: $error',
+            onRetry: () => ref.refresh(usersRepositoryProvider),
+          ),
+          data: (users) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: CustomPickerField(
-                      label: 'Start Date',
-                      valueText: _startDate == null
-                          ? null
-                          : DateFormat('dd/MM/yyyy').format(_startDate!),
-                      placeholder: 'dd/mm/yyyy',
-                      onTap: () => _pickDate(isStart: true),
+                  /// Title
+                  Text(
+                    'Attendance Tracker',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: colors.primary,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(width: 8.0),
+                  const SizedBox(height: 20),
 
-                  /// End Date
-                  Expanded(
-                    child: CustomPickerField(
-                      label: 'End Date',
-                      valueText: _endDate == null
-                          ? null
-                          : DateFormat('dd/MM/yyyy').format(_endDate!),
-                      placeholder: 'dd/mm/yyyy',
-                      onTap: () => _pickDate(isStart: false),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 10.0),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 0.0),
-                child: SingleButton(
-                  loadingKey: 'attendance_tracker',
-                  text: 'submit',
-                  icon: Icons.assignment_turned_in_sharp,
-                  onPressed: () {
-                    if (selectedEmployeeId == null ||
-                        _startDate == null ||
-                        _endDate == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please select employee and dates'),
-                        ),
+                  /// Employee dropdown
+                  CustomDropDownField(
+                    options: users.map((u) {
+                      return DropdownMenuItem<String>(
+                        value: u.userId,
+                        child: Text('${u.firstName} ${u.lastName}'.trim()),
                       );
-                      return;
-                    }
+                    }).toList(),
+                    onChanged: (value) =>
+                        setState(() => selectedEmployeeId = value),
+                    hintText: 'Select Employee',
+                    labelText: 'Select Employee',
+                    prefixIcon: Icons.person_outline,
+                  ),
+                  const SizedBox(height: 16),
 
-                    setState(() {
-                      _queryUserId = selectedEmployeeId;
-                      _queryStartDate = DateFormat(
-                        'yyyy-MM-dd',
-                      ).format(_startDate!);
-                      _queryEndDate = DateFormat(
-                        'yyyy-MM-dd',
-                      ).format(_endDate!);
-                    });
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Attendance List
-              Expanded(
-                child:
-                    (_queryUserId == null ||
-                        _queryStartDate == null ||
-                        _queryEndDate == null)
-                    ? const Center(
-                        child: Text(
-                          "Select employee and dates to view attendance",
+                  /// Date range + submit
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CustomPickerField(
+                          label: 'Start Date',
+                          valueText: _startDate == null
+                              ? null
+                              : DateFormat('dd/MM/yyyy').format(_startDate!),
+                          placeholder: 'dd/mm/yyyy',
+                          onTap: () => _pickDate(isStart: true),
                         ),
-                      )
-                    : ref
-                          .watch(
-                            attendanceTrackerListRepositoryProvider(
-                              userId: _queryUserId!,
-                              startDate: _queryStartDate!,
-                              endDate: _queryEndDate!,
+                      ),
+                      const SizedBox(width: 8.0),
+
+                      /// End Date
+                      Expanded(
+                        child: CustomPickerField(
+                          label: 'End Date',
+                          valueText: _endDate == null
+                              ? null
+                              : DateFormat('dd/MM/yyyy').format(_endDate!),
+                          placeholder: 'dd/mm/yyyy',
+                          onTap: () => _pickDate(isStart: false),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 10.0),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 0.0),
+                    child: SingleButton(
+                      loadingKey: 'attendance_tracker',
+                      text: 'submit',
+                      icon: Icons.assignment_turned_in_sharp,
+                      onPressed: () {
+                        if (selectedEmployeeId == null ||
+                            _startDate == null ||
+                            _endDate == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please select employee and dates'),
+                            ),
+                          );
+                          return;
+                        }
+
+                        setState(() {
+                          _queryUserId = selectedEmployeeId;
+                          _queryStartDate = DateFormat(
+                            'yyyy-MM-dd',
+                          ).format(_startDate!);
+                          _queryEndDate = DateFormat(
+                            'yyyy-MM-dd',
+                          ).format(_endDate!);
+                        });
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Attendance List
+                  Expanded(
+                    child:
+                        (_queryUserId == null ||
+                            _queryStartDate == null ||
+                            _queryEndDate == null)
+                        ? const Center(
+                            child: Text(
+                              "Select employee and dates to view attendance",
                             ),
                           )
-                          .when(
-                            data: (attendanceList) {
-                              if (attendanceList.isEmpty) {
-                                return const Center(
-                                  child: Text("No attendance records found"),
-                                );
-                              }
-                              return RefreshIndicator(
-                                onRefresh: () async {
-                                  ref.refresh(
-                                    attendanceTrackerListRepositoryProvider(
-                                      userId: _queryUserId!,
-                                      startDate: _queryStartDate!,
-                                      endDate: _queryEndDate!,
-                                    ),
-                                  );
-                                },
-                                child: ListView.builder(
-                                  itemCount: attendanceList.length,
-                                  itemBuilder: (context, index) {
-                                    final detail = attendanceList[index];
-                                    final date =
-                                        DateTime.tryParse(detail.dayDate) ??
-                                        detail.checkIn;
-
-                                    return AttendanceTile(
-                                      day: DateFormat('EEE').format(date),
-                                      date: DateFormat('d MMM').format(date),
-                                      status: detail.checkOut != null
-                                          ? "Present"
-                                          : "P (In)",
-                                      statusColor: detail.checkOut != null
-                                          ? Colors.green
-                                          : Colors.orange,
-                                    );
-                                  },
-                                ),
-                              );
-                            },
-                            loading: () => const GlobalLoader(
-                              message: 'Loading attendance info...',
-                            ),
-                            error: (error, stack) => GlobalError(
-                              message: 'Failed to load attendance data: $error',
-                              onRetry: () => ref.refresh(
+                        : ref
+                              .watch(
                                 attendanceTrackerListRepositoryProvider(
                                   userId: _queryUserId!,
                                   startDate: _queryStartDate!,
                                   endDate: _queryEndDate!,
                                 ),
+                              )
+                              .when(
+                                data: (attendanceList) {
+                                  if (attendanceList.isEmpty) {
+                                    return const Center(
+                                      child: Text(
+                                        "No attendance records found",
+                                      ),
+                                    );
+                                  }
+                                  return RefreshIndicator(
+                                    onRefresh: () async {
+                                      ref.refresh(
+                                        attendanceTrackerListRepositoryProvider(
+                                          userId: _queryUserId!,
+                                          startDate: _queryStartDate!,
+                                          endDate: _queryEndDate!,
+                                        ),
+                                      );
+                                    },
+                                    child: ListView.builder(
+                                      itemCount: attendanceList.length,
+                                      itemBuilder: (context, index) {
+                                        final detail = attendanceList[index];
+                                        final date =
+                                            DateTime.tryParse(detail.dayDate) ??
+                                            detail.checkIn;
+
+                                        return AttendanceTile(
+                                          day: DateFormat('EEE').format(date),
+                                          date: DateFormat(
+                                            'd MMM',
+                                          ).format(date),
+                                          status: detail.checkOut != null
+                                              ? "Present"
+                                              : "P (In)",
+                                          statusColor: detail.checkOut != null
+                                              ? Colors.green
+                                              : Colors.orange,
+                                        );
+                                      },
+                                    ),
+                                  );
+                                },
+                                loading: () => const GlobalLoader(
+                                  message: 'Loading attendance info...',
+                                ),
+                                error: (error, stack) => GlobalError(
+                                  message:
+                                      'Failed to load attendance data: $error',
+                                  onRetry: () => ref.refresh(
+                                    attendanceTrackerListRepositoryProvider(
+                                      userId: _queryUserId!,
+                                      startDate: _queryStartDate!,
+                                      endDate: _queryEndDate!,
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -1540,6 +1581,400 @@ class _DateField extends StatelessWidget {
           style: TextStyle(color: colors.onSurface),
         ),
       ),
+    );
+  }
+}
+
+class _LeaveCalendarTab extends ConsumerWidget {
+  const _LeaveCalendarTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final now = DateTime.now();
+    final year = now.year;
+    final month = now.month;
+    final firstDayOfMonth = DateTime(year, month, 1);
+    final lastDayOfMonth = DateTime(year, month + 1, 0);
+    final daysInMonth = lastDayOfMonth.day;
+    final leadDays = firstDayOfMonth.weekday % 7; // Sunday start logic
+
+    final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final calendarAsync = ref.watch(leaveCalendarRepositoryProvider);
+
+    return connectivityStatus.when(
+      data: (results) {
+        if (results.contains(ConnectivityResult.none)) {
+          return GlobalError(
+            message: 'Please check your internet connection.',
+            isNetworkError: true,
+            onRetry: () {
+              ref.invalidate(connectivityStatusProvider);
+            },
+          );
+        }
+
+        return calendarAsync.when(
+          data: (calendarEvents) {
+            // Transform API data to Calendar Map (Optimized)
+            final Map<int, List<LeaveCalendarEvent>> mappedLeaves = {};
+            for (var item in calendarEvents) {
+              final start = DateTime.tryParse(item.startDate);
+              final end = DateTime.tryParse(item.endDate);
+
+              if (start == null || end == null) continue;
+
+              // Calculate intersection with current month
+              final monthStart = DateTime(year, month, 1);
+              final monthEnd = DateTime(year, month + 1, 0);
+
+              // Skip if leave is entirely outside the current month
+              if (end.isBefore(monthStart) || start.isAfter(monthEnd)) continue;
+
+              // Start from the later of leave start or month start
+              var current = start.isBefore(monthStart) ? monthStart : start;
+              // End at the earlier of leave end or month end
+              final loopEnd = end.isAfter(monthEnd) ? monthEnd : end;
+
+              while (current.isBefore(loopEnd) ||
+                  current.isAtSameMomentAs(loopEnd)) {
+                if (current.month == month && current.year == year) {
+                  mappedLeaves.putIfAbsent(current.day, () => []).add(item);
+                }
+                current = current.add(const Duration(days: 1));
+              }
+            }
+
+            final theme = Theme.of(context);
+
+            return RefreshIndicator(
+              onRefresh: () =>
+                  ref.read(leaveCalendarRepositoryProvider.notifier).refresh(),
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  /// Header Section
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Leave Calendar',
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              color: theme.colorScheme.onSurface,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            DateFormat('MMMM yyyy').format(now),
+                            style: theme.textTheme.bodyMedium,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8.0),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      _LegendChip('Sick Leave', const Color(0xFFFACC15)),
+                      _LegendChip('Paid Leave', const Color(0xFF2DD4BF)),
+                      _LegendChip('Unpaid Leave', const Color(0xFFF87171)),
+                      _LegendChip('Others', const Color(0xFF94A3B8)),
+                    ],
+                  ),
+                  const SizedBox(height: 24.0),
+
+                  // Days Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+                        .map(
+                          (day) => Expanded(
+                            child: Center(
+                              child: Text(
+                                day,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Calendar Grid
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 7,
+                          crossAxisSpacing: 4,
+                          mainAxisSpacing: 4,
+                          childAspectRatio: 0.75,
+                        ),
+                    itemCount: daysInMonth + leadDays,
+                    itemBuilder: (context, index) {
+                      if (index < leadDays) {
+                        return const SizedBox();
+                      }
+                      final day = index - leadDays + 1;
+                      final leaves = mappedLeaves[day] ?? [];
+                      final isToday =
+                          day == now.day &&
+                          month == now.month &&
+                          year == now.year;
+
+                      return InkWell(
+                        onTap: leaves.isEmpty
+                            ? null
+                            : () => _showLeaveDetails(context, day, leaves),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: isToday
+                                ? Border.all(
+                                    color: theme.colorScheme.primary,
+                                    width: 1.5,
+                                  )
+                                : Border.all(
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.1),
+                                  ),
+                          ),
+                          padding: const EdgeInsets.all(6),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '$day',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: isToday
+                                          ? FontWeight.bold
+                                          : FontWeight.normal,
+                                      color: isToday
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  if (leaves.isNotEmpty)
+                                    Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: theme.colorScheme.onSurface
+                                            .withOpacity(0.05),
+                                      ),
+                                      child: Text(
+                                        '${leaves.length}',
+                                        style: TextStyle(
+                                          color: theme.colorScheme.onSurface,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 8,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              if (isToday)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(
+                                      0xFF1D4ED8,
+                                    ).withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'Today',
+                                    style: TextStyle(
+                                      color: Color(0xFF3B82F6),
+                                      fontSize: 8,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              const Spacer(),
+                              if (leaves.isEmpty)
+                                Text(
+                                  'No leaves',
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.4),
+                                    fontSize: 7,
+                                  ),
+                                )
+                              else ...[
+                                Wrap(
+                                  spacing: 3,
+                                  runSpacing: 3,
+                                  children: leaves
+                                      .map(
+                                        (l) =>
+                                            _Dot(_getLeaveColor(l.leaveType)),
+                                      )
+                                      .toList(),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+          loading: () =>
+              const Center(child: GlobalLoader(message: 'Loading calendar...')),
+          error: (err, stack) => Center(
+            child: GlobalError(
+              message: 'Failed to load calendar: $err',
+              onRetry: () => ref.refresh(leaveCalendarRepositoryProvider),
+            ),
+          ),
+        );
+      },
+      loading: () => const GlobalLoader(message: 'Checking connection...'),
+      error: (err, stack) => Center(
+        child: GlobalError(
+          message: 'Failed to check connectivity: Try Again',
+          onRetry: () => ref.invalidate(connectivityStatusProvider),
+        ),
+      ),
+    );
+  }
+
+  Color _getLeaveColor(String type) {
+    final typeLower = type.toLowerCase();
+    if (typeLower.contains('sick')) {
+      return const Color(0xFFFACC15);
+    } else if (typeLower.contains('paid')) {
+      return const Color(0xFF2DD4BF);
+    } else if (typeLower.contains('unpaid')) {
+      return const Color(0xFFF87171);
+    } else {
+      return const Color(0xFF94A3B8);
+    }
+  }
+
+  void _showLeaveDetails(
+    BuildContext context,
+    int day,
+    List<LeaveCalendarEvent> leaves,
+  ) {
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text('Leaves on Day $day', style: theme.textTheme.titleMedium),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: leaves.length,
+              separatorBuilder: (context, index) =>
+                  Divider(color: theme.colorScheme.onSurface.withOpacity(0.2)),
+              itemBuilder: (context, index) {
+                final leaf = leaves[index];
+                final color = _getLeaveColor(leaf.leaveType);
+                return ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: CircleAvatar(
+                    backgroundColor: color.withOpacity(0.2),
+                    child: Icon(Icons.person, color: color, size: 20),
+                  ),
+                  title: Text(
+                    leaf.username,
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: Text(
+                    '${leaf.leaveType.replaceAll('_', ' ')}\n${leaf.startDate} to ${leaf.endDate}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  isThreeLine: true,
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _LegendChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _LegendChip(this.label, this.color);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Dot extends StatelessWidget {
+  final Color color;
+  const _Dot(this.color);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 6,
+      height: 6,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }
