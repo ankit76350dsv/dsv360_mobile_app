@@ -4,6 +4,7 @@ class AttendanceDetail {
   final DateTime checkIn;
   final DateTime? checkOut;
   final String? totalTime; // in minutes
+  final String? rowId;
 
   AttendanceDetail({
     required this.dayDate,
@@ -11,6 +12,7 @@ class AttendanceDetail {
     required this.checkIn,
     this.checkOut,
     this.totalTime,
+    this.rowId,
   });
 
   /// Factory constructor to parse API JSON
@@ -23,6 +25,7 @@ class AttendanceDetail {
           ? DateTime.parse(json['Check_Out'])
           : null,
       totalTime: json['Total_Time']?.toString(),
+      rowId: json['ROWID']?.toString(),
     );
   }
 }

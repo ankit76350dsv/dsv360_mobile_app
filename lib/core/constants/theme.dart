@@ -56,7 +56,7 @@ ThemeData buildLightTheme(Color seedColor) {
         vertical: 6.0
       ),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12.0),
         side: BorderSide(
           color: Colors.grey.withOpacity(0.2),
           width: 1.5,
@@ -155,7 +155,7 @@ ThemeData buildDarkTheme(Color seedColor) {
       color: Color.fromARGB(255, 27, 28, 29),
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12.0),
         side: BorderSide(
           color: Colors.grey.withOpacity(0.2),
           width: 1.5,

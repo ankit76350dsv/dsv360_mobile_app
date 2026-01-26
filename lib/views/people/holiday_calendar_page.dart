@@ -2,6 +2,7 @@ import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/holiday.dart';
 import 'package:dsv360/repositories/holiday_repository.dart';
+import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,16 +19,28 @@ class HolidayCalendarPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Holiday Calendar'),
+        toolbarHeight: 35.0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+          icon: const Icon(Icons.arrow_back_ios, size: 18),
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
+        centerTitle: true,
+        elevation: 0,
+        title: Text(
+          'Holiday Calendar',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        // if needed can add the icon as well here
+        // hook for info action
+        // you can open a dialog or screen here
+        actions: [],
       ),
       body: holidayAsync.when(
         loading: () => const GlobalLoader(message: 'Loading holidays...'),
         error: (err, stack) => GlobalError(
-          message: 'Failed to load holidays: $err',
+          message: 'This should never occur',
           onRetry: () => ref.refresh(holidayRepositoryProvider),
         ),
         data: (holidays) {
@@ -45,12 +58,15 @@ class HolidayCalendarPage extends ConsumerWidget {
 
           // Calculate remaining holidays
           final now = DateTime.now();
+          final today = DateTime(now.year, now.month, now.day);
           final remaining = filteredHolidays.where((h) {
             final date = DateTime.tryParse(h.date);
-            return date != null &&
-                (date.isAfter(now) || date.isAtSameMomentAs(now));
+            return date != null && !date.isBefore(today);
           }).length;
           final total = filteredHolidays.length;
+
+          final locations = holidays.map((h) => h.location).toSet().toList()
+            ..sort();
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -63,12 +79,6 @@ class HolidayCalendarPage extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Holiday Calendar',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
                         'Holidays grouped month-wise',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: colors.onSurfaceVariant,
@@ -76,22 +86,10 @@ class HolidayCalendarPage extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.primaryContainer.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Remaining: $remaining / $total',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: colors.onPrimaryContainer,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  CustomChip(
+                    label: 'Remaining: $remaining / $total',
+                    color: colors.primary,
+                    icon: null,
                   ),
                 ],
               ),
@@ -99,10 +97,9 @@ class HolidayCalendarPage extends ConsumerWidget {
 
               // Location Dropdown
               CustomDropDownField(
-                options: const [
-                  DropdownMenuItem(value: 'Mumbai', child: Text('Mumbai')),
-                  DropdownMenuItem(value: 'Pune', child: Text('Pune')),
-                ],
+                options: locations.map((loc) {
+                  return DropdownMenuItem(value: loc, child: Text(loc));
+                }).toList(),
                 onChanged: (value) {
                   if (value != null) {
                     ref.read(selectedLocationProvider.notifier).state = value;
@@ -142,19 +139,25 @@ class _MonthSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: colors.surfaceVariant.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(8),
-            border: Border(left: BorderSide(color: colors.primary, width: 4)),
+        Card(
+          margin: EdgeInsets.symmetric(
+            horizontal: 0.0,
+            vertical: 8.0,
           ),
-          width: double.infinity,
-          child: Text(
-            month,
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+          child: Container(
+            padding: const EdgeInsets.all(10.0),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12.0),
+              border: Border(
+                left: BorderSide(color: theme.colorScheme.primary, width: 2),
+              ),
+            ),
+            width: double.infinity,
+            child: Text(
+              month,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),
@@ -175,63 +178,79 @@ class _HolidayCard extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.only(bottom: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: colors.outline.withOpacity(0.1)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            // Date Badge
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: colors.primaryContainer.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: Text(
-                  '${holiday.day}',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: colors.primary,
-                    fontWeight: FontWeight.bold,
+    final holidayDate = DateTime.tryParse(holiday.date);
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    // Consider it spent if it's before today
+    final isSpent = holidayDate != null && holidayDate.isBefore(today);
+
+    return Opacity(
+      opacity: isSpent ? 0.6 : 1.0,
+      child: Card(
+        elevation: 0,
+        margin: const EdgeInsets.only(bottom: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: colors.outline.withOpacity(0.1)),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              // Date Badge
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: isSpent
+                      ? colors.onSurfaceVariant.withOpacity(0.1)
+                      : colors.primaryContainer.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Center(
+                  child: Text(
+                    '${holiday.day}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: isSpent ? colors.onSurfaceVariant : colors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 16),
+              const SizedBox(width: 16),
 
-            // Name
-            Expanded(
-              child: Text(
-                holiday.name,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
+              // Name
+              Expanded(
+                child: Text(
+                  holiday.name,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                    color: isSpent ? colors.onSurfaceVariant : null,
+                  ),
                 ),
               ),
-            ),
 
-            // Location Chip
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: colors.surfaceVariant,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                holiday.location,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: colors.onSurfaceVariant,
+              // Location Chip
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: colors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  holiday.location,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: colors.onSurfaceVariant,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

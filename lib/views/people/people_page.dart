@@ -3,14 +3,16 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
+import 'package:dsv360/models/active_user.dart';
 import 'package:dsv360/models/leave_calendar_event.dart';
 import 'package:dsv360/models/leave_summary.dart';
-import 'package:dsv360/models/time_logs.dart';
+import 'package:dsv360/models/attendance_detail.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/repositories/leave_summary_repository.dart';
 import 'package:dsv360/repositories/leaves_repository.dart';
 import 'package:dsv360/repositories/time_logs_repository.dart';
 import 'package:dsv360/repositories/attendance_tracker_list.dart';
+import 'package:dsv360/repositories/check_in_repository.dart';
 import 'package:dsv360/repositories/users_repository.dart';
 
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
@@ -95,7 +97,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
       ),
       body: Column(
         children: [
-          /// �️ TABS
+          /// ️ TABS
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: 12.0,
@@ -158,7 +160,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
   }
 }
 
-class _ActivitiesTab extends StatelessWidget {
+class _ActivitiesTab extends ConsumerWidget {
   const _ActivitiesTab();
 
   String _getTimeOfDayGreeting() {
@@ -172,9 +174,9 @@ class _ActivitiesTab extends StatelessWidget {
     }
   }
 
-  String _getGreetingTitle() {
+  String _getGreetingTitle(ActiveUserModel? activeUser) {
     final timeOfDay = _getTimeOfDayGreeting();
-    return 'Good ${timeOfDay.substring(0, 1).toUpperCase()}${timeOfDay.substring(1)} Aman Jain';
+    return 'Good ${timeOfDay.substring(0, 1).toUpperCase()}${timeOfDay.substring(1)} ${activeUser?.firstName} ${activeUser?.lastName}';
   }
 
   String _getGreetingSubtitle() {
@@ -182,14 +184,26 @@ class _ActivitiesTab extends StatelessWidget {
     return 'Have a productive $timeOfDay!';
   }
 
+  String _getCurrentWeekRange() {
+    final now = DateTime.now();
+    // Sunday to Saturday range
+    final firstDayOfWeek = now.subtract(Duration(days: now.weekday % 7));
+    final lastDayOfWeek = firstDayOfWeek.add(const Duration(days: 6));
+
+    final format = DateFormat('dd MMM yyyy');
+    return '${format.format(firstDayOfWeek)} – ${format.format(lastDayOfWeek)}';
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activeUser = ref.watch(activeUserRepositoryProvider);
+
     final theme = Theme.of(context);
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         _InfoCard(
-          title: _getGreetingTitle(),
+          title: _getGreetingTitle(activeUser),
           subtitle: _getGreetingSubtitle(),
           icon: Icons.person,
           accentColor: Colors.blue,
@@ -200,14 +214,133 @@ class _ActivitiesTab extends StatelessWidget {
           icon: Icons.alarm,
           accentColor: theme.colorScheme.primary,
         ),
-        const _InfoCard(
-          title: 'Work Schedule',
-          subtitle: '21 Dec 2025 – 27 Dec 2025',
-          icon: Icons.calendar_today,
-          accentColor: Colors.blueAccent,
-        ),
+        _WorkScheduleCard(weekRange: _getCurrentWeekRange()),
         _TimeLogsCard(),
       ],
+    );
+  }
+}
+
+class _WorkScheduleCard extends StatelessWidget {
+  final String weekRange;
+
+  const _WorkScheduleCard({required this.weekRange});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = theme.colorScheme;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // Calculate start of week (Sunday)
+    final startOfWeek = today.subtract(Duration(days: today.weekday % 7));
+
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colors.outline.withOpacity(0.1)),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border(left: BorderSide(color: Colors.blueAccent, width: 2)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Icon(Icons.calendar_today, size: 18, color: Colors.blueAccent),
+                const SizedBox(width: 8),
+                Text('Work Schedule', style: theme.textTheme.titleMedium),
+                const Spacer(),
+                Text(
+                  weekRange,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'General',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+
+            // Week Days Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(7, (index) {
+                final date = startOfWeek.add(Duration(days: index));
+                final isToday = date.isAtSameMomentAs(today);
+                final dayName = DateFormat('E').format(date); // Sun, Mon...
+                final isWeekend = date.weekday == 6 || date.weekday == 7;
+
+                return Expanded(
+                  child: Column(
+                    children: [
+                      Text(
+                        dayName,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colors.onSurfaceVariant,
+                          fontSize: 11,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${date.day}',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: isToday ? colors.primary : null,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      if (isToday)
+                        Column(
+                          children: [
+                            Text(
+                              'Today',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: colors.onSurfaceVariant.withOpacity(0.7),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Container(
+                              height: 2,
+                              width: 20,
+                              decoration: BoxDecoration(
+                                color: colors.primary,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ],
+                        )
+                      else if (isWeekend)
+                        Text(
+                          'Weekend',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: colors.onSurfaceVariant.withOpacity(0.7),
+                          ),
+                        )
+                      else
+                        const SizedBox(height: 18), // Placeholder for spacer
+                    ],
+                  ),
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -234,7 +367,7 @@ class _InfoCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border: Border(left: BorderSide(color: accentColor, width: 4)),
+          border: Border(left: BorderSide(color: accentColor, width: 2)),
         ),
         child: Row(
           children: [
@@ -271,7 +404,25 @@ class _TimeLogsCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final timeLogsAsync = ref.watch(timeLogsRepositoryProvider);
+    final activeUser = ref.watch(activeUserRepositoryProvider);
+    final userId = activeUser?.userId ?? '';
+
+    // If userId is not available, show empty card or loader
+    if (userId.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Get today's date in YYYY-MM-DD format
+    final now = DateTime.now();
+    final todayStr = DateFormat('yyyy-MM-dd').format(now);
+
+    final timeLogsAsync = ref.watch(
+      timeLogsRepositoryProvider(
+        userId: userId,
+        startDate: todayStr,
+        endDate: todayStr,
+      ),
+    );
 
     return timeLogsAsync.when(
       loading: () => const Padding(
@@ -290,27 +441,19 @@ class _TimeLogsCard extends ConsumerWidget {
 }
 
 class _TimeLogsContent extends StatelessWidget {
-  final List<TimeLogs> timeLogs;
+  final List<AttendanceDetail> timeLogs;
 
   const _TimeLogsContent({required this.timeLogs});
 
-  // Helper method to extract time from datetime string
-  String _extractTime(String dateTime) {
-    if (dateTime.isEmpty) return '--:--:--';
-    try {
-      // Format: "2025-12-31 20:21:38"
-      final parts = dateTime.split(' ');
-      if (parts.length > 1) {
-        return parts[1]; // Returns "20:21:38"
-      }
-      return dateTime;
-    } catch (e) {
-      return dateTime;
-    }
+  // Helper method to format time from DateTime
+  String _formatTime(DateTime? dateTime) {
+    if (dateTime == null) return '--:--:--';
+    return DateFormat('HH:mm:ss').format(dateTime);
   }
 
   // Helper method to format total time
-  String _formatTotalTime(String totalTime) {
+  String _formatTotalTime(String? totalTime) {
+    if (totalTime == null || totalTime.isEmpty) return '0 m';
     try {
       final minutes = int.tryParse(totalTime) ?? 0;
       return '$minutes m';
@@ -328,7 +471,7 @@ class _TimeLogsContent extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border: Border(left: BorderSide(color: colors.primary, width: 4)),
+          border: Border(left: BorderSide(color: colors.primary, width: 2)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,7 +533,7 @@ class _TimeLogsContent extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          _extractTime(log.checkIn),
+                          _formatTime(log.checkIn),
                           style: TextStyle(
                             color: colors.primary,
                             fontWeight: FontWeight.w500,
@@ -399,11 +542,11 @@ class _TimeLogsContent extends StatelessWidget {
                       ),
                       Expanded(
                         child: Text(
-                          log.checkOut.isNotEmpty
-                              ? _extractTime(log.checkOut)
+                          log.checkOut != null
+                              ? _formatTime(log.checkOut)
                               : '--:--:--',
                           style: TextStyle(
-                            color: log.checkOut.isNotEmpty
+                            color: log.checkOut != null
                                 ? colors.error
                                 : colors.onSurfaceVariant,
                           ),
@@ -947,10 +1090,22 @@ class _CheckInTab extends ConsumerStatefulWidget {
 
 class _CheckInTabState extends ConsumerState<_CheckInTab> {
   Timer? _timer;
-  Duration _remaining = const Duration(
-    hours: 8, // example: 8-hour workday
-  );
-  bool _isCheckedIn = false;
+  Duration _elapsed = Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -958,197 +1113,222 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
     super.dispose();
   }
 
-  void _toggleCheckIn() {
-    if (_isCheckedIn) {
-      // ⛔ Stop countdown
-      _timer?.cancel();
-    } else {
-      // ▶️ Start countdown
-      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-        if (_remaining.inSeconds <= 0) {
-          _timer?.cancel();
-          return;
-        }
+  Future<void> _handleAction({
+    required String userId,
+    required String username,
+    AttendanceDetail? activeLog,
+  }) async {
+    final loadingNotifier = ref.read(
+      singleButtonLoadingProvider('checkInCheckOutButton').notifier,
+    );
+    loadingNotifier.state = true;
 
-        setState(() {
-          _remaining -= const Duration(seconds: 1);
-        });
-      });
+    try {
+      final now = DateTime.now();
+      final dayDate = DateFormat('yyyy-MM-dd').format(now);
+      final checkInRepo = ref.read(checkInRepositoryProvider.notifier);
+
+      if (activeLog == null) {
+        // Check In
+        await checkInRepo.checkIn(
+          userId: userId,
+          username: username,
+          device: 'test-phone', // device id
+          lat: 30.75396137744414,
+          long: 76.62712840213943,
+          dayDate: dayDate,
+        );
+      } else {
+        // Check Out
+        await checkInRepo.checkOut(
+          device: 'test-phone',
+          lat: 30.75396137744414,
+          long: 76.62712840213943,
+          checkInTimestamp: activeLog.checkIn.millisecondsSinceEpoch,
+          rowId: activeLog.rowId ?? '',
+        );
+      }
+
+      // Invalidate both repositories to refresh UI
+      ref.invalidate(timeLogsRepositoryProvider);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    } finally {
+      loadingNotifier.state = false;
     }
-
-    setState(() {
-      _isCheckedIn = !_isCheckedIn;
-    });
-  }
-
-  String _formatDuration(Duration d) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final h = twoDigits(d.inHours);
-    final m = twoDigits(d.inMinutes.remainder(60));
-    final s = twoDigits(d.inSeconds.remainder(60));
-    return '$h:$m:$s';
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final activeUser = ref.watch(activeUserRepositoryProvider);
+    final userId = activeUser?.userId ?? '';
+    final username =
+        "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}".trim();
 
-    return Container(
-      decoration: const BoxDecoration(),
-      child: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Text(
-                    "${activeUser?.firstName} ${activeUser?.lastName}",
+    if (userId.isEmpty) {
+      return const Center(child: GlobalLoader(message: 'Loading user info...'));
+    }
+
+    final now = DateTime.now();
+    final todayStr = DateFormat('yyyy-MM-dd').format(now);
+
+    final timeLogsAsync = ref.watch(
+      timeLogsRepositoryProvider(
+        userId: userId,
+        startDate: todayStr,
+        endDate: todayStr,
+      ),
+    );
+
+    return timeLogsAsync.when(
+      loading: () => const Center(child: GlobalLoader()),
+      error: (err, st) => Center(child: Text('Error: $err')),
+      data: (logs) {
+        // Find if there's an active session (checkOut is null)
+        AttendanceDetail? activeLog;
+        try {
+          activeLog = logs.firstWhere((log) => log.checkOut == null);
+        } catch (_) {
+          activeLog = null;
+        }
+
+        final isCheckedIn = activeLog != null;
+        _elapsed = isCheckedIn
+            ? DateTime.now().difference(activeLog.checkIn)
+            : Duration.zero;
+
+        return Container(
+          decoration: const BoxDecoration(),
+          child: SafeArea(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    username,
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: colors.primary,
                     ),
                   ),
-                ],
-              ),
-            ),
-
-            /// TIME ELAPSED
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Card(
-                // decoration: BoxDecoration(
-                //   borderRadius: BorderRadius.circular(24),
-                //   gradient: LinearGradient(
-                //     colors: [
-                //       colors.primary.withOpacity(0.15),
-                //       colors.primary.withOpacity(0.08),
-                //     ],
-                //   ),
-                //   border: Border.all(
-                //     color: colors.primary.withOpacity(0.3),
-                //     width: 2,
-                //   ),
-                // ),
-                child: Padding(
-                  padding: EdgeInsetsGeometry.symmetric(vertical: 18.0),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.timer_outlined,
-                            color: colors.tertiary.withOpacity(0.9),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'TIME ELAPSED',
-                            style: TextStyle(
-                              color: colors.tertiary,
-                              letterSpacing: 1,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12.0),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _TimeBox(value: _remaining.inDays, label: "Days"),
-                          _TimeBox(
-                            value: _remaining.inHours % 24,
-                            label: "Hrs",
-                          ),
-                          _TimeBox(
-                            value: _remaining.inMinutes % 60,
-                            label: "Mins",
-                          ),
-                          _TimeBox(
-                            value: _remaining.inSeconds % 60,
-                            label: "Secs",
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.primary.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.circle, size: 8, color: colors.primary),
-                            const SizedBox(width: 8),
-                            Text(
-                              _isCheckedIn ? 'Checked In' : 'Not Checked In',
-                              style: TextStyle(
-                                color: colors.primary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
-              ),
-            ),
 
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {},
-
-                      icon: Icon(_isCheckedIn ? Icons.logout : Icons.login),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.primary,
-                        foregroundColor: colors.onPrimary,
-
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(200.0),
-                          side: BorderSide(width: 2.0, color: colors.primary),
-                        ),
-                      ),
-                      label: Text(
-                        (_isCheckedIn ? 'CHECK OUT' : 'CHECK IN NOW')
-                            .toUpperCase(),
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
+                /// TIME ELAPSED
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 18.0),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.timer_outlined,
+                                color: colors.tertiary.withOpacity(0.9),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'TIME ELAPSED',
+                                style: TextStyle(
+                                  color: Color(0xFF6B7280),
+                                  letterSpacing: 1,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12.0),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _TimeBox(value: _elapsed.inDays, label: "Days"),
+                              _TimeBox(
+                                value: _elapsed.inHours % 24,
+                                label: "Hrs",
+                              ),
+                              _TimeBox(
+                                value: _elapsed.inMinutes % 60,
+                                label: "Mins",
+                              ),
+                              _TimeBox(
+                                value: _elapsed.inSeconds % 60,
+                                label: "Secs",
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isCheckedIn
+                                  ? colors.primary.withOpacity(0.1)
+                                  : Colors.grey.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.circle,
+                                  size: 8,
+                                  color: isCheckedIn
+                                      ? colors.primary
+                                      : Colors.grey,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  isCheckedIn ? 'Checked In' : 'Not Checked In',
+                                  style: TextStyle(
+                                    color: isCheckedIn
+                                        ? colors.primary
+                                        : Colors.grey,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+
+                const SizedBox(height: 16.0),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SingleButton(
+                    loadingKey: 'checkInCheckOutButton',
+                    text: isCheckedIn ? 'CHECK OUT' : 'CHECK IN NOW',
+                    onPressed: () => _handleAction(
+                      userId: userId,
+                      username: username,
+                      activeLog: activeLog,
+                    ),
+                    icon: isCheckedIn ? Icons.logout : Icons.login,
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -1585,11 +1765,19 @@ class _DateField extends StatelessWidget {
   }
 }
 
-class _LeaveCalendarTab extends ConsumerWidget {
+class _LeaveCalendarTab extends ConsumerStatefulWidget {
   const _LeaveCalendarTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_LeaveCalendarTab> createState() => _LeaveCalendarTabState();
+}
+
+class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
+  int? _selectedDay;
+  List<LeaveCalendarEvent>? _selectedLeaves;
+
+  @override
+  Widget build(BuildContext context) {
     final now = DateTime.now();
     final year = now.year;
     final month = now.month;
@@ -1729,24 +1917,37 @@ class _LeaveCalendarTab extends ConsumerWidget {
                           day == now.day &&
                           month == now.month &&
                           year == now.year;
+                      final isSelected = _selectedDay == day;
 
                       return InkWell(
-                        onTap: leaves.isEmpty
-                            ? null
-                            : () => _showLeaveDetails(context, day, leaves),
+                        onTap: () {
+                          setState(() {
+                            _selectedDay = day;
+                            _selectedLeaves = leaves;
+                          });
+                        },
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
-                            border: isToday
+                            border: isSelected
                                 ? Border.all(
                                     color: theme.colorScheme.primary,
+                                    width: 2,
+                                  )
+                                : isToday
+                                ? Border.all(
+                                    color: theme.colorScheme.primary
+                                        .withOpacity(0.5),
                                     width: 1.5,
                                   )
                                 : Border.all(
                                     color: theme.colorScheme.onSurface
                                         .withOpacity(0.1),
                                   ),
+                            color: isSelected
+                                ? theme.colorScheme.primary.withOpacity(0.05)
+                                : null,
                           ),
                           padding: const EdgeInsets.all(6),
                           child: Column(
@@ -1835,6 +2036,184 @@ class _LeaveCalendarTab extends ConsumerWidget {
                       );
                     },
                   ),
+
+                  // show the leave list details here the day
+                  const SizedBox(height: 24),
+                  if (_selectedDay != null) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 4,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Leaves on day $_selectedDay',
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          if (_selectedLeaves == null ||
+                              _selectedLeaves!.isEmpty)
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceVariant
+                                    .withOpacity(0.3),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: theme.colorScheme.onSurface
+                                      .withOpacity(0.05),
+                                ),
+                              ),
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.event_available,
+                                    size: 40,
+                                    color: theme.colorScheme.onSurface
+                                        .withOpacity(0.2),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'No leaves scheduled for this day',
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.5),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: _selectedLeaves!.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final leaf = _selectedLeaves![index];
+                                final color = _getLeaveColor(leaf.leaveType);
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.surface,
+                                    borderRadius: BorderRadius.circular(16),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.03),
+                                        blurRadius: 10,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                    border: Border.all(
+                                      color: theme.colorScheme.onSurface
+                                          .withOpacity(0.05),
+                                    ),
+                                  ),
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    leading: Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: color.withOpacity(0.1),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: Icon(
+                                        Icons.person_outline,
+                                        color: color,
+                                        size: 24,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      leaf.username,
+                                      style: theme.textTheme.bodyLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                    subtitle: Padding(
+                                      padding: const EdgeInsets.only(top: 4.0),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            leaf.leaveType.replaceAll('_', ' '),
+                                            style: TextStyle(
+                                              color: color,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '${leaf.startDate} to ${leaf.endDate}',
+                                            style: theme.textTheme.bodySmall,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          const SizedBox(height: 20),
+                          Center(
+                            child: Text(
+                              'Click on any day to see details',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                color: theme.colorScheme.onSurface.withOpacity(
+                                  0.4,
+                                ),
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.touch_app_outlined,
+                              size: 48,
+                              color: theme.colorScheme.primary.withOpacity(0.2),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Select a day to view leaves',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurface.withOpacity(
+                                  0.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             );
@@ -1870,61 +2249,6 @@ class _LeaveCalendarTab extends ConsumerWidget {
     } else {
       return const Color(0xFF94A3B8);
     }
-  }
-
-  void _showLeaveDetails(
-    BuildContext context,
-    int day,
-    List<LeaveCalendarEvent> leaves,
-  ) {
-    final theme = Theme.of(context);
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          title: Text('Leaves on Day $day', style: theme.textTheme.titleMedium),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.separated(
-              shrinkWrap: true,
-              itemCount: leaves.length,
-              separatorBuilder: (context, index) =>
-                  Divider(color: theme.colorScheme.onSurface.withOpacity(0.2)),
-              itemBuilder: (context, index) {
-                final leaf = leaves[index];
-                final color = _getLeaveColor(leaf.leaveType);
-                return ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: CircleAvatar(
-                    backgroundColor: color.withOpacity(0.2),
-                    child: Icon(Icons.person, color: color, size: 20),
-                  ),
-                  title: Text(
-                    leaf.username,
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: Text(
-                    '${leaf.leaveType.replaceAll('_', ' ')}\n${leaf.startDate} to ${leaf.endDate}',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  isThreeLine: true,
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
   }
 }
 

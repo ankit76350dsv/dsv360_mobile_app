@@ -1,4 +1,3 @@
-import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +7,6 @@ import 'package:dsv360/repositories/ai_repository.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'dart:io';
-import 'package:dsv360/core/constants/app_colors.dart';
 
 final aiLoadingProvider = StateProvider<bool>((ref) => false);
 final aiModeProvider = StateProvider<String>((ref) => 'AI Model');
@@ -163,8 +161,6 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
     final selectedMode = ref.watch(aiModeProvider);
     final selectedModel = ref.watch(aiModelProvider);
 
-    final currentModels = selectedMode == 'AI Model' ? _aiModels : _ragBots;
-
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
@@ -188,7 +184,62 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
         // if needed can add the icon as well here
         // hook for info action
         // you can open a dialog or screen here
-        actions: [],
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_horiz, size: 18),
+            onSelected: (value) {
+              // Direct selection logic if needed, but we'll use submenus
+              // or handle the provider updates in the itemBuilder if they're final selections
+            },
+            itemBuilder: (context) {
+              return [
+                PopupMenuItem<String>(
+                  enabled: false,
+                  child: Text(
+                    "AI MODELS",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+                ..._aiModels.map(
+                  (model) => PopupMenuItem<String>(
+                    value: 'model:$model',
+                    child: Text(model, style: const TextStyle(fontSize: 13)),
+                    onTap: () {
+                      ref.read(aiModeProvider.notifier).state = 'AI Model';
+                      ref.read(aiModelProvider.notifier).state = model;
+                    },
+                  ),
+                ),
+                const PopupMenuDivider(),
+                PopupMenuItem<String>(
+                  enabled: false,
+                  child: Text(
+                    "RAG BOTS",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+                ..._ragBots.map(
+                  (bot) => PopupMenuItem<String>(
+                    value: 'bot:$bot',
+                    child: Text(bot, style: const TextStyle(fontSize: 13)),
+                    onTap: () {
+                      ref.read(aiModeProvider.notifier).state = 'RAG Bot';
+                      ref.read(aiModelProvider.notifier).state = bot;
+                    },
+                  ),
+                ),
+              ];
+            },
+          ),
+        ],
       ),
       // backgroundColor: const Color(0xFF0F0F11),
       body: SafeArea(
@@ -198,8 +249,8 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
 
             /// HEADER SECTION
             Container(
+              width: double.infinity,
               decoration: BoxDecoration(
-                color: const Color(0xFF1F1F1F),
                 gradient: const LinearGradient(
                   colors: [Color(0xFF2563eb), Color(0xFF4f46e5)],
                   begin: Alignment.centerLeft,
@@ -216,101 +267,21 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                   const Text(
                     'Talk to DSV AI',
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
                   Text(
-                    'Choose AI model or RAG bot — Qwen text, coder, or vision',
+                    'Connected to $selectedModel',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 12,
                       color: Colors.white.withOpacity(0.6),
-                    ),
-                  ),
-                  const SizedBox(height: 8.0),
-
-                  /// MODE SELECTION BUTTONS
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _ModeButton(
-                          label: 'AI Model',
-                          isSelected: selectedMode == 'AI Model',
-                          onTap: () {
-                            ref.read(aiModeProvider.notifier).state =
-                                'AI Model';
-                            ref.read(aiModelProvider.notifier).state =
-                                _aiModels.first;
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8.0),
-                      Expanded(
-                        child: _ModeButton(
-                          label: 'RAG Bot',
-                          isSelected: selectedMode == 'RAG Bot',
-                          onTap: () {
-                            ref.read(aiModeProvider.notifier).state = 'RAG Bot';
-                            ref.read(aiModelProvider.notifier).state =
-                                _ragBots.first;
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8.0),
-
-                  /// MODEL DROPDOWN
-                  Container(
-                    height: 42,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.white, width: 1.5),
-                    ),
-                    child: DropdownButton<String>(
-                      value: selectedModel,
-                      isExpanded: true,
-                      isDense: true,
-                      underline: const SizedBox(),
-                      dropdownColor: Colors.white,
-                      style: const TextStyle(
-                        color: Color(0xFF2563eb),
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      icon: const Icon(
-                        Icons.arrow_drop_down,
-                        color: Color(0xFF2563eb),
-                      ),
-                      items: currentModels.map((model) {
-                        return DropdownMenuItem<String>(
-                          value: model,
-                          child: Text(
-                            model,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Color(0xFF1F1F1F),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          ref.read(aiModelProvider.notifier).state = value;
-                        }
-                      },
                     ),
                   ),
                 ],
               ),
             ),
-
-            const Divider(height: 1, thickness: 1, color: Color(0xFF2A2A2A)),
 
             /// CHAT AREA
             Expanded(
@@ -504,52 +475,6 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ModeButton extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _ModeButton({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isSelected ? Colors.white : Colors.white.withOpacity(0.3),
-              width: 1.5,
-            ),
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: isSelected
-                    ? const Color(0xFF2563eb)
-                    : Colors.white.withOpacity(0.9),
-                fontSize: 14,
-                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              ),
-            ),
-          ),
         ),
       ),
     );
