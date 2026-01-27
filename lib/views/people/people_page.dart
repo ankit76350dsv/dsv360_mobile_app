@@ -12,6 +12,7 @@ import 'package:dsv360/repositories/leave_summary_repository.dart';
 import 'package:dsv360/repositories/leaves_repository.dart';
 import 'package:dsv360/repositories/time_logs_repository.dart';
 import 'package:dsv360/repositories/attendance_tracker_list.dart';
+import 'package:dsv360/repositories/attendance_list_repository.dart';
 import 'package:dsv360/repositories/check_in_repository.dart';
 import 'package:dsv360/repositories/users_repository.dart';
 
@@ -949,14 +950,14 @@ class LeaveTile extends StatelessWidget {
   }
 }
 
-class _AttendanceTab extends StatefulWidget {
+class _AttendanceTab extends ConsumerStatefulWidget {
   const _AttendanceTab({super.key});
 
   @override
-  State<_AttendanceTab> createState() => _AttendanceTabState();
+  ConsumerState<_AttendanceTab> createState() => _AttendanceTabState();
 }
 
-class _AttendanceTabState extends State<_AttendanceTab> {
+class _AttendanceTabState extends ConsumerState<_AttendanceTab> {
   final List<String> options = [
     'This Week',
     'Previous Week',
@@ -966,9 +967,60 @@ class _AttendanceTabState extends State<_AttendanceTab> {
 
   String selected = 'This Week';
 
+  (DateTime, DateTime) _getDateRange(String selected) {
+    final now = DateTime.now();
+    DateTime start;
+    DateTime end;
+
+    if (selected == 'This Week') {
+      // Start on Sunday (7 becomes 0, 1 stays 1, ..., 6 stays 6)
+      int daysToSubtract = now.weekday % 7;
+      start = now.subtract(Duration(days: daysToSubtract));
+      end = start.add(const Duration(days: 6));
+    } else if (selected == 'Previous Week') {
+      int daysToSubtract = (now.weekday % 7) + 7;
+      start = now.subtract(Duration(days: daysToSubtract));
+      end = start.add(const Duration(days: 6));
+    } else if (selected == 'This Month') {
+      start = DateTime(now.year, now.month, 1);
+      end = DateTime(now.year, now.month + 1, 0);
+    } else if (selected == 'Last Month') {
+      start = DateTime(now.year, now.month - 1, 1);
+      end = DateTime(now.year, now.month, 0);
+    } else {
+      start = now;
+      end = now;
+    }
+
+    // Normalize to midnight
+    start = DateTime(start.year, start.month, start.day);
+    end = DateTime(end.year, end.month, end.day);
+
+    return (start, end);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final activeUser = ref.watch(activeUserRepositoryProvider);
+    final userId = activeUser?.userId ?? '';
+
+    if (userId.isEmpty) {
+      return const Center(child: GlobalLoader(message: 'Loading user info...'));
+    }
+
+    final range = _getDateRange(selected);
+    final startDate = range.$1;
+    final endDate = range.$2;
+    final formatter = DateFormat('yyyy-MM-dd');
+
+    final attendanceAsync = ref.watch(
+      attendanceDetailListRepositoryProvider(
+        userId: userId,
+        startDate: formatter.format(startDate),
+        endDate: formatter.format(endDate),
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1026,54 +1078,73 @@ class _AttendanceTabState extends State<_AttendanceTab> {
 
         // Attendance List
         Expanded(
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            children: const [
-              AttendanceTile(
-                day: "Sun",
-                date: "21 Dec",
-                status: "Weekend",
-                statusColor: Colors.red,
-                highlight: true,
+          child: attendanceAsync.when(
+            loading: () => const Center(
+              child: GlobalLoader(message: 'Fetching attendance...'),
+            ),
+            error: (err, st) => Center(
+              child: GlobalError(
+                message: 'Failed to load attendance: $err',
+                onRetry: () => ref.refresh(
+                  attendanceDetailListRepositoryProvider(
+                    userId: userId,
+                    startDate: formatter.format(startDate),
+                    endDate: formatter.format(endDate),
+                  ),
+                ),
               ),
-              AttendanceTile(
-                day: "Mon",
-                date: "22 Dec",
-                status: "Absent",
-                statusColor: Colors.red,
-              ),
-              AttendanceTile(
-                day: "Tue",
-                date: "23 Dec",
-                status: "Absent",
-                statusColor: Colors.red,
-              ),
-              AttendanceTile(
-                day: "Wed",
-                date: "24 Dec",
-                status: "Absent",
-                statusColor: Colors.red,
-              ),
-              AttendanceTile(
-                day: "Thu",
-                date: "25 Dec",
-                status: "Absent",
-                statusColor: Colors.red,
-              ),
-              AttendanceTile(
-                day: "Fri",
-                date: "26 Dec",
-                status: "Present",
-                statusColor: Colors.green,
-              ),
-              AttendanceTile(
-                day: "Sat",
-                date: "27 Dec",
-                status: "Weekend",
-                statusColor: Colors.red,
-                highlight: true,
-              ),
-            ],
+            ),
+            data: (data) {
+              final presentDates = data.map((e) => e.dayDate).toSet();
+
+              final List<Widget> children = [];
+              DateTime current = startDate;
+
+              // Show the full range as requested
+              final DateTime limit = endDate;
+
+              while (current.isBefore(limit) ||
+                  current.isAtSameMomentAs(limit)) {
+                final dateStr = formatter.format(current);
+                final isWeekend =
+                    current.weekday == DateTime.saturday ||
+                    current.weekday == DateTime.sunday;
+                final isPresent = presentDates.contains(dateStr);
+
+                String status;
+                Color statusColor;
+                bool highlight = false;
+
+                if (isWeekend) {
+                  status = "Weekend";
+                  statusColor = Colors.red;
+                  highlight = true;
+                } else if (isPresent) {
+                  status = "Present";
+                  statusColor = Colors.green;
+                } else {
+                  status = "Absent";
+                  statusColor = Colors.red;
+                }
+
+                children.add(
+                  AttendanceTile(
+                    day: DateFormat('EEE').format(current),
+                    date: DateFormat('d MMM').format(current),
+                    status: status,
+                    statusColor: statusColor,
+                    highlight: highlight,
+                  ),
+                );
+
+                current = current.add(const Duration(days: 1));
+              }
+
+              return ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                children: children.toList(), // Most recent first
+              );
+            },
           ),
         ),
       ],
@@ -1330,29 +1401,6 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
         );
       },
     );
-  }
-
-  String _getDayName(int weekday) {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return days[weekday - 1];
-  }
-
-  String _getMonthName(int month) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return months[month - 1];
   }
 }
 

@@ -122,7 +122,7 @@ class DioClient {
       debugPrint("response:  $response");
 
       // Check for HTTP 200
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return response;
       } else {
         throw Exception('Unexpected status code: ${response.statusCode}');

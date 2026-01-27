@@ -204,16 +204,42 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                     ),
                   ),
                 ),
-                ..._aiModels.map(
-                  (model) => PopupMenuItem<String>(
+                ..._aiModels.map((model) {
+                  final isSelected =
+                      selectedMode == 'AI Model' && selectedModel == model;
+                  return PopupMenuItem<String>(
                     value: 'model:$model',
-                    child: Text(model, style: const TextStyle(fontSize: 13)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            model,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isSelected
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                        if (isSelected)
+                          Icon(
+                            Icons.check,
+                            size: 16,
+                            color: theme.colorScheme.primary,
+                          ),
+                      ],
+                    ),
                     onTap: () {
                       ref.read(aiModeProvider.notifier).state = 'AI Model';
                       ref.read(aiModelProvider.notifier).state = model;
                     },
-                  ),
-                ),
+                  );
+                }),
                 const PopupMenuDivider(),
                 PopupMenuItem<String>(
                   enabled: false,
@@ -226,16 +252,42 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                     ),
                   ),
                 ),
-                ..._ragBots.map(
-                  (bot) => PopupMenuItem<String>(
+                ..._ragBots.map((bot) {
+                  final isSelected =
+                      selectedMode == 'RAG Bot' && selectedModel == bot;
+                  return PopupMenuItem<String>(
                     value: 'bot:$bot',
-                    child: Text(bot, style: const TextStyle(fontSize: 13)),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            bot,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                              color: isSelected
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                        if (isSelected)
+                          Icon(
+                            Icons.check,
+                            size: 16,
+                            color: theme.colorScheme.primary,
+                          ),
+                      ],
+                    ),
                     onTap: () {
                       ref.read(aiModeProvider.notifier).state = 'RAG Bot';
                       ref.read(aiModelProvider.notifier).state = bot;
                     },
-                  ),
-                ),
+                  );
+                }),
               ];
             },
           ),
@@ -245,44 +297,6 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(height: 10.0),
-
-            /// HEADER SECTION
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF2563eb), Color(0xFF4f46e5)],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Talk to DSV AI',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Text(
-                    'Connected to $selectedModel',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white.withOpacity(0.6),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
             /// CHAT AREA
             Expanded(
               child: _messages.isEmpty
