@@ -8,6 +8,7 @@ class AuthManager {
   static AuthManager get instance => _instance;
 
   ZCatalystUser? currentUser;
+  
 
   /// Fetch the current user details and store them
   Future<ZCatalystUser?> fetchUser() async {

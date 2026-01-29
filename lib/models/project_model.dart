@@ -6,6 +6,7 @@ class ProjectModel {
   final DateTime startDate;
   final DateTime endDate;
   final String? assignedTo;
+  final String? assignedToId;
   final String? description;
   final String? owner;
   final int? progress;
@@ -22,6 +23,7 @@ class ProjectModel {
     required this.startDate,
     required this.endDate,
     this.assignedTo,
+    this.assignedToId,
     this.description,
     this.owner,
     this.progress,
@@ -41,6 +43,7 @@ class ProjectModel {
       'startDate': startDate.toIso8601String(),
       'endDate': endDate.toIso8601String(),
       'assignedTo': assignedTo,
+      'assignedToId': assignedToId,
       'description': description,
       'owner': owner,
       'progress': progress,
@@ -62,6 +65,7 @@ class ProjectModel {
       startDate: _parseDate(json['Start_Date'] ?? json['startDate']),
       endDate: _parseDate(json['End_Date'] ?? json['endDate']),
       assignedTo: json['Assigned_To']?.toString() ?? json['assignedTo']?.toString(),
+      assignedToId: json['Assigned_To_Id']?.toString() ?? json['assignedToId']?.toString(),
       description: json['Description']?.toString() ?? json['description']?.toString(),
       owner: json['Owner']?.toString() ?? json['owner']?.toString(),
       progress: json['progress'] ?? 0, // API doesn't seem to return progress, defaulting to 0
@@ -85,11 +89,8 @@ class ProjectModel {
     if (files == null) return [];
     if (files is List) return List<String>.from(files);
     if (files is String && files.isNotEmpty) {
-      // Assuming comma separated if string, or just a single file URL? 
-      // The sample showed "Files": "", so safe to default to empty list if empty string.
-      // If actual URLs come as string, we might need logic here. 
-      // For now treating non-empty string as single item list if it looks like a url/path.
-      return [files];
+      // Handle comma-separated URLs from API
+      return files.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
     }
     return [];
   }
@@ -103,6 +104,7 @@ class ProjectModel {
     DateTime? startDate,
     DateTime? endDate,
     String? assignedTo,
+    String? assignedToId,
     String? description,
     String? owner,
     int? progress,
@@ -119,6 +121,7 @@ class ProjectModel {
       startDate: startDate ?? this.startDate,
       endDate: endDate ?? this.endDate,
       assignedTo: assignedTo ?? this.assignedTo,
+      assignedToId: assignedToId ?? this.assignedToId,
       description: description ?? this.description,
       owner: owner ?? this.owner,
       progress: progress ?? this.progress,

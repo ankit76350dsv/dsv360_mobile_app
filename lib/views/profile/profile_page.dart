@@ -12,7 +12,7 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final user = AuthManager.instance.currentUser;
-    final fullName = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
+    print(user?.zaaid);     final fullName = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
     final email = user?.emailId ?? 'No Email';
     final role = user?.role?.name ?? 'User';
 

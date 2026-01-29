@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../models/issue_model.dart';
+import '../../providers/issue_provider.dart';
 import '../widgets/custom_search_bar.dart';
 import '../widgets/generic_card.dart';
 import '../widgets/TopBar.dart';
@@ -13,165 +15,68 @@ import 'issue_details_modal_sheet.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 
-class IssuesScreen extends StatefulWidget {
+class IssuesScreen extends ConsumerStatefulWidget {
   const IssuesScreen({super.key});
 
   @override
-  State<IssuesScreen> createState() => _IssuesScreenState();
+  ConsumerState<IssuesScreen> createState() => _IssuesScreenState();
 }
 
-class _IssuesScreenState extends State<IssuesScreen> {
+class _IssuesScreenState extends ConsumerState<IssuesScreen> {
   final TextEditingController _searchController = TextEditingController();
-  List<IssueModel> _issues = [];
-  List<IssueModel> _filteredIssues = [];
+  String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _loadSampleData();
-    _filteredIssues = _issues;
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text;
+      });
+    });
   }
-
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
 
-  void _loadSampleData() {
-    _issues = [
-      IssueModel(
-        id: 'I001',
-        issueName: 'Login page not responsive',
-        status: 'Open',
-        priority: 'High',
-        description: 'The login page breaks on mobile devices',
-        assignedTo: 'John Doe',
-        owner: 'Alice Smith',
-        createdDate: DateTime(2026, 1, 5),
-        dueDate: DateTime(2026, 1, 15),
-        projectId: 'P4201',
-        projectName: 'Demo Session',
-        attachments: ['screenshot.png'],
-        commentsCount: 3,
-      ),
-      IssueModel(
-        id: 'I002',
-        issueName: 'Database connection timeout',
-        status: 'In Progress',
-        priority: 'Critical',
-        description: 'Database queries are timing out under load',
-        assignedTo: 'Jane Smith',
-        owner: 'Bob Johnson',
-        createdDate: DateTime(2026, 1, 3),
-        dueDate: DateTime(2026, 1, 12),
-        projectId: 'P4201',
-        projectName: 'Demo Session',
-        attachments: ['error_log.txt', 'query_trace.pdf'],
-        commentsCount: 5,
-      ),
-      IssueModel(
-        id: 'I003',
-        issueName: 'Improve search performance',
-        status: 'Open',
-        priority: 'Medium',
-        description: 'Search functionality needs optimization',
-        assignedTo: 'Mike Johnson',
-        owner: 'Charlie Brown',
-        createdDate: DateTime(2026, 1, 1),
-        dueDate: DateTime(2026, 1, 20),
-        projectId: 'P4201',
-        projectName: 'Demo Session',
-        attachments: [],
-        commentsCount: 2,
-      ),
-      IssueModel(
-        id: 'I004',
-        issueName: 'Fix typo in documentation',
-        status: 'Closed',
-        priority: 'Low',
-        description: 'Minor spelling error in API docs',
-        assignedTo: 'Sarah Lee',
-        owner: 'David Wilson',
-        createdDate: DateTime(2025, 12, 28),
-        dueDate: DateTime(2026, 1, 8),
-        projectId: 'P4201',
-        projectName: 'Demo Session',
-        attachments: [],
-        commentsCount: 1,
-      ),
-    ];
-    _filteredIssues = _issues;
+  List<IssueModel> _filterIssues(List<IssueModel> issues) {
+    if (_searchQuery.isEmpty) {
+      return issues;
+    }
+    return issues.where((issue) {
+      return issue.issueName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          issue.id.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          issue.status.toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
   }
-
-  void _filterIssues(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _filteredIssues = _issues;
-      } else {
-        _filteredIssues = _issues
-            .where((issue) =>
-                issue.issueName.toLowerCase().contains(query.toLowerCase()) ||
-                issue.id.toLowerCase().contains(query.toLowerCase()) ||
-                issue.status.toLowerCase().contains(query.toLowerCase()))
-            .toList();
-      }
-    });
-  }
-
-  // Color _getPriorityColor(String priority) {
-  //   switch (priority) {
-  //     case 'Critical':
-  //       return AppColors.error;
-  //     case 'High':
-  //       return AppColors.statusInProgress;
-  //     case 'Medium':
-  //       return AppColors.primary;
-  //     case 'Low':
-  //       return AppColors.statusCompleted;
-  //     default:
-  //       return AppColors.textSecondary;
-  //   }
-  // }
 
   Future<void> _showAddIssueDialog({IssueModel? issue}) async {
-    final result = await Navigator.of(context).push<IssueModel>(
+    final issueRepository = ref.read(issueRepositoryProvider);
+    final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
         builder: (context) => AddIssueFormScreen(
           issue: issue,
+          issueRepository: issueRepository,
         ),
       ),
     );
 
-    if (result != null) {
-      setState(() {
-        if (issue == null) {
-          // Add new issue
-          _issues.insert(0, result);
-        } else {
-          // Update existing issue
-          final index = _issues.indexWhere((i) => i.id == issue.id);
-          if (index != -1) {
-            _issues[index] = result;
-          }
-        }
-        _filterIssues(_searchController.text);
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              issue == null ? 'Issue added successfully' : 'Issue updated successfully',
-            ),
-            backgroundColor: AppColors.primary,
+    if (result == true && mounted) {
+      ref.refresh(issueListProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            issue == null ? 'Issue added successfully' : 'Issue updated successfully',
           ),
-        );
-      }
+          backgroundColor: AppColors.primary,
+        ),
+      );
     }
   }
 
-  void _deleteIssue(IssueModel issue) {
+  Future<void> _deleteIssue(IssueModel issue) async {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -193,18 +98,30 @@ class _IssuesScreenState extends State<IssuesScreen> {
             ),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                _issues.removeWhere((i) => i.id == issue.id);
-                _filterIssues(_searchController.text);
-              });
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Issue deleted'),
-                  backgroundColor: AppColors.error,
-                ),
-              );
+              try {
+                final repository = ref.read(issueRepositoryProvider);
+                await repository.deleteIssue(issue.id);
+                ref.refresh(issueListProvider);
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Issue deleted successfully'),
+                      backgroundColor: AppColors.primary,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete issue: $e'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Delete'),
@@ -248,7 +165,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
                   child: CustomSearchBar(
                     controller: _searchController,
                     hintText: 'Search Issues',
-                    onChanged: _filterIssues,
+                    onChanged: (_) {}, // Trigger rebuild via _searchQuery
                   ),
                 ),
               ],
@@ -257,8 +174,12 @@ class _IssuesScreenState extends State<IssuesScreen> {
 
           // Issues List
           Expanded(
-            child: _filteredIssues.isEmpty
-                ? Center(
+            child: ref.watch(issueListProvider).when(
+              data: (issues) {
+                final filteredIssues = _filterIssues(issues);
+                
+                if (filteredIssues.isEmpty) {
+                  return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -269,19 +190,21 @@ class _IssuesScreenState extends State<IssuesScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          _searchController.text.isEmpty ? 'No issues yet' : 'No issues found',
+                          _searchQuery.isEmpty ? 'No issues yet' : 'No issues found',
                           style: AppTextStyles.bodyLarge.copyWith(
                             color: AppColors.textSecondary,
                           ),
                         ),
                       ],
                     ),
-                  )
-                : ListView.builder(
+                  );
+                }
+                
+                return ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    itemCount: _filteredIssues.length,
+                    itemCount: filteredIssues.length,
                     itemBuilder: (context, index) {
-                      final issue = _filteredIssues[index];
+                      final issue = filteredIssues[index];
                       final dateFormat = DateFormat('dd/MM/yy');
                       final createdDate = dateFormat.format(issue.createdDate);
                       final dueDate = issue.dueDate != null ? dateFormat.format(issue.dueDate!) : 'N/A';
@@ -289,7 +212,9 @@ class _IssuesScreenState extends State<IssuesScreen> {
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: GenericCard(
-                          id: issue.id,
+                          id: issue.id.length > 4 
+                              ? 'I${issue.id.substring(issue.id.length - 4)}' 
+                              : 'I${issue.id}',
                           name: issue.issueName,
                           status: issue.status,
                           subtitleIcon: 'business',
@@ -346,7 +271,49 @@ class _IssuesScreenState extends State<IssuesScreen> {
                         ),
                       );
                     },
-                  ),
+                  );
+              },
+              loading: () => const Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                ),
+              ),
+              error: (error, stack) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: AppColors.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error loading issues',
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      error.toString(),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => ref.refresh(issueListProvider),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                      ),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),

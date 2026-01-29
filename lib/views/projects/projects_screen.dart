@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/project_provider.dart';
+import '../../providers/employee_provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/constants/auth_manager.dart';
@@ -56,21 +57,33 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   }
 
   Future<void> _showAddProjectDialog({ProjectModel? project}) async {
-    // Note: Creating/Updating not fully implemented with backend yet, still using local sample logic or need to update
-    // For now we just show dialog. If we want to support invalidating provider, we need to do that here.
+    final projectRepository = ref.read(projectRepositoryProvider);
+    final employeeRepository = ref.read(employeeRepositoryProvider);
     
-    await Navigator.of(context).push<ProjectModel>(
+    final result = await Navigator.of(context).push<Map<String, dynamic>>(
       MaterialPageRoute(
-        builder: (context) => AddProjectDialog(project: project),
+        builder: (context) => AddProjectDialog(
+          project: project,
+          projectRepository: projectRepository,
+          employeeRepository: employeeRepository,
+        ),
       ),
     );
     
-    // Refresh the list after add/edit
-    ref.refresh(projectListProvider);
+    // Refresh the list if operation was successful
+    if (result != null && result['success'] == true && mounted) {
+      ref.refresh(projectListProvider);
+      final action = result['action'] ?? 'saved';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Project ${action == 'create' ? 'created' : 'updated'} successfully'),
+          backgroundColor: AppColors.avatarBackground,
+        ),
+      );
+    }
   }
 
   void _deleteProject(ProjectModel project) {
-    // Note: Delete not implemented in backend yet.
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -84,18 +97,32 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              // TODO: Implement delete API call
-              // ref.read(projectRepositoryProvider).deleteProject(project.id);
-              // ref.refresh(projectListProvider);
-              
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Delete not implemented yet'),
-                  backgroundColor: AppColors.error,
-                ),
-              );
+              
+              try {
+                final projectRepository = ref.read(projectRepositoryProvider);
+                await projectRepository.deleteProject(project.id);
+                
+                if (mounted) {
+                  ref.refresh(projectListProvider);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Project deleted successfully'),
+                      backgroundColor: AppColors.avatarBackground,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete project: ${e.toString()}'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Delete'),

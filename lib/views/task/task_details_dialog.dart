@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
-import '../../models/task_model.dart';
+import '../../models/task.dart';
 
 class TaskDetailsDialog extends StatelessWidget {
-  final TaskModel task;
+  final Task task;
 
   const TaskDetailsDialog({super.key, required this.task});
 
@@ -86,7 +86,9 @@ class TaskDetailsDialog extends StatelessWidget {
                         child: _buildDetailCard(
                           icon: Icons.info_outline,
                           label: 'Task ID',
-                          value: task.id,
+                          value: task.taskId.length > 4 
+                              ? 'T${task.taskId.substring(task.taskId.length - 4)}' 
+                              : 'T${task.taskId}',
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -130,7 +132,7 @@ class TaskDetailsDialog extends StatelessWidget {
                         child: _buildDetailCard(
                           icon: Icons.calendar_today,
                           label: 'Start Date',
-                          value: DateFormat('dd/MM/yy').format(task.startDate),
+                          value: task.startDate != null ? DateFormat('dd/MM/yy').format(task.startDate!) : 'N/A',
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -138,7 +140,7 @@ class TaskDetailsDialog extends StatelessWidget {
                         child: _buildDetailCard(
                           icon: Icons.event,
                           label: 'End Date',
-                          value: DateFormat('dd/MM/yy').format(task.endDate),
+                          value: task.endDate != null ? DateFormat('dd/MM/yy').format(task.endDate!) : 'N/A',
                         ),
                       ),
                     ],

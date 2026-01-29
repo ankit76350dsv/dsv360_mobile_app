@@ -1,14 +1,21 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
-import '../../models/task_model.dart';
+import '../../models/task.dart';
+import '../../models/employee.dart';
+import '../../models/attachment.dart';
+import '../../providers/project_provider.dart';
+import '../../providers/employee_provider.dart';
 import '../widgets/custom_input_field.dart';
 import '../widgets/custom_popup_dropdown.dart';
 import '../widgets/TopBar.dart';
 
-class AddTaskDialog extends StatefulWidget {
-  final TaskModel? task; // For edit mode
+class AddTaskDialog extends ConsumerStatefulWidget {
+  final Task? task; // For edit mode
   final String projectId;
 
   const AddTaskDialog({
@@ -18,52 +25,75 @@ class AddTaskDialog extends StatefulWidget {
   });
 
   @override
-  State<AddTaskDialog> createState() => _AddTaskDialogState();
+  ConsumerState<AddTaskDialog> createState() => _AddTaskDialogState();
 }
 
-class _AddTaskDialogState extends State<AddTaskDialog> {
+class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
   final _formKey = GlobalKey<FormState>();
   final _taskNameController = TextEditingController();
   final _descriptionController = TextEditingController();
 
   String? _selectedStatus;
-  String? _selectedAssignTo;
-  String? _selectedProject;
+  List<Employee> _selectedAssignees = []; // Changed to multi-select
+  String? _selectedProjectId; // Now stores the actual project ID
+  String? _selectedProjectName; // Store project name
   DateTime? _startDate;
   DateTime? _endDate;
-  final List<String> _attachments = [];
+  List<Attachment> _selectedAttachments = []; // For file attachments
 
-  final List<String> _statusOptions = ['Pending', 'In Progress', 'Completed', 'On Hold'];
-  final List<String> _projectOptions = [
-    'Mobile App',
-    'Web Portal',
-    'Backend API',
-    'Data Analytics',
-    'Cloud Migration',
-  ];
-  final List<String> _assignToOptions = [
-    'Ujjwal Mishra',
-    'John Doe',
-    'Jane Smith',
-    'Mike Johnson',
-    'Sarah Lee',
-    'Bob Wilson',
-    'Alice Brown'
-  ];
+  // API expects these status values
+  final List<String> _statusOptions = ['Open', 'In Progress', 'Completed'];
+  // Removed hardcoded assignee options - will fetch from provider
 
   @override
   void initState() {
     super.initState();
     if (widget.task != null) {
       _taskNameController.text = widget.task!.taskName;
-      _descriptionController.text = widget.task!.description ?? '';
+      _descriptionController.text = widget.task!.description;
       _selectedStatus = widget.task!.status;
-      _selectedAssignTo = widget.task!.assignedTo;
       _startDate = widget.task!.startDate;
       _endDate = widget.task!.endDate;
-      _attachments.addAll(widget.task!.attachments);
+      _selectedProjectId = widget.task!.projectId;
+      _selectedProjectName = widget.task!.projectName;
+      
+      // Initialize assignees from task data
+      // We need to convert assignee IDs and names back to Employee objects
+      // For now, we'll create temporary Employee objects with the available data
+      if (widget.task!.assignedToId.isNotEmpty && widget.task!.assignedTo.isNotEmpty) {
+        final assigneeIds = widget.task!.assignedToId.split(',').map((e) => e.trim()).toList();
+        final assigneeNames = widget.task!.assignedTo.split(',').map((e) => e.trim()).toList();
+        
+        for (int i = 0; i < assigneeIds.length && i < assigneeNames.length; i++) {
+          final nameParts = assigneeNames[i].split(' ');
+          final firstName = nameParts.isNotEmpty ? nameParts[0] : assigneeNames[i];
+          final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+          
+          // Create a temporary Employee object with the data we have
+          _selectedAssignees.add(Employee(
+            userId: assigneeIds[i],
+            firstName: firstName,
+            lastName: lastName,
+            emailId: '', // Not available from task data
+            status: 'ACTIVE',
+            isConfirmed: true,
+            roleId: '',
+            roleName: '',
+          ));
+        }
+        debugPrint('✏️ EDIT MODE - Loaded ${_selectedAssignees.length} assignee(s)');
+      }
+      
+      debugPrint('✏️ EDIT MODE - Editing existing task: ${widget.task!.taskName}');
     } else {
-      _selectedProject = _projectOptions[0];
+      // For new tasks, use the passed projectId if available
+      _selectedProjectId = widget.projectId.isNotEmpty ? widget.projectId : null;
+      debugPrint('➕ CREATE MODE - Creating new task');
+    }
+    
+    debugPrint('📁 Initial Project ID: "${widget.projectId}"');
+    if (widget.projectId.isEmpty) {
+      debugPrint('⚠️ WARNING: No project ID provided - will fetch from dropdown');
     }
   }
 
@@ -107,53 +137,67 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
     }
   }
 
-  void _handleAddAttachment() {
-    // TODO: Implement file picker
-    setState(() {
-      _attachments.add('attachment_${_attachments.length + 1}.pdf');
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Attachment added'),
-        backgroundColor: AppColors.primary,
-      ),
-    );
-  }
-
   void _handleSubmit() {
+    debugPrint('🔧 SUBMIT - Form submission started');
+    
     if (_formKey.currentState!.validate()) {
+      debugPrint('✅ Form validation passed');
+      
       if (_selectedStatus == null) {
+        debugPrint('❌ Status is null');
         _showError('Please select a status');
         return;
       }
       if (_startDate == null) {
+        debugPrint('❌ Start date is null');
         _showError('Please select a start date');
         return;
       }
       if (_endDate == null) {
+        debugPrint('❌ End date is null');
         _showError('Please select an end date');
         return;
       }
+      if (_selectedProjectId == null || _selectedProjectId!.isEmpty) {
+        debugPrint('❌ Project ID is empty');
+        _showError('Please select a project');
+        return;
+      }
 
-      final taskId = widget.task?.id ?? 'T${DateTime.now().millisecondsSinceEpoch % 1000}';
+      debugPrint('✅ All validations passed');
+      debugPrint('📝 Task Name: ${_taskNameController.text.trim()}');
+      debugPrint('⚡ Status: $_selectedStatus');
+      debugPrint('📁 Final Project ID: $_selectedProjectId');
+      debugPrint('📅 Start Date: $_startDate');
+      debugPrint('📅 End Date: $_endDate');
+      debugPrint('👥 Assigned To (Count): ${_selectedAssignees.length}');
+      _selectedAssignees.forEach((emp) => debugPrint('   - ${emp.fullName}'));
+      debugPrint('📋 Description: ${_descriptionController.text.trim()}');
 
-      final task = TaskModel(
-        id: taskId,
+      final taskId = widget.task?.taskId ?? 'T${DateTime.now().millisecondsSinceEpoch % 1000}';
+
+      final task = Task(
         taskName: _taskNameController.text.trim(),
-        status: _selectedStatus!,
-        projectId: widget.projectId,
-        startDate: _startDate!,
-        endDate: _endDate!,
-        assignedTo: _selectedAssignTo,
-        owner: _selectedAssignTo,
+        taskId: taskId,
         description: _descriptionController.text.trim(),
-        progress: widget.task?.progress ?? 0,
-        attachments: List.from(_attachments),
-        subTasksCount: widget.task?.subTasksCount ?? 0,
-        timeEntriesCount: widget.task?.timeEntriesCount ?? 0,
+        status: _selectedStatus!,
+        projectId: _selectedProjectId!,
+        projectName: _selectedProjectName ?? '', // Use selected project name
+        assignedTo: _selectedAssignees.isNotEmpty 
+            ? _selectedAssignees.map((e) => e.fullName).join(', ')
+            : '',
+        assignedToId: _selectedAssignees.isNotEmpty 
+            ? _selectedAssignees.map((e) => e.userId).join(',')
+            : '',
+        startDate: _startDate,
+        endDate: _endDate,
+        attachmentsForCreation: _selectedAttachments, // Pass attachments here
       );
 
+      debugPrint('📤 Returning task object from dialog');
       Navigator.of(context).pop(task);
+    } else {
+      debugPrint('❌ Form validation failed');
     }
   }
 
@@ -164,6 +208,30 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
         backgroundColor: AppColors.error,
       ),
     );
+  }
+
+  String _getFileType(String extension) {
+    extension = extension.toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].contains(extension)) return 'image';
+    if (extension == 'pdf') return 'pdf';
+    if (['doc', 'docx'].contains(extension)) return 'document';
+    if (['xlsx', 'xls'].contains(extension)) return 'spreadsheet';
+    return 'document';
+  }
+
+  IconData _getIconForFileType(String fileType) {
+    switch (fileType) {
+      case 'image':
+        return Icons.image;
+      case 'pdf':
+        return Icons.picture_as_pdf;
+      case 'document':
+        return Icons.description;
+      case 'spreadsheet':
+        return Icons.table_chart;
+      default:
+        return Icons.attachment;
+    }
   }
 
   @override
@@ -191,13 +259,49 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Project Dropdown
-                CustomPopupDropdown(
-                  value: _selectedProject,
-                  hint: 'Project',
-                  items: _projectOptions,
-                  icon: Icons.folder_outlined,
-                  onChanged: (value) => setState(() => _selectedProject = value),
+                // Project Dropdown with dynamic projects
+                Consumer(
+                  builder: (context, ref, child) {
+                    final projectsAsync = ref.watch(projectListProvider);
+                    
+                    return projectsAsync.when(
+                      loading: () => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: CircularProgressIndicator(),
+                      ),
+                      error: (error, st) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Text('Error loading projects: $error'),
+                      ),
+                      data: (projects) {
+                        final projectMap = {for (var p in projects) p.id: p.projectName};
+                        final projectIdList = projects.map((p) => p.id).toList();
+                        final projectNameList = projects.map((p) => p.projectName).toList();
+                        
+                        debugPrint('📦 Projects loaded: ${projectNameList.length} projects');
+                        projectNameList.forEach((name) => debugPrint('  - $name'));
+                        
+                        return CustomPopupDropdown(
+                          value: _selectedProjectId != null 
+                            ? projectMap[_selectedProjectId!]
+                            : null,
+                          hint: 'Select Project',
+                          items: projectNameList,
+                          icon: Icons.folder_outlined,
+                          onChanged: (value) {
+                            if (value != null) {
+                              final selectedId = projectIdList[projectNameList.indexOf(value)];
+                              setState(() {
+                                _selectedProjectId = selectedId;
+                                _selectedProjectName = value;
+                              });
+                              debugPrint('✅ Project selected: $value (ID: $selectedId)');
+                            }
+                          },
+                        );
+                      },
+                    );
+                  },
                 ),
                 const SizedBox(height: 20),
 
@@ -336,13 +440,138 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 ),
                 const SizedBox(height: 20),
 
-                // Assign To Dropdown
-                CustomPopupDropdown(
-                  value: _selectedAssignTo,
-                  hint: 'Assign To',
-                  items: _assignToOptions,
-                  icon: Icons.person_outline,
-                  onChanged: (value) => setState(() => _selectedAssignTo = value),
+                // Assignee Multi-Select Dropdown
+                Consumer(
+                  builder: (context, ref, child) {
+                    final employeesAsync = ref.watch(employeeListProvider);
+                    
+                    return employeesAsync.when(
+                      loading: () => const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: CircularProgressIndicator(),
+                      ),
+                      error: (error, st) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: Text('Error loading employees: $error'),
+                      ),
+                      data: (employees) {
+                        // Filter only active employees
+                        final activeEmployees =
+                            employees.where((e) => e.status == 'ACTIVE').toList();
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Dropdown field
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.secondary,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: AppColors.inputBorder,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: DropdownButton<Employee>(
+                                isExpanded: true,
+                                hint: const Row(
+                                  children: [
+                                    Icon(
+                                      Icons.person_outline,
+                                      color: AppColors.textSecondary,
+                                      size: 18,
+                                    ),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Select Assignees',
+                                      style: TextStyle(
+                                        color: AppColors.textHint,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                underline: const SizedBox(),
+                                style: const TextStyle(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 14,
+                                ),
+                                dropdownColor: AppColors.cardBackground,
+                                items: activeEmployees.map((employee) {
+                                  return DropdownMenuItem<Employee>(
+                                    value: employee,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8.0,
+                                      ),
+                                      child: Text(
+                                        employee.fullName,
+                                        style: const TextStyle(
+                                          color: AppColors.textPrimary,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (employee) {
+                                  if (employee != null) {
+                                    setState(() {
+                                      if (_selectedAssignees.any(
+                                          (e) => e.userId == employee.userId)) {
+                                        _selectedAssignees.removeWhere(
+                                            (e) => e.userId == employee.userId);
+                                      } else {
+                                        _selectedAssignees.add(employee);
+                                      }
+                                    });
+                                    debugPrint(
+                                      '✅ Assignee toggled: ${employee.fullName}',
+                                    );
+                                    debugPrint(
+                                      '👥 Total selected: ${_selectedAssignees.length}',
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            // Chips below the dropdown
+                            if (_selectedAssignees.isNotEmpty)
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _selectedAssignees.map((employee) {
+                                  return Chip(
+                                    label: Text(employee.fullName),
+                                    onDeleted: () {
+                                      setState(() {
+                                        _selectedAssignees.removeWhere(
+                                            (e) => e.userId == employee.userId);
+                                      });
+                                      debugPrint(
+                                        '❌ Assignee removed: ${employee.fullName}',
+                                      );
+                                    },
+                                    backgroundColor: AppColors.primary
+                                        .withOpacity(0.2),
+                                    labelStyle: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 13,
+                                    ),
+                                    deleteIconColor: AppColors.primary,
+                                  );
+                                }).toList(),
+                              ),
+                          ],
+                        );
+                      },
+                    );
+                  },
                 ),
                 const SizedBox(height: 20),
 
@@ -358,59 +587,136 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                 ),
                 const SizedBox(height: 24),
 
-                // Attachments
-                if (_attachments.isNotEmpty) ...[
-                  Text(
-                    'Attachments',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _attachments.asMap().entries.map((entry) {
-                      return Chip(
-                        label: Text(
-                          entry.value,
-                          style: const TextStyle(color: AppColors.textPrimary),
-                        ),
-                        backgroundColor: AppColors.inputFill,
-                        deleteIcon: const Icon(
-                          Icons.close,
-                          size: 18,
-                          color: AppColors.textSecondary,
-                        ),
-                        onDeleted: () {
-                          setState(() {
-                            _attachments.removeAt(entry.key);
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-
                 // Add Attachment Button
-                OutlinedButton.icon(
-                  onPressed: _handleAddAttachment,
-                  icon: const Icon(Icons.attach_file, size: 18),
-                  label: const Text('ATTACHMENT', style: TextStyle(fontSize: 13)),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
-                    side: const BorderSide(color: AppColors.primary),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.15),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      try {
+                        final result = await FilePicker.platform.pickFiles(
+                          allowMultiple: true,
+                          type: FileType.custom,
+                          allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'xlsx', 'xls', 'txt'],
+                        );
+
+                        if (result != null) {
+                          setState(() {
+                            _selectedAttachments.clear();
+                            for (var file in result.files) {
+                              if (file.path != null) {
+                                final attachment = Attachment(
+                                  fileName: file.name,
+                                  fileType: _getFileType(file.extension ?? ''),
+                                  fileSize: file.size,
+                                  localFile: File(file.path!),
+                                );
+                                _selectedAttachments.add(attachment);
+                                debugPrint('📎 File selected: ${file.name}');
+                              }
+                            }
+                          });
+                        }
+                      } catch (e) {
+                        debugPrint('❌ Error picking files: $e');
+                      }
+                    },
+                    icon: const Icon(Icons.attach_file, size: 20),
+                    label: const Text(
+                      'Add Attachment',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
                     ),
                   ),
                 ),
+                const SizedBox(height: 16),
+
+                // Display selected attachments
+                if (_selectedAttachments.isNotEmpty)
+                  ...(_selectedAttachments.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final attachment = entry.value;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: colors.secondary,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.inputBorder.withOpacity(0.5),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _getIconForFileType(attachment.fileType),
+                              color: AppColors.primary,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    attachment.fileName,
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${(attachment.fileSize / 1024 / 1024).toStringAsFixed(2)} MB',
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 20),
+                              color: AppColors.error,
+                              onPressed: () {
+                                setState(() {
+                                  _selectedAttachments.removeAt(index);
+                                });
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList()),
                 const SizedBox(height: 24),
 
                 // Action Buttons
