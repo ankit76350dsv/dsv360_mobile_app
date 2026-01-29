@@ -7,7 +7,7 @@ part of 'pending_tasks_repository.dart';
 // **************************************************************************
 
 String _$pendingTasksListRepositoryHash() =>
-    r'797c9eef3329b92d0de3f2dfaf8bf6451d327dcd';
+    r'46e1666c1bf325a3cda62c06f77bb84019b5e778';
 
 /// Copied from Dart SDK
 class _SystemHash {

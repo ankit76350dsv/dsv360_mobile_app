@@ -15,13 +15,18 @@ class CustomInputField extends StatefulWidget {
   final bool enabled;
   final IconData? prefixIcon;
 
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
+  final ValueChanged<String>? onChanged;
+  final Color? focusedBorderColor;
+
   const CustomInputField({
     super.key,
     this.controller,
     this.hintText,
     this.labelText,
     this.isMultiline = false,
-    this.maxLines = 1,
+    this.maxLines,
     this.minLines,
     this.maxLength,
     this.keyboardType,
@@ -29,6 +34,10 @@ class CustomInputField extends StatefulWidget {
     this.enabled = true,
     this.prefixIcon,
     this.inputFormatters,
+    this.textInputAction,
+    this.onFieldSubmitted,
+    this.onChanged,
+    this.focusedBorderColor,
   });
 
   @override
@@ -87,10 +96,13 @@ class _CustomInputFieldState extends State<CustomInputField> {
         keyboardType: widget.keyboardType,
         validator: widget.validator,
         enabled: widget.enabled,
-        maxLines: widget.isMultiline ? (widget.maxLines ?? 5) : 1,
+        maxLines: widget.isMultiline ? widget.maxLines : 1,
         minLines: widget.minLines,
         maxLength: widget.maxLength,
         focusNode: _focusNode,
+        textInputAction: widget.textInputAction,
+        onFieldSubmitted: widget.onFieldSubmitted,
+        onChanged: widget.onChanged,
         style: TextStyle(
           color: colors.tertiary,
           fontSize: 16,
@@ -143,7 +155,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(
-              color: Colors.grey.withOpacity(0.9),
+              color: widget.focusedBorderColor ?? Colors.grey.withOpacity(0.9),
               width: 2,
             ),
           ),
@@ -163,7 +175,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
             ),
           ),
           contentPadding: widget.isMultiline
-              ? const EdgeInsets.fromLTRB(18, 20, 18, 16)
+              ? const EdgeInsets.fromLTRB(18, 16, 18, 16)
               : const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           errorStyle: TextStyle(
             color: colors.error,

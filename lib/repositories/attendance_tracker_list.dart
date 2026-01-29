@@ -1,27 +1,30 @@
 import 'dart:async';
+import 'dart:developer' as developer;
+
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/models/attendance_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'attendance_list_repository.g.dart';
+part 'attendance_tracker_list.g.dart';
 
 @riverpod
-class AttendanceDetailListRepository extends _$AttendanceDetailListRepository {
+class AttendanceTrackerListRepository
+    extends _$AttendanceTrackerListRepository {
   @override
   Future<List<AttendanceDetail>> build({
     required String userId,
     required String startDate,
     required String endDate,
   }) async {
-    return fetchAttendanceDetail(
+    return fetchAttendance(
       userId: userId,
       startDate: startDate,
       endDate: endDate,
     );
   }
 
-  Future<List<AttendanceDetail>> fetchAttendanceDetail({
+  Future<List<AttendanceDetail>> fetchAttendance({
     required String userId,
     required String startDate,
     required String endDate,
@@ -31,6 +34,7 @@ class AttendanceDetailListRepository extends _$AttendanceDetailListRepository {
         'time_entry_management_application_function/attendance/dashboard?Start_date=$startDate&End_date=$endDate',
         data: {"UserID": userId},
       );
+      debugPrint("Response From fetchAttendance: $response");
 
       final data = response.data;
       final List<dynamic> list = data["data"] ?? [];
@@ -40,7 +44,9 @@ class AttendanceDetailListRepository extends _$AttendanceDetailListRepository {
 
       return attendanceList;
     } catch (e, st) {
-      debugPrint("Error fetching Attendance Detail: $e");
+      debugPrint(
+        "Error fetching Attendance Tracker: $e"
+      );
       throw AsyncError(e, st);
     }
   }
