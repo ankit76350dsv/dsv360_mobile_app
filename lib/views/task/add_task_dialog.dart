@@ -5,6 +5,7 @@ import '../../core/constants/app_text_styles.dart';
 import '../../models/task_model.dart';
 import '../widgets/custom_input_field.dart';
 import '../widgets/custom_popup_dropdown.dart';
+import '../widgets/TopBar.dart';
 
 class AddTaskDialog extends StatefulWidget {
   final TaskModel? task; // For edit mode
@@ -167,11 +168,19 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(widget.task == null ? 'Add New Task' : 'Edit Task'),
-        backgroundColor: AppColors.cardBackground,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(120),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 24),
+          child: TopBar(
+            title: widget.task == null ? 'Add New Task' : 'Edit Task',
+            onBack: () => Navigator.of(context).pop(),
+            onInfoTap: () {},
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -230,7 +239,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.inputFill,
+                            color: colors.secondary,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: AppColors.inputBorder,
@@ -282,7 +291,7 @@ class _AddTaskDialogState extends State<AddTaskDialog> {
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.inputFill,
+                            color: colors.secondary,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: AppColors.inputBorder,

@@ -6,7 +6,6 @@ import 'package:dsv360/providers/dashboard_provider.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/DashboardTitle.dart';
-import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/views/dashboard/ProjectAnalyticsCard.dart';
 import 'package:dsv360/views/dashboard/StatGrid.dart';
@@ -45,6 +44,7 @@ class _DashboardScaffold extends ConsumerWidget {
         automaticallyImplyLeading: false, // Hide default hamburger
         title: Text(
           'DSV360 - ${activeUser?.firstName ?? "User"}',
+          // 'DSV360',
           style: const TextStyle(color: AppColors.textPrimary),
         ),
         leading: Builder(

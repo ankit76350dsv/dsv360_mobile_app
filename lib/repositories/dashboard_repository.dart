@@ -18,7 +18,7 @@ class DashboardRepository {
       'Year': year,
     });
 
-    debugPrint('🩸 Fetching dashboard data | URL: $url');
+    // debugPrint('🩸 Fetching dashboard data | URL: $url');
 
     try {
       final response = await http.get(url);

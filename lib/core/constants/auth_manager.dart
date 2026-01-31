@@ -15,7 +15,7 @@ class AuthManager {
       final app = AppInitManager.instance.catalystApp;
       final (response, user) = await app.getCurrentUser();
       currentUser = user;
-      debugPrint('✅ User fetched: ${user.firstName} ${user?.userType}');
+      debugPrint('✅ User fetched: ${user.firstName} ${user.userType}');
       return user;
     } catch (e) {
       debugPrint('❌ Failed to fetch user: $e');

@@ -10,7 +10,6 @@ import '../attachments/attachment_list_modal.dart';
 import 'assignee_modal.dart';
 import 'add_issue_form_screen.dart';
 import 'issue_details_modal_sheet.dart';
-import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 
 class IssuesScreen extends StatefulWidget {

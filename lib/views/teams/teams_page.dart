@@ -1,5 +1,6 @@
+import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:dsv360/views/widgets/custom_app_bar.dart';
+import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 
 class TeamsPage extends StatelessWidget {
@@ -8,12 +9,28 @@ class TeamsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: 'Teams'),
+      backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
-      body: const Center(
-        child: Text(
-          'Coming Soon',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      body: SafeArea(
+        child: Column(
+          children: [
+            TopBar(
+              title: 'Teams',
+              onBack: () => Navigator.pop(context),
+            ),
+            const Expanded(
+              child: Center(
+                child: Text(
+                  'Coming Soon',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

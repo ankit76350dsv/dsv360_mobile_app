@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/issue_model.dart';
 import '../widgets/custom_input_field.dart';
+import '../widgets/TopBar.dart';
 
 class AddIssueFormScreen extends StatefulWidget {
   final IssueModel? issue; // For edit mode
@@ -156,11 +157,19 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text(widget.issue == null ? 'Add New Issue' : 'Edit Issue'),
-        backgroundColor: AppColors.cardBackground,
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(120),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 24),
+          child: TopBar(
+            title: widget.issue == null ? 'Add New Issue' : 'Edit Issue',
+            onBack: () => Navigator.of(context).pop(),
+            onInfoTap: () {},
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -194,7 +203,7 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                     style: TextStyle(color: AppColors.textHint),
                   ),
                   style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
-                  dropdownColor: AppColors.inputFill,
+                  dropdownColor: colors.secondary,
                   decoration: InputDecoration(
                     labelText: 'Project',
                     labelStyle: const TextStyle(
@@ -203,7 +212,7 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                     filled: true,
-                    fillColor: AppColors.inputFill,
+                    fillColor: colors.secondary,
                     prefixIcon: const Icon(Icons.folder_outlined, color: AppColors.textSecondary),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -239,7 +248,7 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                     style: TextStyle(color: AppColors.textHint),
                   ),
                   style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
-                  dropdownColor: AppColors.inputFill,
+                  dropdownColor: colors.secondary,
                   decoration: InputDecoration(
                     labelText: 'Status',
                     labelStyle: const TextStyle(
@@ -248,7 +257,7 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                     filled: true,
-                    fillColor: AppColors.inputFill,
+                    fillColor: colors.secondary,
                     prefixIcon: const Icon(Icons.assignment_outlined, color: AppColors.textSecondary),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -284,7 +293,7 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                     style: TextStyle(color: AppColors.textHint),
                   ),
                   style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
-                  dropdownColor: AppColors.inputFill,
+                  dropdownColor: colors.secondary,
                   decoration: InputDecoration(
                     labelText: 'Severity',
                     labelStyle: const TextStyle(
@@ -293,7 +302,7 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                     filled: true,
-                    fillColor: AppColors.inputFill,
+                    fillColor: colors.secondary,
                     prefixIcon: const Icon(Icons.warning_outlined, color: AppColors.textSecondary),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -330,7 +339,7 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.inputFill,
+                      color: colors.secondary,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: AppColors.inputBorder,
@@ -380,7 +389,7 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: AppColors.inputFill,
+                        color: colors.secondary,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
                           color: AppColors.inputBorder,
