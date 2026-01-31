@@ -1,15 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
 import '../../core/constants/app_colors.dart';
 import '../../models/project_model.dart';
+import '../../models/employee.dart';
+import '../../models/attachment.dart';
+import '../../repositories/project_repository.dart';
+import '../../repositories/employee_repository.dart';
 import '../widgets/custom_input_field.dart';
 import '../widgets/custom_popup_dropdown.dart';
 import '../widgets/TopBar.dart';
 
 class AddProjectDialog extends StatefulWidget {
   final ProjectModel? project; // For edit mode
+  final ProjectRepository projectRepository;
+  final EmployeeRepository employeeRepository;
 
-  const AddProjectDialog({super.key, this.project});
+  const AddProjectDialog({
+    super.key,
+    this.project,
+    required this.projectRepository,
+    required this.employeeRepository,
+  });
 
   @override
   State<AddProjectDialog> createState() => _AddProjectDialogState();
@@ -22,28 +35,77 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
 
   String? _selectedClient;
   String? _selectedStatus;
-  String? _selectedAssignTo;
+  Employee? _selectedEmployee;
   DateTime? _startDate;
   DateTime? _endDate;
-  final List<String> _attachments = [];
+  final List<Attachment> _attachments = [];
+
+  List<Employee> _employeeList = [];
+  bool _isLoadingEmployees = false;
+  bool _isSubmitting = false;
 
   final List<String> _clientOptions = ['Wipro', 'Test', 'Bala & Co', 'TCS'];
   final List<String> _statusOptions = ['Open', 'Work In Process', 'Completed', 'Closed', 'On Hold'];
-  final List<String> _assignToOptions = ['Ujjwal Mishra', 'John Doe', 'Jane Smith', 'Bob Wilson', 'Alice Brown'];
 
   @override
   void initState() {
     super.initState();
+    _loadEmployees();
+    
     if (widget.project != null) {
       _projectNameController.text = widget.project!.projectName;
       _descriptionController.text = widget.project!.description ?? '';
       _selectedClient = widget.project!.client;
       _selectedStatus = widget.project!.status;
-      _selectedAssignTo = widget.project!.assignedTo;
       _startDate = widget.project!.startDate;
       _endDate = widget.project!.endDate;
-      _attachments.addAll(widget.project!.attachments);
+      
+      // Convert existing attachment URLs to Attachment objects
+      for (var url in widget.project!.attachments) {
+        _attachments.add(Attachment(
+          fileName: url.split('/').last,
+          fileType: _getFileType(url),
+          fileSize: 0,
+          fileUrl: url,
+        ));
+      }
     }
+  }
+
+  Future<void> _loadEmployees() async {
+    setState(() => _isLoadingEmployees = true);
+    try {
+      final employees = await widget.employeeRepository.fetchAllEmployees();
+      setState(() {
+        _employeeList = employees;
+        // Set selected employee if in edit mode
+        if (widget.project != null && widget.project!.assignedToId != null) {
+          final targetId = widget.project!.assignedToId!;
+          try {
+            _selectedEmployee = employees.firstWhere(
+              (e) => e.userId.toString() == targetId.toString(),
+            );
+          } catch (e) {
+            _selectedEmployee = employees.isNotEmpty ? employees.first : null;
+          }
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        _showError('Failed to load employees: $e');
+      }
+    } finally {
+      setState(() => _isLoadingEmployees = false);
+    }
+  }
+
+  String _getFileType(String fileName) {
+    final ext = fileName.split('.').last.toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'bmp'].contains(ext)) return 'image';
+    if (['pdf'].contains(ext)) return 'pdf';
+    if (['doc', 'docx'].contains(ext)) return 'document';
+    if (['xls', 'xlsx'].contains(ext)) return 'spreadsheet';
+    return 'file';
   }
 
   @override
@@ -88,21 +150,45 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
     }
   }
 
-  void _handleAddAttachment() {
-    // TODO: Implement file picker
-    setState(() {
-      _attachments.add('attachment_${_attachments.length + 1}.pdf');
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Attachment added'),
-        backgroundColor: AppColors.primary,
-        duration: Duration(seconds: 1),
-      ),
-    );
+  Future<void> _handleAddAttachment() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: false,
+        type: FileType.custom,
+        allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'xls', 'xlsx'],
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        final file = result.files.first;
+        final attachment = Attachment(
+          fileName: file.name,
+          fileType: _getFileType(file.name),
+          fileSize: file.size,
+          localFile: File(file.path!),
+        );
+
+        setState(() {
+          _attachments.add(attachment);
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${file.name} added'),
+              backgroundColor: AppColors.primary,
+              duration: const Duration(seconds: 1),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showError('Failed to pick file: $e');
+      }
+    }
   }
 
-  void _handleSubmit() {
+  void _handleSubmit() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedClient == null) {
         _showError('Please select a client');
@@ -121,19 +207,59 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
         return;
       }
 
-      final project = ProjectModel(
-        id: widget.project?.id ?? 'P${DateTime.now().millisecondsSinceEpoch % 10000}',
-        projectName: _projectNameController.text.trim(),
-        status: _selectedStatus!,
-        client: _selectedClient!,
-        startDate: _startDate!,
-        endDate: _endDate!,
-        assignedTo: _selectedAssignTo,
-        description: _descriptionController.text.trim(),
-        attachments: List.from(_attachments),
-      );
+      setState(() => _isSubmitting = true);
 
-      Navigator.of(context).pop(project);
+      try {
+        // Hardcoded client IDs based on client name (you can make this dynamic later)
+        final clientIdMap = {
+          'Wipro': '17682000000675650',
+          'Test': '17682000000675651',
+          'Bala & Co': '17682000000675652',
+          'TCS': '17682000000675653',
+        };
+
+        final clientId = clientIdMap[_selectedClient] ?? '17682000000675650';
+
+        if (widget.project == null) {
+          // Create new project
+          await widget.projectRepository.createProject(
+            projectName: _projectNameController.text.trim(),
+            status: _selectedStatus!,
+            clientId: clientId,
+            startDate: _startDate!,
+            endDate: _endDate!,
+            assignedToId: _selectedEmployee?.userId,
+            description: _descriptionController.text.trim(),
+            attachments: _attachments.isEmpty ? null : _attachments,
+          );
+
+          if (mounted) {
+            Navigator.of(context).pop({'success': true, 'action': 'create'});
+          }
+        } else {
+          // Update existing project
+          await widget.projectRepository.updateProject(
+            projectId: widget.project!.id,
+            projectName: _projectNameController.text.trim(),
+            status: _selectedStatus!,
+            clientId: clientId,
+            startDate: _startDate!,
+            endDate: _endDate!,
+            assignedToId: _selectedEmployee?.userId,
+            description: _descriptionController.text.trim(),
+            attachments: _attachments.isEmpty ? null : _attachments,
+          );
+
+          if (mounted) {
+            Navigator.of(context).pop({'success': true, 'action': 'update'});
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() => _isSubmitting = false);
+          _showError('Failed to ${widget.project == null ? "create" : "update"} project: $e');
+        }
+      }
     }
   }
 
@@ -318,15 +444,80 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                       ),
                       const SizedBox(height: 20),
 
-                      // Assign To Dropdown
-                      CustomPopupDropdown(
-                        value: _selectedAssignTo,
-                        hint: 'Team Member',
-                        items: _assignToOptions,
-                        icon: Icons.person_outline,
-                        onChanged: (value) {
-                          setState(() => _selectedAssignTo = value);
-                        },
+                      // Employee Dropdown
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: colors.secondary,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.inputBorder,
+                            width: 1.5,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.person_outline,
+                              color: AppColors.textSecondary,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _isLoadingEmployees
+                                  ? const Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 12),
+                                      child: Text(
+                                        'Loading employees...',
+                                        style: TextStyle(
+                                          color: AppColors.textHint,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    )
+                                  : DropdownButton<Employee>(
+                                      value: _selectedEmployee,
+                                      hint: const Text(
+                                        'Assign To',
+                                        style: TextStyle(
+                                          color: AppColors.textHint,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      isExpanded: true,
+                                      underline: const SizedBox(),
+                                      dropdownColor: AppColors.cardBackground,
+                                      style: const TextStyle(
+                                        color: AppColors.textPrimary,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      icon: const Icon(
+                                        Icons.arrow_drop_down,
+                                        color: AppColors.textSecondary,
+                                      ),
+                                      items: _employeeList.map((Employee employee) {
+                                        return DropdownMenuItem<Employee>(
+                                          value: employee,
+                                          child: Text(employee.fullName),
+                                        );
+                                      }).toList(),
+                                      onChanged: (Employee? value) {
+                                        setState(() => _selectedEmployee = value);
+                                      },
+                                    ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 20),
 
@@ -349,7 +540,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                           runSpacing: 8,
                           children: _attachments.asMap().entries.map((entry) {
                             return Chip(
-                              label: Text(entry.value),
+                              label: Text(entry.value.fileName),
                               deleteIcon: const Icon(Icons.close, size: 18),
                               onDeleted: () {
                                 setState(() {
@@ -364,7 +555,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
 
                       // Add Attachment Button
                       OutlinedButton.icon(
-                        onPressed: _handleAddAttachment,
+                        onPressed: _isSubmitting ? null : _handleAddAttachment,
                         icon: const Icon(Icons.attach_file, size: 18),
                         label: const Text('ATTACHMENT', style: TextStyle(fontSize: 13)),
                         style: OutlinedButton.styleFrom(
@@ -397,7 +588,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: _handleSubmit,
+                      onPressed: _isSubmitting ? null : _handleSubmit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
@@ -407,14 +598,23 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text(
-                        'ADD',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
+                      child: _isSubmitting
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              widget.project == null ? 'ADD' : 'UPDATE',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                     ),
                   ),
                 ),

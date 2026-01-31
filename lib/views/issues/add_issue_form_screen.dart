@@ -2,13 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../models/issue_model.dart';
+import '../../models/project_model.dart';
+import '../../models/employee.dart';
+import '../../repositories/issue_repository.dart';
+import '../../repositories/project_repository.dart';
+import '../../repositories/employee_repository.dart';
 import '../widgets/custom_input_field.dart';
 import '../widgets/TopBar.dart';
 
 class AddIssueFormScreen extends StatefulWidget {
-  final IssueModel? issue; // For edit mode
+  final IssueModel? issue;
+  final IssueRepository issueRepository;
 
-  const AddIssueFormScreen({super.key, this.issue});
+  const AddIssueFormScreen({
+    super.key,
+    this.issue,
+    required this.issueRepository,
+  });
 
   @override
   State<AddIssueFormScreen> createState() => _AddIssueFormScreenState();
@@ -19,32 +29,87 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
   final _issueNameController = TextEditingController();
   final _descriptionController = TextEditingController();
 
-  String? _selectedProject;
+  ProjectModel? _selectedProject;
+  Employee? _selectedAssignee;
   String? _selectedStatus;
   String? _selectedSeverity;
   DateTime? _dueDate;
-  List<String> _selectedAssignees = [];
-  final List<String> _attachments = [];
+  
+  List<ProjectModel> _projectList = [];
+  List<Employee> _employeeList = [];
+  bool _isLoadingProjects = false;
+  bool _isLoadingEmployees = false;
+  bool _isSubmitting = false;
 
-  final List<String> _projectOptions = ['Demo Session', 'Mobile App', 'Web Portal'];
-  final List<String> _statusOptions = ['Open', 'In Progress', 'Resolved', 'Closed', 'On Hold'];
+  final List<String> _statusOptions = ['Open', 'Work In Progress', 'Resolved', 'Closed'];
   final List<String> _severityOptions = ['Critical', 'High', 'Medium', 'Low'];
-  final List<String> _assigneeOptions = ['Aman Jain', 'Patel Kumar', 'John Cena', 'John Doe', 'Jane Smith'];
 
   @override
   void initState() {
     super.initState();
+    _loadProjects();
+    _loadEmployees();
+    
     if (widget.issue != null) {
       _issueNameController.text = widget.issue!.issueName;
       _descriptionController.text = widget.issue!.description ?? '';
-      _selectedProject = widget.issue!.projectName;
       _selectedStatus = widget.issue!.status;
       _selectedSeverity = widget.issue!.priority;
       _dueDate = widget.issue!.dueDate;
-      if (widget.issue!.assignedTo != null) {
-        _selectedAssignees = [widget.issue!.assignedTo!];
+      
+      // Load project and assignee after data is loaded
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          setState(() {
+            _selectedProject = _projectList.firstWhere(
+              (p) => p.id == widget.issue!.projectId,
+              orElse: () => _projectList.first,
+            );
+            _selectedAssignee = _employeeList.firstWhere(
+              (e) => e.fullName == widget.issue!.assignedTo,
+              orElse: () => _employeeList.first,
+            );
+          });
+        }
+      });
+    }
+  }
+
+  Future<void> _loadProjects() async {
+    setState(() => _isLoadingProjects = true);
+    try {
+      final projectRepo = ProjectRepository();
+      final projects = await projectRepo.fetchProjects();
+      setState(() {
+        _projectList = projects;
+        _isLoadingProjects = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingProjects = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading projects: $e')),
+        );
       }
-      _attachments.addAll(widget.issue!.attachments);
+    }
+  }
+
+  Future<void> _loadEmployees() async {
+    setState(() => _isLoadingEmployees = true);
+    try {
+      final employeeRepo = EmployeeRepository();
+      final employees = await employeeRepo.fetchAllEmployees();
+      setState(() {
+        _employeeList = employees;
+        _isLoadingEmployees = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingEmployees = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading employees: $e')),
+        );
+      }
     }
   }
 
@@ -84,31 +149,7 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
     }
   }
 
-  void _toggleAssignee(String assignee) {
-    setState(() {
-      if (_selectedAssignees.contains(assignee)) {
-        _selectedAssignees.remove(assignee);
-      } else {
-        _selectedAssignees.add(assignee);
-      }
-    });
-  }
-
-  void _handleAddAttachment() {
-    // TODO: Implement file picker
-    setState(() {
-      _attachments.add('attachment_${_attachments.length + 1}.pdf');
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Attachment added'),
-        backgroundColor: AppColors.primary,
-        duration: Duration(seconds: 1),
-      ),
-    );
-  }
-
-  void _handleSubmit() {
+  Future<void> _handleSubmit() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedProject == null) {
         _showError('Please select a project');
@@ -122,27 +163,54 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
         _showError('Please select severity');
         return;
       }
+      if (_selectedAssignee == null) {
+        _showError('Please select an assignee');
+        return;
+      }
       if (_dueDate == null) {
         _showError('Please select a due date');
         return;
       }
 
-      final issue = IssueModel(
-        id: widget.issue?.id ?? 'I${DateTime.now().millisecondsSinceEpoch % 10000}',
-        issueName: _issueNameController.text.trim(),
-        status: _selectedStatus!,
-        priority: _selectedSeverity!,
-        description: _descriptionController.text.trim(),
-        assignedTo: _selectedAssignees.isNotEmpty ? _selectedAssignees.first : null,
-        createdDate: widget.issue?.createdDate ?? DateTime.now(),
-        dueDate: _dueDate,
-        projectId: 'P${DateTime.now().millisecondsSinceEpoch % 10000}',
-        projectName: _selectedProject,
-        attachments: List.from(_attachments),
-        commentsCount: widget.issue?.commentsCount ?? 0,
-      );
+      setState(() => _isSubmitting = true);
 
-      Navigator.of(context).pop(issue);
+      try {
+        final formattedDate = DateFormat('yyyy-MM-dd').format(_dueDate!);
+        
+        if (widget.issue == null) {
+          // Create new issue
+          await widget.issueRepository.createIssue(
+            issueName: _issueNameController.text.trim(),
+            description: _descriptionController.text.trim(),
+            severity: _selectedSeverity!,
+            status: _selectedStatus!,
+            projectId: _selectedProject!.id,
+            assigneeId: _selectedAssignee!.userId,
+            dueDate: formattedDate,
+          );
+        } else {
+          // Update existing issue
+          await widget.issueRepository.updateIssue(
+            issueId: widget.issue!.id,
+            issueName: _issueNameController.text.trim(),
+            description: _descriptionController.text.trim(),
+            severity: _selectedSeverity!,
+            status: _selectedStatus!,
+            projectId: _selectedProject!.id,
+            assigneeId: _selectedAssignee!.userId,
+            dueDate: formattedDate,
+          );
+        }
+
+        if (mounted) {
+          Navigator.of(context).pop(true);
+        }
+      } catch (e) {
+        setState(() => _isSubmitting = false);
+        if (mounted) {
+          _showError('Failed to ${widget.issue == null ? 'create' : 'update'} issue: $e');
+        }
+      }
     }
   }
 
@@ -196,48 +264,50 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                 const SizedBox(height: 20),
 
                 // Project Dropdown
-                DropdownButtonFormField<String>(
-                  value: _selectedProject,
-                  hint: const Text(
-                    'Select Project',
-                    style: TextStyle(color: AppColors.textHint),
-                  ),
-                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
-                  dropdownColor: colors.secondary,
-                  decoration: InputDecoration(
-                    labelText: 'Project',
-                    labelStyle: const TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    filled: true,
-                    fillColor: colors.secondary,
-                    prefixIcon: const Icon(Icons.folder_outlined, color: AppColors.textSecondary),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                  ),
-                  items: _projectOptions.map((project) {
-                    return DropdownMenuItem(
-                      value: project,
-                      child: Text(project),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() => _selectedProject = value);
-                  },
-                ),
+                _isLoadingProjects
+                    ? const Center(child: CircularProgressIndicator())
+                    : DropdownButtonFormField<ProjectModel>(
+                        value: _selectedProject,
+                        hint: const Text(
+                          'Select Project',
+                          style: TextStyle(color: AppColors.textHint),
+                        ),
+                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
+                        dropdownColor: colors.secondary,
+                        decoration: InputDecoration(
+                          labelText: 'Project',
+                          labelStyle: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          filled: true,
+                          fillColor: colors.secondary,
+                          prefixIcon: const Icon(Icons.folder_outlined, color: AppColors.textSecondary),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        ),
+                        items: _projectList.map((project) {
+                          return DropdownMenuItem(
+                            value: project,
+                            child: Text(project.projectName),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setState(() => _selectedProject = value);
+                        },
+                      ),
                 const SizedBox(height: 20),
 
                 // Status Dropdown
@@ -381,70 +451,51 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // Assignee Multi-Select
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Dropdown field
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: colors.secondary,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: AppColors.inputBorder,
-                          width: 1.5,
+                // Assignee Dropdown
+                _isLoadingEmployees
+                    ? const Center(child: CircularProgressIndicator())
+                    : DropdownButtonFormField<Employee>(
+                        value: _selectedAssignee,
+                        hint: const Text(
+                          'Select Assignee',
+                          style: TextStyle(color: AppColors.textHint),
                         ),
-                      ),
-                      child: DropdownButton<String>(
-                        isExpanded: true,
-                        hint: const Row(
-                          children: [
-                            Icon(Icons.person_outline, color: AppColors.textSecondary, size: 18),
-                            SizedBox(width: 8),
-                            Text(
-                              'Select Assignee',
-                              style: TextStyle(color: AppColors.textHint, fontSize: 14),
-                            ),
-                          ],
+                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
+                        dropdownColor: colors.secondary,
+                        decoration: InputDecoration(
+                          labelText: 'Assignee',
+                          labelStyle: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          filled: true,
+                          fillColor: colors.secondary,
+                          prefixIcon: const Icon(Icons.person_outline, color: AppColors.textSecondary),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                         ),
-                        underline: const SizedBox(),
-                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
-                        dropdownColor: AppColors.cardBackground,
-                        items: _assigneeOptions.map((assignee) {
+                        items: _employeeList.map((employee) {
                           return DropdownMenuItem(
-                            value: assignee,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8.0),
-                              child: Text(assignee, style: const TextStyle(color: AppColors.textPrimary, fontSize: 14)),
-                            ),
+                            value: employee,
+                            child: Text(employee.fullName ?? 'Unknown'),
                           );
                         }).toList(),
                         onChanged: (value) {
-                          if (value != null) {
-                            _toggleAssignee(value);
-                          }
+                          setState(() => _selectedAssignee = value);
                         },
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Chips below the dropdown
-                    if (_selectedAssignees.isNotEmpty)
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: _selectedAssignees.map((assignee) {
-                          return Chip(
-                            label: Text(assignee),
-                            onDeleted: () => _toggleAssignee(assignee),
-                            backgroundColor: AppColors.primary.withValues(alpha: 0.2),
-                            labelStyle: const TextStyle(color: AppColors.textPrimary, fontSize: 13),
-                            deleteIconColor: AppColors.primary,
-                          );
-                        }).toList(),
-                      ),
-                  ],
-                ),
                 const SizedBox(height: 20),
 
                 // Description
@@ -457,27 +508,6 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                   maxLines: 4,
                   minLines: 4,
                 ),
-                const SizedBox(height: 20),
-
-                // Add Attachment Button
-                OutlinedButton.icon(
-                  onPressed: _handleAddAttachment,
-                  icon: const Icon(Icons.attach_file, color: AppColors.primary),
-                  label: const Text(
-                    'ADD ATTACHMENT',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.primary, width: 1.5),
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
                 const SizedBox(height: 24),
 
                 // Action Buttons
@@ -485,21 +515,30 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                   children: [
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: _handleSubmit,
+                        onPressed: _isSubmitting ? null : _handleSubmit,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           elevation: 2,
                         ),
-                        child: const Text(
-                          'ADD',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                        ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                widget.issue == null ? 'ADD' : 'UPDATE',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(width: 12),

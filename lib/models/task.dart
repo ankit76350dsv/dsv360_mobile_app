@@ -3,12 +3,17 @@ class Task {
   final String taskId;
   final String description;
   final String status;
+
   final String projectId;
   final String projectName;
   final String assignedTo;
   final String assignedToId;
   final DateTime? startDate;
   final DateTime? endDate;
+  
+  // Temporary field for passing attachments through dialog
+  // Not part of API response, only used internally
+  final List<dynamic>? _attachmentsForCreation;
 
   Task({
     required this.taskName,
@@ -21,7 +26,11 @@ class Task {
     required this.assignedToId,
     this.startDate,
     this.endDate,
-  });
+    List<dynamic>? attachmentsForCreation,
+  }) : _attachmentsForCreation = attachmentsForCreation;
+
+  // Getter to access attachments
+  List<dynamic>? get attachmentsForCreation => _attachmentsForCreation;
 
   factory Task.fromJson(Map<String, dynamic> json) {
     return Task(
@@ -35,6 +44,7 @@ class Task {
       assignedToId: json['Assign_To_ID']?.toString() ?? "",
       startDate: _parseDate(json['Start_Date']),
       endDate: _parseDate(json['End_Date']),
+      attachmentsForCreation: null,
     );
   }
 
