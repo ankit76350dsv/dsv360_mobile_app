@@ -47,6 +47,18 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     super.dispose();
   }
 
+  bool _isAdminUser() {
+    final user = AuthManager.instance.currentUser;
+    final roleName = user?.role?.name ?? '';
+    final isAdminOrManager = roleName == 'Admin' ||
+                             roleName == 'Admin (Default)' || 
+                             roleName == 'Super Admin' || 
+                             roleName == 'App Administrator' ||
+                             roleName == 'Manager/Team Lead';
+    debugPrint('🔐 Projects Screen - Checking permission: $isAdminOrManager | Role: $roleName');
+    return isAdminOrManager;
+  }
+
   List<ProjectModel> _filterProjects(List<ProjectModel> projects) {
     if (_searchQuery.isEmpty) {
       return projects;
@@ -247,7 +259,13 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                                 itemBuilder: (context, index) {
                                   final project = filteredProjects[index];
                                   final user = AuthManager.instance.currentUser;
-                                  final isAdmin = user?.role?.name == 'Admin';
+                                  final roleName = user?.role?.name ?? '';
+                                  final isAdminOrManager = roleName == 'Admin' ||
+                                                           roleName == 'Admin (Default)' || 
+                                                           roleName == 'Super Admin' || 
+                                                           roleName == 'App Administrator' ||
+                                                           roleName == 'Manager/Team Lead';
+                                  debugPrint('👤 ProjectCard Permission Check - Role: "$roleName" | isAdminOrManager: $isAdminOrManager | User: ${user?.firstName}');
                                   return ProjectCard(
                                     project: project,
                                     onTap: () {
@@ -260,10 +278,10 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                                             ProjectDetailsDialog(project: project),
                                       );
                                     },
-                                    onEdit: isAdmin
+                                    onEdit: isAdminOrManager
                                         ? () => _showAddProjectDialog(project: project)
                                         : null,
-                                    onDelete: isAdmin
+                                    onDelete: isAdminOrManager
                                         ? () => _deleteProject(project)
                                         : null,
                                   );
@@ -286,12 +304,14 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddProjectDialog(),
-        backgroundColor: AppColors.primary,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
-      ),
+      floatingActionButton: _isAdminUser()
+          ? FloatingActionButton(
+              onPressed: () => _showAddProjectDialog(),
+              backgroundColor: AppColors.primary,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            )
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }

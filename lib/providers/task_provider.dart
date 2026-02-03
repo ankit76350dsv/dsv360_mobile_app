@@ -1,12 +1,16 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dsv360/models/task.dart';
 import 'package:dsv360/repositories/task_repository.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
+import 'package:dsv360/core/constants/auth_manager.dart';
 
-// Provider to get the current user's ID from the active user state
+// Provider to get the current user's ID from AuthManager (more reliable)
 final currentUserIdProvider = Provider<String>((ref) {
-  final activeUser = ref.watch(activeUserRepositoryProvider);
-  return activeUser?.userId ?? '';
+  final user = AuthManager.instance.currentUser;
+  final userId = user?.id ?? '';
+  debugPrint('👤 Getting userId from AuthManager: $userId (ID: ${user?.id})');
+  return userId;
 });
 
 // Re-export the auto-generated task list repository provider
@@ -20,6 +24,7 @@ final tasksSearchQueryProvider = StateProvider<String>((ref) => '');
 final filteredTasksProvider =
     Provider.autoDispose<AsyncValue<List<Task>>>((ref) {
   final userId = ref.watch(currentUserIdProvider);
+  debugPrint('🎯 Filtered Tasks Provider - userId: $userId');
   return ref.watch(tasksListRepositoryProvider(userId));
 });
 

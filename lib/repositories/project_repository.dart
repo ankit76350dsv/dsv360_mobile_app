@@ -25,7 +25,13 @@ class ProjectRepository {
     // AuthManager has currentUser.role.name usually.
     // Let's assume 'Super Admin' or similar for Admin.
     
-    final isAdmin = user.role?.name == 'Admin'; 
+    final roleName = user.role?.name ?? '';
+    // For endpoint selection: Only true Admin roles get all projects
+    // Manager and other roles should use user-specific endpoint
+    final isAdmin = roleName == 'Admin' ||
+                    roleName == 'Admin (Default)' || 
+                    roleName == 'Super Admin' || 
+                    roleName == 'App Administrator'; 
     // Adjust based on actual role names if known, typically 'Super Admin' in Catalyst.
 
 
@@ -43,10 +49,16 @@ class ProjectRepository {
     try {
       final response = await http.get(Uri.parse(url));
 
+      debugPrint('📊 Project API Response Status: ${response.statusCode}');
+      debugPrint('📊 Project API Response Body: ${response.body}');
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        debugPrint('📊 Parsed JSON Response: $jsonResponse');
+        
         if (jsonResponse['success'] == true) {
           final List<dynamic> data = jsonResponse['data'];
+          debugPrint('📊 Data List: $data');
           
           if (isAdmin) {
             // Admin response: direct list of project objects
@@ -65,7 +77,7 @@ class ProjectRepository {
         throw Exception('Failed to load projects: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Error fetching projects: $e');
+      debugPrint('❌ Error fetching projects: $e');
       throw Exception('Error fetching projects: $e');
     }
   }

@@ -24,64 +24,85 @@ class TasksListRepository extends _$TasksListRepository {
   /// 2.2 Get Tasks by Employee (Current implementation) or All Tasks if Admin
   Future<List<Task>> fetchTasks(String userId) async {
     try {
-      // Check if user is Admin to determine which endpoint to use
+      // Check if user is Admin or Manager to determine which endpoint to use
       final user = AuthManager.instance.currentUser;
-      final isAdmin = user?.role?.name == 'Admin';
+      final roleName = user?.role?.name ?? '';
+      
+      final isAdmin = roleName == 'Admin' ||
+                      roleName == 'Admin (Default)' || 
+                      roleName == 'Super Admin' || 
+                      roleName == 'App Administrator';
+      
+      final isManager = roleName == 'Manager/Team Lead';
 
-      debugPrint("📋 Fetching tasks | isAdmin: $isAdmin | Role: ${user?.role?.name} | userId: $userId");
+      debugPrint("📋 Fetching tasks | isAdmin: $isAdmin | isManager: $isManager | Role: ${user?.role?.name} | userId: $userId");
 
-      String url;
       if (isAdmin) {
-        // Admin gets all tasks - using the serverless function pattern
-        url = '${ServerConstant.serverURL}time_entry_management_application_function/tasks';
-      } else {
-        // Regular user gets only their tasks - using the serverless function pattern
-        url = '${ServerConstant.serverURL}time_entry_management_application_function/tasks/$userId';
-      }
+        // Admin gets all tasks
+        final url = '${ServerConstant.serverURL}time_entry_management_application_function/tasks';
+        debugPrint("📋 Admin endpoint: $url");
+        
+        final response = await http.get(Uri.parse(url));
+        debugPrint("Response From fetchTasks - Status: ${response.statusCode}");
+        debugPrint("📊 Task API Response Body: ${response.body}");
 
-      debugPrint("📋 Using endpoint: $url");
-
-      final response = await http.get(Uri.parse(url));
-      debugPrint("Response From fetchTasks - Status: ${response.statusCode}");
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] == true) {
-          final List<dynamic> list = jsonResponse["data"] ?? [];
-
-          // All tasks come as direct objects in the list
-          // Parse each task directly from the response
-          return list.map((e) {
-            try {
-              final taskData = e as Map<String, dynamic>;
-              final taskId = taskData['ROWID']?.toString() ?? '';
+        return _parseTasks(response);
+      } else if (isManager) {
+        // Manager gets tasks by projects - need to fetch all manager's projects first
+        debugPrint("📋 Manager detected - fetching projects first");
+        
+        // Fetch manager's projects
+        final projectsUrl = '${ServerConstant.serverURL}time_entry_management_application_function/projects/$userId';
+        final projectsResponse = await http.get(Uri.parse(projectsUrl));
+        
+        if (projectsResponse.statusCode == 200) {
+          final projectsJson = json.decode(projectsResponse.body);
+          if (projectsJson['success'] == true) {
+            final List<dynamic> projectsData = projectsJson['data'] ?? [];
+            
+            // Collect all tasks from all manager's projects
+            List<Task> allTasks = [];
+            
+            for (var projectItem in projectsData) {
+              // Extract project data (it's wrapped in "Projects" key)
+              final projectData = projectItem['Projects'];
+              final projectId = projectData['ROWID']?.toString() ?? '';
               
-              // Print detailed info for task 2507 to see attachment structure
-              if (taskId == '17682000000712507' || taskId == '2507' || taskData['Task_Name']?.toString().contains('2507') == true) {
-                debugPrint("🔍 ============================================");
-                debugPrint("🔍 FOUND TASK WITH ATTACHMENT (ID: $taskId)");
-                debugPrint("🔍 ============================================");
-                debugPrint("🔍 Full Task Data: $taskData");
-                debugPrint("🔍 Task Name: ${taskData['Task_Name']}");
-                debugPrint("🔍 Files Field: ${taskData['Files']}");
-                debugPrint("🔍 Files Type: ${taskData['Files'].runtimeType}");
-                if (taskData['Files'] != null && taskData['Files'].toString().isNotEmpty) {
-                  debugPrint("🔍 Files Content: ${taskData['Files']}");
+              if (projectId.isNotEmpty) {
+                debugPrint("📋 Fetching tasks for project: $projectId");
+                
+                // Fetch tasks for this project using POST /tasks/project
+                final tasksUrl = '${ServerConstant.serverURL}time_entry_management_application_function/tasks/project';
+                final tasksResponse = await http.post(
+                  Uri.parse(tasksUrl),
+                  headers: {'Content-Type': 'application/json'},
+                  body: json.encode({'projectID': projectId}),
+                );
+                
+                if (tasksResponse.statusCode == 200) {
+                  final tasks = _parseTasks(tasksResponse);
+                  allTasks.addAll(tasks);
                 }
-                debugPrint("🔍 ============================================");
               }
-              
-              return Task.fromJson(taskData);
-            } catch (parseError) {
-              debugPrint("⚠️ Error parsing task: $parseError");
-              return null;
             }
-          }).whereType<Task>().toList();
-        } else {
-          throw Exception('API returned success: false');
+            
+            debugPrint("📊 Total tasks fetched for manager: ${allTasks.length}");
+            return allTasks;
+          }
         }
+        
+        // Fallback if projects fetch fails
+        return [];
       } else {
-        throw Exception('Failed to load tasks: ${response.statusCode}');
+        // Regular users get only their assigned tasks
+        final url = '${ServerConstant.serverURL}time_entry_management_application_function/tasks/employee/$userId';
+        debugPrint("📋 User endpoint: $url");
+        
+        final response = await http.get(Uri.parse(url));
+        debugPrint("Response From fetchTasks - Status: ${response.statusCode}");
+        debugPrint("📊 Task API Response Body: ${response.body}");
+
+        return _parseTasks(response);
       }
     } catch (e, st) {
       developer.log(
@@ -92,6 +113,53 @@ class TasksListRepository extends _$TasksListRepository {
       debugPrint("⚠️ Tasks endpoint not available. Returning empty list.");
       debugPrint("📌 To fix: Ensure the tasks endpoint is properly configured on the server.");
       return [];
+    }
+  }
+
+  // Helper method to parse task response
+  List<Task> _parseTasks(http.Response response) {
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> jsonResponse = json.decode(response.body);
+      debugPrint("📊 Parsed Task JSON Response: $jsonResponse");
+      
+      if (jsonResponse['success'] == true) {
+        final List<dynamic> list = jsonResponse["data"] ?? [];
+        debugPrint("📊 Task Data List Length: ${list.length}");
+        debugPrint("📊 Task Data List: $list");
+
+        // All tasks come as direct objects in the list
+        // Parse each task directly from the response
+        return list.map((e) {
+          try {
+            final taskData = e as Map<String, dynamic>;
+            final taskId = taskData['ROWID']?.toString() ?? '';
+            
+            // Print detailed info for task 2507 to see attachment structure
+            if (taskId == '17682000000712507' || taskId == '2507' || taskData['Task_Name']?.toString().contains('2507') == true) {
+              debugPrint("🔍 ============================================");
+              debugPrint("🔍 FOUND TASK WITH ATTACHMENT (ID: $taskId)");
+              debugPrint("🔍 ============================================");
+              debugPrint("🔍 Full Task Data: $taskData");
+              debugPrint("🔍 Task Name: ${taskData['Task_Name']}");
+              debugPrint("🔍 Files Field: ${taskData['Files']}");
+              debugPrint("🔍 Files Type: ${taskData['Files'].runtimeType}");
+              if (taskData['Files'] != null && taskData['Files'].toString().isNotEmpty) {
+                debugPrint("🔍 Files Content: ${taskData['Files']}");
+              }
+              debugPrint("🔍 ============================================");
+            }
+            
+            return Task.fromJson(taskData);
+          } catch (parseError) {
+            debugPrint("⚠️ Error parsing task: $parseError");
+            return null;
+          }
+        }).whereType<Task>().toList();
+      } else {
+        throw Exception('API returned success: false');
+      }
+    } else {
+      throw Exception('Failed to load tasks: ${response.statusCode}');
     }
   }
 

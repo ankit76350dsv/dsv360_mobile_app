@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
+import '../../core/constants/auth_manager.dart';
 import '../../models/issue_model.dart';
 import '../../providers/issue_provider.dart';
 import '../widgets/custom_search_bar.dart';
@@ -38,6 +39,14 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  bool _isAdminUser() {
+    final user = AuthManager.instance.currentUser;
+    final roleName = user?.role?.name ?? '';
+    final isAdmin = roleName == 'Admin (Default)' || roleName == 'Super Admin' || roleName == 'App Administrator';
+    debugPrint('🔐 Issues Screen - Checking permission: $isAdmin | Role: $roleName');
+    return isAdmin;
   }
 
   List<IssueModel> _filterIssues(List<IssueModel> issues) {
@@ -265,8 +274,8 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                               builder: (context) => IssueDetailsModalSheet(issue: issue),
                             );
                           },
-                          onEdit: () => _showAddIssueDialog(issue: issue),
-                          onDelete: () => _deleteIssue(issue),
+                          onEdit: _isAdminUser() ? () => _showAddIssueDialog(issue: issue) : null,
+                          onDelete: _isAdminUser() ? () => _deleteIssue(issue) : null,
                         ),
                       );
                     },
@@ -316,16 +325,18 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddIssueDialog(),
-        backgroundColor: AppColors.primary,
-        shape: const CircleBorder(),
-        child: const Icon(
-          Icons.add,
-          color: Colors.white,
-          size: 28,
-        ),
-      ),
+      floatingActionButton: _isAdminUser()
+          ? FloatingActionButton(
+              onPressed: () => _showAddIssueDialog(),
+              backgroundColor: AppColors.primary,
+              shape: const CircleBorder(),
+              child: const Icon(
+                Icons.add,
+                color: Colors.white,
+                size: 28,
+              ),
+            )
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
