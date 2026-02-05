@@ -49,7 +49,7 @@ class DioClient {
         options: options,
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return response;
       } else {
         throw Exception('Unexpected status code: ${response.statusCode}');

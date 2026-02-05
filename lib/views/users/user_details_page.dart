@@ -179,16 +179,6 @@ class _InfoTab extends ConsumerWidget {
             label: "Full Name",
             value: "${user.firstName} ${user.lastName}",
           ),
-          GridView(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 0,
-              childAspectRatio: 2.1, // adjust for tile height
-            ),
-            children: [
               _InfoTile(
                 icon: Icons.badge,
                 label: "User Id",
@@ -203,8 +193,6 @@ class _InfoTab extends ConsumerWidget {
                   icon: verificationStatusIcon,
                 ),
               ),
-            ],
-          ),
           _InfoTile(
             icon: Icons.work,
             label: "Role",

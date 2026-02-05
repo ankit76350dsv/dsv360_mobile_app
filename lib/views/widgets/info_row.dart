@@ -13,10 +13,12 @@ class InfoRow extends StatelessWidget {
       children: [
         Icon(icon, size: 18, color: theme.colorScheme.tertiary),
         const SizedBox(width: 8),
-        Text(
-          text,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.tertiary,
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.tertiary,
+            ),
           ),
         ),
       ],

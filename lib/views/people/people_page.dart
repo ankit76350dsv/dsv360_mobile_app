@@ -258,14 +258,14 @@ class _WorkScheduleCard extends StatelessWidget {
                 Icon(Icons.calendar_today, size: 18, color: Colors.blueAccent),
                 const SizedBox(width: 8),
                 Text('Work Schedule', style: theme.textTheme.titleMedium),
-                const Spacer(),
-                Text(
-                  weekRange,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colors.onSurfaceVariant,
-                  ),
-                ),
               ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              weekRange,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colors.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -653,14 +653,12 @@ class _LeaveTab extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    data: (LeaveSummary leaveSummary) => GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 1.2,
+                    data: (LeaveSummary leaveSummary) => 
+                    Column(
                       children: [
+                        Row(
+                        children: [
+                          Expanded(child: 
                         LeaveSummaryCard(
                           title: "Remaining",
                           value: leaveSummary.remainingValue,
@@ -668,30 +666,43 @@ class _LeaveTab extends ConsumerWidget {
                           color: Colors.green,
                           icon: Icons.eco,
                         ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(child: 
                         LeaveSummaryCard(
                           title: "Paid",
                           value: leaveSummary.paidValue,
                           subtitle: leaveSummary.paidSubtitle,
                           color: Colors.redAccent,
                           icon: Icons.money_off,
-                        ),
+                        ),),
+                        ],),
+                        Row(
+                        children: [
+                          Expanded(child: 
                         LeaveSummaryCard(
                           title: "Sick",
                           value: leaveSummary.sickValue,
                           subtitle: leaveSummary.sickSubtitle,
                           color: Colors.lightGreen,
                           icon: Icons.local_hospital,
-                        ),
+                        ),),
+                        const SizedBox(width: 12),
+                        Expanded(child: 
                         LeaveSummaryCard(
                           title: "Unpaid",
                           value: leaveSummary.unpaidValue,
                           subtitle: leaveSummary.unpaidSubtitle,
                           color: Colors.lightBlue,
                           icon: Icons.beach_access,
+                        ),),
+                      ],
                         ),
                       ],
                     ),
                   ),
+
+                  
 
                   const SizedBox(height: 24),
 
@@ -700,7 +711,7 @@ class _LeaveTab extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        "Recent Leave Requests",
+                        "Leave Requests",
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -830,7 +841,9 @@ class LeaveSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Card(
+    return SizedBox(
+      height: 160,
+      child: Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
         side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
@@ -854,6 +867,7 @@ class LeaveSummaryCard extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -1608,35 +1622,27 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                     labelText: 'Select Employee',
                     prefixIcon: Icons.person_outline,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8.0),
 
                   /// Date range + submit
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomPickerField(
-                          label: 'Start Date',
-                          valueText: _startDate == null
-                              ? null
-                              : DateFormat('dd/MM/yyyy').format(_startDate!),
-                          placeholder: 'dd/mm/yyyy',
-                          onTap: () => _pickDate(isStart: true),
-                        ),
-                      ),
-                      const SizedBox(width: 8.0),
+                  CustomPickerField(
+                    label: 'Start Date',
+                    valueText: _startDate == null
+                        ? null
+                        : DateFormat('dd/MM/yyyy').format(_startDate!),
+                    placeholder: 'dd/mm/yyyy',
+                    onTap: () => _pickDate(isStart: true),
+                  ),
+                  const SizedBox(height: 8.0),
 
-                      /// End Date
-                      Expanded(
-                        child: CustomPickerField(
-                          label: 'End Date',
-                          valueText: _endDate == null
-                              ? null
-                              : DateFormat('dd/MM/yyyy').format(_endDate!),
-                          placeholder: 'dd/mm/yyyy',
-                          onTap: () => _pickDate(isStart: false),
-                        ),
-                      ),
-                    ],
+                  /// End Date
+                  CustomPickerField(
+                    label: 'End Date',
+                    valueText: _endDate == null
+                        ? null
+                        : DateFormat('dd/MM/yyyy').format(_endDate!),
+                    placeholder: 'dd/mm/yyyy',
+                    onTap: () => _pickDate(isStart: false),
                   ),
 
                   const SizedBox(height: 10.0),
@@ -2048,7 +2054,7 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: const Text(
-                                    'Today',
+                                    'T',
                                     style: TextStyle(
                                       color: Color(0xFF3B82F6),
                                       fontSize: 8,
@@ -2057,7 +2063,7 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
                                   ),
                                 ),
                               const Spacer(),
-                              if (leaves.isEmpty)
+                              if (leaves.isEmpty && !isToday)
                                 Text(
                                   'No leaves',
                                   style: TextStyle(

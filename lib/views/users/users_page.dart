@@ -229,8 +229,8 @@ class _UserCardState extends ConsumerState<UserCard> {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+                          horizontal: 6,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: colors.primary,
@@ -238,7 +238,10 @@ class _UserCardState extends ConsumerState<UserCard> {
                         ),
                         child: Text(
                           "U${widget.user.userId.substring(widget.user.userId.length - 4)}",
-                          style: TextStyle(color: theme.colorScheme.surface),
+                          style: TextStyle(
+                            color: theme.colorScheme.surface,
+                            fontSize: 12,
+                          ),
                         ),
                       ),
                       const Spacer(),
