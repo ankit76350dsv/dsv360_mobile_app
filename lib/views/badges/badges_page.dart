@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
@@ -29,7 +30,7 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
     final query = ref.watch(usersSearchQueryProvider);
     final usersAsync = ref.watch(usersRepositoryProvider);
     final connectivityStatus = ref.watch(connectivityStatusProvider);
@@ -70,6 +71,8 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
           }
 
           return SpeedDial(
+            backgroundColor: customColors.primary,
+            foregroundColor: Colors.white,
             icon: Icons.add, // The icon for the main button
             activeIcon: Icons.close, // The icon when the menu is open
             children: [
@@ -308,18 +311,16 @@ class _UserBadgeCardState extends ConsumerState<UserBadgeCard> {
   }
 
   Widget _userInfoRow(IconData icon, String text) {
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
 
     return Row(
       children: [
-        Icon(icon, size: 18, color: theme.colorScheme.tertiary),
+        Icon(icon, size: 18, color: customColors.textSecondary),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.tertiary,
-            ),
+            style: TextStyle(color: customColors.textSecondary),
           ),
         ),
       ],

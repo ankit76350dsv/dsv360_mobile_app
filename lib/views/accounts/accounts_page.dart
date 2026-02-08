@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
@@ -27,7 +28,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
   Widget build(BuildContext context) {
     final accountsListAsync = ref.watch(accountsListRepositoryProvider);
     final query = ref.watch(accountsSearchQueryProvider);
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
     final connectivityStatus = ref.watch(connectivityStatusProvider);
 
     return Scaffold(
@@ -67,6 +68,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
 
           return FloatingActionButton(
             shape: const CircleBorder(),
+            backgroundColor: customColors.primary,
             onPressed: () {
               // do nothing for the moment
 
@@ -77,7 +79,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
               //   ),
               // );
             },
-            child: Icon(Icons.apartment, size: 22),
+            child: Icon(Icons.apartment, size: 22, color: Colors.white,),
           );
         },
         loading: () => null, // hide FAB while checking
@@ -106,7 +108,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
                     vertical: 12.0,
                   ),
                   child: TextField(
-                    style: TextStyle(color: colors.tertiary),
+                    style: TextStyle(color: customColors.textPrimary),
                     onChanged: (value) {
                       ref.read(accountsSearchQueryProvider.notifier).state =
                           value.trim();
@@ -119,7 +121,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
                         fontWeight: FontWeight.w400,
                       ),
                       filled: true,
-                      fillColor: colors.surfaceVariant,
+                      fillColor: customColors.surfaceBackground,
                       prefixIcon: Icon(Icons.search, color: Colors.grey),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
@@ -212,7 +214,7 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    final customColors = theme.custom;
     final activeUser = ref.watch(activeUserRepositoryProvider);
 
     return GestureDetector(
@@ -241,13 +243,13 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
                       const Spacer(),
                       CustomChip(
                         label: widget.account.orgType,
-                        color: colors.primary,
+                        color: customColors.primary!,
                         icon: null,
                       ),
                       const SizedBox(width: 6.0),
                       CustomChip(
                         label: widget.account.status,
-                        color: colors.primary,
+                        color: customColors.primary!,
                         icon: Icons.add_comment_outlined,
                       ),
                     ],
@@ -310,7 +312,7 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
                               // );
                             },
                             icon: Icons.delete,
-                            color: colors.error,
+                            color: customColors.error,
                           ),
                         ],
                       ),
@@ -327,20 +329,20 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
 
   /// Small helper for website-value row
   Widget _websiteRow(IconData icon, String value) {
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
 
     final websiteUrl = value.startsWith('http') ? value : 'https://$value';
 
     return Row(
       children: [
-        Icon(icon, size: 18, color: theme.colorScheme.tertiary),
+        Icon(icon, size: 18, color: customColors.textSecondary),
         const SizedBox(width: 8),
         RichText(
           text: TextSpan(
             text: value,
-            style: theme.textTheme.bodySmall?.copyWith(
+            style: TextStyle(
               fontSize: 14,
-              color: theme.colorScheme.primary,
+              color: customColors.primary,
               decoration: TextDecoration.underline,
             ),
             recognizer: TapGestureRecognizer()
@@ -357,16 +359,16 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
   }
 
   Widget _accountInfoRow(IconData icon, String text) {
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
 
     return Row(
       children: [
-        Icon(icon, size: 18, color: theme.colorScheme.tertiary),
+        Icon(icon, size: 18, color: customColors.textSecondary),
         const SizedBox(width: 8),
         Text(
           text,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.tertiary,
+          style: TextStyle(
+            color: customColors.textSecondary,
           ),
         ),
       ],

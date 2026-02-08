@@ -1,5 +1,5 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 
 class CustomPopupDropdown extends StatefulWidget {
   final String? value;
@@ -46,6 +46,7 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
   }
 
   void _showDropdownOverlay() {
+    final customColors = Theme.of(_buttonKey.currentContext!).custom;
     setState(() {
       _filteredItems = widget.items;
       _searchController.clear();
@@ -72,11 +73,11 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
                   child: Material(
                     elevation: 8,
                     borderRadius: BorderRadius.circular(14),
-                    color: AppColors.cardBackground,
+                    color: customColors.cardBackground,
                     child: Container(
                       constraints: const BoxConstraints(maxHeight: 300),
                       decoration: BoxDecoration(
-                        color: AppColors.cardBackground,
+                        color: customColors.cardBackground,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Column(
@@ -102,11 +103,11 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
                               },
                               decoration: InputDecoration(
                                 hintText: 'Search...',
-                                hintStyle: const TextStyle(color: AppColors.textHint, fontSize: 14),
-                                prefixIcon: const Icon(Icons.search, color: AppColors.textSecondary, size: 20),
+                                hintStyle: TextStyle(color: customColors.textHint, fontSize: 14),
+                                prefixIcon: Icon(Icons.search, color: customColors.textSecondary, size: 20),
                                 suffixIcon: _searchController.text.isNotEmpty
                                     ? IconButton(
-                                        icon: const Icon(Icons.clear, color: AppColors.textSecondary, size: 20),
+                                        icon: Icon(Icons.clear, color: customColors.textSecondary, size: 20),
                                         onPressed: () {
                                           setOverlayState(() {
                                             _searchController.clear();
@@ -117,23 +118,23 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
                                     : null,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: AppColors.inputBorder, width: 1),
+                                  borderSide: BorderSide(color: customColors.inputBorder!, width: 1),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: AppColors.inputBorder, width: 1),
+                                  borderSide: BorderSide(color: customColors.inputBorder!, width: 1),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                                  borderSide: BorderSide(color: customColors.primary!, width: 1.5),
                                 ),
                                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                 filled: true,
-                                fillColor: colors.secondary,
+                                fillColor: customColors.cardBackground,
                                 isDense: true,
                               ),
-                              style: const TextStyle(color: AppColors.textPrimary, fontSize: 14),
-                              cursorColor: AppColors.primary,
+                              style: TextStyle(color: customColors.textPrimary, fontSize: 14),
+                              cursorColor: customColors.primary,
                             ),
                           ),
                           const Divider(height: 1),
@@ -155,7 +156,7 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
                                     margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                     decoration: BoxDecoration(
                                       color: isSelected
-                                          ? AppColors.primary.withOpacity(0.1)
+                                          ? customColors.primary!.withOpacity(0.1)
                                           : Colors.transparent,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
@@ -163,7 +164,7 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
                                     child: Text(
                                       item,
                                       style: TextStyle(
-                                        color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                                        color: isSelected ? customColors.primary : customColors.textPrimary,
                                         fontSize: 16,
                                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                                       ),
@@ -193,6 +194,7 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
     return GestureDetector(
       key: _buttonKey,
       onTap: _showDropdownOverlay,
@@ -202,7 +204,7 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
         decoration: BoxDecoration(
           color: colors.secondary,
           border: Border.all(
-            color: AppColors.inputBorder,
+            color: customColors.inputBorder!,
             width: 1.5,
           ),
           borderRadius: BorderRadius.circular(14),
@@ -210,13 +212,13 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(widget.icon, color: AppColors.textSecondary),
+            Icon(widget.icon, color: customColors.textSecondary),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 widget.value ?? widget.hint,
                 style: TextStyle(
-                  color: widget.value == null ? AppColors.textHint : AppColors.textPrimary,
+                  color: widget.value == null ? customColors.textHint : customColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
@@ -225,7 +227,7 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
+            Icon(Icons.arrow_drop_down, color: customColors.textSecondary),
           ],
         ),
       ),

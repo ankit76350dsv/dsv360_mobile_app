@@ -1,6 +1,6 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../core/constants/app_colors.dart';
 import '../../models/project_model.dart';
 
 class ProjectDetailsDialog extends StatelessWidget {
@@ -8,32 +8,36 @@ class ProjectDetailsDialog extends StatelessWidget {
 
   const ProjectDetailsDialog({super.key, required this.project});
 
-  Color _getStatusColor(String status) {
+  Color _getStatusColor(String status, BuildContext context) {
+    final customColors = Theme.of(context).custom;
+
     switch (status) {
       case 'Open':
-        return AppColors.statusPending;
+        return customColors.statusPending!;
       case 'Work In Process':
-        return AppColors.statusInProgress;
+        return customColors.statusInProgress!;
       case 'Completed':
-        return AppColors.statusCompleted;
+        return customColors.statusCompleted!;
       case 'Closed':
-        return AppColors.textSecondary;
+        return customColors.textSecondary!;
       case 'On Hold':
-        return AppColors.error;
+        return customColors.error!;
       default:
-        return AppColors.textSecondary;
+        return customColors.textSecondary!;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    final customColors = Theme.of(context).custom;
+
     return Container(
       constraints: BoxConstraints(
         maxHeight: screenHeight * 0.75, // 75% of screen height
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.cardBackground,
+      decoration: BoxDecoration(
+        color: customColors.cardBackground,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
@@ -50,7 +54,7 @@ class ProjectDetailsDialog extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.textSecondary.withValues(alpha: 0.3),
+                  color: customColors.textSecondary!.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -66,7 +70,7 @@ class ProjectDetailsDialog extends StatelessWidget {
               child: Text(
                 'Project Details',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: customColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -89,6 +93,7 @@ class ProjectDetailsDialog extends StatelessWidget {
                           icon: Icons.info_outline,
                           label: 'Project ID',
                           value: project.id,
+                          context: context,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -97,6 +102,7 @@ class ProjectDetailsDialog extends StatelessWidget {
                           icon: Icons.assignment,
                           label: 'Project Name',
                           value: project.projectName,
+                          context: context,
                         ),
                       ),
                     ],
@@ -111,6 +117,7 @@ class ProjectDetailsDialog extends StatelessWidget {
                           icon: Icons.person,
                           label: 'Assigned To',
                           value: project.assignedTo ?? 'Not assigned',
+                          context: context,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -119,6 +126,7 @@ class ProjectDetailsDialog extends StatelessWidget {
                           icon: Icons.business,
                           label: 'Client Name',
                           value: project.client,
+                          context: context,
                         ),
                       ),
                     ],
@@ -133,6 +141,7 @@ class ProjectDetailsDialog extends StatelessWidget {
                           icon: Icons.calendar_today,
                           label: 'Start Date',
                           value: DateFormat('dd/MM/yy').format(project.startDate),
+                          context: context,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -141,6 +150,7 @@ class ProjectDetailsDialog extends StatelessWidget {
                           icon: Icons.event,
                           label: 'End Date',
                           value: DateFormat('dd/MM/yy').format(project.endDate),
+                          context: context,
                         ),
                       ),
                     ],
@@ -151,7 +161,8 @@ class ProjectDetailsDialog extends StatelessWidget {
                   _buildStatusCard(
                     label: 'Status',
                     value: project.status,
-                    color: _getStatusColor(project.status),
+                    color: _getStatusColor(project.status, context),
+                    context: context,
                   ),
                   const SizedBox(height: 12),
                   
@@ -160,6 +171,7 @@ class ProjectDetailsDialog extends StatelessWidget {
                     label: 'Progress',
                     value: '${project.progress ?? 0}% completed',
                     progress: (project.progress ?? 0) / 100,
+                    context: context,
                   ),
                   const SizedBox(height: 12),
                   
@@ -170,6 +182,7 @@ class ProjectDetailsDialog extends StatelessWidget {
                         icon: Icons.emoji_events,
                         label: 'Owner',
                         value: project.owner!,
+                        context: context,
                       ),
                       const SizedBox(height: 12),
                     ],
@@ -180,6 +193,7 @@ class ProjectDetailsDialog extends StatelessWidget {
                       icon: Icons.description,
                       label: 'Description',
                       value: project.description!,
+                      context: context,
                     ),
                 ],
               ),
@@ -194,11 +208,13 @@ class ProjectDetailsDialog extends StatelessWidget {
     required IconData icon,
     required String label,
     required String value,
+    required BuildContext context,
   }) {
+    final customColors = Theme.of(context).custom;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: customColors.cardBackground,
         border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
@@ -214,13 +230,13 @@ class ProjectDetailsDialog extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: AppColors.primary, size: 18),
+              Icon(icon, color: customColors.primary, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: customColors.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -233,8 +249,8 @@ class ProjectDetailsDialog extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
+            style: TextStyle(
+              color: customColors.textPrimary,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -250,11 +266,13 @@ class ProjectDetailsDialog extends StatelessWidget {
     required String label,
     required String value,
     required Color color,
+    required BuildContext context,
   }) {
+    final customColors = Theme.of(context).custom;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: customColors.cardBackground,
         border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
@@ -267,13 +285,13 @@ class ProjectDetailsDialog extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.check_circle, color: AppColors.primary, size: 18),
+          Icon(Icons.check_circle, color: customColors.primary, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: customColors.textSecondary,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -303,13 +321,15 @@ class ProjectDetailsDialog extends StatelessWidget {
     required String label,
     required String value,
     required double progress,
+    required BuildContext context,
   }) {
-    final isDarkMode = AppColors.background.computeLuminance() < 0.5;
+    final customColors = Theme.of(context).custom;
+    final isDarkMode = customColors.background!.computeLuminance() < 0.5;
     
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: customColors.cardBackground,
         border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
@@ -325,12 +345,12 @@ class ProjectDetailsDialog extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.trending_up, color: AppColors.primary, size: 18),
+              Icon(Icons.trending_up, color: customColors.primary, size: 18),
               const SizedBox(width: 8),
               Text(
                 label,
-                style: const TextStyle(
-                  color: AppColors.textSecondary,
+                style: TextStyle(
+                  color: customColors.textSecondary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -338,8 +358,8 @@ class ProjectDetailsDialog extends StatelessWidget {
               const Spacer(),
               Text(
                 value,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
+                style: TextStyle(
+                  color: customColors.textPrimary,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -356,7 +376,7 @@ class ProjectDetailsDialog extends StatelessWidget {
                 ? Colors.grey[300]! 
                 : Colors.grey[700]!,
               valueColor: AlwaysStoppedAnimation<Color>(
-                AppColors.primary,
+                customColors.primary!,
               ),
             ),
           ),

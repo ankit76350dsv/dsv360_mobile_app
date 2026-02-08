@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/time_entry_model.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_text_styles.dart';
+import '../../core/constants/theme.dart';
 import '../widgets/custom_input_field.dart';
 import '../widgets/TopBar.dart';
 import 'time_entries_screen.dart';
@@ -79,6 +78,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
+    final customColors = Theme.of(context).custom;
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: _selectedDate ?? DateTime.now(),
@@ -88,12 +88,12 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.dark(
-              primary: AppColors.primary,
+              primary: customColors.primary!,
               onPrimary: Colors.white,
-              surface: AppColors.cardBackground,
-              onSurface: AppColors.textPrimary,
+              surface: customColors.cardBackground!,
+              onSurface: customColors.textPrimary!,
             ),
-            dialogBackgroundColor: AppColors.cardBackground,
+            dialogBackgroundColor: customColors.cardBackground!,
           ),
           child: child!,
         );
@@ -108,6 +108,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
   }
 
   Future<void> _selectTime(BuildContext context, bool isStartTime) async {
+    final customColors = Theme.of(context).custom;
     final TimeOfDay? pickedTime = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
@@ -115,12 +116,12 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.dark(
-              primary: AppColors.primary,
+              primary: customColors.primary!,
               onPrimary: Colors.white,
-              surface: AppColors.cardBackground,
-              onSurface: AppColors.textPrimary,
+              surface: customColors.cardBackground!,
+              onSurface: customColors.textPrimary!,
             ),
-            dialogBackgroundColor: AppColors.cardBackground,
+            dialogBackgroundColor: customColors.cardBackground!,
           ),
           child: child!,
         );
@@ -140,12 +141,13 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
     }
   }
 
-  void _addTimeEntry() {
+  void _addTimeEntry(BuildContext context) {
+    final customColors = Theme.of(context).custom;
     if (_startTimeController.text.isEmpty || _endTimeController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in start and end time'),
-          backgroundColor: AppColors.error,
+        SnackBar(
+          content: const Text('Please fill in start and end time'),
+          backgroundColor: customColors.error,
         ),
       );
       return;
@@ -187,9 +189,9 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Time entry added'),
-        backgroundColor: AppColors.primary,
+      SnackBar(
+        content: const Text('Time entry added'),
+        backgroundColor: customColors.primary,
       ),
     );
   }
@@ -201,11 +203,12 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
   }
 
   void _submitTimeEntries() {
+    final customColors = Theme.of(context).custom;
     if (_timeEntries.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please add at least one time entry'),
-          backgroundColor: AppColors.error,
+        SnackBar(
+          content: const Text('Please add at least one time entry'),
+          backgroundColor: customColors.error,
         ),
       );
       return;
@@ -216,9 +219,9 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: customColors.background,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(120),
         child: Padding(
@@ -253,9 +256,9 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                   decoration: BoxDecoration(
-                    color: colors.secondary,
+                    color: customColors.cardBackground,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.inputBorder, width: 1.5),
+                    border: Border.all(color: customColors.inputBorder!, width: 1.5),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.05),
@@ -266,16 +269,16 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.calendar_today_outlined, color: AppColors.textSecondary, size: 20),
+                      Icon(Icons.calendar_today_outlined, color: customColors.textSecondary, size: 20),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'Date',
                               style: TextStyle(
-                                color: AppColors.textSecondary,
+                                color: customColors.textSecondary,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -287,8 +290,8 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                                   : DateFormat('dd-MM-yyyy').format(_selectedDate!),
                               style: TextStyle(
                                 color: _selectedDate == null
-                                    ? AppColors.textHint
-                                    : AppColors.textPrimary,
+                                    ? customColors.textHint
+                                    : customColors.textPrimary,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -311,9 +314,9 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                         decoration: BoxDecoration(
-                          color: colors.secondary,
+                          color: customColors.cardBackground,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.inputBorder, width: 1.5),
+                          border: Border.all(color: customColors.inputBorder!, width: 1.5),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
@@ -324,16 +327,16 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.access_time_outlined, color: AppColors.textSecondary, size: 20),
+                            Icon(Icons.access_time_outlined, color: customColors.textSecondary, size: 20),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'Start Time',
                                     style: TextStyle(
-                                      color: AppColors.textSecondary,
+                                      color: customColors.textSecondary,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -345,8 +348,8 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                                         : _startTimeController.text,
                                     style: TextStyle(
                                       color: _startTimeController.text.isEmpty
-                                          ? AppColors.textHint
-                                          : AppColors.textPrimary,
+                                          ? customColors.textHint
+                                          : customColors.textPrimary,
                                       fontSize: 16,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -366,9 +369,9 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                         decoration: BoxDecoration(
-                          color: colors.secondary,
+                          color: customColors.cardBackground,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.inputBorder, width: 1.5),
+                          border: Border.all(color: customColors.inputBorder!, width: 1.5),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
@@ -379,16 +382,16 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.access_time_outlined, color: AppColors.textSecondary, size: 20),
+                            Icon(Icons.access_time_outlined, color: customColors.textSecondary, size: 20),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'End Time',
                                     style: TextStyle(
-                                      color: AppColors.textSecondary,
+                                      color: customColors.textSecondary,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -400,8 +403,8 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                                         : _endTimeController.text,
                                     style: TextStyle(
                                       color: _endTimeController.text.isEmpty
-                                          ? AppColors.textHint
-                                          : AppColors.textPrimary,
+                                          ? customColors.textHint
+                                          : customColors.textPrimary,
                                       fontSize: 16,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -421,33 +424,33 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
               // Type field
               DropdownButtonFormField<String>(
                 value: _selectedType,
-                hint: const Text(
+                hint: Text(
                   'Type',
-                  style: TextStyle(color: AppColors.textHint),
+                  style: TextStyle(color: customColors.textHint),
                 ),
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
+                style: TextStyle(
+                  color: customColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
-                dropdownColor: colors.secondary,
+                dropdownColor: customColors.cardBackground,
                 decoration: InputDecoration(
                   labelText: 'Type',
-                  labelStyle: const TextStyle(
-                    color: AppColors.textSecondary,
+                  labelStyle: TextStyle(
+                    color: customColors.textSecondary,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                   filled: true,
-                  fillColor: colors.secondary,
-                  prefixIcon: const Icon(Icons.category_outlined, color: AppColors.textSecondary),
+                  fillColor: customColors.cardBackground,
+                  prefixIcon: Icon(Icons.category_outlined, color: customColors.textSecondary),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                    borderSide: BorderSide(color: customColors.inputBorder!, width: 1.5),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                    borderSide: BorderSide(color: customColors.inputBorder!, width: 1.5),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -488,8 +491,8 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                       '$remaining characters left',
                       style: TextStyle(
                         color: remaining < 100
-                            ? AppColors.error
-                            : AppColors.textSecondary,
+                            ? Colors.red
+                            : customColors.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -508,16 +511,16 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                         borderRadius: BorderRadius.circular(18),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.3),
+                            color: customColors.primary!.withOpacity(0.3),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
                           ),
                         ],
                       ),
                       child: ElevatedButton(
-                        onPressed: _addTimeEntry,
+                        onPressed: () => _addTimeEntry(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: customColors.primary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
@@ -541,8 +544,8 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.error,
-                        side: const BorderSide(color: AppColors.error, width: 2),
+                        foregroundColor: customColors.error,
+                        side: BorderSide(color: customColors.error!, width: 2),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24),
@@ -569,9 +572,10 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                   children: [
                     Text(
                       'Time Entries (${_timeEntries.length})',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                      style: TextStyle(
+                        fontWeight: FontWeight.normal,
+                        fontSize: 14,
+                        color: customColors.textPrimary,
                       ),
                     ),
                     ElevatedButton.icon(
@@ -589,7 +593,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                       },
                       label: const Text('View All'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: customColors.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -610,7 +614,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.cardBackground,
+                        color: customColors.cardBackground,
                         border: Border.all(
                           color: Colors.white.withOpacity(0.1),
                           width: 1,
@@ -625,8 +629,8 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                               children: [
                                 Text(
                                   '${entry.startTime} - ${entry.endTime}',
-                                  style: const TextStyle(
-                                    color: AppColors.textPrimary,
+                                  style: TextStyle(
+                                    color: customColors.textPrimary,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 14,
                                   ),
@@ -634,8 +638,8 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                                 const SizedBox(height: 4),
                                 Text(
                                   '${DateFormat('dd/MM/yy').format(entry.date)} • ${entry.type}',
-                                  style: const TextStyle(
-                                    color: AppColors.textSecondary,
+                                  style: TextStyle(
+                                    color: customColors.textSecondary,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -644,9 +648,9 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                           ),
                           IconButton(
                             onPressed: () => _deleteTimeEntry(index),
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.delete,
-                              color: AppColors.error,
+                              color: customColors.error,
                               size: 20,
                             ),
                           ),
@@ -662,7 +666,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                   child: ElevatedButton(
                     onPressed: _submitTimeEntries,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: customColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(

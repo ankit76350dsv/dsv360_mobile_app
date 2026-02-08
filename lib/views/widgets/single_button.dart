@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -19,7 +20,7 @@ class SingleButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
     final isLoading = ref.watch(singleButtonLoadingProvider(loadingKey));
 
     return Row(
@@ -28,12 +29,12 @@ class SingleButton extends ConsumerWidget {
           child: ElevatedButton(
             onPressed: isLoading ? null : onPressed,
             style: ElevatedButton.styleFrom(
-              backgroundColor: colors.primary,
-              foregroundColor: colors.onPrimary,
+              backgroundColor: customColors.primary,
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 12.0),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8.0),
-                side: BorderSide(width: 2.0, color: colors.primary),
+                side: BorderSide(width: 2.0, color: customColors.primary!),
               ),
             ),
             child: isLoading

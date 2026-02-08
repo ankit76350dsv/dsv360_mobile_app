@@ -1,8 +1,7 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/time_entry_model.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_text_styles.dart';
 import '../widgets/time_entry_card.dart';
 import 'add_time_entry_dialog.dart';
 
@@ -78,10 +77,12 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
     });
   }
 
-  void _showFilterDialog() {
+  void _showFilterDialog(BuildContext context) {
+    final customColors = Theme.of(context).custom;
+
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.cardBackground,
+      backgroundColor: customColors.cardBackground,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -120,6 +121,7 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
   }
 
   void _editTimeEntry(TimeEntry entry) {
+    final customColors = Theme.of(context).custom;
     showDialog(
       context: context,
       builder: (context) => AddTimeEntryDialog(
@@ -138,9 +140,9 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
           _applyFilters();
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Time entry updated'),
-            backgroundColor: AppColors.primary,
+            backgroundColor: customColors.primary,
           ),
         );
       }
@@ -148,24 +150,25 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
   }
 
   void _deleteTimeEntry(TimeEntry entry) {
+    final customColors = Theme.of(context).custom;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.cardBackground,
-        title: const Text(
+        backgroundColor: customColors.cardBackground,
+        title: Text(
           'Delete Time Entry',
-          style: TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: customColors.textPrimary),
         ),
         content: Text(
           'Are you sure you want to delete this time entry?',
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: customColors.textPrimary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(color: AppColors.primary),
+              style: TextStyle(color: customColors.primary),
             ),
           ),
           TextButton(
@@ -175,14 +178,14 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
               });
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text('Time entry deleted'),
-                  backgroundColor: AppColors.error,
+                  backgroundColor: customColors.error,
                 ),
               );
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Delete'),
+            style: TextButton.styleFrom(foregroundColor: customColors.error),
+            child: Text('Delete'),
           ),
         ],
       ),
@@ -191,11 +194,12 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: customColors.background,
       appBar: AppBar(
         title: Text('${widget.taskName} - Time Entries'),
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: customColors.cardBackground,
       ),
       body: Column(
         children: [
@@ -206,11 +210,11 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ElevatedButton.icon(
-                  onPressed: _showFilterDialog,
+                  onPressed: () =>_showFilterDialog(context),
                   icon: const Icon(Icons.filter_list),
                   label: const Text('Filters'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: customColors.primary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -228,7 +232,7 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: customColors.primary,
                     deleteIcon: const Icon(Icons.close, size: 16, color: Colors.white),
                     onDeleted: _clearFilters,
                   ),
@@ -246,13 +250,15 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
                         Icon(
                           Icons.schedule_outlined,
                           size: 64,
-                          color: AppColors.textSecondary.withValues(alpha: 0.5),
+                          color: customColors.textSecondary!.withValues(alpha: 0.5),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'No time entries found',
-                          style: AppTextStyles.bodyLarge.copyWith(
-                            color: AppColors.textSecondary,
+                          style: TextStyle(
+                            color: customColors.textSecondary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.normal,
                           ),
                         ),
                       ],
@@ -310,6 +316,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
   }
 
   void _selectFromDate() async {
+    final customColors = Theme.of(context).custom;
     final picked = await showDatePicker(
       context: context,
       initialDate: _tempFromDate ?? DateTime.now(),
@@ -319,9 +326,9 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.dark(
-              primary: AppColors.primary,
-              surface: AppColors.cardBackground,
-              onSurface: AppColors.textPrimary,
+              primary: customColors.primary!,
+              surface: customColors.cardBackground!,
+              onSurface: customColors.textPrimary!,
               onPrimary: Colors.white,
             ),
           ),
@@ -337,6 +344,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
   }
 
   void _selectToDate() async {
+    final customColors = Theme.of(context).custom;
     final picked = await showDatePicker(
       context: context,
       initialDate: _tempToDate ?? DateTime.now(),
@@ -346,9 +354,9 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.dark(
-              primary: AppColors.primary,
-              surface: AppColors.cardBackground,
-              onSurface: AppColors.textPrimary,
+              primary: customColors.primary!,
+              surface: customColors.cardBackground!,
+              onSurface: customColors.textPrimary!,
               onPrimary: Colors.white,
             ),
           ),
@@ -365,10 +373,11 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: customColors.cardBackground,
+        borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(32),
           topRight: Radius.circular(32),
         ),
@@ -391,7 +400,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.textSecondary.withValues(alpha: 0.3),
+                    color: customColors.textSecondary!.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -399,10 +408,10 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
               const SizedBox(height: 20),
 
               // Header
-              const Text(
+              Text(
                 'Filter by:',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: customColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -418,29 +427,29 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                       onTap: _selectFromDate,
                       decoration: InputDecoration(
                         label: const Text('From'),
-                        labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+                        labelStyle: TextStyle(color: customColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
                         floatingLabelBehavior: FloatingLabelBehavior.auto,
-                        prefixIcon: const Icon(Icons.calendar_today_outlined, color: AppColors.textSecondary, size: 20),
+                        prefixIcon: Icon(Icons.calendar_today_outlined, color: customColors.textSecondary, size: 20),
                         filled: true,
-                        fillColor: AppColors.inputFill,
+                        fillColor: customColors.inputFill,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                          borderSide: BorderSide(color: customColors.inputBorder!, width: 1.5),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                          borderSide: BorderSide(color: customColors.inputBorder!, width: 1.5),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                          borderSide: BorderSide(color: customColors.primary!, width: 1.5),
                         ),
                         contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                       ),
                       controller: TextEditingController(
                         text: _tempFromDate != null ? DateFormat('dd-MM-yyyy').format(_tempFromDate!) : '',
                       ),
-                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
+                      style: TextStyle(color: customColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -450,29 +459,29 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                       onTap: _selectToDate,
                       decoration: InputDecoration(
                         label: const Text('To'),
-                        labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+                        labelStyle: TextStyle(color: customColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
                         floatingLabelBehavior: FloatingLabelBehavior.auto,
-                        prefixIcon: const Icon(Icons.calendar_today_outlined, color: AppColors.textSecondary, size: 20),
+                        prefixIcon: Icon(Icons.calendar_today_outlined, color: customColors.textSecondary, size: 20),
                         filled: true,
-                        fillColor: AppColors.inputFill,
+                        fillColor: customColors.inputFill,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                          borderSide: BorderSide(color: customColors.inputBorder!, width: 1.5),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                          borderSide: BorderSide(color: customColors.inputBorder!, width: 1.5),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
-                          borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+                          borderSide: BorderSide(color: customColors.primary!, width: 1.5),
                         ),
                         contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
                       ),
                       controller: TextEditingController(
                         text: _tempToDate != null ? DateFormat('dd-MM-yyyy').format(_tempToDate!) : '',
                       ),
-                      style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
+                      style: TextStyle(color: customColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
                     ),
                   ),
                 ],
@@ -482,33 +491,33 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
               // Entry Type Dropdown
               DropdownButtonFormField<String>(
                 value: _tempBillableFilter,
-                hint: const Text(
+                hint: Text(
                   'Entry Type',
-                  style: TextStyle(color: AppColors.textHint),
+                  style: TextStyle(color: customColors.textHint),
                 ),
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
+                style: TextStyle(
+                  color: customColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
-                dropdownColor: AppColors.inputFill,
+                dropdownColor: customColors.inputFill,
                 decoration: InputDecoration(
                   labelText: 'Entry Type',
-                  labelStyle: const TextStyle(
-                    color: AppColors.textSecondary,
+                  labelStyle: TextStyle(
+                    color: customColors.textSecondary,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
                   filled: true,
-                  fillColor: AppColors.inputFill,
-                  prefixIcon: const Icon(Icons.category_outlined, color: AppColors.textSecondary),
+                  fillColor: customColors.inputFill,
+                  prefixIcon: Icon(Icons.category_outlined, color: customColors.textSecondary),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                    borderSide: BorderSide(color: customColors.inputBorder!, width: 1.5),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                    borderSide: BorderSide(color: customColors.inputBorder!, width: 1.5),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -516,26 +525,26 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 ),
-                items: const [
+                items: [
                   DropdownMenuItem(
                     value: 'All',
                     child: Text(
                       'All Entries',
-                      style: TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(color: customColors.textPrimary),
                     ),
                   ),
                   DropdownMenuItem(
                     value: 'Billable',
                     child: Text(
                       'Billable Only',
-                      style: TextStyle(color: AppColors.primary),
+                      style: TextStyle(color: customColors.primary),
                     ),
                   ),
                   DropdownMenuItem(
                     value: 'Non-Billable',
                     child: Text(
                       'Non-Billable Only',
-                      style: TextStyle(color: AppColors.statusPending),
+                      style: TextStyle(color: customColors.statusPending),
                     ),
                   ),
                 ],
@@ -557,10 +566,10 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                     onPressed: () {
                       widget.onClear();
                     },
-                    child: const Text(
+                    child: Text(
                       'Reset All',
                       style: TextStyle(
-                        color: AppColors.error,
+                        color: customColors.error,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -571,7 +580,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                       widget.onApply(_tempFromDate, _tempToDate, _tempBillableFilter);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: customColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(

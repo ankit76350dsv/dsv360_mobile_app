@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
@@ -34,8 +35,8 @@ class _UsersPageState extends ConsumerState<UsersPage> {
   Widget build(BuildContext context) {
     final usersAsync = ref.watch(usersRepositoryProvider);
     final query = ref.watch(usersSearchQueryProvider);
-    final colors = Theme.of(context).colorScheme;
     final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final customColors = Theme.of(context).custom;
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -73,6 +74,8 @@ class _UsersPageState extends ConsumerState<UsersPage> {
           }
 
           return FloatingActionButton(
+            backgroundColor: customColors.primary,
+            foregroundColor: Colors.white,
             shape: const CircleBorder(),
             onPressed: () {
               Navigator.push(
@@ -185,7 +188,8 @@ class _UserCardState extends ConsumerState<UserCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    // final colors = theme.colorScheme;
+    final customColors = theme.custom;
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final verificationStatus = widget.user.verificationStatus;
     final isActive = widget.user.workStatus == WorkStatus.active;
@@ -233,13 +237,13 @@ class _UserCardState extends ConsumerState<UserCard> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: colors.primary,
+                          color: customColors.primary,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           "U${widget.user.userId.substring(widget.user.userId.length - 4)}",
                           style: TextStyle(
-                            color: theme.colorScheme.surface,
+                            color: Colors.white,
                             fontSize: 12,
                           ),
                         ),
@@ -247,7 +251,7 @@ class _UserCardState extends ConsumerState<UserCard> {
                       const Spacer(),
                       CustomChip(
                         label: widget.user.role,
-                        color: colors.primary,
+                        color: customColors.primary!,
                         icon: null,
                       ),
                       const SizedBox(width: 6.0),
@@ -360,8 +364,8 @@ class _UserCardState extends ConsumerState<UserCard> {
                             isActive ? 'Active' : 'Inactive',
                             style: TextStyle(
                               color: isActive
-                                  ? colors.primary
-                                  : colors.onSurfaceVariant,
+                                  ? customColors.primary
+                                  : customColors.inputFill,
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
                             ),
@@ -439,7 +443,7 @@ class _UserCardState extends ConsumerState<UserCard> {
                                 usersList: widget.userList,
                               );
                             },
-                            color: colors.error,
+                            color: customColors.error,
                           ),
                         ],
                       ),
@@ -472,16 +476,16 @@ class _UserCardState extends ConsumerState<UserCard> {
   }
 
   Widget _userInfoRow(IconData icon, String text) {
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
 
     return Row(
       children: [
-        Icon(icon, size: 18, color: theme.colorScheme.tertiary),
+        Icon(icon, size: 18, color: customColors.textSecondary),
         const SizedBox(width: 8),
         Text(
           text,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.tertiary,
+          style: TextStyle(
+            color: customColors.textSecondary,
           ),
         ),
       ],

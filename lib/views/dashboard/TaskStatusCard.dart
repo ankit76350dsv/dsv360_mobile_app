@@ -1,7 +1,8 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/models/dashboard_model.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:dsv360/core/constants/app_colors.dart';
+// import 'package:dsv360/core/constants/app_colors.dart';
 
 class TaskStatusCard extends StatelessWidget {
   final YearTaskData taskData;
@@ -11,25 +12,32 @@ class TaskStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height * 0.28;
+    final customColors = Theme.of(context).custom;
+
     return Card(
       elevation: 0,
-      color: AppColors.cardBackground,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
-            const ListTile(
+            ListTile(
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(
-                backgroundColor: AppColors.background,
-                child: Icon(Icons.schedule, color: AppColors.textPrimary),
+                backgroundColor: customColors.inputFill,
+                child: Icon(Icons.schedule, color: customColors.textPrimary),
               ),
               title: Text(
                 'Task Status',
-                style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: customColors.textPrimary,
+                ),
               ),
-              trailing: Icon(Icons.filter_list, color: AppColors.textSecondary),
+              trailing: Icon(
+                Icons.filter_list,
+                color: customColors.textPrimary!.withOpacity(0.6),
+              ),
             ),
             ConstrainedBox(
               constraints: BoxConstraints(maxHeight: height, minHeight: 140),
@@ -49,10 +57,13 @@ class TaskStatusContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final custom = Theme.of(context).custom;
     final total = taskData.open + taskData.inProgress + taskData.closed;
     // Avoid division by zero
     final openPct = total == 0 ? 0.0 : (taskData.open / total) * 100;
-    final inProgressPct = total == 0 ? 0.0 : (taskData.inProgress / total) * 100;
+    final inProgressPct = total == 0
+        ? 0.0
+        : (taskData.inProgress / total) * 100;
     final closedPct = total == 0 ? 0.0 : (taskData.closed / total) * 100;
 
     return Row(
@@ -64,34 +75,37 @@ class TaskStatusContent extends StatelessWidget {
               centerSpaceRadius: 30,
               sections: [
                 PieChartSectionData(
-                  color: AppColors.statusCompleted,
+                  color: custom.statusCompleted,
                   value: closedPct,
                   title: '${closedPct.toStringAsFixed(0)}%',
                   radius: 40,
                   titleStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textWhite),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
                 PieChartSectionData(
-                  color: AppColors.statusInProgress,
+                  color: custom.statusInProgress,
                   value: openPct,
                   title: '${openPct.toStringAsFixed(0)}%',
                   radius: 40,
                   titleStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textWhite),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
                 PieChartSectionData(
-                  color: AppColors.error,
+                  color: custom.error,
                   value: inProgressPct,
                   title: '${inProgressPct.toStringAsFixed(0)}%',
                   radius: 40,
                   titleStyle: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textWhite),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ],
             ),
@@ -102,19 +116,26 @@ class TaskStatusContent extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-             _LegendDot(color: AppColors.statusCompleted, label: 'Completed (${taskData.closed})'),
+            _LegendDot(
+              color: custom.statusCompleted!,
+              label: 'Completed (${taskData.closed})',
+            ),
             const SizedBox(height: 8),
-             _LegendDot(color: AppColors.statusInProgress, label: 'Open (${taskData.open})'),
+            _LegendDot(
+              color: custom.statusInProgress!,
+              label: 'Open (${taskData.open})',
+            ),
             const SizedBox(height: 8),
-             _LegendDot(color: AppColors.error, label: 'In Progress (${taskData.inProgress})'),
+            _LegendDot(
+              color: custom.error!,
+              label: 'In Progress (${taskData.inProgress})',
+            ),
           ],
         ),
       ],
     );
   }
 }
-
-
 
 class _LegendDot extends StatelessWidget {
   final Color color;
@@ -123,14 +144,26 @@ class _LegendDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      Container(
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Container(
           width: 10,
           height: 10,
           decoration: BoxDecoration(
-              color: color, borderRadius: BorderRadius.circular(4))),
-      const SizedBox(width: 6),
-      Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary))
-    ]);
+            color: color,
+            borderRadius: BorderRadius.circular(4),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+          ),
+        ),
+      ],
+    );
   }
 }

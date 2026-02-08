@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
@@ -24,7 +25,6 @@ class UserDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
 
     return DefaultTabController(
       length: 3,
@@ -72,22 +72,20 @@ class UserDetailsPage extends StatelessWidget {
 class _UserTabs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
       child: Container(
         height: 52,
         decoration: BoxDecoration(
-          color: colors.surfaceVariant.withOpacity(
-            0.7,
-          ), // light grey background
+          color: customColors.tabbarBackground,
           borderRadius: BorderRadius.circular(14),
         ),
         padding: EdgeInsets.all(4.0),
         child: TabBar(
           indicator: BoxDecoration(
-            color: colors.secondary, // white pill
+            color: customColors.tabbarIndicator, // white pill
             borderRadius: BorderRadius.circular(12),
             boxShadow: [
               BoxShadow(
@@ -98,8 +96,8 @@ class _UserTabs extends StatelessWidget {
             ],
           ),
           indicatorSize: TabBarIndicatorSize.tab,
-          labelColor: colors.primary,
-          unselectedLabelColor: colors.onSurfaceVariant,
+          labelColor: customColors.textPrimary,
+          unselectedLabelColor: customColors.textSecondary,
           labelStyle: const TextStyle(fontWeight: FontWeight.w600),
           dividerColor: Colors.transparent, // removes bottom line
           tabs: const [
@@ -127,7 +125,7 @@ class _InfoTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
     final verificationStatus = user.verificationStatus;
     final workStatus = user.workStatus;
     final usersAsync = ref.watch(usersRepositoryProvider);
@@ -197,7 +195,7 @@ class _InfoTab extends ConsumerWidget {
             icon: Icons.work,
             label: "Role",
             child: CustomChip(
-              color: colors.primary,
+              color: customColors.primary!,
               label: user.role,
               icon: null,
             ),
@@ -253,14 +251,14 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-          color: colors.primary,
+          color: customColors.primary,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -289,7 +287,7 @@ class _InfoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
     final textTheme = Theme.of(context).textTheme;
 
     return Card(
@@ -307,8 +305,8 @@ class _InfoTile extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: colors.primary.withOpacity(0.4),
-                  child: Icon(icon, size: 20, color: colors.primary),
+                  backgroundColor: customColors.primary!.withOpacity(0.2),
+                  child: Icon(icon, size: 20, color: customColors.primary),
                 ),
                 const SizedBox(width: 12.0),
                 Column(
@@ -318,7 +316,7 @@ class _InfoTile extends StatelessWidget {
                     Text(
                       label,
                       style: textTheme.bodyMedium?.copyWith(
-                        color: colors.tertiary,
+                        color: customColors.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -540,9 +538,7 @@ class _ProjectCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
-    final textTheme = theme.textTheme;
+    final colorScheme = Theme.of(context).custom;
 
     return Card(
       shape: RoundedRectangleBorder(
@@ -565,18 +561,18 @@ class _ProjectCard extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: colors.primary,
+                        color: colorScheme.primary,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         "P${project.id.substring(project.id.length - 4)}",
-                        style: TextStyle(color: theme.colorScheme.surface),
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
                     const Spacer(),
                     CustomChip(
                       label: project.status,
-                      color: colors.primary,
+                      color: colorScheme.primary!,
                       icon: null,
                     ),
                   ],
@@ -600,7 +596,11 @@ class _ProjectCard extends StatelessWidget {
                         children: [
                           Text(
                             project.projectName,
-                            style: theme.textTheme.bodyLarge,
+                            style: TextStyle(
+                              color: colorScheme.textSecondary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -691,8 +691,7 @@ class _TaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
+    final customColors = Theme.of(context).custom;
     final theme = Theme.of(context);
 
     return Card(
@@ -717,18 +716,18 @@ class _TaskCard extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: colors.primary,
+                        color: customColors.primary,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         "T${task.taskId.substring(task.taskId.length - 4)}",
-                        style: TextStyle(color: theme.colorScheme.surface),
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
                     const Spacer(),
                     CustomChip(
                       label: task.status,
-                      color: colors.primary,
+                      color: customColors.primary!,
                       icon: null,
                     ),
                   ],
@@ -752,7 +751,11 @@ class _TaskCard extends StatelessWidget {
                         children: [
                           Text(
                             task.taskName,
-                            style: theme.textTheme.bodyLarge,
+                            style: TextStyle(
+                              color: customColors.textSecondary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),

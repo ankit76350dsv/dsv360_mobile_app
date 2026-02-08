@@ -1,21 +1,21 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_text_styles.dart';
 
 class ScreenHeader extends StatelessWidget {
   final IconData icon;
   final String title;
-  final Color iconBackgroundColor;
+  final Color? iconBackgroundColor;
 
   const ScreenHeader({
     super.key,
     required this.icon,
     required this.title,
-    this.iconBackgroundColor = AppColors.primary,
+    this.iconBackgroundColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -23,19 +23,19 @@ class ScreenHeader extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: iconBackgroundColor,
+              color: iconBackgroundColor ?? customColors.primary,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 28,
-            ),
+            child: Icon(icon, color: Colors.white, size: 28),
           ),
           const SizedBox(width: 12),
           Text(
             title,
-            style: AppTextStyles.pageTitle,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 32,
+              color: customColors.textPrimary,
+            ),
           ),
         ],
       ),

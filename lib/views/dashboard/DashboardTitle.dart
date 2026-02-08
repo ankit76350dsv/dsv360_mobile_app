@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:dsv360/core/constants/app_colors.dart';
+import 'package:dsv360/core/constants/theme.dart';
+
 
 class DashboardTitle extends StatelessWidget {
   const DashboardTitle({super.key});
@@ -9,16 +10,17 @@ class DashboardTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final dateString = DateFormat('EEEE, d MMM').format(now);
+    final customColors = Theme.of(context).custom;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Dashboard',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+            color: customColors.textPrimary,
           ),
         ),
         const SizedBox(height: 4),
@@ -26,7 +28,7 @@ class DashboardTitle extends StatelessWidget {
           dateString,
           style: TextStyle(
             fontSize: 16,
-            color: AppColors.textSecondary,
+            color: customColors.textSecondary,
             fontWeight: FontWeight.w500,
           ),
         ),

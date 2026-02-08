@@ -1,8 +1,7 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_text_styles.dart';
 import '../../models/issue_model.dart';
 import '../../providers/issue_provider.dart';
 import '../widgets/custom_search_bar.dart';
@@ -52,6 +51,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
   }
 
   Future<void> _showAddIssueDialog({IssueModel? issue}) async {
+    final customColors = Theme.of(context).custom;
     final issueRepository = ref.read(issueRepositoryProvider);
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
@@ -69,31 +69,34 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
           content: Text(
             issue == null ? 'Issue added successfully' : 'Issue updated successfully',
           ),
-          backgroundColor: AppColors.primary,
+          backgroundColor: customColors.primary,
         ),
       );
     }
   }
-
+  
+  
   Future<void> _deleteIssue(IssueModel issue) async {
+    final customColors = Theme.of(context).custom;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.cardBackground,
-        title: const Text(
+        backgroundColor: customColors.cardBackground,
+        title: Text(
           'Delete Issue',
-          style: TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: customColors.textPrimary),
         ),
         content: Text(
           'Are you sure you want to delete "${issue.issueName}"?',
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: customColors.textPrimary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(color: AppColors.primary),
+              style: TextStyle(color: customColors.primary),
             ),
           ),
           TextButton(
@@ -105,9 +108,9 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                 ref.refresh(issueListProvider);
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Text('Issue deleted successfully'),
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: customColors.primary,
                     ),
                   );
                 }
@@ -116,13 +119,13 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Failed to delete issue: $e'),
-                      backgroundColor: AppColors.error,
+                      backgroundColor: customColors.error,
                     ),
                   );
                 }
               }
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: customColors.error),
             child: const Text('Delete'),
           ),
         ],
@@ -132,8 +135,9 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: Column(
         children: [
           // Header
@@ -185,14 +189,16 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                         Icon(
                           Icons.inbox_outlined,
                           size: 64,
-                          color: AppColors.textSecondary.withValues(alpha: 0.5),
+                          color: customColors.textSecondary!.withValues(alpha: 0.5),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           _searchQuery.isEmpty ? 'No issues yet' : 'No issues found',
-                          style: AppTextStyles.bodyLarge.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
+                          style: TextStyle(
+                            color: customColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.normal,
+                          )
                         ),
                       ],
                     ),
@@ -272,40 +278,44 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                     },
                   );
               },
-              loading: () => const Center(
+              loading: () => Center(
                 child: CircularProgressIndicator(
-                  color: AppColors.primary,
+                  color: customColors.primary,
                 ),
               ),
               error: (error, stack) => Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.error_outline,
                       size: 64,
-                      color: AppColors.error,
+                      color: customColors.error,
                     ),
                     const SizedBox(height: 16),
                     Text(
                       'Error loading issues',
-                      style: AppTextStyles.bodyLarge.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
+                      style: TextStyle(
+                            color: customColors.textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.normal,
+                          )
                     ),
                     const SizedBox(height: 8),
                     Text(
                       error.toString(),
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                      ),
+                      style: TextStyle(
+                            color: customColors.textSecondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.normal,
+                          ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () => ref.refresh(issueListProvider),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: customColors.primary,
                       ),
                       child: const Text('Retry'),
                     ),
@@ -318,7 +328,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddIssueDialog(),
-        backgroundColor: AppColors.primary,
+        backgroundColor: customColors.primary,
         shape: const CircleBorder(),
         child: const Icon(
           Icons.add,

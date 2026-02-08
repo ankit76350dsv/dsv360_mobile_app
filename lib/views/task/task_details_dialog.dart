@@ -1,6 +1,7 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../core/constants/app_colors.dart';
+// import '../../core/constants/app_colors.dart';
 import '../../models/task.dart';
 
 class TaskDetailsDialog extends StatelessWidget {
@@ -8,30 +9,33 @@ class TaskDetailsDialog extends StatelessWidget {
 
   const TaskDetailsDialog({super.key, required this.task});
 
-  Color _getStatusColor(String status) {
+  Color _getStatusColor(String status, BuildContext context) {
+    final customColors = Theme.of(context).custom;
     switch (status) {
       case 'Pending':
-        return AppColors.statusPending;
+        return customColors.statusPending!;
       case 'In Progress':
-        return AppColors.statusInProgress;
+        return customColors.statusInProgress!;
       case 'Completed':
-        return AppColors.statusCompleted;
+        return customColors.statusCompleted!;
       case 'On Hold':
-        return AppColors.error;
+        return customColors.error!;
       default:
-        return AppColors.textSecondary;
+        return customColors.textSecondary!;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    final customColors = Theme.of(context).custom;
+
     return Container(
       constraints: BoxConstraints(
         maxHeight: screenHeight * 0.75,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.cardBackground,
+      decoration: BoxDecoration(
+        color: customColors.cardBackground,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
@@ -48,7 +52,7 @@ class TaskDetailsDialog extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.textSecondary.withValues(alpha: 0.3),
+                  color: customColors.textSecondary!.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -64,7 +68,7 @@ class TaskDetailsDialog extends StatelessWidget {
               child: Text(
                 'Task Details',
                 style: TextStyle(
-                  color: AppColors.textPrimary,
+                  color: customColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -89,6 +93,7 @@ class TaskDetailsDialog extends StatelessWidget {
                           value: task.taskId.length > 4 
                               ? 'T${task.taskId.substring(task.taskId.length - 4)}' 
                               : 'T${task.taskId}',
+                          context: context
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -97,6 +102,7 @@ class TaskDetailsDialog extends StatelessWidget {
                           icon: Icons.assignment,
                           label: 'Task Name',
                           value: task.taskName,
+                          context: context
                         ),
                       ),
                     ],
@@ -111,6 +117,7 @@ class TaskDetailsDialog extends StatelessWidget {
                           icon: Icons.person,
                           label: 'Assigned To',
                           value: task.assignedTo ?? 'Not assigned',
+                          context: context
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -119,6 +126,7 @@ class TaskDetailsDialog extends StatelessWidget {
                           icon: Icons.folder_outlined,
                           label: 'Project Name',
                           value: task.projectId,
+                          context: context
                         ),
                       ),
                     ],
@@ -133,6 +141,7 @@ class TaskDetailsDialog extends StatelessWidget {
                           icon: Icons.calendar_today,
                           label: 'Start Date',
                           value: task.startDate != null ? DateFormat('dd/MM/yy').format(task.startDate!) : 'N/A',
+                          context: context
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -141,6 +150,7 @@ class TaskDetailsDialog extends StatelessWidget {
                           icon: Icons.event,
                           label: 'End Date',
                           value: task.endDate != null ? DateFormat('dd/MM/yy').format(task.endDate!) : 'N/A',
+                          context: context
                         ),
                       ),
                     ],
@@ -151,7 +161,8 @@ class TaskDetailsDialog extends StatelessWidget {
                   _buildStatusCard(
                     label: 'Status',
                     value: task.status,
-                    color: _getStatusColor(task.status),
+                    color: _getStatusColor(task.status, context),
+                    context: context
                   ),
                   const SizedBox(height: 12),
                   
@@ -159,6 +170,7 @@ class TaskDetailsDialog extends StatelessWidget {
                   _buildTypeCard(
                     label: 'Type',
                     value: task.status,
+                    context: context
                   ),
                   const SizedBox(height: 12),
                   
@@ -168,6 +180,7 @@ class TaskDetailsDialog extends StatelessWidget {
                       icon: Icons.description,
                       label: 'Description',
                       value: task.description!,
+                      context: context
                     ),
                 ],
               ),
@@ -182,11 +195,14 @@ class TaskDetailsDialog extends StatelessWidget {
     required IconData icon,
     required String label,
     required String value,
+    required BuildContext context
   }) {
+    final customColors = Theme.of(context).custom;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: customColors.cardBackground,
         border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
@@ -202,13 +218,13 @@ class TaskDetailsDialog extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: AppColors.primary, size: 18),
+              Icon(icon, color: customColors.primary, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: customColors.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -221,8 +237,8 @@ class TaskDetailsDialog extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
+            style: TextStyle(
+              color: customColors.textPrimary,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -238,11 +254,14 @@ class TaskDetailsDialog extends StatelessWidget {
     required String label,
     required String value,
     required Color color,
+    required BuildContext context
   }) {
+    final customColors = Theme.of(context).custom;
+    
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: customColors.cardBackground,
         border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
@@ -260,8 +279,8 @@ class TaskDetailsDialog extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: customColors.textSecondary,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -291,12 +310,15 @@ class TaskDetailsDialog extends StatelessWidget {
   Widget _buildTypeCard({
     required String label,
     required String value,
+    required BuildContext context
   }) {
+    final customColors = Theme.of(context).custom;
+    
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: customColors.cardBackground,
         border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
@@ -309,13 +331,13 @@ class TaskDetailsDialog extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.category, color: AppColors.primary, size: 18),
+          Icon(Icons.category, color: customColors.primary, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: customColors.textSecondary,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -324,8 +346,8 @@ class TaskDetailsDialog extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             value,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
+            style: TextStyle(
+              color: customColors.textPrimary,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),

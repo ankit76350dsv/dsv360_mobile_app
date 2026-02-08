@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
@@ -82,8 +83,8 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -110,7 +111,7 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
                         icon: const Icon(Icons.list_alt, size: 18),
                         label: const Text('View All Feedbacks'),
                         style: TextButton.styleFrom(
-                          foregroundColor: AppColors.primary,
+                          foregroundColor: customColors.primary,
                         ),
                       ),
                     ),
@@ -161,8 +162,8 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
                           // Upload Images Section
                           Text(
                             AppStrings.uploadUpTo3Images,
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
+                            style: TextStyle(
+                              color: customColors.textPrimary,
                               fontSize: 16,
                             ),
                           ),
@@ -182,17 +183,17 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
                                         width: 80,
                                         height: 80,
                                         decoration: BoxDecoration(
-                                          color: AppColors.inputFill,
+                                          color: customColors.inputFill,
                                           borderRadius: BorderRadius.circular(8),
                                         ),
                                         child: Image.asset(
                                           'assets/images/feedback.png',
                                           fit: BoxFit.cover,
                                           errorBuilder: (context, error, stackTrace) {
-                                            return const Icon(
+                                            return Icon(
                                               Icons.image,
                                               size: 40,
-                                              color: AppColors.textSecondary,
+                                              color: customColors.textSecondary,
                                             );
                                           },
                                         ),
@@ -202,7 +203,7 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
                                       top: -8,
                                       right: -8,
                                       child: IconButton(
-                                        icon: const Icon(Icons.cancel, color: AppColors.error),
+                                        icon: Icon(Icons.cancel, color: customColors.error),
                                         onPressed: () {
                                           setState(() {
                                             _selectedImages.removeAt(entry.key);
@@ -223,8 +224,8 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
                             icon: const Icon(Icons.attach_file, size: 18),
                             label: const Text('ATTACHMENT', style: TextStyle(fontSize: 13)),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.primary,
-                              side: const BorderSide(color: AppColors.primary),
+                              foregroundColor: customColors.primary,
+                              side: BorderSide(color: customColors.primary!),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 8,

@@ -1,5 +1,5 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:dsv360/core/constants/app_colors.dart';
 
 class GlobalError extends StatelessWidget {
   final String message;
@@ -15,6 +15,8 @@ class GlobalError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -24,24 +26,24 @@ class GlobalError extends StatelessWidget {
             Icon(
               isNetworkError ? Icons.wifi_off_rounded : Icons.error_outline_rounded,
               size: 64,
-              color: AppColors.textSecondary,
+              color: customColors.textSecondary,
             ),
             const SizedBox(height: 16),
             Text(
               isNetworkError ? 'No Internet Connection' : 'Something went wrong',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
+                color: customColors.textPrimary,
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: AppColors.textSecondary,
+                color: customColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
@@ -49,14 +51,14 @@ class GlobalError extends StatelessWidget {
             ElevatedButton(
               onPressed: onRetry,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: customColors.primary!,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              child: const Text('Retry'),
+              child: Text('Retry'),
             ),
           ],
         ),

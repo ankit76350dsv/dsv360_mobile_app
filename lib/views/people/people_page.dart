@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
@@ -56,7 +57,8 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    // final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -107,14 +109,14 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
             child: Container(
               height: 52,
               decoration: BoxDecoration(
-                color: colors.surface.withOpacity(0.7), // light grey background
+                color: customColors.tabbarBackground, // light grey background
                 borderRadius: BorderRadius.circular(14),
               ),
               padding: EdgeInsets.all(4.0),
               child: TabBar(
                 controller: _tabController,
                 indicator: BoxDecoration(
-                  color: colors.secondary, // white pill
+                  color: customColors.tabbarIndicator, // white pill
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -125,8 +127,8 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
                   ],
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
-                labelColor: colors.primary,
-                unselectedLabelColor: colors.onSurfaceVariant,
+                labelColor: customColors.textPrimary,
+                unselectedLabelColor: customColors.textSecondary,
                 labelStyle: const TextStyle(fontWeight: FontWeight.w600),
                 dividerColor: Colors.transparent,
                 tabs: const [
@@ -199,7 +201,8 @@ class _ActivitiesTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final activeUser = ref.watch(activeUserRepositoryProvider);
 
-    final theme = Theme.of(context);
+    // final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -213,7 +216,7 @@ class _ActivitiesTab extends ConsumerWidget {
           title: 'Check-in reminder',
           subtitle: 'Your shift is completed\n9:00 AM – 7:00 PM',
           icon: Icons.alarm,
-          accentColor: theme.colorScheme.primary,
+          accentColor: customColors.primary!,
         ),
         _WorkScheduleCard(weekRange: _getCurrentWeekRange()),
         _TimeLogsCard(),
@@ -229,8 +232,7 @@ class _WorkScheduleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    final customColors = Theme.of(context).custom;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
@@ -239,10 +241,7 @@ class _WorkScheduleCard extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colors.outline.withOpacity(0.1)),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -257,15 +256,20 @@ class _WorkScheduleCard extends StatelessWidget {
               children: [
                 Icon(Icons.calendar_today, size: 18, color: Colors.blueAccent),
                 const SizedBox(width: 8),
-                Text('Work Schedule', style: theme.textTheme.titleMedium),
+                Text(
+                  'Work Schedule',
+                  style: TextStyle(
+                    color: customColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
               weekRange,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-              ),
+              style: TextStyle(color: customColors.textSecondary),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -288,8 +292,8 @@ class _WorkScheduleCard extends StatelessWidget {
                     children: [
                       Text(
                         dayName,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colors.onSurfaceVariant,
+                        style: TextStyle(
+                          color: customColors.textSecondary,
                           fontSize: 11,
                         ),
                       ),
@@ -299,7 +303,7 @@ class _WorkScheduleCard extends StatelessWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 14,
-                          color: isToday ? colors.primary : null,
+                          color: isToday ? customColors.primary : null,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -310,7 +314,7 @@ class _WorkScheduleCard extends StatelessWidget {
                               'Today',
                               style: TextStyle(
                                 fontSize: 10,
-                                color: colors.onSurfaceVariant.withOpacity(0.7),
+                                color: customColors.textSecondary,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -318,7 +322,7 @@ class _WorkScheduleCard extends StatelessWidget {
                               height: 2,
                               width: 20,
                               decoration: BoxDecoration(
-                                color: colors.primary,
+                                color: customColors.primary,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                             ),
@@ -329,7 +333,7 @@ class _WorkScheduleCard extends StatelessWidget {
                           'Weekend',
                           style: TextStyle(
                             fontSize: 10,
-                            color: colors.onSurfaceVariant.withOpacity(0.7),
+                            color: customColors.textSecondary,
                           ),
                         )
                       else
@@ -361,14 +365,17 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
 
     return Card(
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border: Border(left: BorderSide(color: accentColor, width: 2)),
+          border: Border(
+            left: BorderSide(color: customColors.primary!, width: 2),
+          ),
         ),
         child: Row(
           children: [
@@ -388,7 +395,10 @@ class _InfoCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: customColors.textSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -465,14 +475,18 @@ class _TimeLogsContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    // final theme = Theme.of(context);
+    // final colors = theme.colorScheme;
+
+    final customColors = Theme.of(context).custom;
 
     return Card(
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          border: Border(left: BorderSide(color: colors.primary, width: 2)),
+          border: Border(
+            left: BorderSide(color: customColors.primary!, width: 2),
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -482,8 +496,10 @@ class _TimeLogsContent extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               child: Text(
                 "Today's Time Logs",
-                style: theme.textTheme.titleMedium?.copyWith(
+                style: TextStyle(
+                  fontSize: 16.0,
                   fontWeight: FontWeight.w600,
+                  color: customColors.textPrimary,
                 ),
               ),
             ),
@@ -493,7 +509,7 @@ class _TimeLogsContent extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 border: Border(
-                  bottom: BorderSide(color: colors.outlineVariant),
+                  bottom: BorderSide(color: customColors.greyBorder!),
                 ),
               ),
               child: Row(
@@ -511,8 +527,9 @@ class _TimeLogsContent extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 child: Text(
                   'No check-in/check-out logs found',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: colors.onSurfaceVariant,
+                  style: TextStyle(
+                    fontSize: 14.0,
+                    color: customColors.textSecondary,
                   ),
                 ),
               )
@@ -525,9 +542,7 @@ class _TimeLogsContent extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     border: Border(
-                      top: BorderSide(
-                        color: colors.outlineVariant.withOpacity(0.4),
-                      ),
+                      top: BorderSide(color: customColors.greyBorder!),
                     ),
                   ),
                   child: Row(
@@ -536,7 +551,7 @@ class _TimeLogsContent extends StatelessWidget {
                         child: Text(
                           _formatTime(log.checkIn),
                           style: TextStyle(
-                            color: colors.primary,
+                            color: customColors.primary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -548,8 +563,8 @@ class _TimeLogsContent extends StatelessWidget {
                               : '--:--:--',
                           style: TextStyle(
                             color: log.checkOut != null
-                                ? colors.error
-                                : colors.onSurfaceVariant,
+                                ? customColors.error
+                                : customColors.textSecondary,
                           ),
                         ),
                       ),
@@ -558,7 +573,7 @@ class _TimeLogsContent extends StatelessWidget {
                           _formatTotalTime(log.totalTime),
                           textAlign: TextAlign.right,
                           style: TextStyle(
-                            color: colors.primary,
+                            color: customColors.primary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -582,13 +597,16 @@ class _HeaderCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
     return Expanded(
       child: Text(
         text,
         textAlign: alignRight ? TextAlign.right : TextAlign.left,
-        style: Theme.of(
-          context,
-        ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+        style: TextStyle(
+          fontSize: 14.0,
+          fontWeight: FontWeight.w600,
+          color: customColors.textPrimary,
+        ),
       ),
     );
   }
@@ -609,7 +627,7 @@ class _LeaveTab extends ConsumerWidget {
       leaveSummaryRepositoryProvider(userId: userId, username: username),
     );
 
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
     final connectivityStatus = ref.watch(connectivityStatusProvider);
 
     return Scaffold(
@@ -653,56 +671,57 @@ class _LeaveTab extends ConsumerWidget {
                         ),
                       ),
                     ),
-                    data: (LeaveSummary leaveSummary) => 
-                    Column(
+                    data: (LeaveSummary leaveSummary) => Column(
                       children: [
                         Row(
-                        children: [
-                          Expanded(child: 
-                        LeaveSummaryCard(
-                          title: "Remaining",
-                          value: leaveSummary.remainingValue,
-                          subtitle: leaveSummary.remainingSubtitle,
-                          color: Colors.green,
-                          icon: Icons.eco,
+                          children: [
+                            Expanded(
+                              child: LeaveSummaryCard(
+                                title: "Remaining",
+                                value: leaveSummary.remainingValue,
+                                subtitle: leaveSummary.remainingSubtitle,
+                                color: Colors.green,
+                                icon: Icons.eco,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: LeaveSummaryCard(
+                                title: "Paid",
+                                value: leaveSummary.paidValue,
+                                subtitle: leaveSummary.paidSubtitle,
+                                color: Colors.redAccent,
+                                icon: Icons.money_off,
+                              ),
+                            ),
+                          ],
                         ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(child: 
-                        LeaveSummaryCard(
-                          title: "Paid",
-                          value: leaveSummary.paidValue,
-                          subtitle: leaveSummary.paidSubtitle,
-                          color: Colors.redAccent,
-                          icon: Icons.money_off,
-                        ),),
-                        ],),
                         Row(
-                        children: [
-                          Expanded(child: 
-                        LeaveSummaryCard(
-                          title: "Sick",
-                          value: leaveSummary.sickValue,
-                          subtitle: leaveSummary.sickSubtitle,
-                          color: Colors.lightGreen,
-                          icon: Icons.local_hospital,
-                        ),),
-                        const SizedBox(width: 12),
-                        Expanded(child: 
-                        LeaveSummaryCard(
-                          title: "Unpaid",
-                          value: leaveSummary.unpaidValue,
-                          subtitle: leaveSummary.unpaidSubtitle,
-                          color: Colors.lightBlue,
-                          icon: Icons.beach_access,
-                        ),),
-                      ],
+                          children: [
+                            Expanded(
+                              child: LeaveSummaryCard(
+                                title: "Sick",
+                                value: leaveSummary.sickValue,
+                                subtitle: leaveSummary.sickSubtitle,
+                                color: Colors.lightGreen,
+                                icon: Icons.local_hospital,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: LeaveSummaryCard(
+                                title: "Unpaid",
+                                value: leaveSummary.unpaidValue,
+                                subtitle: leaveSummary.unpaidSubtitle,
+                                color: Colors.lightBlue,
+                                icon: Icons.beach_access,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
-
-                  
 
                   const SizedBox(height: 24),
 
@@ -728,8 +747,8 @@ class _LeaveTab extends ConsumerWidget {
                           );
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: theme.colorScheme.onPrimary,
+                          backgroundColor: customColors.primary,
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(
                             vertical: 10.0,
                             horizontal: 20.0,
@@ -738,7 +757,7 @@ class _LeaveTab extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(200.0),
                             side: BorderSide(
                               width: 2.0,
-                              color: theme.colorScheme.primary,
+                              color: customColors.primary!,
                             ),
                           ),
                         ),
@@ -839,35 +858,35 @@ class LeaveSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
 
     return SizedBox(
       height: 160,
       child: Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
-      ),
-      child: Container(
-        padding: const EdgeInsets.only(left: 14.0, top: 14.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: color),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-            ),
-            Text(title, style: TextStyle(color: color)),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
-            ),
-          ],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
         ),
-      ),
+        child: Container(
+          padding: const EdgeInsets.only(left: 14.0, top: 14.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, color: color),
+              const SizedBox(height: 12),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(title, style: TextStyle(color: color)),
+              const SizedBox(height: 4),
+              Text(subtitle, style: TextStyle(fontSize: 14)),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -893,7 +912,7 @@ class LeaveTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
 
     return Card(
       shape: RoundedRectangleBorder(
@@ -917,7 +936,7 @@ class LeaveTile extends StatelessWidget {
                 ),
                 CustomChip(
                   label: status,
-                  color: theme.colorScheme.primary,
+                  color: customColors.primary!,
                   icon: null,
                 ),
               ],
@@ -937,11 +956,17 @@ class LeaveTile extends StatelessWidget {
                   children: [
                     Text(
                       "From $start",
-                      style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: customColors.textSecondary,
+                      ),
                     ),
                     Text(
                       "to $end",
-                      style: theme.textTheme.bodySmall?.copyWith(fontSize: 14),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: customColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -1015,7 +1040,7 @@ class _AttendanceTabState extends ConsumerState<_AttendanceTab> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final userId = activeUser?.userId ?? '';
 
@@ -1074,7 +1099,7 @@ class _AttendanceTabState extends ConsumerState<_AttendanceTab> {
                   ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: theme.colorScheme.primary),
+                    border: Border.all(color: customColors.greyBorder!),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1249,7 +1274,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final userId = activeUser?.userId ?? '';
     final username =
@@ -1301,7 +1326,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: colors.primary,
+                      color: customColors.primary,
                     ),
                   ),
                 ),
@@ -1319,14 +1344,14 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                             children: [
                               Icon(
                                 Icons.timer_outlined,
-                                color: colors.tertiary.withOpacity(0.9),
+                                color: customColors.textSecondary,
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
-                              const Text(
+                              Text(
                                 'TIME ELAPSED',
                                 style: TextStyle(
-                                  color: Color(0xFF6B7280),
+                                  color: customColors.textSecondary,
                                   letterSpacing: 1,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 14,
@@ -1361,7 +1386,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                             ),
                             decoration: BoxDecoration(
                               color: isCheckedIn
-                                  ? colors.primary.withOpacity(0.1)
+                                  ? customColors.primary!.withOpacity(0.1)
                                   : Colors.grey.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
@@ -1372,7 +1397,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                                   Icons.circle,
                                   size: 8,
                                   color: isCheckedIn
-                                      ? colors.primary
+                                      ? customColors.primary
                                       : Colors.grey,
                                 ),
                                 const SizedBox(width: 8),
@@ -1380,7 +1405,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                                   isCheckedIn ? 'Checked In' : 'Not Checked In',
                                   style: TextStyle(
                                     color: isCheckedIn
-                                        ? colors.primary
+                                        ? customColors.primary
                                         : Colors.grey,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w600,
@@ -1426,7 +1451,7 @@ class _TimeBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
     final theme = Theme.of(context);
 
     return Column(
@@ -1436,7 +1461,7 @@ class _TimeBox extends StatelessWidget {
           style: theme.textTheme.bodyMedium?.copyWith(
             fontSize: 26,
             fontWeight: FontWeight.w800,
-            color: colors.tertiary,
+            color: customColors.textSecondary,
           ),
         ),
         Text(
@@ -1444,7 +1469,7 @@ class _TimeBox extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             letterSpacing: 1.2,
-            color: colors.tertiary,
+            color: customColors.textSecondary,
           ),
         ),
       ],
@@ -1562,8 +1587,7 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    final customColors = Theme.of(context).custom;
     final usersAsync = ref.watch(usersRepositoryProvider);
     final connectivityStatus = ref.watch(connectivityStatusProvider);
 
@@ -1601,8 +1625,8 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                   /// Title
                   Text(
                     'Attendance Tracker',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: colors.primary,
+                    style: TextStyle(
+                      color: customColors.primary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

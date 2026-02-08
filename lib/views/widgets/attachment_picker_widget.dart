@@ -1,7 +1,7 @@
 import 'dart:io';
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/models/attachment.dart';
 
 class AttachmentPickerWidget extends StatefulWidget {
@@ -90,6 +90,7 @@ class AttachmentPickerWidgetState extends State<AttachmentPickerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -102,15 +103,15 @@ class AttachmentPickerWidgetState extends State<AttachmentPickerWidget> {
               color: Theme.of(context).colorScheme.secondary,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: AppColors.inputBorder,
+                color: customColors.inputBorder!,
                 width: 1.5,
               ),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.attach_file,
-                  color: AppColors.textSecondary,
+                  color: customColors.textSecondary,
                   size: 20,
                 ),
                 const SizedBox(width: 12),
@@ -121,15 +122,15 @@ class AttachmentPickerWidgetState extends State<AttachmentPickerWidget> {
                         : '${_selectedAttachments.length} file(s) selected',
                     style: TextStyle(
                       color: _selectedAttachments.isEmpty
-                          ? AppColors.textSecondary
-                          : AppColors.textPrimary,
+                          ? customColors.textSecondary
+                          : customColors.textPrimary,
                       fontSize: 14,
                     ),
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.add_circle_outline,
-                  color: AppColors.primary,
+                  color: customColors.primary,
                   size: 20,
                 ),
               ],
@@ -142,10 +143,10 @@ class AttachmentPickerWidgetState extends State<AttachmentPickerWidget> {
           const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
-              color: AppColors.cardBackground,
+              color: customColors.cardBackground,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: AppColors.inputBorder,
+                color: customColors.inputBorder!,
                 width: 1,
               ),
             ),
@@ -155,7 +156,7 @@ class AttachmentPickerWidgetState extends State<AttachmentPickerWidget> {
               itemCount: _selectedAttachments.length,
               separatorBuilder: (context, index) => Divider(
                 height: 1,
-                color: AppColors.inputBorder,
+                color: customColors.inputBorder,
               ),
               itemBuilder: (context, index) {
                 final attachment = _selectedAttachments[index];
@@ -168,7 +169,7 @@ class AttachmentPickerWidgetState extends State<AttachmentPickerWidget> {
                     children: [
                       Icon(
                         _getFileIcon(attachment),
-                        color: AppColors.primary,
+                        color: customColors.primary,
                         size: 24,
                       ),
                       const SizedBox(width: 12),
@@ -180,8 +181,8 @@ class AttachmentPickerWidgetState extends State<AttachmentPickerWidget> {
                               attachment.fileName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
+                              style: TextStyle(
+                                color: customColors.textPrimary,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -189,8 +190,8 @@ class AttachmentPickerWidgetState extends State<AttachmentPickerWidget> {
                             const SizedBox(height: 4),
                             Text(
                               '$sizeMB MB',
-                              style: const TextStyle(
-                                color: AppColors.textSecondary,
+                              style: TextStyle(
+                                color: customColors.textSecondary,
                                 fontSize: 12,
                               ),
                             ),
@@ -199,9 +200,9 @@ class AttachmentPickerWidgetState extends State<AttachmentPickerWidget> {
                       ),
                       IconButton(
                         onPressed: () => _removeAttachment(index),
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.close,
-                          color: AppColors.textSecondary,
+                          color: customColors.textSecondary,
                           size: 20,
                         ),
                         splashRadius: 20,

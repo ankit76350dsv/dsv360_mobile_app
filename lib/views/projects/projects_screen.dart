@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/network/connectivity_provider.dart';
@@ -6,8 +7,6 @@ import '../../core/widgets/global_error.dart';
 import '../../core/widgets/global_loader.dart';
 import '../../providers/project_provider.dart';
 import '../../providers/employee_provider.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_text_styles.dart';
 import '../../core/constants/auth_manager.dart';
 import '../../models/project_model.dart';
 import '../widgets/custom_search_bar.dart';
@@ -60,10 +59,11 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     }).toList();
   }
 
-  Future<void> _showAddProjectDialog({ProjectModel? project}) async {
+  Future<void> _showAddProjectDialog({ProjectModel? project, required BuildContext context}) async {
+    final customColors = Theme.of(context).custom;
     final projectRepository = ref.read(projectRepositoryProvider);
     final employeeRepository = ref.read(employeeRepositoryProvider);
-    
+
     final result = await Navigator.of(context).push<Map<String, dynamic>>(
       MaterialPageRoute(
         builder: (context) => AddProjectDialog(
@@ -73,21 +73,24 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
         ),
       ),
     );
-    
+
     // Refresh the list if operation was successful
     if (result != null && result['success'] == true && mounted) {
       ref.refresh(projectListProvider);
       final action = result['action'] ?? 'saved';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Project ${action == 'create' ? 'created' : 'updated'} successfully'),
-          backgroundColor: AppColors.avatarBackground,
+          content: Text(
+            'Project ${action == 'create' ? 'created' : 'updated'} successfully',
+          ),
+          backgroundColor: customColors.avatarBackground,
         ),
       );
     }
   }
 
-  void _deleteProject(ProjectModel project) {
+  void _deleteProject(ProjectModel project, BuildContext context) {
+    final customColors = Theme.of(context).custom;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -103,17 +106,17 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              
+
               try {
                 final projectRepository = ref.read(projectRepositoryProvider);
                 await projectRepository.deleteProject(project.id);
-                
+
                 if (mounted) {
                   ref.refresh(projectListProvider);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Text('Project deleted successfully'),
-                      backgroundColor: AppColors.avatarBackground,
+                      backgroundColor: customColors.avatarBackground,
                     ),
                   );
                 }
@@ -121,14 +124,16 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Failed to delete project: ${e.toString()}'),
-                      backgroundColor: AppColors.error,
+                      content: Text(
+                        'Failed to delete project: ${e.toString()}',
+                      ),
+                      backgroundColor: customColors.error,
                     ),
                   );
                 }
               }
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            style: TextButton.styleFrom(foregroundColor: customColors.error),
             child: const Text('Delete'),
           ),
         ],
@@ -138,8 +143,10 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: customColors.background,
       drawer: const AppDrawer(),
       body: Builder(
         builder: (context) {
@@ -178,7 +185,8 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (_) => const DashboardPage()),
+                                    builder: (_) => const DashboardPage(),
+                                  ),
                                 );
                               }
                             },
@@ -186,7 +194,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                               // hook for info action
                             },
                           ),
-              
+
                           // Search Bar
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -199,19 +207,26 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                         ],
                       ),
                     ),
-              
+
                     // Mobile-Friendly Card List
                     Expanded(
-                      child: ref.watch(projectListProvider).when(
-                            loading: () =>
-                                const Center(child: GlobalLoader(message: 'Loading projects...')),
+                      child: ref
+                          .watch(projectListProvider)
+                          .when(
+                            loading: () => const Center(
+                              child: GlobalLoader(
+                                message: 'Loading projects...',
+                              ),
+                            ),
                             error: (err, stack) => GlobalError(
                               message: 'Error loading projects: $err',
                               onRetry: () => ref.refresh(projectListProvider),
                             ),
                             data: (projects) {
-                              final filteredProjects = _filterProjects(projects);
-              
+                              final filteredProjects = _filterProjects(
+                                projects,
+                              );
+
                               if (filteredProjects.isEmpty) {
                                 // Add Stack to allow refresh even when list is empty
                                 return Stack(
@@ -219,20 +234,23 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                                     ListView(), // Empty list for Pull-to-Refresh
                                     Center(
                                       child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Icon(
                                             Icons.folder_open,
                                             size: 80,
-                                            color: AppColors.textSecondary
+                                            color: customColors.textSecondary!
                                                 .withValues(alpha: 0.3),
                                           ),
                                           const SizedBox(height: 16),
                                           Text(
                                             'No projects found',
-                                            style: AppTextStyles.bodyLarge.copyWith(
-                                              color: AppColors.textSecondary,
-                                            ),
+                                            style: TextStyle(
+                                              color: customColors.textSecondary,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.normal,
+                                            )
                                           ),
                                         ],
                                       ),
@@ -240,7 +258,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                                   ],
                                 );
                               }
-              
+
                               return ListView.builder(
                                 padding: const EdgeInsets.all(16),
                                 itemCount: filteredProjects.length,
@@ -257,14 +275,19 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                                         isScrollControlled: true,
                                         backgroundColor: Colors.transparent,
                                         builder: (context) =>
-                                            ProjectDetailsDialog(project: project),
+                                            ProjectDetailsDialog(
+                                              project: project,
+                                            ),
                                       );
                                     },
                                     onEdit: isAdmin
-                                        ? () => _showAddProjectDialog(project: project)
+                                        ? () => _showAddProjectDialog(
+                                            project: project,
+                                            context: context,
+                                          )
                                         : null,
                                     onDelete: isAdmin
-                                        ? () => _deleteProject(project)
+                                        ? () => _deleteProject(project, context)
                                         : null,
                                   );
                                 },
@@ -281,14 +304,14 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
               isNetworkError: true,
               onRetry: () => ref.invalidate(connectivityStatusProvider),
             ),
-            loading: () => const GlobalLoader(
-                message: 'Checking connection...'),
+            loading: () =>
+                const GlobalLoader(message: 'Checking connection...'),
           );
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddProjectDialog(),
-        backgroundColor: AppColors.primary,
+        onPressed: () => _showAddProjectDialog(context: context),
+        backgroundColor: customColors.primary,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),

@@ -1,6 +1,6 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../core/constants/app_colors.dart';
 import '../../models/issue_model.dart';
 import '../../models/project_model.dart';
 import '../../models/employee.dart';
@@ -34,14 +34,19 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
   String? _selectedStatus;
   String? _selectedSeverity;
   DateTime? _dueDate;
-  
+
   List<ProjectModel> _projectList = [];
   List<Employee> _employeeList = [];
   bool _isLoadingProjects = false;
   bool _isLoadingEmployees = false;
   bool _isSubmitting = false;
 
-  final List<String> _statusOptions = ['Open', 'Work In Progress', 'Resolved', 'Closed'];
+  final List<String> _statusOptions = [
+    'Open',
+    'Work In Progress',
+    'Resolved',
+    'Closed',
+  ];
   final List<String> _severityOptions = ['Critical', 'High', 'Medium', 'Low'];
 
   @override
@@ -49,14 +54,14 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
     super.initState();
     _loadProjects();
     _loadEmployees();
-    
+
     if (widget.issue != null) {
       _issueNameController.text = widget.issue!.issueName;
       _descriptionController.text = widget.issue!.description ?? '';
       _selectedStatus = widget.issue!.status;
       _selectedSeverity = widget.issue!.priority;
       _dueDate = widget.issue!.dueDate;
-      
+
       // Load project and assignee after data is loaded
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) {
@@ -87,9 +92,9 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
     } catch (e) {
       setState(() => _isLoadingProjects = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading projects: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading projects: $e')));
       }
     }
   }
@@ -106,9 +111,9 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
     } catch (e) {
       setState(() => _isLoadingEmployees = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading employees: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading employees: $e')));
       }
     }
   }
@@ -121,6 +126,8 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
+    final customColors = Theme.of(context).custom;
+
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _dueDate ?? DateTime.now(),
@@ -130,12 +137,12 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.dark(
-              primary: AppColors.primary,
+              primary: customColors.primary!,
               onPrimary: Colors.white,
-              surface: AppColors.cardBackground,
-              onSurface: AppColors.textPrimary,
+              surface: customColors.cardBackground!,
+              onSurface: customColors.textPrimary!,
             ),
-            dialogBackgroundColor: AppColors.cardBackground,
+            dialogBackgroundColor: customColors.cardBackground,
           ),
           child: child!,
         );
@@ -176,7 +183,7 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
 
       try {
         final formattedDate = DateFormat('yyyy-MM-dd').format(_dueDate!);
-        
+
         if (widget.issue == null) {
           // Create new issue
           await widget.issueRepository.createIssue(
@@ -208,26 +215,28 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
       } catch (e) {
         setState(() => _isSubmitting = false);
         if (mounted) {
-          _showError('Failed to ${widget.issue == null ? 'create' : 'update'} issue: $e');
+          _showError(
+            'Failed to ${widget.issue == null ? 'create' : 'update'} issue: $e',
+          );
         }
       }
     }
   }
 
   void _showError(String message) {
+    final customColors = Theme.of(context).custom;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.error,
-      ),
+      SnackBar(content: Text(message), backgroundColor: customColors.error!),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    // final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: customColors.background!,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(120),
         child: Padding(
@@ -268,35 +277,54 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                     ? const Center(child: CircularProgressIndicator())
                     : DropdownButtonFormField<ProjectModel>(
                         value: _selectedProject,
-                        hint: const Text(
+                        hint: Text(
                           'Select Project',
-                          style: TextStyle(color: AppColors.textHint),
+                          style: TextStyle(color: customColors.textHint),
                         ),
-                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
-                        dropdownColor: colors.secondary,
+                        style: TextStyle(
+                          color: customColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        dropdownColor: customColors.inputFill!,
                         decoration: InputDecoration(
                           labelText: 'Project',
-                          labelStyle: const TextStyle(
-                            color: AppColors.textSecondary,
+                          labelStyle: TextStyle(
+                            color: customColors.textSecondary,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
                           filled: true,
-                          fillColor: colors.secondary,
-                          prefixIcon: const Icon(Icons.folder_outlined, color: AppColors.textSecondary),
+                          fillColor: customColors.inputFill!,
+                          prefixIcon: Icon(
+                            Icons.folder_outlined,
+                            color: customColors.textSecondary,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                            borderSide: BorderSide(
+                              color: customColors.inputBorder!,
+                              width: 1.5,
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                            borderSide: BorderSide(
+                              color: customColors.inputBorder!,
+                              width: 1.5,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
+                            borderSide: BorderSide(
+                              color: Colors.grey[400]!,
+                              width: 2,
+                            ),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 12,
+                          ),
                         ),
                         items: _projectList.map((project) {
                           return DropdownMenuItem(
@@ -313,41 +341,57 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                 // Status Dropdown
                 DropdownButtonFormField<String>(
                   value: _selectedStatus,
-                  hint: const Text(
+                  hint: Text(
                     'Status',
-                    style: TextStyle(color: AppColors.textHint),
+                    style: TextStyle(color: customColors.textHint),
                   ),
-                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
-                  dropdownColor: colors.secondary,
+                  style: TextStyle(
+                    color: customColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  dropdownColor: customColors.inputFill!,
                   decoration: InputDecoration(
                     labelText: 'Status',
-                    labelStyle: const TextStyle(
-                      color: AppColors.textSecondary,
+                    labelStyle: TextStyle(
+                      color: customColors.textSecondary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                     filled: true,
-                    fillColor: colors.secondary,
-                    prefixIcon: const Icon(Icons.assignment_outlined, color: AppColors.textSecondary),
+                    fillColor: customColors.inputFill!,
+                    prefixIcon: Icon(
+                      Icons.assignment_outlined,
+                      color: customColors.textSecondary,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                      borderSide: BorderSide(
+                        color: customColors.inputBorder!,
+                        width: 1.5,
+                      ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                      borderSide: BorderSide(
+                        color: customColors.inputBorder!,
+                        width: 1.5,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
+                      borderSide: BorderSide(
+                        color: Colors.grey[400]!,
+                        width: 2,
+                      ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
+                    ),
                   ),
                   items: _statusOptions.map((status) {
-                    return DropdownMenuItem(
-                      value: status,
-                      child: Text(status),
-                    );
+                    return DropdownMenuItem(value: status, child: Text(status));
                   }).toList(),
                   onChanged: (value) {
                     setState(() => _selectedStatus = value);
@@ -358,35 +402,54 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                 // Severity Dropdown
                 DropdownButtonFormField<String>(
                   value: _selectedSeverity,
-                  hint: const Text(
+                  hint: Text(
                     'Severity',
-                    style: TextStyle(color: AppColors.textHint),
+                    style: TextStyle(color: customColors.textHint),
                   ),
-                  style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
-                  dropdownColor: colors.secondary,
+                  style: TextStyle(
+                    color: customColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  dropdownColor: customColors.inputFill!,
                   decoration: InputDecoration(
                     labelText: 'Severity',
-                    labelStyle: const TextStyle(
-                      color: AppColors.textSecondary,
+                    labelStyle: TextStyle(
+                      color: customColors.textSecondary,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                     filled: true,
-                    fillColor: colors.secondary,
-                    prefixIcon: const Icon(Icons.warning_outlined, color: AppColors.textSecondary),
+                    fillColor: customColors.inputFill!,
+                    prefixIcon: Icon(
+                      Icons.warning_outlined,
+                      color: customColors.textSecondary,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                      borderSide: BorderSide(
+                        color: customColors.inputBorder!,
+                        width: 1.5,
+                      ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                      borderSide: BorderSide(
+                        color: customColors.inputBorder!,
+                        width: 1.5,
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
+                      borderSide: BorderSide(
+                        color: Colors.grey[400]!,
+                        width: 2,
+                      ),
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
+                    ),
                   ),
                   items: _severityOptions.map((severity) {
                     return DropdownMenuItem(
@@ -409,10 +472,10 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                       vertical: 12,
                     ),
                     decoration: BoxDecoration(
-                      color: colors.secondary,
+                      color: customColors.inputFill!,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                        color: AppColors.inputBorder,
+                        color: customColors.inputBorder!,
                         width: 1.5,
                       ),
                       boxShadow: [
@@ -425,9 +488,9 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.calendar_today_outlined,
-                          color: AppColors.textSecondary,
+                          color: customColors.textSecondary,
                           size: 20,
                         ),
                         const SizedBox(width: 12),
@@ -438,8 +501,8 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                                 : DateFormat('dd-MM-yyyy').format(_dueDate!),
                             style: TextStyle(
                               color: _dueDate == null
-                                  ? AppColors.textHint
-                                  : AppColors.textPrimary,
+                                  ? customColors.textHint
+                                  : customColors.textPrimary,
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
                             ),
@@ -456,35 +519,54 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                     ? const Center(child: CircularProgressIndicator())
                     : DropdownButtonFormField<Employee>(
                         value: _selectedAssignee,
-                        hint: const Text(
+                        hint: Text(
                           'Select Assignee',
-                          style: TextStyle(color: AppColors.textHint),
+                          style: TextStyle(color: customColors.textHint),
                         ),
-                        style: const TextStyle(color: AppColors.textPrimary, fontSize: 16, fontWeight: FontWeight.w500),
-                        dropdownColor: colors.secondary,
+                        style: TextStyle(
+                          color: customColors.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        dropdownColor: customColors.inputFill!,
                         decoration: InputDecoration(
                           labelText: 'Assignee',
-                          labelStyle: const TextStyle(
-                            color: AppColors.textSecondary,
+                          labelStyle: TextStyle(
+                            color: customColors.textSecondary,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
                           filled: true,
-                          fillColor: colors.secondary,
-                          prefixIcon: const Icon(Icons.person_outline, color: AppColors.textSecondary),
+                          fillColor: customColors.inputFill!,
+                          prefixIcon: Icon(
+                            Icons.person_outline,
+                            color: customColors.textSecondary,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                            borderSide: BorderSide(
+                              color: customColors.inputBorder!,
+                              width: 1.5,
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: AppColors.inputBorder, width: 1.5),
+                            borderSide: BorderSide(
+                              color: customColors.inputBorder!,
+                              width: 1.5,
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
+                            borderSide: BorderSide(
+                              color: Colors.grey[400]!,
+                              width: 2,
+                            ),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 12,
+                          ),
                         ),
                         items: _employeeList.map((employee) {
                           return DropdownMenuItem(
@@ -517,9 +599,11 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                       child: ElevatedButton(
                         onPressed: _isSubmitting ? null : _handleSubmit,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
+                          backgroundColor: customColors.primary,
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           elevation: 2,
                         ),
                         child: _isSubmitting
@@ -546,14 +630,19 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.error, width: 1.5),
+                          side: BorderSide(
+                            color: customColors.error!,
+                            width: 1.5,
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'CANCEL',
                           style: TextStyle(
-                            color: AppColors.error,
+                            color: customColors.error,
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
                           ),

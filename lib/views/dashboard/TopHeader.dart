@@ -1,5 +1,5 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:dsv360/core/constants/app_colors.dart';
 
 class TopHeader extends StatelessWidget {
   final bool isLarge;
@@ -112,6 +112,8 @@ class _RightMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double dialSize = 44 * scale;
+    final customColors = Theme.of(context).custom;
+    
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -124,13 +126,13 @@ class _RightMetric extends StatelessWidget {
               CircularProgressIndicator(
                 value: 0.0,
                 strokeWidth: 5 * scale,
-                color: AppColors.textWhite.withOpacity(0.24), // Colors.white24
-                backgroundColor: AppColors.textWhite.withOpacity(0.12), // Colors.white12
+                color: customColors.textWhite!.withOpacity(0.24), // Colors.white24
+                backgroundColor: customColors.textWhite!.withOpacity(0.12), // Colors.white12
               ),
               Text(
                 percentText,
                 style: TextStyle(
-                  color: AppColors.textWhite,
+                  color: customColors.textWhite,
                   fontSize: 12 * scale,
                   fontWeight: FontWeight.bold,
                 ),
@@ -142,14 +144,14 @@ class _RightMetric extends StatelessWidget {
         Text(
           smallLabel,
           textAlign: TextAlign.center,
-          style: TextStyle(color: AppColors.textWhite.withOpacity(0.7), fontSize: 11 * scale),
+          style: TextStyle(color: customColors.textWhite!.withOpacity(0.7), fontSize: 11 * scale),
         ),
         SizedBox(height: 2 * scale),
         Text(
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-              color: AppColors.textWhite,
+              color: customColors.textWhite,
               fontSize: 10 * scale,
               fontWeight: FontWeight.w500),
         ),

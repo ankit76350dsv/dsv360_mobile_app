@@ -1,8 +1,9 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
-import '../../core/constants/app_colors.dart';
+// import '../../core/constants/app_colors.dart';
 import '../../models/project_model.dart';
 import '../../models/employee.dart';
 import '../../models/attachment.dart';
@@ -116,6 +117,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
   }
 
   Future<void> _selectDate(BuildContext context, bool isStartDate) async {
+    final customColors = Theme.of(context).custom;
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: isStartDate
@@ -127,12 +129,12 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.dark(
-              primary: AppColors.primary,
+              primary: customColors.primary!,
               onPrimary: Colors.white,
-              surface: AppColors.cardBackground,
-              onSurface: AppColors.textPrimary,
+              surface: customColors.cardBackground!,
+              onSurface: customColors.textPrimary!,
             ),
-            dialogBackgroundColor: AppColors.cardBackground,
+            dialogBackgroundColor: customColors.cardBackground!,
           ),
           child: child!,
         );
@@ -151,6 +153,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
   }
 
   Future<void> _handleAddAttachment() async {
+    final customColors = Theme.of(context).custom;
     try {
       final result = await FilePicker.platform.pickFiles(
         allowMultiple: false,
@@ -175,7 +178,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('${file.name} added'),
-              backgroundColor: AppColors.primary,
+              backgroundColor: customColors.primary!,
               duration: const Duration(seconds: 1),
             ),
           );
@@ -264,19 +267,20 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
   }
 
   void _showError(String message) {
+    final customColors = Theme.of(context).custom;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.error,
+        backgroundColor: customColors.error!,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: customColors.background,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(120),
         child: Padding(
@@ -347,10 +351,10 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                                   vertical: 12,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: colors.secondary,
+                                  color: customColors.cardBackground,
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: AppColors.inputBorder,
+                                    color: customColors.inputBorder!,
                                     width: 1.5,
                                   ),
                                   boxShadow: [
@@ -363,9 +367,9 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.calendar_today_outlined,
-                                      color: AppColors.textSecondary,
+                                      color: customColors.textSecondary,
                                       size: 20,
                                     ),
                                     const SizedBox(width: 12),
@@ -376,8 +380,8 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                                             : DateFormat('dd-MM-yyyy').format(_startDate!),
                                         style: TextStyle(
                                           color: _startDate == null
-                                              ? AppColors.textHint
-                                              : AppColors.textPrimary,
+                                              ? customColors.textHint
+                                              : customColors.textPrimary,
                                           fontSize: 16,
                                           fontWeight: FontWeight.w500,
                                         ),
@@ -399,10 +403,10 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                                   vertical: 12,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: colors.secondary,
+                                  color: customColors.cardBackground,
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: AppColors.inputBorder,
+                                    color: customColors.inputBorder!,
                                     width: 1.5,
                                   ),
                                   boxShadow: [
@@ -415,9 +419,9 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.calendar_today_outlined,
-                                      color: AppColors.textSecondary,
+                                      color: customColors.textSecondary!,
                                       size: 20,
                                     ),
                                     const SizedBox(width: 12),
@@ -428,8 +432,8 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                                             : DateFormat('dd-MM-yyyy').format(_endDate!),
                                         style: TextStyle(
                                           color: _endDate == null
-                                              ? AppColors.textHint
-                                              : AppColors.textPrimary,
+                                              ? customColors.textHint
+                                              : customColors.textPrimary,
                                           fontSize: 16,
                                           fontWeight: FontWeight.w500,
                                         ),
@@ -448,10 +452,10 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
                         decoration: BoxDecoration(
-                          color: colors.secondary,
+                          color: customColors.cardBackground,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: AppColors.inputBorder,
+                            color: customColors.inputBorder!,
                             width: 1.5,
                           ),
                           boxShadow: [
@@ -464,20 +468,20 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.person_outline,
-                              color: AppColors.textSecondary,
+                              color: customColors.textSecondary!,
                               size: 20,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: _isLoadingEmployees
-                                  ? const Padding(
-                                      padding: EdgeInsets.symmetric(vertical: 12),
+                                  ? Padding(
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
                                       child: Text(
                                         'Loading employees...',
                                         style: TextStyle(
-                                          color: AppColors.textHint,
+                                          color: customColors.textHint,
                                           fontSize: 16,
                                           fontWeight: FontWeight.w500,
                                         ),
@@ -485,25 +489,25 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                                     )
                                   : DropdownButton<Employee>(
                                       value: _selectedEmployee,
-                                      hint: const Text(
+                                      hint: Text(
                                         'Assign To',
                                         style: TextStyle(
-                                          color: AppColors.textHint,
+                                          color: customColors.textHint,
                                           fontSize: 16,
                                           fontWeight: FontWeight.w500,
                                         ),
                                       ),
                                       isExpanded: true,
                                       underline: const SizedBox(),
-                                      dropdownColor: AppColors.cardBackground,
-                                      style: const TextStyle(
-                                        color: AppColors.textPrimary,
+                                      dropdownColor: customColors.cardBackground,
+                                      style: TextStyle(
+                                        color: customColors.textPrimary,
                                         fontSize: 16,
                                         fontWeight: FontWeight.w500,
                                       ),
-                                      icon: const Icon(
+                                      icon: Icon(
                                         Icons.arrow_drop_down,
-                                        color: AppColors.textSecondary,
+                                        color: customColors.textSecondary,
                                       ),
                                       items: _employeeList.map((Employee employee) {
                                         return DropdownMenuItem<Employee>(
@@ -559,8 +563,8 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                         icon: const Icon(Icons.attach_file, size: 18),
                         label: const Text('ATTACHMENT', style: TextStyle(fontSize: 13)),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          side: const BorderSide(color: AppColors.primary),
+                          foregroundColor: customColors.primary,
+                          side: BorderSide(color: customColors.primary!),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 8,
@@ -581,7 +585,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.primary.withOpacity(0.3),
+                          color: customColors.primary!.withOpacity(0.3),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -590,7 +594,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                     child: ElevatedButton(
                       onPressed: _isSubmitting ? null : _handleSubmit,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: customColors.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
@@ -623,8 +627,8 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: const BorderSide(color: AppColors.error, width: 2),
+                      foregroundColor: customColors.error,
+                      side: BorderSide(color: customColors.error!, width: 2),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),

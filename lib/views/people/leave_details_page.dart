@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/leave_details.dart';
@@ -22,8 +23,8 @@ class LeaveDetailsPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
+    // final theme = Theme.of(context);
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final userId = activeUser?.userId ?? '';
     final username =
@@ -65,8 +66,8 @@ class LeaveDetailsPage extends ConsumerWidget {
                   children: [
                     Text(
                       'Leave Information',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: colors.primary,
+                      style: TextStyle(
+                        color: customColors.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -404,7 +405,7 @@ class _InfoBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
 
     return Card(
       child: Column(
@@ -413,12 +414,12 @@ class _InfoBox extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: theme.colorScheme.tertiary),
+              Icon(icon, color: customColors.textPrimary),
               const SizedBox(width: 8),
               Text(
                 title,
                 style: TextStyle(
-                  color: theme.colorScheme.tertiary,
+                  color: customColors.textPrimary,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -446,7 +447,7 @@ class _LargeInfoBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
 
     return Card(
       child: Container(
@@ -456,12 +457,12 @@ class _LargeInfoBox extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(icon, color: theme.colorScheme.tertiary),
+                Icon(icon, color: customColors.textPrimary),
                 const SizedBox(width: 8),
                 Text(
                   title,
                   style: TextStyle(
-                    color: theme.colorScheme.tertiary,
+                    color: customColors.textPrimary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -484,7 +485,7 @@ class _LeaveBalanceSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -494,12 +495,11 @@ class _LeaveBalanceSection extends StatelessWidget {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: theme.colorScheme.tertiary,
+            color: customColors.textPrimary,
           ),
         ),
         const SizedBox(height: 8.0),
         Card(
-          // color: AppColors.bg,
           child: Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 18.0),
@@ -583,7 +583,7 @@ class _LeaveBalanceItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
 
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 10.0),
@@ -599,7 +599,7 @@ class _LeaveBalanceItem extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.tertiary,
+                    color: customColors.textPrimary,
                   ),
                 ),
                 if (usage != null) ...[

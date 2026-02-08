@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 
 class InfoRow extends StatelessWidget {
@@ -7,17 +8,17 @@ class InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
 
     return Row(
       children: [
-        Icon(icon, size: 18, color: theme.colorScheme.tertiary),
+        Icon(icon, size: 18, color: customColors.textSecondary),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.tertiary,
+            style: TextStyle(
+              color: customColors.textSecondary,
             ),
           ),
         ),

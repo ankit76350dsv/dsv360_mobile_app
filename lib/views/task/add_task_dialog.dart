@@ -1,10 +1,9 @@
 import 'dart:io';
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_text_styles.dart';
 import '../../models/task.dart';
 import '../../models/employee.dart';
 import '../../models/attachment.dart';
@@ -105,6 +104,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
   }
 
   Future<void> _selectDate(BuildContext context, bool isStartDate) async {
+    final customColors = Theme.of(context).custom;
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: isStartDate ? (_startDate ?? DateTime.now()) : (_endDate ?? DateTime.now()),
@@ -114,12 +114,12 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: ColorScheme.dark(
-              primary: AppColors.primary,
+              primary: customColors.primary!,
               onPrimary: Colors.white,
-              surface: AppColors.cardBackground,
-              onSurface: AppColors.textPrimary,
+              surface: customColors.cardBackground!,
+              onSurface: customColors.textPrimary!,
             ),
-            dialogBackgroundColor: AppColors.cardBackground,
+            dialogBackgroundColor: customColors.cardBackground!,
           ),
           child: child!,
         );
@@ -202,10 +202,11 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
   }
 
   void _showError(String message) {
+    final customColors = Theme.of(context).custom;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.error,
+        backgroundColor: customColors.error,
       ),
     );
   }
@@ -236,9 +237,9 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(120),
         child: Padding(
@@ -343,10 +344,10 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: colors.secondary,
+                            color: customColors.cardBackground!,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: AppColors.inputBorder,
+                              color: customColors.inputBorder!,
                               width: 1.5,
                             ),
                             boxShadow: [
@@ -359,9 +360,9 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.calendar_today_outlined,
-                                color: AppColors.textSecondary,
+                                color: customColors.textSecondary,
                                 size: 20,
                               ),
                               const SizedBox(width: 12),
@@ -372,8 +373,8 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                                       : DateFormat('dd-MM-yyyy').format(_startDate!),
                                   style: TextStyle(
                                     color: _startDate == null
-                                        ? AppColors.textHint
-                                        : AppColors.textPrimary,
+                                        ? customColors.textHint
+                                        : customColors.textPrimary,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -395,10 +396,10 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: colors.secondary,
+                            color: customColors.cardBackground,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: AppColors.inputBorder,
+                              color: customColors.inputBorder!,
                               width: 1.5,
                             ),
                             boxShadow: [
@@ -411,9 +412,9 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.calendar_today_outlined,
-                                color: AppColors.textSecondary,
+                                color: customColors.textSecondary,
                                 size: 20,
                               ),
                               const SizedBox(width: 12),
@@ -424,8 +425,8 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                                       : DateFormat('dd-MM-yyyy').format(_endDate!),
                                   style: TextStyle(
                                     color: _endDate == null
-                                        ? AppColors.textHint
-                                        : AppColors.textPrimary,
+                                        ? customColors.textHint
+                                        : customColors.textPrimary,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -472,35 +473,35 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                                 color: Theme.of(context).colorScheme.secondary,
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: AppColors.inputBorder,
+                                  color: customColors.inputBorder!,
                                   width: 1.5,
                                 ),
                               ),
                               child: DropdownButton<Employee>(
                                 isExpanded: true,
-                                hint: const Row(
+                                hint: Row(
                                   children: [
                                     Icon(
                                       Icons.person_outline,
-                                      color: AppColors.textSecondary,
+                                      color: customColors.textSecondary,
                                       size: 18,
                                     ),
                                     SizedBox(width: 8),
                                     Text(
                                       'Select Assignees',
                                       style: TextStyle(
-                                        color: AppColors.textHint,
+                                        color: customColors.textHint,
                                         fontSize: 14,
                                       ),
                                     ),
                                   ],
                                 ),
                                 underline: const SizedBox(),
-                                style: const TextStyle(
-                                  color: AppColors.textPrimary,
+                                style: TextStyle(
+                                  color: customColors.textPrimary,
                                   fontSize: 14,
                                 ),
-                                dropdownColor: AppColors.cardBackground,
+                                dropdownColor: customColors.cardBackground!,
                                 items: activeEmployees.map((employee) {
                                   return DropdownMenuItem<Employee>(
                                     value: employee,
@@ -510,8 +511,8 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                                       ),
                                       child: Text(
                                         employee.fullName,
-                                        style: const TextStyle(
-                                          color: AppColors.textPrimary,
+                                        style: TextStyle(
+                                          color: customColors.textPrimary,
                                           fontSize: 14,
                                         ),
                                       ),
@@ -557,13 +558,13 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                                         '❌ Assignee removed: ${employee.fullName}',
                                       );
                                     },
-                                    backgroundColor: AppColors.primary
-                                        .withOpacity(0.2),
-                                    labelStyle: const TextStyle(
-                                      color: AppColors.textPrimary,
+                                    backgroundColor: customColors.primary
+                                        !.withOpacity(0.2),
+                                    labelStyle: TextStyle(
+                                      color: customColors.textPrimary,
                                       fontSize: 13,
                                     ),
-                                    deleteIconColor: AppColors.primary,
+                                    deleteIconColor: customColors.primary,
                                   );
                                 }).toList(),
                               ),
@@ -593,7 +594,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.primary.withOpacity(0.15),
+                        color: customColors.primary!.withOpacity(0.15),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -639,7 +640,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: customColors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 20,
@@ -664,17 +665,17 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: colors.secondary,
+                          color: customColors.cardBackground,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: AppColors.inputBorder.withOpacity(0.5),
+                            color: customColors.inputBorder!,
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               _getIconForFileType(attachment.fileType),
-                              color: AppColors.primary,
+                              color: customColors.primary,
                               size: 24,
                             ),
                             const SizedBox(width: 12),
@@ -684,8 +685,8 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                                 children: [
                                   Text(
                                     attachment.fileName,
-                                    style: const TextStyle(
-                                      color: AppColors.textPrimary,
+                                    style: TextStyle(
+                                      color: customColors.textPrimary,
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -696,7 +697,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                                   Text(
                                     '${(attachment.fileSize / 1024 / 1024).toStringAsFixed(2)} MB',
                                     style: TextStyle(
-                                      color: AppColors.textSecondary,
+                                      color: customColors.textSecondary,
                                       fontSize: 12,
                                     ),
                                   ),
@@ -705,7 +706,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                             ),
                             IconButton(
                               icon: const Icon(Icons.close, size: 20),
-                              color: AppColors.error,
+                              color: customColors.error,
                               onPressed: () {
                                 setState(() {
                                   _selectedAttachments.removeAt(index);
@@ -728,7 +729,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                           borderRadius: BorderRadius.circular(18),
                           boxShadow: [
                             BoxShadow(
-                              color: AppColors.primary.withOpacity(0.3),
+                              color: customColors.primary!.withOpacity(0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -737,7 +738,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                         child: ElevatedButton(
                           onPressed: _handleSubmit,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
+                            backgroundColor: customColors.primary,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
@@ -761,8 +762,8 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                       child: OutlinedButton(
                         onPressed: () => Navigator.of(context).pop(),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.error,
-                          side: const BorderSide(color: AppColors.error, width: 2),
+                          foregroundColor: customColors.error,
+                          side: BorderSide(color: customColors.error!, width: 2),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24),

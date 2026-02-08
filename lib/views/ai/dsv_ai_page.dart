@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:flutter/material.dart';
@@ -157,7 +158,7 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
     final selectedMode = ref.watch(aiModeProvider);
     final selectedModel = ref.watch(aiModelProvider);
 
@@ -180,7 +181,10 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
         ),
         centerTitle: true,
         elevation: 0,
-        title: Text('DSV AI', style: theme.textTheme.titleMedium),
+        title: Text('DSV AI', style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        )),
         // if needed can add the icon as well here
         // hook for info action
         // you can open a dialog or screen here
@@ -200,7 +204,7 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
+                      color: customColors.primary,
                     ),
                   ),
                 ),
@@ -221,8 +225,8 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                                   ? FontWeight.bold
                                   : FontWeight.normal,
                               color: isSelected
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.onSurface,
+                                  ? customColors.primary
+                                  : customColors.textPrimary,
                             ),
                           ),
                         ),
@@ -230,7 +234,7 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                           Icon(
                             Icons.check,
                             size: 16,
-                            color: theme.colorScheme.primary,
+                            color: customColors.primary,
                           ),
                       ],
                     ),
@@ -248,7 +252,7 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.primary,
+                      color: customColors.primary,
                     ),
                   ),
                 ),
@@ -269,8 +273,8 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                                   ? FontWeight.bold
                                   : FontWeight.normal,
                               color: isSelected
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.onSurface,
+                                  ? customColors.primary
+                                  : customColors.textPrimary,
                             ),
                           ),
                         ),
@@ -278,7 +282,7 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                           Icon(
                             Icons.check,
                             size: 16,
-                            color: theme.colorScheme.primary,
+                            color: customColors.primary,
                           ),
                       ],
                     ),
@@ -307,12 +311,16 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
                           Icon(
                             Icons.chat_bubble_outline,
                             size: 64,
-                            color: theme.colorScheme.onSurface.withOpacity(0.3),
+                            color: customColors.textPrimary!.withOpacity(0.3),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'Start a conversation',
-                            style: theme.textTheme.bodyMedium,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: customColors.textPrimary!.withOpacity(0.6),
+                            )
                           ),
                         ],
                       ),
@@ -518,6 +526,7 @@ class _ChatBubble extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final bool isUser = message?.isUser ?? false;
+    final customColors = Theme.of(context).custom;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -549,7 +558,7 @@ class _ChatBubble extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: isUser
                     ? const Color(0xFF2563eb)
-                    : const Color(0xFF1F1F1F),
+                    : customColors.chatBubbleBot,
                 gradient: isUser
                     ? const LinearGradient(
                         colors: [Color(0xFF2563eb), Color(0xFF4f46e5)],
@@ -601,8 +610,8 @@ class _ChatBubble extends ConsumerWidget {
                         if (message?.text != null && message!.text.isNotEmpty)
                           Text(
                             message!.text,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: isUser ? Colors.white : customColors.textSecondary,
                               fontSize: 14,
                               height: 1.4,
                             ),

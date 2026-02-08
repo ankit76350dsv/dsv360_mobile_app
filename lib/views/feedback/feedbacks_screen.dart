@@ -1,5 +1,5 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../models/feedback_model.dart';
 import '../widgets/custom_search_bar.dart';
 import '../widgets/feedback_card.dart';
@@ -99,8 +99,8 @@ class _FeedbacksScreenState extends State<FeedbacksScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -128,10 +128,10 @@ class _FeedbacksScreenState extends State<FeedbacksScreen> {
                       // Feedback Count
                       Text(
                         '${_filteredFeedbacks.length} Feedback${_filteredFeedbacks.length != 1 ? 's' : ''}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
+                          color: customColors.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -146,14 +146,14 @@ class _FeedbacksScreenState extends State<FeedbacksScreen> {
                                 Icon(
                                   Icons.inbox,
                                   size: 64,
-                                  color: AppColors.textSecondary.withValues(alpha: 0.5),
+                                  color: customColors.textSecondary!.withValues(alpha: 0.5),
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
                                   'No feedbacks found',
                                   style: TextStyle(
                                     fontSize: 16,
-                                    color: AppColors.textSecondary.withValues(alpha: 0.7),
+                                    color: customColors.textSecondary!.withValues(alpha: 0.7),
                                   ),
                                 ),
                               ],

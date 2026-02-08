@@ -1,5 +1,6 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+// import '../../core/constants/app_colors.dart';
 
 class AssigneeModal extends StatelessWidget {
   final String assignedTo;
@@ -13,6 +14,8 @@ class AssigneeModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
+
     return DraggableScrollableSheet(
       initialChildSize: 0.3,
       minChildSize: 0.2,
@@ -20,8 +23,8 @@ class AssigneeModal extends StatelessWidget {
       expand: false,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.cardBackground,
+          decoration: BoxDecoration(
+            color: customColors.cardBackground,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
@@ -38,7 +41,7 @@ class AssigneeModal extends StatelessWidget {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.textSecondary.withOpacity(0.3),
+                      color: customColors.textSecondary!.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -54,7 +57,7 @@ class AssigneeModal extends StatelessWidget {
                   child: Text(
                     'Assignee Details',
                     style: TextStyle(
-                      color: AppColors.textPrimary,
+                      color: customColors.textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -74,7 +77,8 @@ class AssigneeModal extends StatelessWidget {
                       icon: Icons.person_outline,
                       label: 'Assigned To',
                       name: assignedTo,
-                      color: AppColors.primary,
+                      color: customColors.primary!,
+                      context: context
                     ),
                   ],
                 ),
@@ -92,16 +96,15 @@ class AssigneeModal extends StatelessWidget {
     required String label,
     required String name,
     required Color color,
+    required BuildContext context
   }) {
+    final customColors = Theme.of(context).custom;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.inputFill,
+        color: customColors.inputFill,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.inputBorder,
-          width: 1,
-        ),
+        border: Border.all(color: customColors.inputBorder!, width: 1),
       ),
       child: Row(
         children: [
@@ -111,11 +114,7 @@ class AssigneeModal extends StatelessWidget {
               color: color.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              icon,
-              color: color,
-              size: 24,
-            ),
+            child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -124,8 +123,8 @@ class AssigneeModal extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: customColors.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -133,8 +132,8 @@ class AssigneeModal extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   name,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: customColors.textPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),

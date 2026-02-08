@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/core/constants/token_manager.dart';
@@ -97,8 +98,9 @@ class _SplashScreenState extends ConsumerState<ConsumerStatefulWidget>
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -120,8 +122,7 @@ class _SplashScreenState extends ConsumerState<ConsumerStatefulWidget>
                   'DSV360',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    // color: Colors.white,
-                    color: AppColors.primary,
+                    color: customColors.logoColor,
                     letterSpacing: 1.2,
                   ),
                 ),

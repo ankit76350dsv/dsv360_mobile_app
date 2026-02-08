@@ -1,5 +1,5 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import 'attachment_view_screen.dart';
 
 class AttachmentListModal extends StatelessWidget {
@@ -44,6 +44,7 @@ class AttachmentListModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
     return DraggableScrollableSheet(
       initialChildSize: 0.4,
       minChildSize: 0.2,
@@ -51,8 +52,8 @@ class AttachmentListModal extends StatelessWidget {
       expand: false,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.cardBackground,
+          decoration: BoxDecoration(
+            color: customColors.cardBackground,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
@@ -69,7 +70,7 @@ class AttachmentListModal extends StatelessWidget {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.textSecondary.withOpacity(0.3),
+                      color: customColors.textSecondary!.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -85,7 +86,7 @@ class AttachmentListModal extends StatelessWidget {
                   child: Text(
                     'Attachments',
                     style: TextStyle(
-                      color: AppColors.textPrimary,
+                      color: customColors.textPrimary,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -105,14 +106,14 @@ class AttachmentListModal extends StatelessWidget {
                             Icon(
                               Icons.attachment,
                               size: 64,
-                              color: AppColors.textSecondary.withOpacity(0.5),
+                              color: customColors.textSecondary!.withOpacity(0.5),
                             ),
                             const SizedBox(height: 16),
                             Text(
                               'No attachments available',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: AppColors.textSecondary,
+                                color: customColors.textSecondary,
                               ),
                             ),
                           ],
@@ -143,7 +144,7 @@ class AttachmentListModal extends StatelessWidget {
                               child: Container(
                                 margin: const EdgeInsets.only(bottom: 12),
                                 decoration: BoxDecoration(
-                                  color: AppColors.inputFill,
+                                  color: customColors.inputFill,
                                   border: Border.all(
                                     color: Colors.white.withOpacity(0.1),
                                     width: 1,
@@ -178,10 +179,10 @@ class AttachmentListModal extends StatelessWidget {
                                           children: [
                                             Text(
                                               attachment,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w600,
-                                                color: AppColors.textPrimary,
+                                                color: customColors.textPrimary,
                                               ),
                                               maxLines: 1,
                                               overflow: TextOverflow.ellipsis,
@@ -201,7 +202,7 @@ class AttachmentListModal extends StatelessWidget {
                                       Icon(
                                         Icons.arrow_forward_ios,
                                         size: 16,
-                                        color: AppColors.textSecondary,
+                                        color: customColors.textSecondary,
                                       ),
                                     ],
                                   ),

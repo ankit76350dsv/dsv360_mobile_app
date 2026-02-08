@@ -1,7 +1,6 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_text_styles.dart';
 import '../../models/feedback_model.dart';
 import '../../views/widgets/TopBar.dart';
 
@@ -13,30 +12,32 @@ class FeedbackDetailScreen extends StatelessWidget {
     required this.feedback,
   });
 
-  Color _getStatusColor(String status) {
+  Color _getStatusColor(String status, BuildContext context) {
+    final customColors = Theme.of(context).custom;
     switch (status) {
       case 'Reviewed':
-        return AppColors.statusCompleted;
+        return customColors.statusCompleted!;
       case 'Pending':
-        return AppColors.statusPending;
+        return customColors.statusPending!;
       case 'In Review':
-        return AppColors.statusInProgress;
+        return customColors.statusInProgress!;
       default:
-        return AppColors.textSecondary;
+        return customColors.textSecondary!;
     }
   }
 
-  Color _getDividerColor() {
-    final isDarkMode = AppColors.background.computeLuminance() < 0.5;
+  Color _getDividerColor(BuildContext context) {
+    final customColors = Theme.of(context).custom;
+    final isDarkMode = customColors.background!.computeLuminance() < 0.5;
     return isDarkMode 
       ? Colors.white.withValues(alpha: 0.2)
-      : AppColors.divider.withValues(alpha: 0.5);
+      : customColors.divider!.withValues(alpha: 0.5);
   }
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -60,7 +61,7 @@ class FeedbackDetailScreen extends StatelessWidget {
                           width: 1,
                         ),
                       ),
-                      color: AppColors.cardBackground,
+                      color: customColors.cardBackground,
                       child: Padding(
                         padding: const EdgeInsets.all(20),
                         child: Column(
@@ -71,13 +72,13 @@ class FeedbackDetailScreen extends StatelessWidget {
                               children: [
                                 CircleAvatar(
                                   radius: 32,
-                                  backgroundColor: AppColors.avatarBackground,
+                                  backgroundColor: customColors.avatarBackground,
                                   child: Text(
                                     feedback.name.isNotEmpty ? feedback.name[0].toUpperCase() : 'U',
                                     style: const TextStyle(
                                       fontSize: 28,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.textWhite,
+                                      color: Colors.white,
                                     ),
                                   ),
                                 ),
@@ -95,19 +96,27 @@ class FeedbackDetailScreen extends StatelessWidget {
                                               children: [
                                                 Text(
                                                   feedback.name,
-                                                  style: AppTextStyles.cardTitle,
+                                                  style: TextStyle(
+                                                    fontSize: 20,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: customColors.textPrimary,
+                                                  ),
                                                 ),
                                                 const SizedBox(height: 4),
                                                 Text(
                                                   feedback.email,
-                                                  style: AppTextStyles.emailText,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.normal,
+                                                    color: customColors.textSecondary,
+                                                  )
                                                 ),
                                                 const SizedBox(height: 8),
                                                 Text(
                                                   DateFormat('dd MMM yyyy, hh:mm a').format(feedback.date),
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 12,
-                                                    color: AppColors.textSecondary,
+                                                    color: customColors.textSecondary,
                                                   ),
                                                 ),
                                               ],
@@ -117,10 +126,10 @@ class FeedbackDetailScreen extends StatelessWidget {
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                             decoration: BoxDecoration(
-                                              color: _getStatusColor(feedback.status).withValues(alpha: 0.2),
+                                              color: _getStatusColor(feedback.status, context).withValues(alpha: 0.2),
                                               borderRadius: BorderRadius.circular(20),
                                               border: Border.all(
-                                                color: _getStatusColor(feedback.status),
+                                                color: _getStatusColor(feedback.status, context),
                                                 width: 1,
                                               ),
                                             ),
@@ -129,7 +138,7 @@ class FeedbackDetailScreen extends StatelessWidget {
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w600,
-                                                color: _getStatusColor(feedback.status),
+                                                color: _getStatusColor(feedback.status, context),
                                               ),
                                             ),
                                           ),
@@ -142,21 +151,25 @@ class FeedbackDetailScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
                             // Divider
-                            Divider(color: _getDividerColor()),
+                            Divider(color: _getDividerColor(context)),
                             const SizedBox(height: 16),
                             // Feedback Message
-                            const Text(
+                            Text(
                               'Feedback Message',
                               style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textSecondary,
+                                color: customColors.textSecondary,
                               ),
                             ),
                             const SizedBox(height: 10),
                             Text(
                               feedback.message,
-                              style: AppTextStyles.bodyMedium,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                                color: customColors.textPrimary,
+                              ),
                             ),
                           ],
                         ),
@@ -179,7 +192,7 @@ class FeedbackDetailScreen extends StatelessWidget {
                                 child: Container(
                                   width: double.infinity,
                                   constraints: const BoxConstraints(maxHeight: 400),
-                                  color: AppColors.inputFill,
+                                  color: customColors.inputFill,
                                   child: Image.asset(
                                     'assets/images/feedback.png',
                                     fit: BoxFit.cover,
@@ -187,11 +200,11 @@ class FeedbackDetailScreen extends StatelessWidget {
                                       return Container(
                                         width: double.infinity,
                                         height: 300,
-                                        color: AppColors.inputFill,
-                                        child: const Icon(
+                                        color: customColors.inputFill,
+                                        child: Icon(
                                           Icons.image,
                                           size: 60,
-                                          color: AppColors.textSecondary,
+                                          color: customColors.textSecondary,
                                         ),
                                       );
                                     },

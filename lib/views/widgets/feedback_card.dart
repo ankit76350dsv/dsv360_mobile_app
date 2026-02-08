@@ -1,7 +1,6 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_text_styles.dart';
 import '../../models/feedback_model.dart';
 
 class FeedbackCard extends StatelessWidget {
@@ -14,6 +13,7 @@ class FeedbackCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -23,7 +23,6 @@ class FeedbackCard extends StatelessWidget {
           width: 1,
         ),
       ),
-      color: AppColors.cardBackground,
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -36,13 +35,13 @@ class FeedbackCard extends StatelessWidget {
                 // Avatar
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: AppColors.avatarBackground,
+                  backgroundColor: customColors.avatarBackground,
                   child: Text(
                     feedback.name.isNotEmpty ? feedback.name[0].toUpperCase() : 'U',
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textWhite,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -54,12 +53,20 @@ class FeedbackCard extends StatelessWidget {
                     children: [
                       Text(
                         feedback.name,
-                        style: AppTextStyles.cardTitle,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: customColors.textPrimary,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         feedback.email,
-                        style: AppTextStyles.emailText,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.normal,
+                          color: customColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -71,7 +78,11 @@ class FeedbackCard extends StatelessWidget {
             // Message
             Text(
               feedback.message,
-              style: AppTextStyles.bodyMedium,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.normal,
+                color: customColors.textPrimary,
+              ),
             ),
             
             // Images (if any)
@@ -86,15 +97,15 @@ class FeedbackCard extends StatelessWidget {
                     child: Container(
                       width: 80,
                       height: 80,
-                      color: AppColors.inputFill,
+                      color: customColors.inputFill,
                       child: Image.asset(
                         'assets/images/feedback.png',
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
+                          return Icon(
                             Icons.image,
                             size: 40,
-                            color: AppColors.textSecondary,
+                            color: customColors.textSecondary,
                           );
                         },
                       ),
@@ -113,15 +124,19 @@ class FeedbackCard extends StatelessWidget {
                 // Date
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.access_time,
                       size: 16,
-                      color: AppColors.textSecondary,
+                      color: customColors.textSecondary,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       DateFormat('dd/MM/yyyy').format(feedback.date),
-                      style: AppTextStyles.dateText,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.normal,
+                        color: customColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -130,21 +145,25 @@ class FeedbackCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: _getStatusColor(feedback.status),
+                    color: _getStatusColor(feedback.status, context),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.circle,
                         size: 8,
-                        color: AppColors.textWhite,
+                        color: customColors.textWhite,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         feedback.status,
-                        style: AppTextStyles.statusBadge,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white
+                        ),
                       ),
                     ],
                   ),
@@ -156,17 +175,18 @@ class FeedbackCard extends StatelessWidget {
       ),
     );
   }
-
-  Color _getStatusColor(String status) {
+ 
+  Color _getStatusColor(String status, BuildContext context) {
+    final customColors = Theme.of(context).custom;
     switch (status.toLowerCase()) {
       case 'in progress':
-        return AppColors.statusInProgress;
+        return customColors.statusInProgress!;
       case 'completed':
-        return AppColors.statusCompleted;
+        return customColors.statusCompleted!;
       case 'pending':
-        return AppColors.statusPending;
+        return customColors.statusPending!;
       default:
-        return AppColors.statusInProgress;
+        return customColors.statusInProgress!;
     }
   }
 }

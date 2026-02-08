@@ -1,9 +1,9 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/views/profile/AboutMe.dart';
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
-import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 
@@ -25,8 +25,9 @@ class ProfilePage extends StatelessWidget {
     // final email = 'priya.malhotra@dsv360app.com';
     // final role = 'Operations Coordinator';
 
+    final customColors = Theme.of(context).custom;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -59,7 +60,7 @@ class ProfilePage extends StatelessWidget {
                                 end: Alignment.bottomCenter,
                                 colors: [
                                   Colors.transparent,
-                                  AppColors.background.withOpacity(0.8),
+                                  customColors.background!.withOpacity(0.8),
                                 ],
                               ),
                             ),
@@ -76,7 +77,7 @@ class ProfilePage extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(4),
                                 decoration: BoxDecoration(
-                                  color: AppColors.background,
+                                  color: customColors.background,
                                   shape: BoxShape.circle,
                                 ),
                                 child: const CircleAvatar(
@@ -93,10 +94,10 @@ class ProfilePage extends StatelessWidget {
                                   width: 20,
                                   height: 20,
                                   decoration: BoxDecoration(
-                                    color: AppColors.statusCompleted,
+                                    color: customColors.statusCompleted,
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: AppColors.background,
+                                      color: customColors.background!,
                                       width: 3,
                                     ),
                                   ),
@@ -120,10 +121,10 @@ class ProfilePage extends StatelessWidget {
                             children: [
                               Text(
                                 fullName.isNotEmpty ? fullName : 'User',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 26,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.textPrimary,
+                                  color: customColors.textPrimary,
                                 ),
                               ),
                               const SizedBox(height: 12),
@@ -138,18 +139,18 @@ class ProfilePage extends StatelessWidget {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppColors.statusCompleted
-                                          .withOpacity(0.2),
+                                      color: customColors.statusCompleted
+                                          !.withOpacity(0.2),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
-                                        color: AppColors.statusCompleted
-                                            .withOpacity(0.5),
+                                        color: customColors.statusCompleted
+                                            !.withOpacity(0.5),
                                       ),
                                     ),
                                     child: Text(
-                                      role,
-                                      style: const TextStyle(
-                                        color: AppColors.statusCompleted,
+                                      role.isNotEmpty ? role : 'User',
+                                      style: TextStyle(
+                                        color: customColors.statusCompleted,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
                                       ),
@@ -181,9 +182,9 @@ class ProfilePage extends StatelessWidget {
                             // content: userProfile?.aboutMe ?? 'No description available.',
                             content:
                                 'Operations coordinator with experience in managing bookings, service requests, and customer support workflows.',
-                            backgroundColor: AppColors.cardBackground,
-                            textColor: AppColors.textPrimary,
-                            accentColor: AppColors.statusCompleted,
+                            backgroundColor: customColors.cardBackground!,
+                            textColor: customColors.textPrimary!,
+                            accentColor: customColors.statusCompleted!,
                           ),
 
                           const SizedBox(height: 24),
@@ -193,7 +194,7 @@ class ProfilePage extends StatelessWidget {
                             width: double.infinity,
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: AppColors.cardBackground,
+                              color: customColors.cardBackground,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Column(
@@ -205,15 +206,15 @@ class ProfilePage extends StatelessWidget {
                                       width: 4,
                                       height: 20,
                                       decoration: BoxDecoration(
-                                        color: AppColors.statusCompleted,
+                                        color: customColors.statusCompleted,
                                         borderRadius: BorderRadius.circular(2),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-                                    const Text(
+                                    Text(
                                       'Contact Information',
                                       style: TextStyle(
-                                        color: AppColors.statusCompleted,
+                                        color: customColors.statusCompleted,
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -225,10 +226,11 @@ class ProfilePage extends StatelessWidget {
                                   Icons.email_outlined,
                                   'Email',
                                   email,
-                                  AppColors.textSecondary,
+                                  customColors.textSecondary!,
+                                  context,
                                 ),
-                                const Divider(
-                                  color: AppColors.divider,
+                                Divider(
+                                  color: customColors.divider,
                                   height: 24,
                                 ),
                                 _buildContactRow(
@@ -237,10 +239,11 @@ class ProfilePage extends StatelessWidget {
                                   userProfile?.phone ?? 'No Phone details available.',
                                   // '+91 91234 56789',
 
-                                  AppColors.textSecondary,
+                                  customColors.textSecondary!,
+                                  context,
                                 ),
-                                const Divider(
-                                  color: AppColors.divider,
+                                Divider(
+                                  color: customColors.divider,
                                   height: 24,
                                 ),
                                 _buildContactRow(
@@ -249,7 +252,8 @@ class ProfilePage extends StatelessWidget {
                                   userProfile?.address ?? 'No Address available.',
                                   // '3rd Floor, Orion Business Hub, Andheri East, Mumbai, Maharashtra',
 
-                                  AppColors.textSecondary,
+                                  customColors.textSecondary!,
+                                  context,
                                 ),
                               ],
                             ),
@@ -262,7 +266,7 @@ class ProfilePage extends StatelessWidget {
                             width: double.infinity,
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
-                              color: AppColors.cardBackground,
+                              color: customColors.cardBackground,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Column(
@@ -274,15 +278,15 @@ class ProfilePage extends StatelessWidget {
                                       width: 4,
                                       height: 20,
                                       decoration: BoxDecoration(
-                                        color: AppColors.statusCompleted,
+                                        color: customColors.statusCompleted,
                                         borderRadius: BorderRadius.circular(2),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-                                    const Text(
+                                    Text(
                                       'Skills',
                                       style: TextStyle(
-                                        color: AppColors.statusCompleted,
+                                        color: customColors.statusCompleted,
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -296,19 +300,23 @@ class ProfilePage extends StatelessWidget {
                                   children: [
                                     _buildSkillChip(
                                       'html',
-                                      AppColors.textSecondary,
+                                      customColors.textSecondary!,
+                                      context,
                                     ),
                                     _buildSkillChip(
                                       'css',
-                                      AppColors.textSecondary,
+                                      customColors.textSecondary!,
+                                      context,
                                     ),
                                     _buildSkillChip(
                                       'react',
-                                      AppColors.textSecondary,
+                                      customColors.textSecondary!,
+                                      context,
                                     ),
                                     _buildSkillChip(
                                       'nodejs',
-                                      AppColors.textSecondary,
+                                      customColors.textSecondary!,
+                                      context,
                                     ),
                                   ],
                                 ),
@@ -326,7 +334,7 @@ class ProfilePage extends StatelessWidget {
                               icon: const Icon(Icons.cloud_upload_outlined),
                               label: const Text('Update CV'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.statusCompleted,
+                                backgroundColor: customColors.statusCompleted,
                                 foregroundColor: Colors.black,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 16,
@@ -346,9 +354,9 @@ class ProfilePage extends StatelessWidget {
                               icon: const Icon(Icons.visibility_outlined),
                               label: const Text('View CV'),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.statusCompleted,
-                                side: const BorderSide(
-                                  color: AppColors.statusCompleted,
+                                foregroundColor: customColors.statusCompleted,
+                                side: BorderSide(
+                                  color: customColors.statusCompleted!,
                                 ),
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 16,
@@ -381,7 +389,7 @@ class ProfilePage extends StatelessWidget {
                               icon: const Icon(Icons.logout),
                               label: const Text('Logout'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.error,
+                                backgroundColor: customColors.error,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 16,
@@ -439,11 +447,13 @@ class ProfilePage extends StatelessWidget {
     String label,
     String value,
     Color textColor,
+    BuildContext context,
   ) {
+    final customColors = Theme.of(context).custom;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 20, color: AppColors.statusCompleted),
+        Icon(icon, size: 20, color: customColors.statusCompleted),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
@@ -451,8 +461,8 @@ class ProfilePage extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
+                style: TextStyle(
+                  color: customColors.textPrimary,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),
@@ -466,13 +476,14 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildSkillChip(String label, Color textColor) {
+  Widget _buildSkillChip(String label, Color textColor, BuildContext context) {
+    final customColors = Theme.of(context).custom;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.textWhite.withOpacity(0.05),
+        color: customColors.textWhite!.withOpacity(0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.textWhite.withOpacity(0.1)),
+        border: Border.all(color: customColors.textWhite!.withOpacity(0.1)),
       ),
       child: Text(label, style: TextStyle(color: textColor, fontSize: 13)),
     );
