@@ -2,7 +2,9 @@ import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final singleButtonLoadingProvider = StateProvider.family<bool, String>((ref, key) => false);
+final singleButtonLoadingProvider = StateProvider.family<bool, String>(
+  (ref, key) => false,
+);
 
 class SingleButton extends ConsumerWidget {
   final String loadingKey;
@@ -31,6 +33,8 @@ class SingleButton extends ConsumerWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: customColors.primary,
               foregroundColor: Colors.white,
+              disabledBackgroundColor: customColors.primary,
+              disabledForegroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 12.0),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8.0),
@@ -44,6 +48,7 @@ class SingleButton extends ConsumerWidget {
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       color: Colors.white,
+                      backgroundColor: Colors.transparent,
                     ),
                   )
                 : Row(

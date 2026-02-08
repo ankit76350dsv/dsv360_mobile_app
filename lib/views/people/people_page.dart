@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
@@ -1223,6 +1224,33 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
     super.dispose();
   }
 
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // Test if location services are enabled.
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+        'Location permissions are permanently denied, we cannot request permissions.',
+      );
+    }
+
+    return await Geolocator.getCurrentPosition();
+  }
+
   Future<void> _handleAction({
     required String userId,
     required String username,
@@ -1236,6 +1264,10 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
     try {
       final now = DateTime.now();
       final dayDate = DateFormat('yyyy-MM-dd').format(now);
+      final position = await _determinePosition();
+      final lat = position.latitude;
+      final long = position.longitude;
+
       final checkInRepo = ref.read(checkInRepositoryProvider.notifier);
 
       if (activeLog == null) {
@@ -1244,16 +1276,16 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
           userId: userId,
           username: username,
           device: 'test-phone', // device id
-          lat: 30.75396137744414,
-          long: 76.62712840213943,
+          lat: lat,
+          long: long,
           dayDate: dayDate,
         );
       } else {
         // Check Out
         await checkInRepo.checkOut(
           device: 'test-phone',
-          lat: 30.75396137744414,
-          long: 76.62712840213943,
+          lat: lat,
+          long: long,
           checkInTimestamp: activeLog.checkIn.millisecondsSinceEpoch,
           rowId: activeLog.rowId ?? '',
         );
@@ -1295,9 +1327,16 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
       ),
     );
 
-    return timeLogsAsync.when(
-      loading: () => const Center(child: GlobalLoader()),
-      error: (err, st) => Center(child: Text('Error: $err')),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: timeLogsAsync.when(
+      loading: () => const GlobalLoader(
+        message: 'Loading Check In/Out data...',
+      ),
+      error: (error, stack) => GlobalError(
+        message: 'Failed to load Check In/Out data: Try Again',
+        onRetry: () => ref.invalidate(timeLogsRepositoryProvider),
+      ),
       data: (logs) {
         // Find if there's an active session (checkOut is null)
         AttendanceDetail? activeLog;
@@ -1439,7 +1478,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
           ),
         );
       },
-    );
+    ),);
   }
 }
 

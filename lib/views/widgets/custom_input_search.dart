@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,7 +22,7 @@ class CustomInputSearch extends ConsumerStatefulWidget {
 class _CustomInputSearchState extends ConsumerState<CustomInputSearch> {
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
 
     return TextField(
       onChanged: (value) {
@@ -43,7 +44,7 @@ class _CustomInputSearchState extends ConsumerState<CustomInputSearch> {
           fontWeight: FontWeight.w400,
         ),
         filled: true,
-        fillColor: colors.surfaceVariant,
+        fillColor: customColors.surfaceBackground,
         prefixIcon: Icon(Icons.search, color: Colors.grey),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),

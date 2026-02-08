@@ -181,9 +181,7 @@ class FeedbackDetailScreen extends StatelessWidget {
                     if (feedback.images.isNotEmpty) ...[
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: feedback.images.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          // final image = entry.value;
+                        children: feedback.images.map((image) {
                           
                           return Column(
                             children: [
@@ -193,8 +191,8 @@ class FeedbackDetailScreen extends StatelessWidget {
                                   width: double.infinity,
                                   constraints: const BoxConstraints(maxHeight: 400),
                                   color: customColors.inputFill,
-                                  child: Image.asset(
-                                    'assets/images/feedback.png',
+                                  child: Image.network(
+                                    image,
                                     fit: BoxFit.cover,
                                     errorBuilder: (context, error, stackTrace) {
                                       return Container(
@@ -211,8 +209,7 @@ class FeedbackDetailScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              if (index < feedback.images.length - 1)
-                                const SizedBox(height: 16),
+                              const SizedBox(height: 16),
                             ],
                           );
                         }).toList(),

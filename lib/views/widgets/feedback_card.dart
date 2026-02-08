@@ -6,10 +6,7 @@ import '../../models/feedback_model.dart';
 class FeedbackCard extends StatelessWidget {
   final FeedbackModel feedback;
 
-  const FeedbackCard({
-    super.key,
-    required this.feedback,
-  });
+  const FeedbackCard({super.key, required this.feedback});
 
   @override
   Widget build(BuildContext context) {
@@ -18,10 +15,7 @@ class FeedbackCard extends StatelessWidget {
       elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: Colors.white.withOpacity(0.1),
-          width: 1,
-        ),
+        side: BorderSide(color: Colors.white.withOpacity(0.1), width: 1),
       ),
       margin: const EdgeInsets.only(bottom: 16),
       child: Padding(
@@ -35,13 +29,15 @@ class FeedbackCard extends StatelessWidget {
                 // Avatar
                 CircleAvatar(
                   radius: 24,
-                  backgroundColor: customColors.avatarBackground,
+                  backgroundColor: customColors.primary!.withOpacity(0.2),
                   child: Text(
-                    feedback.name.isNotEmpty ? feedback.name[0].toUpperCase() : 'U',
-                    style: const TextStyle(
+                    feedback.name.isNotEmpty
+                        ? feedback.name[0].toUpperCase()
+                        : 'U',
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: customColors.primary,
                     ),
                   ),
                 ),
@@ -74,7 +70,7 @@ class FeedbackCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
-            
+
             // Message
             Text(
               feedback.message,
@@ -84,7 +80,7 @@ class FeedbackCard extends StatelessWidget {
                 color: customColors.textPrimary,
               ),
             ),
-            
+
             // Images (if any)
             if (feedback.images.isNotEmpty) ...[
               const SizedBox(height: 16),
@@ -98,8 +94,8 @@ class FeedbackCard extends StatelessWidget {
                       width: 80,
                       height: 80,
                       color: customColors.inputFill,
-                      child: Image.asset(
-                        'assets/images/feedback.png',
+                      child: Image.network(
+                        image,
                         fit: BoxFit.cover,
                         errorBuilder: (context, error, stackTrace) {
                           return Icon(
@@ -114,9 +110,9 @@ class FeedbackCard extends StatelessWidget {
                 }).toList(),
               ),
             ],
-            
+
             const SizedBox(height: 16),
-            
+
             // Date and Status
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -140,10 +136,13 @@ class FeedbackCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 // Status Badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: _getStatusColor(feedback.status, context),
                     borderRadius: BorderRadius.circular(12),
@@ -162,7 +161,7 @@ class FeedbackCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white
+                          color: Colors.white,
                         ),
                       ),
                     ],
@@ -175,7 +174,7 @@ class FeedbackCard extends StatelessWidget {
       ),
     );
   }
- 
+
   Color _getStatusColor(String status, BuildContext context) {
     final customColors = Theme.of(context).custom;
     switch (status.toLowerCase()) {
