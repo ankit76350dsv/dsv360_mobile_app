@@ -327,48 +327,48 @@ class ProfilePage extends StatelessWidget {
                           const SizedBox(height: 32),
 
                           // CV Actions
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: () {},
-                              icon: const Icon(Icons.cloud_upload_outlined),
-                              label: const Text('Update CV'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: customColors.statusCompleted,
-                                foregroundColor: Colors.black,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                elevation: 0,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () {},
-                              icon: const Icon(Icons.visibility_outlined),
-                              label: const Text('View CV'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: customColors.statusCompleted,
-                                side: BorderSide(
-                                  color: customColors.statusCompleted!,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                              ),
-                            ),
-                          ),
+                          // SizedBox(
+                          //   width: double.infinity,
+                          //   child: ElevatedButton.icon(
+                          //     onPressed: () {},
+                          //     icon: const Icon(Icons.cloud_upload_outlined),
+                          //     label: const Text('Update CV'),
+                          //     style: ElevatedButton.styleFrom(
+                          //       backgroundColor: customColors.statusCompleted,
+                          //       foregroundColor: Colors.black,
+                          //       padding: const EdgeInsets.symmetric(
+                          //         vertical: 16,
+                          //       ),
+                          //       shape: RoundedRectangleBorder(
+                          //         borderRadius: BorderRadius.circular(30),
+                          //       ),
+                          //       elevation: 0,
+                          //     ),
+                          //   ),
+                          // ),
+                          // const SizedBox(height: 16),
+                          // SizedBox(
+                          //   width: double.infinity,
+                          //   child: OutlinedButton.icon(
+                          //     onPressed: () {},
+                          //     icon: const Icon(Icons.visibility_outlined),
+                          //     label: const Text('View CV'),
+                          //     style: OutlinedButton.styleFrom(
+                          //       foregroundColor: customColors.statusCompleted,
+                          //       side: BorderSide(
+                          //         color: customColors.statusCompleted!,
+                          //       ),
+                          //       padding: const EdgeInsets.symmetric(
+                          //         vertical: 16,
+                          //       ),
+                          //       shape: RoundedRectangleBorder(
+                          //         borderRadius: BorderRadius.circular(30),
+                          //       ),
+                          //     ),
+                          //   ),
+                          // ),
 
-                          const SizedBox(height: 24),
+                          // const SizedBox(height: 24),
 
                           // Logout Button
                           SizedBox(
