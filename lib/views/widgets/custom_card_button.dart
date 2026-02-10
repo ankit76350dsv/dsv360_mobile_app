@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 
 class CustomCardButton extends StatelessWidget {
@@ -13,7 +14,7 @@ class CustomCardButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
 
     return InkWell(
       onTap: onTap,
@@ -21,10 +22,10 @@ class CustomCardButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: color == null ? colors.primary.withValues(alpha: 0.1) : color!.withValues(alpha: 0.1),
+          color: color == null ? customColors.primary!.withValues(alpha: 0.1) : color!.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, size: 20, color: color ?? colors.primary),
+        child: Icon(icon, size: 20, color: color ?? customColors.primary),
       ),
     );
   }

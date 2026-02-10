@@ -1,5 +1,6 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:dsv360/core/constants/app_colors.dart';
+// import 'package:dsv360/core/constants/app_colors.dart';
 
 class StatGrid extends StatelessWidget {
   final bool isLarge;
@@ -47,10 +48,10 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
+
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 0,
-      color: AppColors.cardBackground,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
         child: Column(
@@ -62,8 +63,8 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   value,
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                  style: TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold, color: customColors.textPrimary),
                 ),
                 CircleAvatar(
                   backgroundColor: color.withOpacity(0.18),
@@ -75,7 +76,7 @@ class _StatCard extends StatelessWidget {
             const Spacer(),
             Text(
               title,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              style: TextStyle(color: customColors.textSecondary, fontSize: 13),
             ),
           ],
         ),

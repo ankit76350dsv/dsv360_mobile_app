@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
@@ -29,7 +30,7 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
       clientContactsListRepositoryProvider,
     );
     final query = ref.watch(clientContactsSearchQueryProvider);
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
     final connectivityStatus = ref.watch(connectivityStatusProvider);
 
     return Scaffold(
@@ -69,6 +70,7 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
 
           return FloatingActionButton(
             shape: const CircleBorder(),
+            backgroundColor: customColors.primary,
             onPressed: () {
               // do nothing for the moment
 
@@ -79,7 +81,7 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
               //   ),
               // );
             },
-            child: Icon(Icons.filter_alt, size: 22),
+            child: Icon(Icons.filter_alt, size: 22, color: Colors.white),
           );
         },
         loading: () => null, // hide FAB while checking
@@ -191,7 +193,7 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    final customColors = theme.custom;
     final activeUser = ref.watch(activeUserRepositoryProvider);
 
     return GestureDetector(
@@ -213,11 +215,11 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
                     children: [
                       CircleAvatar(
                         radius: 20,
-                        backgroundColor: colors.primary.withOpacity(0.15),
+                        backgroundColor: customColors.primary!.withOpacity(0.15),
                         child: Icon(
                           Icons.filter_alt,
                           size: 22,
-                          color: colors.primary,
+                          color: customColors.primary,
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -265,7 +267,7 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
                           // );
                         },
                         icon: Icons.delete,
-                        color: colors.error,
+                        color: customColors.error,
                       ),
                     ],
                   ),
@@ -301,16 +303,16 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
   }
 
   Widget _clientInfoRow(IconData icon, String text) {
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
 
     return Row(
       children: [
-        Icon(icon, size: 18, color: theme.colorScheme.tertiary),
+        Icon(icon, size: 18, color: customColors.textSecondary),
         const SizedBox(width: 8),
         Text(
           text,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.tertiary,
+          style: TextStyle(
+            color: customColors.textSecondary,
           ),
         ),
       ],

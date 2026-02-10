@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 
 class CustomPickerField extends StatefulWidget {
@@ -48,7 +49,7 @@ class _CustomPickerFieldState extends State<CustomPickerField> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
 
     final displayText =
         widget.valueText == null || widget.valueText!.isEmpty
@@ -97,7 +98,7 @@ class _CustomPickerFieldState extends State<CustomPickerField> {
               fontWeight: FontWeight.w600,
             ),
             filled: true,
-            fillColor: colors.secondary,
+            fillColor: customColors.inputFill,
             enabled: widget.enabled,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
@@ -136,7 +137,7 @@ class _CustomPickerFieldState extends State<CustomPickerField> {
                 style: TextStyle(
                   color: isPlaceholder
                       ? Colors.grey.withOpacity(0.7)
-                      : colors.tertiary,
+                      : customColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),

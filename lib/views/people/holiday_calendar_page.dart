@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/holiday.dart';
@@ -12,8 +13,7 @@ class HolidayCalendarPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final colors = theme.colorScheme;
+    final customColors = Theme.of(context).custom;
     final holidayAsync = ref.watch(holidayRepositoryProvider);
     final selectedLocation = ref.watch(selectedLocationProvider);
 
@@ -80,15 +80,16 @@ class HolidayCalendarPage extends ConsumerWidget {
                     children: [
                       Text(
                         'Holidays grouped month-wise',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colors.onSurfaceVariant,
+                        style: TextStyle(
+                          color: customColors.textSecondary,
+                          fontSize: 12
                         ),
                       ),
                     ],
                   ),
                   CustomChip(
                     label: 'Remaining: $remaining / $total',
-                    color: colors.primary,
+                  color: customColors.primary!,
                     icon: null,
                   ),
                 ],

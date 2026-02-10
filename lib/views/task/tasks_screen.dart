@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/providers/task_provider.dart';
 import 'package:dsv360/repositories/task_repository.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
@@ -7,8 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../models/task.dart';
 import '../../models/attachment.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_text_styles.dart';
 import '../../core/constants/auth_manager.dart';
 import '../time_entry/add_time_entry_dialog.dart';
 import '../widgets/custom_search_bar.dart';
@@ -43,18 +42,25 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     super.dispose();
   }
 
-  Future<void> _showAddTaskDialog({Task? task}) async {
+  Future<void> _showAddTaskDialog({
+    Task? task,
+    required BuildContext context,
+  }) async {
+    final customColors = Theme.of(context).custom;
     debugPrint('🔧 DIALOG OPENED - Add/Edit Task dialog opened');
     debugPrint('📝 Editing existing task: ${task != null}');
     debugPrint('📁 Current Screen Project ID: "${widget.projectId}"');
-    
+
     if ((widget.projectId ?? '').isEmpty) {
-      debugPrint('⚠️ WARNING: Project ID is empty! User must select a project in the dialog.');
+      debugPrint(
+        '⚠️ WARNING: Project ID is empty! User must select a project in the dialog.',
+      );
     }
-    
+
     final result = await Navigator.of(context).push<Task>(
       MaterialPageRoute(
-        builder: (context) => AddTaskDialog(task: task, projectId: widget.projectId ?? ''),
+        builder: (context) =>
+            AddTaskDialog(task: task, projectId: widget.projectId ?? ''),
       ),
     );
 
@@ -66,17 +72,19 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       debugPrint('📁 Project ID: "${result.projectId}"');
       debugPrint('⚡ Status: ${result.status}');
       debugPrint('👤 Assigned To: ${result.assignedTo}');
-      
+
       // Check if this is a new task or edit
       final isNewTask = task == null;
-      
+
       if (isNewTask && result.projectId.isEmpty) {
         debugPrint('❌ Cannot create task without project ID');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Cannot create task without selecting a project'),
-              backgroundColor: AppColors.error,
+            SnackBar(
+              content: const Text(
+                'Cannot create task without selecting a project',
+              ),
+              backgroundColor: customColors.error,
             ),
           );
         }
@@ -87,27 +95,35 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       try {
         if (isNewTask) {
           debugPrint('📤 Creating new task via API');
-          
+
           // Get the current user ID for the provider
           final userId = ref.read(currentUserIdProvider);
           debugPrint('🔑 Current User ID: $userId');
-          
-          final tasksRepository = ref.read(tasksListRepositoryProvider(userId).notifier);
-          
+
+          final tasksRepository = ref.read(
+            tasksListRepositoryProvider(userId).notifier,
+          );
+
           // Format dates as strings for API
-          final startDateStr = result.startDate?.toIso8601String().split('T')[0] ?? '';
-          final endDateStr = result.endDate?.toIso8601String().split('T')[0] ?? '';
-          
+          final startDateStr =
+              result.startDate?.toIso8601String().split('T')[0] ?? '';
+          final endDateStr =
+              result.endDate?.toIso8601String().split('T')[0] ?? '';
+
           debugPrint('📅 Start Date String: $startDateStr');
           debugPrint('📅 End Date String: $endDateStr');
-          
+
           // Get all assignee IDs and names (comma-separated)
           // Note: Backend currently only supports single assignee, but we send all selected
-          String? assigneeIds = result.assignedToId.isNotEmpty ? result.assignedToId : null;
-          String? assigneeNames = result.assignedTo.isNotEmpty ? result.assignedTo : null;
+          String? assigneeIds = result.assignedToId.isNotEmpty
+              ? result.assignedToId
+              : null;
+          String? assigneeNames = result.assignedTo.isNotEmpty
+              ? result.assignedTo
+              : null;
           debugPrint('👥 Assignee IDs: $assigneeIds');
           debugPrint('👥 Assignee Names: $assigneeNames');
-          
+
           await tasksRepository.createTask(
             taskName: result.taskName,
             projectID: result.projectId,
@@ -118,29 +134,38 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             description: result.description,
             startDate: startDateStr,
             dueDate: endDateStr,
-            attachments: result.attachmentsForCreation?.cast<Attachment>() ?? [],
+            attachments:
+                result.attachmentsForCreation?.cast<Attachment>() ?? [],
           );
-          
+
           debugPrint('✅ Task created successfully via API');
         } else {
           debugPrint('📝 Updating existing task via API');
-          
+
           // Get the current user ID for the provider
           final userId = ref.read(currentUserIdProvider);
           debugPrint('🔑 Current User ID: $userId');
-          
-          final tasksRepository = ref.read(tasksListRepositoryProvider(userId).notifier);
-          
+
+          final tasksRepository = ref.read(
+            tasksListRepositoryProvider(userId).notifier,
+          );
+
           // Format dates as strings for API
-          final startDateStr = result.startDate?.toIso8601String().split('T')[0] ?? '';
-          final endDateStr = result.endDate?.toIso8601String().split('T')[0] ?? '';
-          
+          final startDateStr =
+              result.startDate?.toIso8601String().split('T')[0] ?? '';
+          final endDateStr =
+              result.endDate?.toIso8601String().split('T')[0] ?? '';
+
           // Get all assignee IDs and names (comma-separated)
-          String? assigneeIds = result.assignedToId.isNotEmpty ? result.assignedToId : null;
-          String? assigneeNames = result.assignedTo.isNotEmpty ? result.assignedTo : null;
+          String? assigneeIds = result.assignedToId.isNotEmpty
+              ? result.assignedToId
+              : null;
+          String? assigneeNames = result.assignedTo.isNotEmpty
+              ? result.assignedTo
+              : null;
           debugPrint('👥 Assignee IDs: $assigneeIds');
           debugPrint('👥 Assignee Names: $assigneeNames');
-          
+
           await tasksRepository.updateTask(
             rowId: result.taskId,
             taskName: result.taskName,
@@ -153,7 +178,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             startDate: startDateStr,
             dueDate: endDateStr,
           );
-          
+
           debugPrint('✅ Task updated successfully via API');
         }
       } catch (e) {
@@ -162,25 +187,27 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Error saving task: $e'),
-              backgroundColor: AppColors.error,
+              backgroundColor: customColors.error,
             ),
           );
         }
         return;
       }
-      
+
       // Refresh the tasks list after add/edit
       final userId = ref.read(currentUserIdProvider);
       debugPrint('🔄 Refreshing tasks for user: $userId');
-      
+
       if (mounted) {
         ref.refresh(tasksListRepositoryProvider(userId));
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              task == null ? 'Task added successfully' : 'Task updated successfully',
+              task == null
+                  ? 'Task added successfully'
+                  : 'Task updated successfully',
             ),
-            backgroundColor: AppColors.primary,
+            backgroundColor: customColors.primary,
           ),
         );
       }
@@ -189,25 +216,27 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     }
   }
 
-  void _deleteTask(Task task) {
+  void _deleteTask(Task task, BuildContext context) {
+    final customColors = Theme.of(context).custom;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.cardBackground,
-        title: const Text(
+        backgroundColor: customColors.surfaceBackground,
+        title: Text(
           'Delete Task',
-          style: TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: customColors.textPrimary),
         ),
         content: Text(
           'Are you sure you want to delete "${task.taskName}"?',
-          style: const TextStyle(color: AppColors.textPrimary),
+          style: TextStyle(color: customColors.textPrimary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               'Cancel',
-              style: TextStyle(color: AppColors.primary),
+              style: TextStyle(color: customColors.primary),
             ),
           ),
           TextButton(
@@ -218,15 +247,15 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 await ref
                     .read(tasksListRepositoryProvider(userId).notifier)
                     .deleteTask(task.taskId);
-                
+
                 // Refresh the tasks list
                 if (mounted) {
                   ref.refresh(tasksListRepositoryProvider(userId));
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Text('Task deleted successfully'),
-                      backgroundColor: AppColors.error,
+                      backgroundColor: customColors.error,
                     ),
                   );
                 }
@@ -236,14 +265,14 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Error deleting task: $e'),
-                      backgroundColor: AppColors.error,
+                      backgroundColor: customColors.error,
                     ),
                   );
                 }
               }
             },
-            style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Delete'),
+            style: TextButton.styleFrom(foregroundColor: customColors.error),
+            child: Text('Delete'),
           ),
         ],
       ),
@@ -255,9 +284,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     final userId = ref.watch(currentUserIdProvider);
     final tasksAsync = ref.watch(tasksListRepositoryProvider(userId));
     final searchQuery = ref.watch(tasksSearchQueryProvider);
+    final customColors = Theme.of(context).custom;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       body: Column(
         children: [
@@ -312,12 +341,12 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 final filteredTasks = searchQuery.isEmpty
                     ? tasks
                     : tasks.where((task) {
-                        return task.taskName
-                                .toLowerCase()
-                                .contains(searchQuery.toLowerCase()) ||
-                            task.taskId
-                                .toLowerCase()
-                                .contains(searchQuery.toLowerCase());
+                        return task.taskName.toLowerCase().contains(
+                              searchQuery.toLowerCase(),
+                            ) ||
+                            task.taskId.toLowerCase().contains(
+                              searchQuery.toLowerCase(),
+                            );
                       }).toList();
 
                 return filteredTasks.isEmpty
@@ -328,15 +357,19 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                             Icon(
                               Icons.inbox_outlined,
                               size: 64,
-                              color: AppColors.textSecondary.withValues(
+                              color: customColors.textSecondary!.withValues(
                                 alpha: 0.5,
                               ),
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              searchQuery.isEmpty ? 'No tasks yet' : 'No tasks found',
-                              style: AppTextStyles.bodyLarge.copyWith(
-                                color: AppColors.textSecondary,
+                              searchQuery.isEmpty
+                                  ? 'No tasks yet'
+                                  : 'No tasks found',
+                              style: TextStyle(
+                                color: customColors.textPrimary,
+                                fontSize: 16,
+                                fontWeight: FontWeight.normal,
                               ),
                             ),
                           ],
@@ -345,8 +378,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                     : RefreshIndicator(
                         onRefresh: () async {
                           await ref
-                              .read(tasksListRepositoryProvider(userId)
-                                  .notifier)
+                              .read(
+                                tasksListRepositoryProvider(userId).notifier,
+                              )
                               .refresh(userId);
                         },
                         child: ListView.builder(
@@ -364,8 +398,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: GenericCard(
-                                id: task.taskId.length > 4 
-                                    ? 'T${task.taskId.substring(task.taskId.length - 4)}' 
+                                id: task.taskId.length > 4
+                                    ? 'T${task.taskId.substring(task.taskId.length - 4)}'
                                     : 'T${task.taskId}',
                                 name: task.taskName,
                                 status: task.status,
@@ -389,10 +423,10 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                         MaterialPageRoute(
                                           builder: (context) =>
                                               AddTimeEntryDialog(
-                                            taskId: task.taskId,
-                                            taskName: task.taskName,
-                                            currentUser: task.assignedTo,
-                                          ),
+                                                taskId: task.taskId,
+                                                taskName: task.taskName,
+                                                currentUser: task.assignedTo,
+                                              ),
                                         ),
                                       );
                                     },
@@ -408,17 +442,18 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                         TaskDetailsDialog(task: task),
                                   );
                                 },
-                                onEdit: () => _showAddTaskDialog(task: task),
-                                onDelete: () => _deleteTask(task),
+                                onEdit: () => _showAddTaskDialog(
+                                  task: task,
+                                  context: context,
+                                ),
+                                onDelete: () => _deleteTask(task, context),
                               ),
                             );
                           },
                         ),
                       );
               },
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
-              ),
+              loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, stack) => Center(
                 child: SingleChildScrollView(
                   child: Column(
@@ -427,13 +462,15 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                       Icon(
                         Icons.error_outline,
                         size: 64,
-                        color: AppColors.error.withValues(alpha: 0.5),
+                        color: customColors.error!.withValues(alpha: 0.5),
                       ),
                       const SizedBox(height: 16),
                       Text(
                         'Error loading tasks',
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          color: AppColors.error,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.normal,
+                          color: customColors.error,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -442,8 +479,10 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                         child: Text(
                           err.toString(),
                           textAlign: TextAlign.center,
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.normal,
+                            color: customColors.textSecondary,
                           ),
                         ),
                       ),
@@ -456,8 +495,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddTaskDialog(),
-        backgroundColor: AppColors.primary,
+        onPressed: () => _showAddTaskDialog(context: context),
+        backgroundColor: customColors.primary,
         shape: const CircleBorder(),
         child: const Icon(Icons.add, color: Colors.white, size: 28),
       ),

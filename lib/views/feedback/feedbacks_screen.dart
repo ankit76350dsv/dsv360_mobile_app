@@ -1,30 +1,37 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/widgets/global_error.dart';
+import 'package:dsv360/core/widgets/global_loader.dart';
+import 'package:dsv360/views/dashboard/dashboard_page.dart';
+import 'package:dsv360/views/feedback/feedback_form_screen.dart';
+import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/feedback_model.dart';
+import '../../repositories/feedback_repository.dart';
 import '../widgets/custom_search_bar.dart';
 import '../widgets/feedback_card.dart';
 import '../../views/widgets/TopBar.dart';
 import 'feedback_detail_screen.dart';
 
-class FeedbacksScreen extends StatefulWidget {
+class FeedbacksScreen extends ConsumerStatefulWidget {
   final FeedbackModel? newFeedback;
 
   const FeedbacksScreen({super.key, this.newFeedback});
 
   @override
-  State<FeedbacksScreen> createState() => _FeedbacksScreenState();
+  ConsumerState<FeedbacksScreen> createState() => _FeedbacksScreenState();
 }
 
-class _FeedbacksScreenState extends State<FeedbacksScreen> {
+class _FeedbacksScreenState extends ConsumerState<FeedbacksScreen> {
   final TextEditingController _searchController = TextEditingController();
-  List<FeedbackModel> _allFeedbacks = [];
-  List<FeedbackModel> _filteredFeedbacks = [];
 
   @override
   void initState() {
     super.initState();
-    _loadFeedbacks();
-    _searchController.addListener(() => _filterFeedbacks(_searchController.text));
+    // Initialize search controller with current query if needed
+    _searchController.text = ref.read(feedbackSearchQueryProvider);
   }
 
   @override
@@ -33,155 +40,202 @@ class _FeedbacksScreenState extends State<FeedbacksScreen> {
     super.dispose();
   }
 
-  void _loadFeedbacks() {
-    // Sample feedback data - In a real app, this would come from an API or database
-    _allFeedbacks = [
-      FeedbackModel(
-        id: '1',
-        name: 'John Doe',
-        email: 'john@example.com',
-        message: 'Great application! Very user-friendly and intuitive interface.',
-        images: [],
-        date: DateTime.now().subtract(const Duration(days: 2)),
-        status: 'Reviewed',
-      ),
-      FeedbackModel(
-        id: '2',
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        message: 'The project management features are excellent. Would love to see time tracking integration.',
-        images: [],
-        date: DateTime.now().subtract(const Duration(days: 1)),
-        status: 'Pending',
-      ),
-      FeedbackModel(
-        id: '3',
-        name: 'Mike Johnson',
-        email: 'mike@example.com',
-        message: 'Found a bug in the export functionality. Please check the CSV export feature.',
-        images: [],
-        date: DateTime.now(),
-        status: 'In Review',
-      ),
-      FeedbackModel(
-        id: '4',
-        name: 'Sarah Wilson',
-        email: 'sarah@example.com',
-        message: 'Love the dark theme! Makes it easier on the eyes during late night work sessions.',
-        images: [],
-        date: DateTime.now().subtract(const Duration(days: 3)),
-        status: 'Reviewed',
-      ),
-    ];
-    
-    // Add new feedback if provided
-    if (widget.newFeedback != null) {
-      _allFeedbacks.insert(0, widget.newFeedback!);
-    }
-    
-    _filteredFeedbacks = _allFeedbacks;
-  }
-
-  void _filterFeedbacks(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _filteredFeedbacks = _allFeedbacks;
-      } else {
-        _filteredFeedbacks = _allFeedbacks
-            .where((feedback) =>
-                feedback.name.toLowerCase().contains(query.toLowerCase()) ||
-                feedback.email.toLowerCase().contains(query.toLowerCase()) ||
-                feedback.message.toLowerCase().contains(query.toLowerCase()))
-            .toList();
-      }
-    });
+  void _onSearchChanged(String query) {
+    ref.read(feedbackSearchQueryProvider.notifier).state = query;
   }
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
+    final feedbackAsync = ref.watch(feedbackRepositoryProvider);
+    final searchQuery = ref.watch(feedbackSearchQueryProvider);
+    final connectivityStatus = ref.watch(connectivityStatusProvider);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        toolbarHeight: 35.0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, size: 18),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
+              );
+            }
+          },
+        ),
+        centerTitle: true,
+        elevation: 0,
+        title: Text(
+          'Feedbacks',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        // if needed can add the icon as well here
+        // hook for info action
+        // you can open a dialog or screen here
+        actions: [],
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: connectivityStatus.when(
+        data: (results) {
+          if (results.contains(ConnectivityResult.none)) {
+            return null; // FAB hidden when no internet
+          }
+
+          return FloatingActionButton(
+            backgroundColor: customColors.primary,
+            foregroundColor: Colors.white,
+            shape: const CircleBorder(),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => FeedbackFormScreen()),
+              );
+            },
+            child: Icon(Icons.feedback_rounded, size: 22),
+          );
+        },
+        loading: () => null, // hide FAB while checking
+        error: (_, __) => null, // hide FAB on error
+      ),
       body: SafeArea(
-        child: Column(
-          children: [
-            TopBar(
-              title: 'Feedbacks',
-              onBack: () => Navigator.pop(context),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header was here, now controlled by TopBar, removed empty Column
-                      
-                      // Search Bar
-                      CustomSearchBar(
-                        controller: _searchController,
-                        hintText: 'Search Feedbacks',
-                        onChanged: _filterFeedbacks,
-                      ),
-                      const SizedBox(height: 24),
-        
-                      // Feedback Count
-                      Text(
-                        '${_filteredFeedbacks.length} Feedback${_filteredFeedbacks.length != 1 ? 's' : ''}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-        
-                      // Feedbacks List
-                      if (_filteredFeedbacks.isEmpty)
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 40),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  Icons.inbox,
-                                  size: 64,
-                                  color: AppColors.textSecondary.withValues(alpha: 0.5),
+        child: connectivityStatus.when(
+          data: (results) {
+            if (results.contains(ConnectivityResult.none)) {
+              return GlobalError(
+                message: 'Please check your internet connection.',
+                isNetworkError: true,
+                onRetry: () {
+                  ref.invalidate(connectivityStatusProvider);
+                },
+              );
+            }
+
+            // When connected, show accounts data
+            return Column(
+              children: [
+                Expanded(
+                  child: feedbackAsync.when(
+                    loading: () =>
+                        const GlobalLoader(message: 'Loading feedbacks info...'),
+                    error: (error, stack) => GlobalError(
+                      message: 'Failed to load feedbacks data: Try Again',
+                      onRetry: () => ref.refresh(feedbackRepositoryProvider),
+                    ),
+                    data: (feedbacks) {
+                      // Merge new feedback if it exists and isn't already in the list
+                      // This is a simple handling to respect the 'newFeedback' parameter
+                      // In a real app, this should probably be handled by a mutation + refresh
+                      var displayFeedbacks = [...feedbacks];
+                      if (widget.newFeedback != null &&
+                          !displayFeedbacks.any(
+                            (f) => f.id == widget.newFeedback!.id,
+                          )) {
+                        displayFeedbacks.insert(0, widget.newFeedback!);
+                      }
+
+                      final filteredFeedbacks = displayFeedbacks.where((
+                        feedback,
+                      ) {
+                        if (searchQuery.isEmpty) return true;
+                        final query = searchQuery.toLowerCase();
+                        return feedback.name.toLowerCase().contains(query) ||
+                            feedback.email.toLowerCase().contains(query) ||
+                            feedback.message.toLowerCase().contains(query);
+                      }).toList();
+
+                      return SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: EdgeInsetsGeometry.symmetric(
+                                  vertical: 8.0,
                                 ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No feedbacks found',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: AppColors.textSecondary.withValues(alpha: 0.7),
-                                  ),
+                                child: CustomInputSearch(
+                                  searchProvider: feedbackSearchQueryProvider,
+                                  hint: "Search feedbacks",
                                 ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else
-                        Column(
-                          children: _filteredFeedbacks
-                              .map((feedback) => GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => FeedbackDetailScreen(feedback: feedback),
+                              ),
+                              Text(
+                                '${filteredFeedbacks.length} Feedback${filteredFeedbacks.length != 1 ? 's' : ''}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: customColors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              if (filteredFeedbacks.isEmpty)
+                                Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 40,
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        Icon(
+                                          Icons.inbox,
+                                          size: 64,
+                                          color: customColors.textSecondary!
+                                              .withValues(alpha: 0.5),
                                         ),
-                                      );
-                                    },
-                                    child: FeedbackCard(feedback: feedback),
-                                  ))
-                              .toList(),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          'No feedbacks found',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: customColors.textSecondary!
+                                                .withValues(alpha: 0.7),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              else
+                                Column(
+                                  children: filteredFeedbacks
+                                      .map(
+                                        (feedback) => GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    FeedbackDetailScreen(
+                                                      feedback: feedback,
+                                                    ),
+                                              ),
+                                            );
+                                          },
+                                          child: FeedbackCard(
+                                            feedback: feedback,
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                            ],
+                          ),
                         ),
-                    ],
+                      );
+                    },
                   ),
                 ),
-              ),
-            ),
-          ],
+              ],
+            );
+          },
+          loading: () => const GlobalLoader(message: 'Checking connection...'),
+          error: (error, stack) => GlobalError(
+            message: 'Failed to check connectivity: $error',
+            onRetry: () => ref.invalidate(connectivityStatusProvider),
+          ),
         ),
       ),
     );

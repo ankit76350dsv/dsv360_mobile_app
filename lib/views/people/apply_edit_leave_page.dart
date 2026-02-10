@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/models/leave_details.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/repositories/leaves_repository.dart';
@@ -76,8 +77,7 @@ class _ApplyEditLeavePageState extends ConsumerState<ApplyEditLeavePage> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
 
     return Scaffold(
       appBar: AppBar(
@@ -112,8 +112,8 @@ class _ApplyEditLeavePageState extends ConsumerState<ApplyEditLeavePage> {
                     children: [
                       Text(
                         'Leave Information',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: colors.primary,
+                        style: TextStyle(
+                          color: customColors.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

@@ -32,11 +32,6 @@ class UsersRepository extends AsyncNotifier<List<UsersModel>> {
       throw AsyncError(e, st);
     }
   }
-
-  Future<void> refresh() async {
-    state = const AsyncLoading();
-    state = await AsyncValue.guard(fetchUsers);
-  }
 }
 
 final usersRepositoryProvider =

@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 
 class CustomDropDownField extends StatefulWidget {
@@ -58,7 +59,7 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
 
     return Container(
       decoration: BoxDecoration(
@@ -90,11 +91,11 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
           ),
         ),
         style: TextStyle(
-          color: colors.tertiary,
+          color: customColors.textPrimary,
           fontSize: 16,
           fontWeight: FontWeight.w500,
         ),
-        dropdownColor: colors.surface,
+        dropdownColor: customColors.cardBackground,
         decoration: InputDecoration(
           labelText: widget.labelText,
           labelStyle: TextStyle(
@@ -105,7 +106,7 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
             fontWeight: FontWeight.w600,
           ),
           filled: true,
-          fillColor: colors.secondary,
+          fillColor: customColors.inputFill,
           prefixIcon: Icon(
             widget.prefixIcon,
             color: _isFocused

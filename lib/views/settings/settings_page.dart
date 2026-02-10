@@ -1,5 +1,4 @@
-import 'package:dsv360/core/constants/theme.dart' hide AppColors;
-import 'package:dsv360/core/constants/app_colors.dart';
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
@@ -11,8 +10,9 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+     final customColors = Theme.of(context).custom;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       body: SafeArea(
         child: Column(
@@ -31,11 +31,11 @@ class SettingsPage extends StatelessWidget {
                       SwitchListTile(
                         title: Text(
                           'Dark Mode',
-                          style: TextStyle(color: AppColors.textPrimary),
+                          style: TextStyle(color: customColors.textPrimary),
                         ),
                         subtitle: Text(
                           isDark ? 'Dark theme enabled' : 'Light theme enabled',
-                          style: TextStyle(color: AppColors.textSecondary),
+                          style: TextStyle(color: customColors.textSecondary),
                         ),
                         value: isDark,
                         onChanged: (value) {

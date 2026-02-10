@@ -31,10 +31,9 @@ class DioClient {
     );
 
     // Automatically logs: Request URL, Headers, Body, Response body
-    // Automatically logs: Request URL, Headers, Body, Response body
-    // _dio.interceptors.add(
-    //   LogInterceptor(requestBody: true, responseBody: true),
-    // );
+    _dio.interceptors.add(
+      LogInterceptor(requestBody: true, responseBody: true),
+    );
   }
 
   Future<Response> get(
@@ -49,7 +48,7 @@ class DioClient {
         options: options,
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         return response;
       } else {
         throw Exception('Unexpected status code: ${response.statusCode}');

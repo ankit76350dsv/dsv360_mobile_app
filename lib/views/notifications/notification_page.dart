@@ -1,6 +1,6 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
-import 'package:dsv360/core/constants/app_colors.dart';
 
 
 class NotificationPage extends StatelessWidget {
@@ -74,7 +74,6 @@ class NotificationPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final items = _items();
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -175,14 +174,15 @@ class _NotificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.cardBackground,
+          color: customColors.cardBackground,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.divider),
+          border: Border.all(color: customColors.divider!),
           boxShadow: [
             BoxShadow(
               color: Colors.black26,
@@ -194,7 +194,7 @@ class _NotificationCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _leading(),
+            _leading(context),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -206,19 +206,19 @@ class _NotificationCard extends StatelessWidget {
                   ],
                   Text(
                     item.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       height: 1.25,
-                      color: AppColors.textPrimary,
+                      color: customColors.textPrimary,
                     ),
                   ),
                   if (item.subtitle.isNotEmpty) ...[
                     const SizedBox(height: 6),
                     Text(
                       item.subtitle,
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
+                      style: TextStyle(
+                        color: customColors.textSecondary,
                         fontSize: 13,
                       ),
                     ),
@@ -232,7 +232,8 @@ class _NotificationCard extends StatelessWidget {
     );
   }
 
-  Widget _leading() {
+  Widget _leading(BuildContext context) {
+    final customColors = Theme.of(context).custom;
     switch (item.leadingType) {
       case LeadingType.logo:
         return Container(
@@ -245,8 +246,8 @@ class _NotificationCard extends StatelessWidget {
           alignment: Alignment.center,
           child: Text(
             item.logoText ?? '',
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: AppColors.textWhite),
+            style: TextStyle(
+                fontWeight: FontWeight.bold, color: customColors.textWhite),
           ),
         );
       case LeadingType.check:
@@ -254,7 +255,7 @@ class _NotificationCard extends StatelessWidget {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: AppColors.inputFill,
+          color: customColors.inputFill,
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.check_circle, color: Color(0xFF24C16E)),
@@ -264,9 +265,9 @@ class _NotificationCard extends StatelessWidget {
           radius: 22,
           backgroundImage:
               item.avatarUrl != null ? NetworkImage(item.avatarUrl!) : null,
-          backgroundColor: AppColors.inputFill,
+          backgroundColor: customColors.inputFill,
           child: item.avatarUrl == null
-              ? const Icon(Icons.person, color: AppColors.textHint)
+              ? Icon(Icons.person, color: customColors.textHint)
               : null,
         );
     }

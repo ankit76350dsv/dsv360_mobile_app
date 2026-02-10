@@ -1,203 +1,199 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../core/constants/app_colors.dart';
 import '../../models/issue_model.dart';
 
-class IssueDetailsModalSheet extends StatelessWidget {
+class IssueDetailsModalSheet extends StatefulWidget {
   final IssueModel issue;
 
   const IssueDetailsModalSheet({super.key, required this.issue});
 
-  // Color _getSeverityColor(String severity) {
-  //   switch (severity) {
-  //     case 'Critical':
-  //       return AppColors.error;
-  //     case 'High':
-  //       return Colors.orange;
-  //     case 'Medium':
-  //       return Colors.yellow;
-  //     case 'Low':
-  //       return Colors.green;
-  //     default:
-  //       return AppColors.textSecondary;
-  //   }
-  // }
+  @override
+  State<IssueDetailsModalSheet> createState() => _IssueDetailsModalSheetState();
+}
 
-  Color _getStatusColor(String status) {
+class _IssueDetailsModalSheetState extends State<IssueDetailsModalSheet> {
+  Color _getStatusColor(String status, CustomColors custom) {
     switch (status) {
       case 'Open':
-        return AppColors.statusPending;
+        return custom.statusPending!;
       case 'In Progress':
-        return AppColors.statusInProgress;
+        return custom.statusInProgress!;
       case 'Resolved':
-        return AppColors.statusCompleted;
+        return custom.statusCompleted!;
       case 'Closed':
-        return AppColors.textSecondary;
+        return custom.textSecondary!;
       case 'On Hold':
-        return AppColors.error;
+        return custom.error!;
       default:
-        return AppColors.textSecondary;
+        return custom.textSecondary!;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    final custom = Theme.of(context).custom;
+
     return Container(
-      constraints: BoxConstraints(
-        maxHeight: screenHeight * 0.75,
-      ),
-      decoration: const BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Drag handle
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.textSecondary.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(2),
+      constraints: BoxConstraints(maxHeight: screenHeight * 0.75),
+      child: Card(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: custom.textSecondary!.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // Heading
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Issue Details',
-                style: TextStyle(
-                  color: AppColors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // Content
-          Flexible(
-            child: SingleChildScrollView(
+            // Heading
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  // Row 1: Issue ID and Issue Name
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildDetailCard(
-                          icon: Icons.info_outline,
-                          label: 'Issue ID',
-                          value: issue.id,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildDetailCard(
-                          icon: Icons.bug_report_outlined,
-                          label: 'Issue Name',
-                          value: issue.issueName,
-                        ),
-                      ),
-                    ],
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Issue Details',
+                  style: TextStyle(
+                    color: custom.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
-                  const SizedBox(height: 12),
-
-                  // Row 2: Project Name and Assignee
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildDetailCard(
-                          icon: Icons.folder,
-                          label: 'Project Name',
-                          value: issue.projectName ?? 'N/A',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildDetailCard(
-                          icon: Icons.person,
-                          label: 'Assignee',
-                          value: issue.assignedTo ?? 'Not assigned',
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Row 3: Reporter and Severity
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildDetailCard(
-                          icon: Icons.info_rounded,
-                          label: 'Reporter',
-                          value: issue.owner ?? 'N/A',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildDetailCard(
-                          icon: Icons.warning_outlined,
-                          label: 'Severity',
-                          value: issue.priority,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Row 4: Due Date and Status
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildDetailCard(
-                          icon: Icons.calendar_today,
-                          label: 'Due Date',
-                          value: issue.dueDate != null
-                              ? DateFormat('yyyy-MM-dd').format(issue.dueDate!)
-                              : 'Not set',
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildStatusCard(
-                          label: 'Status',
-                          value: issue.status,
-                          color: _getStatusColor(issue.status),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Description (Full width at last)
-                  _buildDetailCard(
-                    icon: Icons.description_outlined,
-                    label: 'Description',
-                    value: issue.description ?? 'N/A',
-                  ),
-                  const SizedBox(height: 20),
-                ],
+                ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+
+            // Content
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: [
+                    // Row 1: Issue ID and Issue Name
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildDetailCard(
+                            icon: Icons.info_outline,
+                            label: 'Issue ID',
+                            value: widget.issue.id,
+                            context: context,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildDetailCard(
+                            icon: Icons.bug_report_outlined,
+                            label: 'Issue Name',
+                            value: widget.issue.issueName,
+                            context: context,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Row 2: Project Name and Assignee
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildDetailCard(
+                            icon: Icons.folder,
+                            label: 'Project Name',
+                            value: widget.issue.projectName ?? 'N/A',
+                            context: context,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildDetailCard(
+                            icon: Icons.person,
+                            label: 'Assignee',
+                            value: widget.issue.assignedTo ?? 'Not assigned',
+                            context: context,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Row 3: Reporter and Severity
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildDetailCard(
+                            icon: Icons.info_rounded,
+                            label: 'Reporter',
+                            value: widget.issue.owner ?? 'N/A',
+                            context: context,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildDetailCard(
+                            icon: Icons.warning_outlined,
+                            label: 'Severity',
+                            value: widget.issue.priority,
+                            context: context,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Row 4: Due Date and Status
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildDetailCard(
+                            icon: Icons.calendar_today,
+                            label: 'Due Date',
+                            value: widget.issue.dueDate != null
+                                ? DateFormat(
+                                    'yyyy-MM-dd',
+                                  ).format(widget.issue.dueDate!)
+                                : 'Not set',
+                            context: context,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildStatusCard(
+                            label: 'Status',
+                            value: widget.issue.status,
+                            color: _getStatusColor(widget.issue.status, custom),
+                            context: context,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Description (Full width at last)
+                    _buildDetailCard(
+                      icon: Icons.description_outlined,
+                      label: 'Description',
+                      value: widget.issue.description ?? 'N/A',
+                      context: context,
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -206,11 +202,14 @@ class IssueDetailsModalSheet extends StatelessWidget {
     required IconData icon,
     required String label,
     required String value,
+    required BuildContext context,
   }) {
+    final customColors = Theme.of(context).custom;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: customColors.cardBackground!,
         border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
@@ -226,13 +225,13 @@ class IssueDetailsModalSheet extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: AppColors.primary, size: 18),
+              Icon(icon, color: customColors.primary, size: 18),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: customColors.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -245,8 +244,8 @@ class IssueDetailsModalSheet extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             value,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
+            style: TextStyle(
+              color: customColors.textPrimary,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -262,11 +261,14 @@ class IssueDetailsModalSheet extends StatelessWidget {
     required String label,
     required String value,
     required Color color,
+    required BuildContext context,
   }) {
+    final customColors = Theme.of(context).custom;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: customColors.cardBackground!,
         border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
@@ -279,13 +281,13 @@ class IssueDetailsModalSheet extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.check_circle, color: AppColors.primary, size: 18),
+          Icon(Icons.check_circle, color: customColors.primary, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
+              style: TextStyle(
+                color: customColors.textSecondary,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),

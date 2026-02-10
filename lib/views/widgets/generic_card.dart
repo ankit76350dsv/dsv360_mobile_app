@@ -1,16 +1,15 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_text_styles.dart';
 
 class GenericCard extends StatelessWidget {
   final String id;
   final String name;
   final String status;
   final String? subtitleIcon;
-  final String? subtitleText; 
+  final String? subtitleText;
   final String dateRange;
   final String? dueDate;
-  final List<CardChip> chips; 
+  final List<CardChip> chips;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
   final VoidCallback? onTap;
@@ -30,37 +29,36 @@ class GenericCard extends StatelessWidget {
     this.onTap,
   });
 
-  Color _getStatusColor(String status) {
+  Color _getStatusColor(String status, BuildContext context) {
+    final customColors = Theme.of(context).extension<CustomColors>()!;
     switch (status) {
       case 'Open':
       case 'Pending':
-        return AppColors.statusPending;
+        return customColors.statusPending!;
       case 'Work In Process':
       case 'In Progress':
-        return AppColors.statusInProgress;
+        return customColors.statusInProgress!;
       case 'Completed':
-        return AppColors.statusCompleted;
+        return customColors.statusCompleted!;
       case 'Closed':
       case 'On Hold':
-        return AppColors.error;
+        return customColors.error!;
       default:
-        return AppColors.textSecondary;
+        return customColors.textSecondary!;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: AppColors.cardBackground,
+          color: customColors.cardBackground,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.2),
-            width: 1.5,
-          ),
+          border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -78,9 +76,12 @@ class GenericCard extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: customColors.primary,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -94,15 +95,18 @@ class GenericCard extends StatelessWidget {
                   ),
                   const Spacer(),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(status).withValues(alpha: 0.2),
+                      color: _getStatusColor(status, context).withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       status,
                       style: TextStyle(
-                        color: _getStatusColor(status),
+                        color: _getStatusColor(status, context),
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
@@ -113,11 +117,7 @@ class GenericCard extends StatelessWidget {
             ),
 
             // Divider
-            Divider(
-              height: 1,
-              thickness: 1,
-              color: AppColors.greyBorder,
-            ),
+            Divider(height: 1, thickness: 1, color: customColors.greyBorder),
 
             // Content
             Padding(
@@ -132,8 +132,8 @@ class GenericCard extends StatelessWidget {
                         // Name
                         Text(
                           name,
-                          style: const TextStyle(
-                            color: AppColors.textPrimary,
+                          style: TextStyle(
+                            color: customColors.textPrimary,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
@@ -149,14 +149,16 @@ class GenericCard extends StatelessWidget {
                               Icon(
                                 _getIconFromString(subtitleIcon!),
                                 size: 18,
-                                color: AppColors.textSecondary,
+                                color: customColors.textSecondary,
                               ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   subtitleText!,
-                                  style: AppTextStyles.bodyMedium.copyWith(
-                                    color: AppColors.textSecondary,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.normal,
+                                    color: customColors.textSecondary,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -170,16 +172,18 @@ class GenericCard extends StatelessWidget {
                         // Dates
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.calendar_today,
                               size: 18,
-                              color: AppColors.textSecondary,
+                              color: customColors.textSecondary,
                             ),
                             const SizedBox(width: 8),
                             Text(
                               dateRange,
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.textSecondary,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                                color: customColors.textSecondary,
                               ),
                             ),
                           ],
@@ -188,16 +192,18 @@ class GenericCard extends StatelessWidget {
                         if (dueDate != null)
                           Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.event_outlined,
                                 size: 18,
-                                color: AppColors.textSecondary,
+                                color: customColors.textSecondary,
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 dueDate!,
-                                style: AppTextStyles.bodyMedium.copyWith(
-                                  color: AppColors.textSecondary,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.normal,
+                                  color: customColors.textSecondary,
                                 ),
                               ),
                             ],
@@ -214,7 +220,7 @@ class GenericCard extends StatelessWidget {
                                   padding: EdgeInsets.only(
                                     right: entry.key < chips.length - 1 ? 8 : 0,
                                   ),
-                                  child: _buildChip(entry.value),
+                                  child: _buildChip(entry.value, context),
                                 ),
                               )
                               .toList(),
@@ -233,13 +239,13 @@ class GenericCard extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.1),
+                              color: customColors.primary!.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.edit,
                                 size: 20,
-                                color: AppColors.primary,
+                                color:  customColors.primary,
                               ),
                             ),
                           ),
@@ -252,13 +258,13 @@ class GenericCard extends StatelessWidget {
                             child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppColors.error.withValues(alpha: 0.1),
+                                color: customColors.error!.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.delete,
                                 size: 20,
-                                color: AppColors.error,
+                                color: customColors.error,
                               ),
                             ),
                           ),
@@ -273,23 +279,26 @@ class GenericCard extends StatelessWidget {
     );
   }
 
-  Widget _buildChip(CardChip chip) {
+  Widget _buildChip(CardChip chip, BuildContext context) {
+    final customColors = Theme.of(context).extension<CustomColors>()!;
     // If label is provided, render as label badge
     if (chip.label != null) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: chip.backgroundColor?.withValues(alpha: 0.15) ?? AppColors.primary.withValues(alpha: 0.1),
+          color:
+              chip.backgroundColor?.withValues(alpha: 0.15) ??
+              customColors.primary!.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: chip.backgroundColor ?? AppColors.primary,
+            color: chip.backgroundColor ?? customColors.primary!,
             width: 1,
           ),
         ),
         child: Text(
           chip.label!,
           style: TextStyle(
-            color: chip.backgroundColor ?? AppColors.primary,
+            color: chip.backgroundColor ?? customColors.primary,
             fontWeight: FontWeight.w600,
             fontSize: 13,
           ),
@@ -302,8 +311,8 @@ class GenericCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: chip.isActive
-            ? AppColors.primary.withValues(alpha: 0.1)
-            : AppColors.textSecondary.withValues(alpha: 0.1),
+            ? customColors.primary!.withValues(alpha: 0.1)
+            : customColors.textSecondary!.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
       ),
       child: GestureDetector(
@@ -315,14 +324,18 @@ class GenericCard extends StatelessWidget {
               Icon(
                 chip.icon,
                 size: 18,
-                color: chip.isActive ? AppColors.primary : AppColors.textSecondary,
+                color: chip.isActive
+                    ? customColors.primary
+                    : customColors.textSecondary,
               ),
             if (chip.icon != null) const SizedBox(width: 8),
             if (chip.count != null)
               Text(
                 chip.count!,
                 style: TextStyle(
-                  color: chip.isActive ? AppColors.primary : AppColors.textSecondary,
+                  color: chip.isActive
+                      ? customColors.primary
+                      : customColors.textSecondary,
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),

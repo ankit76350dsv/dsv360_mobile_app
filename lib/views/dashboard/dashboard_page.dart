@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
@@ -6,7 +7,6 @@ import 'package:dsv360/providers/dashboard_provider.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/DashboardTitle.dart';
-import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/views/dashboard/ProjectAnalyticsCard.dart';
 import 'package:dsv360/views/dashboard/StatGrid.dart';
 import 'package:dsv360/views/dashboard/TaskStatusCard.dart';
@@ -25,7 +25,6 @@ class DashboardPage extends StatelessWidget {
   }
 }
 
-
 class _DashboardScaffold extends ConsumerWidget {
   const _DashboardScaffold();
 
@@ -34,9 +33,9 @@ class _DashboardScaffold extends ConsumerWidget {
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final connectivityStatus = ref.watch(connectivityStatusProvider);
     final dashboardAsyncValue = ref.watch(dashboardDataProvider);
+    final customColors = Theme.of(context).custom;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       drawer: const AppDrawer(),
       appBar: AppBar(
         elevation: 0,
@@ -44,7 +43,8 @@ class _DashboardScaffold extends ConsumerWidget {
         automaticallyImplyLeading: false, // Hide default hamburger
         title: Text(
           'DSV360 - ${activeUser?.firstName ?? "User"}',
-          style: const TextStyle(color: AppColors.textPrimary),
+          // 'DSV360',
+          style: TextStyle(color: customColors.textPrimary),
         ),
         leading: Builder(
           builder: (context) {
@@ -52,13 +52,13 @@ class _DashboardScaffold extends ConsumerWidget {
               onTap: () => Scaffold.of(context).openDrawer(),
               child: Container(
                 margin: const EdgeInsets.all(8.0),
-                child: const CircleAvatar(
+                child: CircleAvatar(
                   radius: 16,
-                  backgroundColor: AppColors.inputFill,
+                  backgroundColor: customColors.inputFill,
                   child: Icon(
                     Icons.person_outline,
                     size: 18,
-                    color: AppColors.textPrimary,
+                    color: customColors.textPrimary,
                   ),
                 ),
               ),
@@ -72,7 +72,10 @@ class _DashboardScaffold extends ConsumerWidget {
                 MaterialPageRoute(builder: (_) => const NotificationPage()),
               );
             },
-            icon: const Icon(Icons.notifications_none, color: AppColors.textPrimary),
+            icon: Icon(
+              Icons.notifications_none,
+              color: customColors.textPrimary,
+            ),
           ),
           IconButton(
             onPressed: () {
@@ -80,7 +83,10 @@ class _DashboardScaffold extends ConsumerWidget {
                 context,
               ).push(MaterialPageRoute(builder: (_) => const ProfilePage()));
             },
-            icon: const Icon(Icons.account_circle_outlined, color: AppColors.textPrimary),
+            icon: Icon(
+              Icons.account_circle_outlined,
+              color: customColors.textPrimary,
+            ),
           ),
           const SizedBox(width: 12),
         ],
@@ -93,7 +99,7 @@ class _DashboardScaffold extends ConsumerWidget {
                 message: 'Please check your internet connection.',
                 isNetworkError: true,
                 onRetry: () {
-                   ref.invalidate(connectivityStatusProvider);
+                  ref.invalidate(connectivityStatusProvider);
                 },
               );
             }
@@ -103,7 +109,7 @@ class _DashboardScaffold extends ConsumerWidget {
                 return RefreshIndicator(
                   onRefresh: () async {
                     // Refetch data
-                     return await ref.refresh(dashboardDataProvider.future);
+                    return await ref.refresh(dashboardDataProvider.future);
                   },
                   child: Center(
                     child: ConstrainedBox(
@@ -117,7 +123,8 @@ class _DashboardScaffold extends ConsumerWidget {
                                 child: Padding(
                                   padding: const EdgeInsets.all(16),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const DashboardTitle(),
                                       const SizedBox(height: 24),
@@ -125,23 +132,26 @@ class _DashboardScaffold extends ConsumerWidget {
                                         isLarge: isLarge,
                                         userCnt: dashboard.userCnt,
                                         projectCnt: dashboard.projectCnt,
-                                        completedProjectCnt: dashboard.completedProjectCnt,
+                                        completedProjectCnt:
+                                            dashboard.completedProjectCnt,
                                         issueCnt: dashboard.issueCnt,
                                       ),
                                       const SizedBox(height: 16),
                                       TopHeader(
                                         isLarge: isLarge,
                                         projectCnt: dashboard.projectCnt,
-                                        completedProjectCnt: dashboard.completedProjectCnt,
+                                        completedProjectCnt:
+                                            dashboard.completedProjectCnt,
                                         taskCnt: dashboard.taskCnt,
-                                        taskClosedCnt: dashboard.yearTaskData.closed,
+                                        taskClosedCnt:
+                                            dashboard.yearTaskData.closed,
                                         issueCnt: dashboard.issueCnt,
                                       ),
                                     ],
                                   ),
                                 ),
                               ),
-                      
+
                               // Analytics + Task status row
                               SliverPadding(
                                 padding: const EdgeInsets.symmetric(
@@ -151,32 +161,45 @@ class _DashboardScaffold extends ConsumerWidget {
                                 sliver: SliverToBoxAdapter(
                                   child: isLarge
                                       ? Row(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Expanded(
                                               flex: 2,
                                               child: ProjectAnalyticsCard(
-                                                  monthData: dashboard.yearMonthwiseUserProjects),
+                                                monthData: dashboard
+                                                    .yearMonthwiseUserProjects,
+                                              ),
                                             ),
                                             const SizedBox(width: 12),
                                             Expanded(
-                                                flex: 1,
-                                                child: TaskStatusCard(taskData: dashboard.yearTaskData)),
+                                              flex: 1,
+                                              child: TaskStatusCard(
+                                                taskData:
+                                                    dashboard.yearTaskData,
+                                              ),
+                                            ),
                                           ],
                                         )
                                       : Column(
                                           children: [
                                             ProjectAnalyticsCard(
-                                                monthData: dashboard.yearMonthwiseUserProjects),
+                                              monthData: dashboard
+                                                  .yearMonthwiseUserProjects,
+                                            ),
                                             const SizedBox(height: 12),
-                                            TaskStatusCard(taskData: dashboard.yearTaskData),
+                                            TaskStatusCard(
+                                              taskData: dashboard.yearTaskData,
+                                            ),
                                           ],
                                         ),
                                 ),
                               ),
-                      
+
                               // Recent + Quick actions placeholder space
-                              SliverToBoxAdapter(child: const SizedBox(height: 40)),
+                              SliverToBoxAdapter(
+                                child: const SizedBox(height: 40),
+                              ),
                             ],
                           );
                         },
@@ -189,7 +212,8 @@ class _DashboardScaffold extends ConsumerWidget {
                 message: 'Failed to load dashboard data: $error',
                 onRetry: () => ref.refresh(dashboardDataProvider),
               ),
-              loading: () => const GlobalLoader(message: 'Loading dashboard...'),
+              loading: () =>
+                  const GlobalLoader(message: 'Loading dashboard...'),
             );
           },
           error: (error, stack) => GlobalError(

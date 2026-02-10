@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -70,7 +71,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
 
     return Container(
       decoration: BoxDecoration(
@@ -104,7 +105,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
         onFieldSubmitted: widget.onFieldSubmitted,
         onChanged: widget.onChanged,
         style: TextStyle(
-          color: colors.tertiary,
+          color: customColors.textPrimary,
           fontSize: 16,
           fontWeight: FontWeight.w500,
         ),
@@ -137,7 +138,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
               ? const BoxConstraints(minWidth: 0, minHeight: 0)
               : null,
           filled: true,
-          fillColor: colors.secondary,
+          fillColor: customColors.inputFill,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(
@@ -161,11 +162,11 @@ class _CustomInputFieldState extends State<CustomInputField> {
           ),
           errorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: colors.error, width: 1.5),
+            borderSide: BorderSide(color: customColors.error!, width: 1.5),
           ),
           focusedErrorBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(color: colors.error, width: 2),
+            borderSide: BorderSide(color: customColors.error!, width: 2),
           ),
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
@@ -178,7 +179,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
               ? const EdgeInsets.fromLTRB(18, 16, 18, 16)
               : const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           errorStyle: TextStyle(
-            color: colors.error,
+            color: customColors.error,
             fontSize: 12,
             fontWeight: FontWeight.w500,
           ),

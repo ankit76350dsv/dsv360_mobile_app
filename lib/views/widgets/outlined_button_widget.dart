@@ -1,6 +1,5 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_text_styles.dart';
 
 class OutlinedButtonWidget extends StatelessWidget {
   final String text;
@@ -22,6 +21,7 @@ class OutlinedButtonWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final customColors = Theme.of(context).custom;
     return SizedBox(
       width: width,
       height: height,
@@ -29,7 +29,7 @@ class OutlinedButtonWidget extends StatelessWidget {
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
           side: BorderSide(
-            color: borderColor ?? AppColors.primary,
+            color: borderColor ?? customColors.primary!,
             width: 2,
           ),
           shape: RoundedRectangleBorder(
@@ -38,8 +38,10 @@ class OutlinedButtonWidget extends StatelessWidget {
         ),
         child: Text(
           text,
-          style: AppTextStyles.uploadText.copyWith(
-            color: textColor ?? AppColors.primary,
+          style: TextStyle(
+            color: textColor ?? customColors.primary,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),

@@ -1,9 +1,9 @@
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/services/auth_service.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
-import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/views/projects/projects_screen.dart';
 import 'package:dsv360/views/task/tasks_screen.dart';
 import 'package:dsv360/views/issues/issues_screen.dart';
@@ -23,13 +23,13 @@ class AppDrawer extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Removed dependency on Theme.of(context).colorScheme for colors
     final textTheme = Theme.of(context).textTheme;
+    final customColors = Theme.of(context).custom;
 
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.8, // 80% screen
       child: Drawer(
-        backgroundColor: AppColors.background, // Explicit drawer background
+        backgroundColor: customColors.background,
         child: SafeArea(
           bottom: false,
           child: CustomScrollView(
@@ -40,7 +40,7 @@ class AppDrawer extends ConsumerWidget {
                     Container(
                       margin: const EdgeInsets.symmetric(horizontal: 6),
                       decoration: BoxDecoration(
-                        color: AppColors.cardBackground,
+                        color: customColors.background,
                         borderRadius: BorderRadius.circular(0.0),
                       ),
                       height: 56, // standard app bar height
@@ -52,9 +52,9 @@ class AppDrawer extends ConsumerWidget {
                           Positioned(
                             left: 0,
                             child: IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.arrow_back_rounded,
-                                color: AppColors.textPrimary,
+                                color: customColors.textPrimary,
                               ),
                               onPressed: () {
                                 Navigator.pop(context);
@@ -73,12 +73,12 @@ class AppDrawer extends ConsumerWidget {
                                 fit: BoxFit.fitWidth,
                               ),
                               const SizedBox(width: 6),
-                              const Text(
+                              Text(
                                 'DSV-360',
                                 style: TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
+                                  color: customColors.logoColor,
                                 ),
                               ),
                             ],
@@ -269,7 +269,10 @@ class AppDrawer extends ConsumerWidget {
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 30,
+                    vertical: 40,
+                  ),
                   child: Column(
                     children: [
                       Text(
@@ -277,25 +280,23 @@ class AppDrawer extends ConsumerWidget {
                         textAlign: TextAlign.center,
                         style: textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 30.0),
                       Text(
                         'DSV-360 — A unified platform to manage people, projects, and performance.',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12, // bodySmall approximation
+                        style: textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 20),
                       Text(
                         textAlign: TextAlign.center,
                         'v1.0.0',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12, // bodySmall approximation
+                        style: textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
@@ -310,15 +311,15 @@ class AppDrawer extends ConsumerWidget {
   }
 
   Widget profileCardUi(BuildContext context, WidgetRef ref) {
-    final textTheme = Theme.of(context).textTheme;
+    final customColors = Theme.of(context).custom;
     final activeUser = ref.watch(activeUserRepositoryProvider);
 
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 1, left: 6.0, right: 6.0),
       padding: const EdgeInsets.symmetric(vertical: 20),
-      decoration: const BoxDecoration(
-        color: AppColors.cardBackground,
+      decoration: BoxDecoration(
+        color: customColors.background,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(0.0)),
       ),
       child: Column(
@@ -342,9 +343,12 @@ class AppDrawer extends ConsumerWidget {
                   width: 14,
                   height: 14,
                   decoration: BoxDecoration(
-                    color: Colors.green,
+                    color: customColors.success,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.cardBackground, width: 2),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.surface,
+                      width: 2,
+                    ),
                   ),
                 ),
               ),
@@ -353,17 +357,14 @@ class AppDrawer extends ConsumerWidget {
           const SizedBox(height: 10),
           Text(
             "${activeUser?.firstName} ${activeUser?.lastName}",
-            style: textTheme.titleMedium?.copyWith(
+            style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: customColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 2),
           Text(
             "${activeUser?.roleName}",
-            style: textTheme.bodySmall?.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: TextStyle(fontSize: 12.0, color: customColors.textSecondary),
           ),
         ],
       ),
@@ -389,17 +390,19 @@ class _DrawerItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final customColors = Theme.of(context).custom;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 6),
       child: Material(
-        color: AppColors.cardBackground,
-        borderRadius: borderRadius ?? const BorderRadius.all(Radius.circular(0.0)),
+        color: customColors.background,
+        borderRadius:
+            borderRadius ?? const BorderRadius.all(Radius.circular(0.0)),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          borderRadius: borderRadius ?? const BorderRadius.all(Radius.circular(0.0)),
+          borderRadius:
+              borderRadius ?? const BorderRadius.all(Radius.circular(0.0)),
           child: Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 18.0,
@@ -410,11 +413,7 @@ class _DrawerItem extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(
-                      icon,
-                      size: 20,
-                      color: AppColors.textSecondary,
-                    ),
+                    Icon(icon, size: 20, color: customColors.textPrimary),
                     const SizedBox(width: 16),
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -422,19 +421,17 @@ class _DrawerItem extends StatelessWidget {
                       children: [
                         Text(
                           label,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: AppColors.textPrimary,
-                          ),
+                          style: TextStyle(color: customColors.textPrimary),
                         ),
-                        // Text(subLabel, style: theme.textTheme.bodySmall),
+                        // Text(subLabel, style: TextStyle(color: customColors.textSecondary),),
                       ],
                     ),
                   ],
                 ),
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 18,
-                  color: AppColors.textSecondary,
+                  color: customColors.textPrimary,
                 ),
               ],
             ),

@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,7 +22,7 @@ class BottomTwoButtons extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = Theme.of(context).colorScheme;
+    final customColors = Theme.of(context).custom;
     final isLoading = ref.watch(submitLoadingProvider(loadingKey));
 
     return Row(
@@ -30,9 +31,9 @@ class BottomTwoButtons extends ConsumerWidget {
           child: TextButton(
             onPressed: button1Function,
             style: TextButton.styleFrom(
-              foregroundColor: colors.error,
+              foregroundColor: customColors.error,
               side: BorderSide(
-                color: colors.error,
+                color: customColors.error!,
                 width: 2.0,
               ),
               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -55,14 +56,14 @@ class BottomTwoButtons extends ConsumerWidget {
           child: ElevatedButton(
             onPressed: isLoading ? (){} : button2Function,
             style: ElevatedButton.styleFrom(
-              backgroundColor: colors.primary,
-              foregroundColor: colors.onPrimary,
+              backgroundColor: customColors.primary,
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(200.0),
                 side: BorderSide(
                   width: 2.0,
-                  color: colors.primary
+                  color: customColors.primary!
                 )
               ),
             ),

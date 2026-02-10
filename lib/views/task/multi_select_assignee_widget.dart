@@ -1,6 +1,6 @@
+import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/constants/app_colors.dart';
 import '../../models/employee.dart';
 import '../../providers/employee_provider.dart';
 
@@ -32,6 +32,7 @@ class _MultiSelectAssigneeWidgetState
   @override
   Widget build(BuildContext context) {
     final employeesAsync = ref.watch(employeeListProvider);
+    final customColors = Theme.of(context).custom;
 
     return employeesAsync.when(
       loading: () => const Padding(
@@ -54,8 +55,8 @@ class _MultiSelectAssigneeWidgetState
           expand: false,
           builder: (context, scrollController) {
             return Container(
-              decoration: const BoxDecoration(
-                color: AppColors.cardBackground,
+              decoration: BoxDecoration(
+                color: customColors.cardBackground,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20),
                   topRight: Radius.circular(20),
@@ -71,7 +72,7 @@ class _MultiSelectAssigneeWidgetState
                         width: 40,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: AppColors.textSecondary.withOpacity(0.3),
+                          color: customColors.textSecondary!.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -88,7 +89,7 @@ class _MultiSelectAssigneeWidgetState
                         Text(
                           'Select Assignees',
                           style: TextStyle(
-                            color: AppColors.textPrimary,
+                            color: customColors.textPrimary,
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
                           ),
@@ -96,7 +97,7 @@ class _MultiSelectAssigneeWidgetState
                         Text(
                           '${_selectedEmployees.length} selected',
                           style: TextStyle(
-                            color: AppColors.textSecondary,
+                            color: customColors.textSecondary,
                             fontSize: 14,
                           ),
                         ),
@@ -120,13 +121,13 @@ class _MultiSelectAssigneeWidgetState
                           margin: const EdgeInsets.only(bottom: 8),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? AppColors.primary.withOpacity(0.1)
-                                : AppColors.inputFill,
+                                ? customColors.primary!.withOpacity(0.1)
+                                : customColors.inputFill,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
                               color: isSelected
-                                  ? AppColors.primary
-                                  : AppColors.inputBorder,
+                                  ? customColors.primary!
+                                  : customColors.inputBorder!,
                               width: 1.5,
                             ),
                           ),
@@ -142,19 +143,19 @@ class _MultiSelectAssigneeWidgetState
                                 }
                               });
                             },
-                            activeColor: AppColors.primary,
+                            activeColor: customColors.primary,
                             checkColor: Colors.white,
                             title: Text(
                               employee.fullName,
                               style: TextStyle(
-                                color: AppColors.textPrimary,
+                                color: customColors.textPrimary,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
                             subtitle: Text(
                               employee.emailId,
                               style: TextStyle(
-                                color: AppColors.textSecondary,
+                                color: customColors.textSecondary,
                                 fontSize: 12,
                               ),
                             ),
@@ -173,9 +174,9 @@ class _MultiSelectAssigneeWidgetState
                           child: OutlinedButton(
                             onPressed: () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.textPrimary,
-                              side: const BorderSide(
-                                color: AppColors.inputBorder,
+                              foregroundColor: customColors.textPrimary,
+                              side: BorderSide(
+                                color: customColors.inputBorder!,
                               ),
                             ),
                             child: const Padding(
@@ -192,7 +193,7 @@ class _MultiSelectAssigneeWidgetState
                               Navigator.pop(context);
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
+                              backgroundColor: customColors.primary,
                             ),
                             child: const Padding(
                               padding: EdgeInsets.symmetric(vertical: 12),
