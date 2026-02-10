@@ -1,4 +1,5 @@
 import 'package:dsv360/core/network/dio_client.dart';
+import 'package:dsv360/core/utils/functions.dart';
 import 'package:dsv360/models/leave_calendar_event.dart';
 import 'package:dsv360/models/leave_details.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
@@ -19,9 +20,13 @@ class LeaveDetailsListRepository extends AsyncNotifier<List<LeaveDetails>> {
 
     try {
       final userId = activeUser.userId;
-      final response = await DioClient.instance.get(
-        'time_entry_management_application_function/leave/approval/$userId',
-      );
+      final isAdmin = Functions.isAdmin(activeUser);
+
+      final url = isAdmin
+          ? 'time_entry_management_application_function/leave/approval'
+          : 'time_entry_management_application_function/leave/approval/$userId';
+
+      final response = await DioClient.instance.get(url);
 
       debugPrint("Response From fetchLeaveDetails: ${response.data}");
 

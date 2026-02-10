@@ -3,6 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/utils/functions.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/active_user.dart';
@@ -17,6 +18,8 @@ import 'package:dsv360/repositories/attendance_tracker_list.dart';
 import 'package:dsv360/repositories/attendance_list_repository.dart';
 import 'package:dsv360/repositories/check_in_repository.dart';
 import 'package:dsv360/repositories/users_repository.dart';
+import 'package:dsv360/repositories/user_check_in_status_repository.dart';
+import 'package:dsv360/models/user_check_in_status.dart';
 
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
@@ -43,11 +46,16 @@ class PeoplePage extends ConsumerStatefulWidget {
 class _PeoplePageState extends ConsumerState<PeoplePage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  bool isAdmin = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 6, vsync: this);
+    final activeUser = ref.read(activeUserRepositoryProvider);
+    if (activeUser != null) {
+      isAdmin = Functions.isAdmin(activeUser);
+    }
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -58,8 +66,8 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
 
   @override
   Widget build(BuildContext context) {
-    // final colors = Theme.of(context).colorScheme;
     final customColors = Theme.of(context).custom;
+    final activeUser = ref.watch(activeUserRepositoryProvider);
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -132,13 +140,17 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
                 unselectedLabelColor: customColors.textSecondary,
                 labelStyle: const TextStyle(fontWeight: FontWeight.w600),
                 dividerColor: Colors.transparent,
-                tabs: const [
-                  Tab(text: 'Check In'),
-                  Tab(text: 'Activities'),
-                  Tab(text: 'Leave'),
-                  Tab(text: 'Attendance'),
-                  Tab(text: 'Attendance Tracker'),
-                  Tab(text: 'Leave Calendar'),
+                tabs: [
+                  const Tab(text: 'Check In'),
+                  if (!isAdmin)
+                    const Tab(text: 'Activities'),
+                  const Tab(text: 'Leave'),
+                  if (!isAdmin)
+                    const Tab(text: 'Attendance'),
+                  if (isAdmin)
+                    const Tab(text: 'Attendance Tracker'),
+                  if (isAdmin)
+                    const Tab(text: 'Leave Calendar'),
                 ],
               ),
             ),
@@ -149,12 +161,16 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
             child: TabBarView(
               controller: _tabController,
               children: [
-                _CheckInTab(),
-                _ActivitiesTab(),
-                _LeaveTab(),
-                _AttendanceTab(),
-                _AttendanceTrackerTab(),
-                _LeaveCalendarTab(),
+                const _CheckInTab(),
+                if (!isAdmin)
+                  const _ActivitiesTab(),
+                const _LeaveTab(),
+                if (!isAdmin)
+                  const _AttendanceTab(),
+                if (isAdmin)
+                  const _AttendanceTrackerTab(),
+                if (isAdmin)
+                  const _LeaveCalendarTab(),
               ],
             ),
           ),
@@ -657,74 +673,78 @@ class _LeaveTab extends ConsumerWidget {
               },
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
                   // Summary cards
-                  leaveSummaryAsync.when(
-                    loading: () =>
-                        const GlobalLoader(message: 'Loading leave summary...'),
-                    error: (error, stack) => GlobalError(
-                      message: 'Failed to load leave summary: Try Again later',
-                      onRetry: () => ref.refresh(
-                        leaveSummaryRepositoryProvider(
-                          userId: userId,
-                          username: username,
+                  if (activeUser != null && !Functions.isAdmin(activeUser))
+                    leaveSummaryAsync.when(
+                      loading: () => const GlobalLoader(
+                        message: 'Loading leave summary...',
+                      ),
+                      error: (error, stack) => GlobalError(
+                        message:
+                            'Failed to load leave summary: Try Again later',
+                        onRetry: () => ref.refresh(
+                          leaveSummaryRepositoryProvider(
+                            userId: userId,
+                            username: username,
+                          ),
                         ),
                       ),
+                      data: (LeaveSummary leaveSummary) => Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: LeaveSummaryCard(
+                                  title: "Remaining",
+                                  value: leaveSummary.remainingValue,
+                                  subtitle: leaveSummary.remainingSubtitle,
+                                  color: Colors.green,
+                                  icon: Icons.eco,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: LeaveSummaryCard(
+                                  title: "Paid",
+                                  value: leaveSummary.paidValue,
+                                  subtitle: leaveSummary.paidSubtitle,
+                                  color: Colors.redAccent,
+                                  icon: Icons.money_off,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: LeaveSummaryCard(
+                                  title: "Sick",
+                                  value: leaveSummary.sickValue,
+                                  subtitle: leaveSummary.sickSubtitle,
+                                  color: Colors.lightGreen,
+                                  icon: Icons.local_hospital,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: LeaveSummaryCard(
+                                  title: "Unpaid",
+                                  value: leaveSummary.unpaidValue,
+                                  subtitle: leaveSummary.unpaidSubtitle,
+                                  color: Colors.lightBlue,
+                                  icon: Icons.beach_access,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                    data: (LeaveSummary leaveSummary) => Column(
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: LeaveSummaryCard(
-                                title: "Remaining",
-                                value: leaveSummary.remainingValue,
-                                subtitle: leaveSummary.remainingSubtitle,
-                                color: Colors.green,
-                                icon: Icons.eco,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: LeaveSummaryCard(
-                                title: "Paid",
-                                value: leaveSummary.paidValue,
-                                subtitle: leaveSummary.paidSubtitle,
-                                color: Colors.redAccent,
-                                icon: Icons.money_off,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: LeaveSummaryCard(
-                                title: "Sick",
-                                value: leaveSummary.sickValue,
-                                subtitle: leaveSummary.sickSubtitle,
-                                color: Colors.lightGreen,
-                                icon: Icons.local_hospital,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: LeaveSummaryCard(
-                                title: "Unpaid",
-                                value: leaveSummary.unpaidValue,
-                                subtitle: leaveSummary.unpaidSubtitle,
-                                color: Colors.lightBlue,
-                                icon: Icons.beach_access,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
 
-                  const SizedBox(height: 24),
+                  if (activeUser != null && !Functions.isAdmin(activeUser))
+                    const SizedBox(height: 24),
 
                   // Header row
                   Row(
@@ -737,40 +757,43 @@ class _LeaveTab extends ConsumerWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const Spacer(),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ApplyEditLeavePage(leave: null),
+                      if (activeUser != null && !Functions.isAdmin(activeUser))
+                        const Spacer(),
+                      
+                      if (activeUser != null && !Functions.isAdmin(activeUser))
+                        ElevatedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ApplyEditLeavePage(leave: null),
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: customColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 10.0,
+                              horizontal: 20.0,
                             ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: customColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10.0,
-                            horizontal: 20.0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(200.0),
+                              side: BorderSide(
+                                width: 2.0,
+                                color: customColors.primary!,
+                              ),
+                            ),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(200.0),
-                            side: BorderSide(
-                              width: 2.0,
-                              color: customColors.primary!,
+                          child: Text(
+                            "Request Leave".toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
                             ),
                           ),
                         ),
-                        child: Text(
-                          "Request Leave".toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
                     ],
                   ),
 
@@ -782,7 +805,7 @@ class _LeaveTab extends ConsumerWidget {
                     error: (error, _) => GlobalError(
                       message: 'Failed to load leave details: Try again later.',
                       onRetry: () =>
-                          ref.refresh(leaveDetailsListRepositoryProvider),
+                          ref.invalidate(leaveDetailsListRepositoryProvider),
                     ),
                     data: (leaveList) {
                       if (leaveList.isEmpty) {
@@ -800,6 +823,7 @@ class _LeaveTab extends ConsumerWidget {
 
                           return LeaveTile(
                             type: leave.formattedLeaveType,
+                            name: leave.username,
                             start: leave.formattedStartDate,
                             end: leave.formattedEndDate,
                             status: leave.formattedStatus,
@@ -821,6 +845,7 @@ class _LeaveTab extends ConsumerWidget {
                                 ),
                               );
                             },
+                            isAdmin: activeUser != null ? Functions.isAdmin(activeUser) : false,
                           );
                         },
                       );
@@ -895,20 +920,24 @@ class LeaveSummaryCard extends StatelessWidget {
 
 class LeaveTile extends StatelessWidget {
   final String type;
+  final String name;
   final String start;
   final String end;
   final String status;
   final VoidCallback? onTap;
   final VoidCallback? onEditTap;
+  final bool isAdmin;
 
   const LeaveTile({
     super.key,
     required this.type,
+    required this.name,
     required this.start,
     required this.end,
     required this.status,
     this.onTap,
     this.onEditTap,
+    required this.isAdmin,
   });
 
   @override
@@ -955,6 +984,15 @@ class LeaveTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    if(isAdmin)
+                      Text(
+                        name,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: customColors.textSecondary,
+                        ),
+                      ),
                     Text(
                       "From $start",
                       style: TextStyle(
@@ -1254,7 +1292,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
   Future<void> _handleAction({
     required String userId,
     required String username,
-    AttendanceDetail? activeLog,
+    UserCheckInStatus? activeStatus,
   }) async {
     final loadingNotifier = ref.read(
       singleButtonLoadingProvider('checkInCheckOutButton').notifier,
@@ -1270,7 +1308,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
 
       final checkInRepo = ref.read(checkInRepositoryProvider.notifier);
 
-      if (activeLog == null) {
+      if (activeStatus == null || !activeStatus.isCheckIn) {
         // Check In
         await checkInRepo.checkIn(
           userId: userId,
@@ -1286,18 +1324,20 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
           device: 'test-phone',
           lat: lat,
           long: long,
-          checkInTimestamp: activeLog.checkIn.millisecondsSinceEpoch,
-          rowId: activeLog.rowId ?? '',
+          checkInTimestamp:
+              activeStatus.checkInTime?.millisecondsSinceEpoch ?? 0,
+          rowId: activeStatus.rowId ?? '',
         );
       }
 
       // Invalidate both repositories to refresh UI
+      ref.invalidate(userStatusRepositoryProvider(userId));
       ref.invalidate(timeLogsRepositoryProvider);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ).showSnackBar(SnackBar(content: Text('Try Again later!')));
       }
     } finally {
       loadingNotifier.state = false;
@@ -1316,169 +1356,154 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
       return const Center(child: GlobalLoader(message: 'Loading user info...'));
     }
 
-    final now = DateTime.now();
-    final todayStr = DateFormat('yyyy-MM-dd').format(now);
-
-    final timeLogsAsync = ref.watch(
-      timeLogsRepositoryProvider(
-        userId: userId,
-        startDate: todayStr,
-        endDate: todayStr,
-      ),
-    );
+    final userStatusAsync = ref.watch(userStatusRepositoryProvider(userId));
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: timeLogsAsync.when(
-      loading: () => const GlobalLoader(
-        message: 'Loading Check In/Out data...',
-      ),
-      error: (error, stack) => GlobalError(
-        message: 'Failed to load Check In/Out data: Try Again',
-        onRetry: () => ref.invalidate(timeLogsRepositoryProvider),
-      ),
-      data: (logs) {
-        // Find if there's an active session (checkOut is null)
-        AttendanceDetail? activeLog;
-        try {
-          activeLog = logs.firstWhere((log) => log.checkOut == null);
-        } catch (_) {
-          activeLog = null;
-        }
+      child: userStatusAsync.when(
+        loading: () =>
+            const GlobalLoader(message: 'Loading Check In/Out status...'),
+        error: (error, stack) => GlobalError(
+          message: 'Failed to load Check In/Out status: Try Again',
+          onRetry: () => ref.invalidate(userStatusRepositoryProvider(userId)),
+        ),
+        data: (status) {
+          final isCheckedIn = status.isCheckIn;
+          _elapsed = (isCheckedIn && status.checkInTime != null)
+              ? DateTime.now().difference(status.checkInTime!)
+              : Duration.zero;
 
-        final isCheckedIn = activeLog != null;
-        _elapsed = isCheckedIn
-            ? DateTime.now().difference(activeLog.checkIn)
-            : Duration.zero;
-
-        return Container(
-          decoration: const BoxDecoration(),
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    username,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: customColors.primary,
+          return Container(
+            decoration: const BoxDecoration(),
+            child: SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Text(
+                      username,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: customColors.primary,
+                      ),
                     ),
                   ),
-                ),
 
-                /// TIME ELAPSED
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 18.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.timer_outlined,
-                                color: customColors.textSecondary,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'TIME ELAPSED',
-                                style: TextStyle(
-                                  color: customColors.textSecondary,
-                                  letterSpacing: 1,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12.0),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _TimeBox(value: _elapsed.inDays, label: "Days"),
-                              _TimeBox(
-                                value: _elapsed.inHours % 24,
-                                label: "Hrs",
-                              ),
-                              _TimeBox(
-                                value: _elapsed.inMinutes % 60,
-                                label: "Mins",
-                              ),
-                              _TimeBox(
-                                value: _elapsed.inSeconds % 60,
-                                label: "Secs",
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isCheckedIn
-                                  ? customColors.primary!.withOpacity(0.1)
-                                  : Colors.grey.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
+                  /// TIME ELAPSED
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Card(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 18.0),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.circle,
-                                  size: 8,
-                                  color: isCheckedIn
-                                      ? customColors.primary
-                                      : Colors.grey,
+                                  Icons.timer_outlined,
+                                  color: customColors.textSecondary,
+                                  size: 20,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
-                                  isCheckedIn ? 'Checked In' : 'Not Checked In',
+                                  'TIME ELAPSED',
                                   style: TextStyle(
-                                    color: isCheckedIn
-                                        ? customColors.primary
-                                        : Colors.grey,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
+                                    color: customColors.textSecondary,
+                                    letterSpacing: 1,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 12.0),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                _TimeBox(value: _elapsed.inDays, label: "Days"),
+                                _TimeBox(
+                                  value: _elapsed.inHours % 24,
+                                  label: "Hrs",
+                                ),
+                                _TimeBox(
+                                  value: _elapsed.inMinutes % 60,
+                                  label: "Mins",
+                                ),
+                                _TimeBox(
+                                  value: _elapsed.inSeconds % 60,
+                                  label: "Secs",
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isCheckedIn
+                                    ? customColors.primary!.withOpacity(0.1)
+                                    : Colors.grey.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.circle,
+                                    size: 8,
+                                    color: isCheckedIn
+                                        ? customColors.primary
+                                        : Colors.grey,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    isCheckedIn
+                                        ? 'Checked In'
+                                        : 'Not Checked In',
+                                    style: TextStyle(
+                                      color: isCheckedIn
+                                          ? customColors.primary
+                                          : Colors.grey,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 16.0),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: SingleButton(
-                    loadingKey: 'checkInCheckOutButton',
-                    text: isCheckedIn ? 'CHECK OUT' : 'CHECK IN NOW',
-                    onPressed: () => _handleAction(
-                      userId: userId,
-                      username: username,
-                      activeLog: activeLog,
+                  const SizedBox(height: 16.0),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: SingleButton(
+                      loadingKey: 'checkInCheckOutButton',
+                      text: isCheckedIn ? 'CHECK OUT' : 'CHECK IN NOW',
+                      onPressed: () => _handleAction(
+                        userId: userId,
+                        username: username,
+                        activeStatus: status,
+                      ),
+                      icon: isCheckedIn ? Icons.logout : Icons.login,
                     ),
-                    icon: isCheckedIn ? Icons.logout : Icons.login,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    ),);
+          );
+        },
+      ),
+    );
   }
 }
 

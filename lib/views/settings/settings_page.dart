@@ -1,5 +1,6 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 
@@ -10,17 +11,39 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-     final customColors = Theme.of(context).custom;
+    final customColors = Theme.of(context).custom;
 
     return Scaffold(
       drawer: const AppDrawer(),
+      appBar: AppBar(
+        toolbarHeight: 55.0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, size: 18),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => const DashboardPage()),
+              );
+            }
+          },
+        ),
+        centerTitle: true,
+        elevation: 0,
+        title: Text(
+          'Settings',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        // if needed can add the icon as well here
+        // hook for info action
+        // you can open a dialog or screen here
+        actions: [],
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            TopBar(
-              title: 'Settings',
-              onBack: () => Navigator.pop(context),
-            ),
             Expanded(
               child: ValueListenableBuilder<ThemeMode>(
                 valueListenable: themeController.themeMode,

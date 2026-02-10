@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/network/dio_client.dart';
+import 'package:dsv360/core/utils/functions.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/task.dart';
@@ -31,6 +32,17 @@ class UsersPage extends ConsumerStatefulWidget {
 }
 
 class _UsersPageState extends ConsumerState<UsersPage> {
+  bool isAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final activeUser = ref.read(activeUserRepositoryProvider);
+    if (activeUser != null) {
+      isAdmin = Functions.isAdmin(activeUser);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final usersAsync = ref.watch(usersRepositoryProvider);
@@ -242,10 +254,7 @@ class _UserCardState extends ConsumerState<UserCard> {
                         ),
                         child: Text(
                           "U${widget.user.userId.substring(widget.user.userId.length - 4)}",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
+                          style: TextStyle(color: Colors.white, fontSize: 12),
                         ),
                       ),
                       const Spacer(),
@@ -482,12 +491,7 @@ class _UserCardState extends ConsumerState<UserCard> {
       children: [
         Icon(icon, size: 18, color: customColors.textSecondary),
         const SizedBox(width: 8),
-        Text(
-          text,
-          style: TextStyle(
-            color: customColors.textSecondary,
-          ),
-        ),
+        Text(text, style: TextStyle(color: customColors.textSecondary)),
       ],
     );
   }

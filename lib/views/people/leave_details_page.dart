@@ -1,4 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/functions.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/leave_details.dart';
@@ -24,14 +25,10 @@ class LeaveDetailsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final customColors = Theme.of(context).custom;
-    // final theme = Theme.of(context);
     final activeUser = ref.watch(activeUserRepositoryProvider);
-    final userId = activeUser?.userId ?? '';
-    final username =
-        "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}".trim();
 
     final leaveSummaryAsync = ref.watch(
-      leaveSummaryRepositoryProvider(userId: userId, username: username),
+      leaveSummaryRepositoryProvider(userId: leave.userId, username: leave.username),
     );
 
     return Scaffold(
@@ -138,8 +135,8 @@ class LeaveDetailsPage extends ConsumerWidget {
                         message: 'Failed to load leave summary data: $error',
                         onRetry: () => ref.refresh(
                           leaveSummaryRepositoryProvider(
-                            userId: userId,
-                            username: username,
+                            userId: leave.userId,
+                            username: leave.username,
                           ),
                         ),
                       ),
@@ -148,60 +145,27 @@ class LeaveDetailsPage extends ConsumerWidget {
                         return _LeaveBalanceSection(leaveSummary: leaveSummary);
                       },
                     ),
+                    if (activeUser != null && Functions.isAdmin(activeUser))
+                      const SizedBox(height: 32.0),
 
-                    const SizedBox(height: 32.0),
+                    if (activeUser != null && Functions.isAdmin(activeUser))
+                      BottomTwoButtons(
+                        loadingKey: bottomTwoButtonsLoadingKey,
+                        button1Text: "reject",
+                        button2Text: "approve",
+                        button1Function: () =>
+                            _showRejectBottomSheet(context, leave),
+                        button2Function: () async {
+                          final activeUser = ref.read(
+                            activeUserRepositoryProvider,
+                          );
+                          if (activeUser == null) return;
 
-                    BottomTwoButtons(
-                      loadingKey: bottomTwoButtonsLoadingKey,
-                      button1Text: "reject",
-                      button2Text: "approve",
-                      button1Function: () =>
-                          _showRejectBottomSheet(context, leave),
-                      button2Function: () async {
-                        final activeUser = ref.read(
-                          activeUserRepositoryProvider,
-                        );
-                        if (activeUser == null) return;
+                          final actionById = activeUser.userId ?? '';
+                          final actionBy =
+                              "${activeUser.firstName ?? ''} ${activeUser.lastName ?? ''}"
+                                  .trim();
 
-                        final actionById = activeUser.userId ?? '';
-                        final actionBy =
-                            "${activeUser.firstName ?? ''} ${activeUser.lastName ?? ''}"
-                                .trim();
-
-                        ref
-                                .read(
-                                  submitLoadingProvider(
-                                    bottomTwoButtonsLoadingKey,
-                                  ).notifier,
-                                )
-                                .state =
-                            true;
-
-                        try {
-                          await ref
-                              .read(leaveDetailsListRepositoryProvider.notifier)
-                              .approveLeave(
-                                rowId: leave.rowId,
-                                actionById: actionById,
-                                actionBy: actionBy,
-                              );
-
-                          if (context.mounted) {
-                            Navigator.of(context).pop();
-                            AppSnackBar.show(
-                              context,
-                              message: 'Leave approved successfully',
-                            );
-                          }
-                        } catch (e) {
-                          debugPrint("Error approving leave: $e");
-                          if (context.mounted) {
-                            AppSnackBar.show(
-                              context,
-                              message: 'Try again later',
-                            );
-                          }
-                        } finally {
                           ref
                                   .read(
                                     submitLoadingProvider(
@@ -209,10 +173,46 @@ class LeaveDetailsPage extends ConsumerWidget {
                                     ).notifier,
                                   )
                                   .state =
-                              false;
-                        }
-                      },
-                    ),
+                              true;
+
+                          try {
+                            await ref
+                                .read(
+                                  leaveDetailsListRepositoryProvider.notifier,
+                                )
+                                .approveLeave(
+                                  rowId: leave.rowId,
+                                  actionById: actionById,
+                                  actionBy: actionBy,
+                                );
+
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
+                              AppSnackBar.show(
+                                context,
+                                message: 'Leave approved successfully',
+                              );
+                            }
+                          } catch (e) {
+                            debugPrint("Error approving leave: $e");
+                            if (context.mounted) {
+                              AppSnackBar.show(
+                                context,
+                                message: 'Try again later',
+                              );
+                            }
+                          } finally {
+                            ref
+                                    .read(
+                                      submitLoadingProvider(
+                                        bottomTwoButtonsLoadingKey,
+                                      ).notifier,
+                                    )
+                                    .state =
+                                false;
+                          }
+                        },
+                      ),
                   ],
                 ),
               ),
@@ -260,6 +260,7 @@ class _RejectLeaveBottomSheetState
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     String bottomTwoButtonsLoadingKey = 'add_edit_account_key';
+    final activeUser = ref.watch(activeUserRepositoryProvider);
 
     return SafeArea(
       bottom: false,
@@ -321,7 +322,9 @@ class _RejectLeaveBottomSheetState
                   return null;
                 },
               ),
+
               const SizedBox(height: 32),
+
               BottomTwoButtons(
                 loadingKey: bottomTwoButtonsLoadingKey,
                 button1Text: "cancel",

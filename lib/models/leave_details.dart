@@ -33,18 +33,23 @@ class LeaveDetails {
     required this.rowId,
   });
 
-  // Helper method to parse string to int
+  // Helper method to parse nullable int
   static int _parseInt(dynamic value) {
+    if (value == null) return 0;
     if (value is int) return value;
-    if (value is String) return int.tryParse(value) ?? 0;
+    if (value is String) {
+      if (value.isEmpty) return 0;
+      return int.tryParse(value) ?? 0;
+    }
     return 0;
   }
 
   // Helper method to parse nullable string
   static String? _parseNullableString(dynamic value) {
     if (value == null) return null;
-    if (value is String) return value.isEmpty ? null : value;
-    return value.toString();
+    final str = value.toString();
+    if (str.isEmpty || str.toLowerCase() == 'null') return null;
+    return str;
   }
 
   factory LeaveDetails.fromJson(Map<String, dynamic> json) => LeaveDetails(
@@ -66,22 +71,22 @@ class LeaveDetails {
   );
 
   Map<String, dynamic> toJson() => {
-        'CREATORID': creatorId,
-        'Status': status,
-        'ActionByID': actionById,
-        'Cancellation_Reason': cancellationReason,
-        'End_Date': endDate,
-        'Reason': reason,
-        'ActionBy': actionBy,
-        'LeaveCnt': leaveCnt.toString(),
-        'MODIFIEDTIME': modifiedTime,
-        'Username': username,
-        'UserID': userId,
-        'Leave_Type': leaveType,
-        'CREATEDTIME': createdTime,
-        'Start_Date': startDate,
-        'ROWID': rowId,
-      };
+    'CREATORID': creatorId,
+    'Status': status,
+    'ActionByID': actionById,
+    'Cancellation_Reason': cancellationReason,
+    'End_Date': endDate,
+    'Reason': reason,
+    'ActionBy': actionBy,
+    'LeaveCnt': leaveCnt.toString(),
+    'MODIFIEDTIME': modifiedTime,
+    'Username': username,
+    'UserID': userId,
+    'Leave_Type': leaveType,
+    'CREATEDTIME': createdTime,
+    'Start_Date': startDate,
+    'ROWID': rowId,
+  };
 
   // Helper methods for display formatting
   String get formattedLeaveType {
@@ -97,4 +102,3 @@ class LeaveDetails {
   String get formattedReason => reason;
   String get formattedCancellationReason => cancellationReason ?? 'N/A';
 }
-

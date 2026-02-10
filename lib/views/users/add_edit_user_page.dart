@@ -60,15 +60,15 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
     final colors = Theme.of(context).colorScheme;
 
     const Map<String, String> rolesMap = {
-      "App Administrator": "17682000000037211",
-      "App User": "17682000000037213",
-      "Admin": "17682000000035329",
-      "Super Admin": "17682000000035338",
+      // "App Administrator": "17682000000037211",
+      // "App User": "17682000000037213",
+      // "Admin": "17682000000035329",
+      // "Super Admin": "17682000000035338",
       "Intern": "17682000000035343",
       "Manager/Team Lead": "17682000000035348",
-      "Team Lead": "17682000000035353",
+      // "Team Lead": "17682000000035353",
       "Developer": "17682000000035358",
-      "Contacts": "17682000000035363",
+      // "Contacts": "17682000000035363",
       "Business Analyst": "17682000000035368",
       "MIS Analyst": "17682000000434126",
       "Sales": "17682000000659420",
