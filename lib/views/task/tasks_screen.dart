@@ -390,7 +390,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                           builder: (context) =>
                                               AddTimeEntryDialog(
                                             taskId: task.taskId,
+                                            projectId: task.projectId,
                                             taskName: task.taskName,
+                                            projectName: task.projectName ?? 'Project',
                                             currentUser: task.assignedTo,
                                           ),
                                         ),

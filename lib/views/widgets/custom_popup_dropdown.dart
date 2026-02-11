@@ -210,13 +210,15 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(widget.icon, color: AppColors.textSecondary),
+            Icon(widget.icon, color: colors.tertiary.withOpacity(0.7)),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 widget.value ?? widget.hint,
                 style: TextStyle(
-                  color: widget.value == null ? AppColors.textHint : AppColors.textPrimary,
+                  color: widget.value == null 
+                      ? colors.tertiary.withOpacity(0.5)
+                      : colors.tertiary,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
@@ -225,7 +227,7 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
+            Icon(Icons.arrow_drop_down, color: colors.tertiary.withOpacity(0.7)),
           ],
         ),
       ),

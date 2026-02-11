@@ -177,7 +177,7 @@ class _TimeEntryCardState extends State<TimeEntryCard> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    widget.entry.user,
+                    widget.entry.user.split(',').first.trim(),
                     style: const TextStyle(
                       color: AppColors.textSecondary,
                       fontSize: 13,

@@ -359,9 +359,9 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.calendar_today_outlined,
-                                color: AppColors.textSecondary,
+                                color: colors.tertiary.withOpacity(0.7),
                                 size: 20,
                               ),
                               const SizedBox(width: 12),
@@ -372,8 +372,8 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                                       : DateFormat('dd-MM-yyyy').format(_startDate!),
                                   style: TextStyle(
                                     color: _startDate == null
-                                        ? AppColors.textHint
-                                        : AppColors.textPrimary,
+                                        ? colors.tertiary.withOpacity(0.5)
+                                        : colors.tertiary,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -411,9 +411,9 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                           ),
                           child: Row(
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.calendar_today_outlined,
-                                color: AppColors.textSecondary,
+                                color: colors.tertiary.withOpacity(0.7),
                                 size: 20,
                               ),
                               const SizedBox(width: 12),
@@ -424,8 +424,8 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                                       : DateFormat('dd-MM-yyyy').format(_endDate!),
                                   style: TextStyle(
                                     color: _endDate == null
-                                        ? AppColors.textHint
-                                        : AppColors.textPrimary,
+                                        ? colors.tertiary.withOpacity(0.5)
+                                        : colors.tertiary,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
                                   ),

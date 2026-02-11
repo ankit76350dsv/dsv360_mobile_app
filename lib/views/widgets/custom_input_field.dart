@@ -111,7 +111,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
         decoration: InputDecoration(
           hintText: widget.hintText,
           hintStyle: TextStyle(
-            color: Colors.grey,
+            color: colors.tertiary.withOpacity(0.5),
             fontSize: 15,
             fontWeight: FontWeight.w400,
           ),
@@ -119,8 +119,8 @@ class _CustomInputFieldState extends State<CustomInputField> {
           alignLabelWithHint: widget.isMultiline,
           labelStyle: TextStyle(
             color: _isFocused
-                ? Colors.grey.withOpacity(0.9)
-                : Colors.grey.withOpacity(0.8),
+                ? colors.tertiary.withOpacity(0.9)
+                : colors.tertiary.withOpacity(0.7),
             fontSize: 14,
             fontWeight: FontWeight.w600,
           ),
@@ -128,8 +128,8 @@ class _CustomInputFieldState extends State<CustomInputField> {
               ? Icon(
                   widget.prefixIcon,
                   color: _isFocused
-                      ? Colors.grey.withOpacity(0.9)
-                      : Colors.grey.withOpacity(0.8),
+                      ? colors.tertiary.withOpacity(0.9)
+                      : colors.tertiary.withOpacity(0.7),
                   size: 20,
                 )
               : null,
@@ -141,21 +141,21 @@ class _CustomInputFieldState extends State<CustomInputField> {
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(
-              color: Colors.grey.withOpacity(0.6),
+              color: colors.tertiary.withOpacity(0.3),
               width: 1.5,
             ),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(
-              color: Colors.grey.withOpacity(0.6),
+              color: colors.tertiary.withOpacity(0.3),
               width: 1.5,
             ),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(
-              color: widget.focusedBorderColor ?? Colors.grey.withOpacity(0.9),
+              color: widget.focusedBorderColor ?? colors.tertiary.withOpacity(0.8),
               width: 2,
             ),
           ),
@@ -170,7 +170,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
           disabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(
-              color: Colors.grey.withOpacity(0.4),
+              color: colors.tertiary.withOpacity(0.2),
               width: 1.5,
             ),
           ),

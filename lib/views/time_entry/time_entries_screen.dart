@@ -1,21 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import '../../models/time_entry_model.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
+import '../../repositories/time_entry_repository.dart';
 import '../widgets/time_entry_card.dart';
+import '../widgets/TopBar.dart';
 import 'add_time_entry_dialog.dart';
 
 class TimeEntriesScreen extends StatefulWidget {
   final String taskId;
+  final String projectId;
   final String taskName;
+  final String projectName;
   final List<TimeEntry> timeEntries;
 
   const TimeEntriesScreen({
     super.key,
     required this.taskId,
+    required this.projectId,
     required this.taskName,
-    required this.timeEntries,
+    required this.projectName,
+    this.timeEntries = const [],
   });
 
   @override
@@ -25,6 +32,9 @@ class TimeEntriesScreen extends StatefulWidget {
 class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
   late List<TimeEntry> _allEntries;
   late List<TimeEntry> displayedEntries;
+  late TimeEntryRepository _repository;
+  bool _isLoading = true;
+  String? _error;
   
   // Filter variables
   DateTime? _fromDate;
@@ -34,35 +44,82 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
   @override
   void initState() {
     super.initState();
+    _repository = TimeEntryRepository();
     _allEntries = List.from(widget.timeEntries);
     displayedEntries = List.from(_allEntries);
     _billableFilter = 'All';
+    _fetchTimeEntries();
   }
 
-  void _applyFilters() {
-    setState(() {
-      displayedEntries = _allEntries.where((entry) {
-        // Date range filter
-        if (_fromDate != null) {
-          if (entry.date.isBefore(_fromDate!)) return false;
-        }
-        if (_toDate != null) {
-          if (entry.date.isAfter(_toDate!)) return false;
-        }
+  Future<void> _fetchTimeEntries() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+      
+      debugPrint('🔍 Fetching time entries for projectId: ${widget.projectId}');
+      final entries = await _repository.getTimeEntriesByProject(widget.projectId);
+      
+      setState(() {
+        _allEntries = entries;
+        displayedEntries = List.from(_allEntries);
+        _isLoading = false;
+      });
+      
+      debugPrint('✅ Fetched ${entries.length} time entries');
+    } catch (e) {
+      debugPrint('❌ Error fetching time entries: $e');
+      setState(() {
+        _error = 'Failed to load time entries: $e';
+        _isLoading = false;
+      });
+    }
+  }
 
-        // Billable filter
-        if (_billableFilter != 'All') {
-          if (_billableFilter == 'Billable' && entry.type != 'Billable') {
-            return false;
-          }
-          if (_billableFilter == 'Non-Billable' && entry.type != 'Non-Billable') {
-            return false;
-          }
-        }
+  Future<void> _applyFilters() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
 
-        return true;
-      }).toList();
-    });
+      // If date filters are applied, fetch from API with date parameters
+      if (_fromDate != null || _toDate != null) {
+        debugPrint('🔍 Fetching time entries with date filter - from: $_fromDate to: $_toDate');
+        final entries = await _repository.getTimeEntriesByProjectWithDateFilter(
+          projectId: widget.projectId,
+          startDate: _fromDate,
+          endDate: _toDate,
+        );
+        
+        debugPrint('✅ Fetched ${entries.length} time entries with date filter');
+        _allEntries = entries;
+      }
+      
+      // Apply billable filter client-side
+      setState(() {
+        displayedEntries = _allEntries.where((entry) {
+          // Billable filter
+          if (_billableFilter != 'All') {
+            if (_billableFilter == 'Billable' && entry.type != 'Billable') {
+              return false;
+            }
+            if (_billableFilter == 'Non-Billable' && entry.type != 'Non-Billable') {
+              return false;
+            }
+          }
+          return true;
+        }).toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('❌ Error applying filters: $e');
+      setState(() {
+        _error = 'Failed to apply filters: $e';
+        _isLoading = false;
+      });
+    }
   }
 
   
@@ -74,8 +131,9 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
       _fromDate = null;
       _toDate = null;
       _billableFilter = 'All';
-      displayedEntries = List.from(_allEntries);
     });
+    // Fetch all entries (without date filter)
+    _fetchTimeEntries();
   }
 
   void _showFilterDialog() {
@@ -89,22 +147,19 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
         fromDate: _fromDate,
         toDate: _toDate,
         billableFilter: _billableFilter ?? 'All',
-        onApply: (fromDate, toDate, billableFilter) {
+        onApply: (fromDate, toDate, billableFilter) async {
           setState(() {
             _fromDate = fromDate;
             _toDate = toDate;
             _billableFilter = billableFilter;
-            _applyFilters();
           });
-          Navigator.pop(context);
+          await _applyFilters();
+          if (mounted) {
+            Navigator.pop(context);
+          }
         },
         onClear: () {
-          setState(() {
-            _fromDate = null;
-            _toDate = null;
-            _billableFilter = 'All';
-            displayedEntries = List.from(_allEntries);
-          });
+          _clearFilters();
           Navigator.pop(context);
         },
       ),
@@ -124,7 +179,9 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
       context: context,
       builder: (context) => AddTimeEntryDialog(
         taskId: widget.taskId,
+        projectId: widget.projectId,
         taskName: widget.taskName,
+        projectName: widget.projectName,
         currentUser: entry.user,
         editingEntry: entry,
       ),
@@ -169,17 +226,33 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
             ),
           ),
           TextButton(
-            onPressed: () {
-              setState(() {
-                displayedEntries.removeWhere((e) => e.id == entry.id);
-              });
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Time entry deleted'),
-                  backgroundColor: AppColors.error,
-                ),
-              );
+              try {
+                final success = await _repository.deleteTimeEntry(entry.id);
+                if (success) {
+                  setState(() {
+                    _allEntries.removeWhere((e) => e.id == entry.id);
+                    _applyFilters();
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Time entry deleted'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                } else {
+                  throw Exception('Failed to delete');
+                }
+              } catch (e) {
+                debugPrint('❌ Error deleting entry: $e');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to delete: $e'),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              }
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
             child: const Text('Delete'),
@@ -193,83 +266,129 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: Text('${widget.taskName} - Time Entries'),
-        backgroundColor: AppColors.cardBackground,
-      ),
       body: Column(
         children: [
-          // Filter Button Section
-          Padding(
-            padding: const EdgeInsets.only(left: 18.0, top: 14.0, right: 18.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: _showFilterDialog,
-                  icon: const Icon(Icons.filter_list),
-                  label: const Text('Filters'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-                if (_fromDate != null || _toDate != null || _billableFilter != 'All')
-                  Chip(
-                    label: Text(
-                      _getActiveFilterCount(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    backgroundColor: AppColors.primary,
-                    deleteIcon: const Icon(Icons.close, size: 16, color: Colors.white),
-                    onDeleted: _clearFilters,
-                  ),
-              ],
+          // Header with TopBar
+          Container(
+            padding: const EdgeInsets.only(top: 48, bottom: 12),
+            child: TopBar(
+              title: '${widget.taskName} - Time Entries',
+              onBack: () {
+                Navigator.pop(context);
+              },
+              onInfoTap: () {
+                // Info tap action
+              },
             ),
           ),
-
-          // Time Entries List
+          // Body Content
           Expanded(
-            child: displayedEntries.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.schedule_outlined,
-                          size: 64,
-                          color: AppColors.textSecondary.withValues(alpha: 0.5),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No time entries found',
-                          style: AppTextStyles.bodyLarge.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
+            child: _isLoading
+                ? const Center(
+                    child: CircularProgressIndicator(),
                   )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: displayedEntries.length,
-                    itemBuilder: (context, index) {
-                      final entry = displayedEntries[index];
-                      return TimeEntryCard(
-                        entry: entry,
-                        onEdit: () => _editTimeEntry(entry),
-                        onDelete: () => _deleteTimeEntry(entry),
-                      );
-                    },
-                  ),
+                : _error != null
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              size: 64,
+                              color: AppColors.error.withValues(alpha: 0.7),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _error!,
+                              textAlign: TextAlign.center,
+                              style: AppTextStyles.bodyLarge.copyWith(
+                                color: AppColors.error,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: _fetchTimeEntries,
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
+                      )
+                    : Column(
+                        children: [
+                    // Filter Button Section
+                    Padding(
+                      padding: const EdgeInsets.only(left: 18.0, top: 14.0, right: 18.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: _showFilterDialog,
+                            icon: const Icon(Icons.filter_list),
+                            label: const Text('Filters'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                          if (_fromDate != null || _toDate != null || _billableFilter != 'All')
+                            Chip(
+                              label: Text(
+                                _getActiveFilterCount(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              backgroundColor: AppColors.primary,
+                              deleteIcon: const Icon(Icons.close, size: 16, color: Colors.white),
+                              onDeleted: _clearFilters,
+                            ),
+                        ],
+                      ),
+                    ),
+
+                    // Time Entries List
+                    Expanded(
+                      child: displayedEntries.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.schedule_outlined,
+                                    size: 64,
+                                    color: AppColors.textSecondary.withValues(alpha: 0.5),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No time entries found',
+                                    style: AppTextStyles.bodyLarge.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: displayedEntries.length,
+                              itemBuilder: (context, index) {
+                                final entry = displayedEntries[index];
+                                return TimeEntryCard(
+                                  entry: entry,
+                                  onEdit: () => _editTimeEntry(entry),
+                                  onDelete: () => _deleteTimeEntry(entry),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
           ),
         ],
       ),
