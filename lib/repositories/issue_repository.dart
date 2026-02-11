@@ -12,8 +12,12 @@ class IssueRepository {
       throw Exception('User not logged in');
     }
 
-    // Check if user is Admin
-    final isAdmin = user.role?.name == 'Admin';
+    // Check if user is Admin (only admin can CRUD issues)
+    final roleName = user.role?.name ?? '';
+    final isAdmin = roleName == 'Admin' ||
+                    roleName == 'Admin (Default)' || 
+                    roleName == 'Super Admin' || 
+                    roleName == 'App Administrator';
 
     String url;
     if (isAdmin) {

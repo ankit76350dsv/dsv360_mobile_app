@@ -423,10 +423,12 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                         MaterialPageRoute(
                                           builder: (context) =>
                                               AddTimeEntryDialog(
-                                                taskId: task.taskId,
-                                                taskName: task.taskName,
-                                                currentUser: task.assignedTo,
-                                              ),
+                                            taskId: task.taskId,
+                                            projectId: task.projectId,
+                                            taskName: task.taskName,
+                                            projectName: task.projectName ?? 'Project',
+                                            currentUser: task.assignedTo,
+                                          ),
                                         ),
                                       );
                                     },

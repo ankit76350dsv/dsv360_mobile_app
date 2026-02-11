@@ -6,6 +6,7 @@ import '../attachments/attachment_list_modal.dart';
 // import '../../screens/tasks_screen.dart';
 import '../task/tasks_screen.dart';
 import '../issues/issues_screen.dart';
+import '../time_entry/time_entries_screen.dart';
 import '../widgets/generic_card.dart';
 
 class ProjectCard extends StatelessWidget {
@@ -74,6 +75,20 @@ class ProjectCard extends StatelessWidget {
           icon: Icons.access_time,
           count: project.timeEntriesCount.toString(),
           isActive: project.timeEntriesCount > 0,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TimeEntriesScreen(
+                  taskId: '',
+                  projectId: project.id,
+                  taskName: project.projectName,
+                  projectName: project.projectName,
+                  timeEntries: [],
+                ),
+              ),
+            );
+          },
         )
       else
         CardChip(
