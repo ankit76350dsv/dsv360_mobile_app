@@ -24,6 +24,7 @@ class ProfilePage extends StatelessWidget {
     // final fullName = 'Priya Malhotra';
     // final email = 'priya.malhotra@dsv360app.com';
     // final role = 'Operations Coordinator';
+    debugPrint('👤 👤 👤 👤 👤 👤 👤 👤 👤 👤 Building ProfilePage for user: ${userProfile?.skills}');
 
     final customColors = Theme.of(context).custom;
 
@@ -45,9 +46,10 @@ class ProfilePage extends StatelessWidget {
                         Container(
                           height: 200,
                           width: double.infinity,
-                          decoration: const BoxDecoration(
+                          decoration:  BoxDecoration(
                             image: DecorationImage(
                               image: NetworkImage(
+                                userProfile?.coverLink ??
                                 'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=1000&q=80', // City Skyline
                               ),
                               fit: BoxFit.cover,
@@ -80,10 +82,11 @@ class ProfilePage extends StatelessWidget {
                                   color: customColors.background,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const CircleAvatar(
+                                child:  CircleAvatar(
                                   radius: 50,
                                   backgroundImage: NetworkImage(
-                                    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=256&q=80',
+                                    userProfile?.profileLink ??
+                                    'https://wallpapers.com/images/high/anonymous-hacker-theme-full-hd-h1g36h1m0iet2dih.webp',
                                   ),
                                 ),
                               ),
@@ -179,9 +182,9 @@ class ProfilePage extends StatelessWidget {
                           // About Me Section
                           AboutMe(
                             title: 'About Me',
-                            // content: userProfile?.aboutMe ?? 'No description available.',
-                            content:
-                                'Operations coordinator with experience in managing bookings, service requests, and customer support workflows.',
+                            content: userProfile?.aboutMe ?? 'No description available.',
+                            // content: 
+                            //     'No description available.',
                             backgroundColor: customColors.cardBackground!,
                             textColor: customColors.textPrimary!,
                             accentColor: customColors.statusCompleted!,
@@ -294,32 +297,30 @@ class ProfilePage extends StatelessWidget {
                                   ],
                                 ),
                                 const SizedBox(height: 16),
-                                Wrap(
-                                  spacing: 12,
-                                  runSpacing: 12,
-                                  children: [
-                                    _buildSkillChip(
-                                      'html',
-                                      customColors.textSecondary!,
-                                      context,
+                                // Dynamic Skills Parsing
+                                if (userProfile?.skills != null && userProfile!.skills!.isNotEmpty)
+                                  Wrap(
+                                    spacing: 12,
+                                    runSpacing: 12,
+                                    children: (userProfile!.skills!.contains(',') 
+                                            ? userProfile!.skills!.split(',') 
+                                            : [userProfile!.skills!])
+                                        .map((skill) => _buildSkillChip(
+                                              skill.trim(),
+                                              customColors.textSecondary!,
+                                              context,
+                                            ))
+                                        .toList(),
+                                  )
+                                else
+                                  Text(
+                                    'No skills added yet.',
+                                    style: TextStyle(
+                                      color: customColors.textHint,
+                                      fontSize: 14,
+                                      fontStyle: FontStyle.italic,
                                     ),
-                                    _buildSkillChip(
-                                      'css',
-                                      customColors.textSecondary!,
-                                      context,
-                                    ),
-                                    _buildSkillChip(
-                                      'react',
-                                      customColors.textSecondary!,
-                                      context,
-                                    ),
-                                    _buildSkillChip(
-                                      'nodejs',
-                                      customColors.textSecondary!,
-                                      context,
-                                    ),
-                                  ],
-                                ),
+                                  ),
                               ],
                             ),
                           ),
