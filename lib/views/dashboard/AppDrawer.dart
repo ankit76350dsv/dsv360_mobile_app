@@ -1,7 +1,10 @@
+import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/constants/user_manager.dart';
+import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/services/auth_service.dart';
-import 'package:dsv360/repositories/active_user_repository.dart';
+
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/views/projects/projects_screen.dart';
@@ -15,16 +18,19 @@ import 'package:dsv360/views/people/people_page.dart';
 import 'package:dsv360/views/teams/teams_page.dart';
 import 'package:dsv360/views/ai/dsv_ai_page.dart';
 import 'package:dsv360/views/feedback/feedbacks_screen.dart';
+import 'package:dsv360/views/feedback/feedback_form_screen.dart';
 import 'package:dsv360/views/settings/settings_page.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AppDrawer extends ConsumerWidget {
+
+class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final customColors = Theme.of(context).custom;
+
+
 
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.8, // 80% screen
@@ -86,7 +92,7 @@ class AppDrawer extends ConsumerWidget {
                         ],
                       ),
                     ),
-                    profileCardUi(context, ref),
+                    profileCardUi(context),
                   ],
                 ),
               ),
@@ -141,39 +147,43 @@ class AppDrawer extends ConsumerWidget {
                       );
                     },
                   ),
-                  _DrawerItem(
-                    icon: Icons.apartment_outlined,
-                    label: 'Accounts',
-                    subLabel: 'Client organizations',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => AccountsPage()),
-                      );
-                    },
-                  ),
-                  _DrawerItem(
-                    icon: Icons.filter_alt_outlined,
-                    label: 'Client Contacts',
-                    subLabel: 'People & leads',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => ClientContactsPage()),
-                      );
-                    },
-                  ),
-                  _DrawerItem(
-                    icon: Icons.verified_outlined,
-                    label: 'Badges',
-                    subLabel: 'Achievements & rewards',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const BadgesPage()),
-                      );
-                    },
-                  ),
+                  if (IsHaveAccess.instance.isAdmin)
+                    _DrawerItem(
+                      icon: Icons.apartment_outlined,
+                      label: 'Accounts',
+                      subLabel: 'Client organizations',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => AccountsPage()),
+                        );
+                      },
+                    ),
+                  if (IsHaveAccess.instance.isAdmin)
+                    _DrawerItem(
+                      icon: Icons.filter_alt_outlined,
+                      label: 'Client Contacts',
+                      subLabel: 'People & leads',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => ClientContactsPage()),
+                        );
+                      },
+                    ),
+                  if (IsHaveAccess.instance.isAdmin)
+                    _DrawerItem(
+                      icon: Icons.verified_outlined,
+                      label: 'Badges',
+                      subLabel: 'Achievements & rewards',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const BadgesPage()),
+                        );
+                      },
+                    ),
                   _DrawerItem(
                     icon: Icons.person_add_outlined,
                     label: 'Users',
@@ -196,17 +206,18 @@ class AppDrawer extends ConsumerWidget {
                       );
                     },
                   ),
-                  _DrawerItem(
-                    icon: Icons.groups_outlined,
-                    label: 'Teams',
-                    subLabel: 'Group collaboration',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const TeamsPage()),
-                      );
-                    },
-                  ),
+                  if (IsHaveAccess.instance.isAdmin)
+                    _DrawerItem(
+                      icon: Icons.groups_outlined,
+                      label: 'Teams',
+                      subLabel: 'Group collaboration',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const TeamsPage()),
+                        );
+                      },
+                    ),
                   _DrawerItem(
                     icon: Icons.smart_toy_outlined,
                     label: 'DSV AI',
@@ -223,13 +234,21 @@ class AppDrawer extends ConsumerWidget {
                     label: 'Feedback',
                     subLabel: 'User suggestions',
                     onTap: () {
-                      final isAdmin = AuthService().isAdmin;
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const FeedbacksScreen(),
-                        ),
-                      );
+                      if (IsHaveAccess.instance.isAdmin) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const FeedbacksScreen(),
+                          ),
+                        );
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const FeedbackFormScreen(),
+                          ),
+                        );
+                      }
                     },
                   ),
                   _DrawerItem(
@@ -239,7 +258,8 @@ class AppDrawer extends ConsumerWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (_) => const SettingsPage()),
+                        MaterialPageRoute(
+                            builder: (_) => const SettingsPage()),
                       );
                     },
                   ),
@@ -310,9 +330,11 @@ class AppDrawer extends ConsumerWidget {
     );
   }
 
-  Widget profileCardUi(BuildContext context, WidgetRef ref) {
+  Widget profileCardUi(BuildContext context) {
     final customColors = Theme.of(context).custom;
-    final activeUser = ref.watch(activeUserRepositoryProvider);
+    final userProfile = UserManager.instance.userProfile;
+    final user = AuthManager.instance.currentUser;
+
 
     return Container(
       width: double.infinity,
@@ -328,13 +350,11 @@ class AppDrawer extends ConsumerWidget {
             children: [
               CircleAvatar(
                 radius: 36,
-                backgroundImage:
-                    (activeUser != null &&
-                        activeUser.profilePic != null &&
-                        activeUser.profilePic!.isNotEmpty)
-                    ? NetworkImage(activeUser.profilePic!)
+                backgroundImage: (userProfile?.profileLink != null &&
+                        userProfile!.profileLink!.isNotEmpty)
+                    ? NetworkImage(userProfile.profileLink!)
                     : const AssetImage("assets/icons/profile.png")
-                          as ImageProvider,
+                        as ImageProvider,
               ),
               Positioned(
                 bottom: 2,
@@ -356,14 +376,14 @@ class AppDrawer extends ConsumerWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            "${activeUser?.firstName} ${activeUser?.lastName}",
+            userProfile?.username ?? 'User Name',
             style: TextStyle(
               fontWeight: FontWeight.w600,
               color: customColors.textPrimary,
             ),
           ),
           Text(
-            "${activeUser?.roleName}",
+            user?.role?.name ?? 'No Role',
             style: TextStyle(fontSize: 12.0, color: customColors.textSecondary),
           ),
         ],

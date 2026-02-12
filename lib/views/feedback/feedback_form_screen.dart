@@ -1,3 +1,8 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
+import 'package:dsv360/core/constants/server_constant.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
@@ -22,8 +27,22 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
   final _emailController = TextEditingController();
   final _messageController = TextEditingController();
   
-  final List<String> _selectedImages = [];
+  final List<XFile> _selectedImages = [];
   bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  void _loadUserData() {
+    final user = AuthManager.instance.currentUser;
+    if (user != null) {
+      _nameController.text = "${user.firstName} ${user.lastName}";
+      _emailController.text = user.emailId;
+    }
+  }
 
   @override
   void dispose() {
@@ -33,11 +52,21 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
     super.dispose();
   }
 
-  void _handleImageUpload() {
-    // TODO: Implement file picker
-    if (_selectedImages.length < 3) {
+  Future<void> _handleImageUpload() async {
+    final ImagePicker picker = ImagePicker();
+    final List<XFile> images = await picker.pickMultiImage(limit: 3);
+
+    if (images.isNotEmpty) {
+      if ((_selectedImages.length + images.length) > 3) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('You can only upload up to 3 images')),
+          );
+        }
+        return;
+      }
       setState(() {
-        _selectedImages.add('feedback_image_${_selectedImages.length + 1}');
+        _selectedImages.addAll(images);
       });
     }
   }
@@ -46,37 +75,68 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isSubmitting = true);
 
-      // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
+      try {
+        final user = AuthManager.instance.currentUser;
+        if (user == null) {
+          throw Exception("User not found");
+        }
 
-      final feedback = FeedbackModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        message: _messageController.text.trim(),
-        images: List.from(_selectedImages),
-        date: DateTime.now(),
-        status: 'Pending',
-      );
+        final dio = Dio();
+        final formData = FormData.fromMap({
+          "Name": _nameController.text.trim(),
+          "Email": _emailController.text.trim(),
+          "Message": _messageController.text.trim(),
+          "User_ID": user.id,
+        });
 
-      setState(() {
-        _isSubmitting = false;
-        
-        // Clear form
-        _nameController.clear();
-        _emailController.clear();
-        _messageController.clear();
-        _selectedImages.clear();
-      });
+        if (_selectedImages.isNotEmpty) {
+          for (var image in _selectedImages) {
+            formData.files.add(MapEntry(
+              "profile",
+              await MultipartFile.fromFile(image.path, filename: image.name),
+            ));
+          }
+        }
 
-      // Navigate to feedbacks screen with new feedback
-      if (mounted) {
-        Navigator.push(
+        final response = await dio.post(
+          '${ServerConstant.serverURL}time_entry_management_application_function/feedback',
+          data: formData,
+        );
+
+        if (response.data['success'] == true) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text(
+                      response.data['message'] ?? 'Feedback submitted successfully')),
+            );
+            _messageController.clear();
+            setState(() {
+              _selectedImages.clear();
+            });
+            // Navigator.pop(context); // Go back after success
+            Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => FeedbacksScreen(newFeedback: feedback),
+            builder: (context) => FeedbacksScreen(newFeedback: response.data['feedback']),
           ),
         );
+          }
+        } else {
+          throw Exception(response.data['message'] ?? 'Submission failed');
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isSubmitting = false;
+          });
+        }
       }
     }
   }
@@ -130,6 +190,7 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
                             labelText: 'Full Name',
                             prefixIcon: Icons.person_outline,
                             keyboardType: TextInputType.name,
+                            enabled: false, // Read-only
                             validator: FormValidators.validateName,
                           ),
                           const SizedBox(height: 20),
@@ -141,6 +202,7 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
                             labelText: 'Email Address',
                             prefixIcon: Icons.email_outlined,
                             keyboardType: TextInputType.emailAddress,
+                            enabled: false, // Read-only
                             validator: FormValidators.validateEmail,
                           ),
                           const SizedBox(height: 20),
@@ -186,8 +248,8 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
                                           color: customColors.inputFill,
                                           borderRadius: BorderRadius.circular(8),
                                         ),
-                                        child: Image.asset(
-                                          'assets/images/feedback.png',
+                                        child: Image.file(
+                                          File(_selectedImages[entry.key].path),
                                           fit: BoxFit.cover,
                                           errorBuilder: (context, error, stackTrace) {
                                             return Icon(

@@ -10,9 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/feedback_model.dart';
 import '../../repositories/feedback_repository.dart';
-import '../widgets/custom_search_bar.dart';
 import '../widgets/feedback_card.dart';
-import '../../views/widgets/TopBar.dart';
 import 'feedback_detail_screen.dart';
 
 class FeedbacksScreen extends ConsumerStatefulWidget {
