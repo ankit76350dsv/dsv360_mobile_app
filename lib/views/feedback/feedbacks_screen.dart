@@ -5,6 +5,8 @@ import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/feedback/feedback_form_screen.dart';
+import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -36,10 +38,6 @@ class _FeedbacksScreenState extends ConsumerState<FeedbacksScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
-  }
-
-  void _onSearchChanged(String query) {
-    ref.read(feedbackSearchQueryProvider.notifier).state = query;
   }
 
   @override
@@ -133,6 +131,25 @@ class _FeedbacksScreenState extends ConsumerState<FeedbacksScreen> {
                             (f) => f.id == widget.newFeedback!.id,
                           )) {
                         displayFeedbacks.insert(0, widget.newFeedback!);
+                      }
+
+                      // Filter by User ID if not admin
+                      try {
+                        if (!IsHaveAccess.instance.isAdmin) {
+                          final currentUser = AuthManager.instance.currentUser;
+                          if (currentUser != null) {
+                            // Access id safely
+                            // ignore: unnecessary_cast
+                            final String? uid = (currentUser as dynamic).id?.toString();
+                            if (uid != null && uid.isNotEmpty) {
+                              displayFeedbacks = displayFeedbacks
+                                  .where((f) => f.userId == uid)
+                                  .toList();
+                            }
+                          }
+                        }
+                      } catch (e) {
+                        debugPrint("Error filtering feedbacks: $e");
                       }
 
                       final filteredFeedbacks = displayFeedbacks.where((

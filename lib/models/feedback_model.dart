@@ -9,6 +9,7 @@ class FeedbackModel {
   final String? responseByName;
   final String? responseById;
   final String? resolvedMessage;
+  final String userId;
 
   FeedbackModel({
     required this.id,
@@ -18,6 +19,7 @@ class FeedbackModel {
     required this.images,
     required this.date,
     required this.status,
+    required this.userId,
     this.responseByName,
     this.responseById,
     this.resolvedMessage,
@@ -32,6 +34,7 @@ class FeedbackModel {
       images: _parseImages(json['Images'] ?? json['images']),
       date: _parseDateTime(json['CREATEDTIME'] ?? json['date']),
       status: _parseStatus(json['Status'] ?? json['status']),
+      userId: json['User_ID']?.toString() ?? json['userId']?.toString() ?? '',
       responseByName: json['ResponseByName'],
       responseById: json['ResponseByID'],
       resolvedMessage: json['Resolved_Message'],
@@ -47,6 +50,7 @@ class FeedbackModel {
       'Images': images.join(','),
       'CREATEDTIME': date.toIso8601String(),
       'Status': status == 'Resolved',
+      'User_ID': userId,
       'ResponseByName': responseByName,
       'ResponseByID': responseById,
       'Resolved_Message': resolvedMessage,

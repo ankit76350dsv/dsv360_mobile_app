@@ -5,10 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/utils/form_validators.dart';
-import '../../models/feedback_model.dart';
 import '../widgets/custom_input_field.dart';
 import '../widgets/primary_button.dart';
 import '../../views/widgets/TopBar.dart';
@@ -151,6 +149,14 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
             TopBar(
               title: AppStrings.feedbackFormTitle,
               onBack: () => Navigator.pop(context),
+              actionIcon: Icons.list_alt,
+              onInfoTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const FeedbacksScreen()),
+                );
+              },
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -158,23 +164,7 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const FeedbacksScreen()),
-                          );
-                        },
-                        icon: const Icon(Icons.list_alt, size: 18),
-                        label: const Text('View All Feedbacks'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: customColors.primary,
-                        ),
-                      ),
-                    ),
+
                     const SizedBox(height: 20),
                     
                     // Form

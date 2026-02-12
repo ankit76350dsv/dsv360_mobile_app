@@ -42,7 +42,7 @@ class _DashboardScaffold extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         automaticallyImplyLeading: false, // Hide default hamburger
         title: Text(
-          'DSV360 - ${activeUser?.firstName ?? "User"}',
+          'DSV360',
           // 'DSV360',
           style: TextStyle(color: customColors.textPrimary),
         ),

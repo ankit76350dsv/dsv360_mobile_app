@@ -6,8 +6,15 @@ class TopBar extends StatelessWidget {
   final String title;
   final VoidCallback? onBack;
   final VoidCallback? onInfoTap;
+  final IconData? actionIcon;
 
-  const TopBar({super.key, required this.title, this.onBack, this.onInfoTap});
+  const TopBar({
+    super.key,
+    required this.title,
+    this.onBack,
+    this.onInfoTap,
+    this.actionIcon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +51,8 @@ class TopBar extends StatelessWidget {
             splashRadius: 20,
             onPressed: onInfoTap,
             icon: Icon(
-              Platform.isAndroid ? Icons.more_vert : Icons.more_horiz,
+              actionIcon ??
+                  (Platform.isAndroid ? Icons.more_vert : Icons.more_horiz),
               size: 18,
             ),
             color: customColors.textPrimary,
