@@ -72,8 +72,12 @@ class UsersModel {
       lastName: json['last_name'] ?? '',
       userId: json['user_id']?.toString() ?? '',
       emailAddress: json['email_id'] ?? '',
-      role: json['role_details']?['role_name'] ?? '',
-      roleId: json['role_details']?['role_id']?.toString() ?? '',
+      role: (json['role_details'] is Map)
+          ? (json['role_details']['role_name'] ?? '')
+          : '',
+      roleId: (json['role_details'] is Map)
+          ? (json['role_details']['role_id']?.toString() ?? '')
+          : '',
       reporterId: json['reporter_id']?.toString(),
       reporterName: json['reporter_name'],
       reporterProfile: json['reporter_profile'],

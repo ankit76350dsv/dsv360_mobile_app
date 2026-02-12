@@ -1,5 +1,5 @@
+import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/network/dio_client.dart';
-import 'package:dsv360/core/utils/functions.dart';
 import 'package:dsv360/models/leave_calendar_event.dart';
 import 'package:dsv360/models/leave_details.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
@@ -20,7 +20,7 @@ class LeaveDetailsListRepository extends AsyncNotifier<List<LeaveDetails>> {
 
     try {
       final userId = activeUser.userId;
-      final isAdmin = Functions.isAdmin(activeUser);
+      final isAdmin = IsHaveAccess.instance.isAdmin;
 
       final url = isAdmin
           ? 'time_entry_management_application_function/leave/approval'

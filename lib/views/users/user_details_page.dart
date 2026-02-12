@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
@@ -10,7 +11,7 @@ import 'package:dsv360/providers/project_provider.dart';
 import 'package:dsv360/repositories/task_repository.dart';
 import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
-import 'package:dsv360/views/widgets/custom_card_button.dart';
+
 import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/views/widgets/info_row.dart';
@@ -25,9 +26,10 @@ class UserDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAdmin = IsHaveAccess.instance.isAdmin;
 
     return DefaultTabController(
-      length: 3,
+      length: isAdmin ? 4 : 3,
       child: Scaffold(
         appBar: AppBar(
           toolbarHeight: 35.0,
@@ -56,6 +58,7 @@ class UserDetailsPage extends StatelessWidget {
                 child: TabBarView(
                   children: [
                     _InfoTab(user: user),
+                    if (isAdmin) _WorkInfoTab(user: user),
                     _ProjectsTab(user: user),
                     _TasksTab(user: user),
                   ],
@@ -100,10 +103,11 @@ class _UserTabs extends StatelessWidget {
           unselectedLabelColor: customColors.textSecondary,
           labelStyle: const TextStyle(fontWeight: FontWeight.w600),
           dividerColor: Colors.transparent, // removes bottom line
-          tabs: const [
-            Tab(text: "Info"),
-            Tab(text: "Projects"),
-            Tab(text: "Tasks"),
+          tabs: [
+            const Tab(text: "Info"),
+            if (IsHaveAccess.instance.isAdmin) const Tab(text: "Work"),
+            const Tab(text: "Projects"),
+            const Tab(text: "Tasks"),
           ],
         ),
       ),
@@ -177,20 +181,21 @@ class _InfoTab extends ConsumerWidget {
             label: "Full Name",
             value: "${user.firstName} ${user.lastName}",
           ),
-              _InfoTile(
-                icon: Icons.badge,
-                label: "User Id",
-                value: "U${user.userId.substring(user.userId.length - 4)}",
-              ),
-              _InfoTile(
-                icon: Icons.verified_user,
-                label: "Verification",
-                child: CustomChip(
-                  label: verificationStatusText,
-                  color: verificationStatusColor,
-                  icon: verificationStatusIcon,
-                ),
-              ),
+          _InfoTile(
+            icon: Icons.badge,
+            label: "User Id",
+            value:
+                "U${user.userId.length > 4 ? user.userId.substring(user.userId.length - 4) : user.userId}",
+          ),
+          _InfoTile(
+            icon: Icons.verified_user,
+            label: "Verification",
+            child: CustomChip(
+              label: verificationStatusText,
+              color: verificationStatusColor,
+              icon: verificationStatusIcon,
+            ),
+          ),
           _InfoTile(
             icon: Icons.work,
             label: "Role",
@@ -214,6 +219,18 @@ class _InfoTab extends ConsumerWidget {
             label: "Email Address",
             value: user.emailAddress,
           ),
+          if (IsHaveAccess.instance.isAdmin)
+            _InfoTile(
+              icon: Icons.phone,
+              label: "Phone Number",
+              value: user.phone ?? 'N/A',
+            ),
+          if (IsHaveAccess.instance.isAdmin)
+            _InfoTile(
+              icon: Icons.person_2,
+              label: "Reporting To",
+              value: user.reporterName ?? 'N/A',
+            ),
 
           // _InfoTile(
           //   icon: Icons.report_gmailerrorred,
@@ -238,6 +255,45 @@ class _InfoTab extends ConsumerWidget {
           //     icon: Icons.edit,
           //   ),
           // ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WorkInfoTab extends ConsumerWidget {
+  final UsersModel user;
+
+  _WorkInfoTab({required this.user});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionTitle(title: "Work Information"),
+          _InfoTile(
+            icon: Icons.badge,
+            label: "Employee Id",
+            value: user.empId ?? 'N/A',
+          ),
+          _InfoTile(
+            icon: Icons.location_city,
+            label: "Office Location",
+            value: user.location ?? 'N/A',
+          ),
+          _InfoTile(
+            icon: Icons.lock_clock,
+            label: "Shift Start Time",
+            value: user.shiftStartTime ?? 'N/A',
+          ),
+          _InfoTile(
+            icon: Icons.lock_clock_rounded,
+            label: "Shift End Time",
+            value: user.shiftEndTime ?? 'N/A',
+          ),
         ],
       ),
     );
@@ -651,12 +707,21 @@ class _TasksTab extends ConsumerWidget {
         return tasksAsync.when(
           loading: () => const GlobalLoader(message: 'Loading tasks info...'),
           error: (error, stack) => GlobalError(
-            message: 'Failed to load dashboard data: $error',
+            message: 'Failed to load tasks data: Try Again',
             onRetry: () =>
                 ref.refresh(tasksListRepositoryProvider(user.userId)),
           ),
           data: (tasks) {
             if (tasks.isEmpty) {
+              return const Center(child: Text("No tasks assigned"));
+            }
+
+            final userId = user.userId;
+            final assignedTasks = tasks
+                .where((t) => t.assignedToId == userId)
+                .toList();
+
+            if (assignedTasks.isEmpty) {
               return const Center(child: Text("No tasks assigned"));
             }
 
@@ -666,9 +731,9 @@ class _TasksTab extends ConsumerWidget {
               },
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
-                itemCount: tasks.length,
+                itemCount: assignedTasks.length,
                 itemBuilder: (context, index) {
-                  return _TaskCard(task: tasks[index]);
+                  return _TaskCard(task: assignedTasks[index]);
                 },
               ),
             );

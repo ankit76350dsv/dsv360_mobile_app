@@ -1,8 +1,8 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/network/dio_client.dart';
-import 'package:dsv360/core/utils/functions.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/task.dart';
@@ -32,15 +32,9 @@ class UsersPage extends ConsumerStatefulWidget {
 }
 
 class _UsersPageState extends ConsumerState<UsersPage> {
-  bool isAdmin = false;
-
   @override
   void initState() {
     super.initState();
-    final activeUser = ref.read(activeUserRepositoryProvider);
-    if (activeUser != null) {
-      isAdmin = Functions.isAdmin(activeUser);
-    }
   }
 
   @override
@@ -83,6 +77,10 @@ class _UsersPageState extends ConsumerState<UsersPage> {
         data: (results) {
           if (results.contains(ConnectivityResult.none)) {
             return null; // FAB hidden when no internet
+          }
+
+          if (!IsHaveAccess.instance.isAdmin) {
+            return null; // FAB hidden when user not admin
           }
 
           return FloatingActionButton(
@@ -135,7 +133,7 @@ class _UsersPageState extends ConsumerState<UsersPage> {
                       loading: () =>
                           const GlobalLoader(message: 'Loading users info...'),
                       error: (error, stack) => GlobalError(
-                        message: 'Failed to load users data: $error',
+                        message: 'Failed to load users data: Try Again',
                         onRetry: () => ref.refresh(usersRepositoryProvider),
                       ),
                       data: (users) {
@@ -174,7 +172,7 @@ class _UsersPageState extends ConsumerState<UsersPage> {
             );
           },
           error: (error, stack) => GlobalError(
-            message: 'Failed to check connectivity: $error',
+            message: 'Failed to check connectivity: Try Again',
             onRetry: () => ref.invalidate(connectivityStatusProvider),
           ),
           loading: () => const GlobalLoader(message: 'Checking connection...'),
@@ -200,9 +198,7 @@ class _UserCardState extends ConsumerState<UserCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // final colors = theme.colorScheme;
     final customColors = theme.custom;
-    final activeUser = ref.watch(activeUserRepositoryProvider);
     final verificationStatus = widget.user.verificationStatus;
     final isActive = widget.user.workStatus == WorkStatus.active;
 
@@ -310,157 +306,160 @@ class _UserCardState extends ConsumerState<UserCard> {
             ),
 
             // Divider
-            Divider(
-              height: 1,
-              thickness: 1,
-              color: Colors.grey.withOpacity(0.2),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
+            if (IsHaveAccess.instance.isAdmin)
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: Colors.grey.withOpacity(0.2),
               ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          SizedBox(
-                            width: 38,
-                            height: 18,
-                            child: Transform.scale(
-                              scale: 0.70,
-                              child: Switch(
-                                value: isActive,
-                                onChanged: (value) async {
-                                  // this value is after toggling value
+            
+            if (IsHaveAccess.instance.isAdmin)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            SizedBox(
+                              width: 38,
+                              height: 18,
+                              child: Transform.scale(
+                                scale: 0.70,
+                                child: Switch(
+                                  value: isActive,
+                                  onChanged: (value) async {
+                                    // this value is after toggling value
 
-                                  // Optional: show loading indicator or disable switch
-                                  try {
-                                    // Call API based on switch value
-                                    final path = value
-                                        // to make it active (now value is true, previous was false)
-                                        ? 'time_entry_management_application_function/employee/DISABLED/${widget.user.userId}'
-                                        // to make it inactive (now value is false, previous was true)
-                                        : 'time_entry_management_application_function/employee/ACTIVE/${widget.user.userId}';
-                                    await DioClient.instance.post(path);
-
-                                    AppSnackBar.show(
-                                      context,
-                                      message: value
-                                          ? 'Employee is active'
-                                          : 'Employee is inactive',
-                                    );
-
-                                    // Refresh users provider (sync with backend)
-                                    ref.invalidate(usersRepositoryProvider);
-                                  } catch (e) {
-                                    AppSnackBar.show(
-                                      context,
-                                      message: 'Failed to update work status',
-                                      icon: Icons.error_outline,
-                                    );
-                                  }
-                                },
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            isActive ? 'Active' : 'Inactive',
-                            style: TextStyle(
-                              color: isActive
-                                  ? customColors.primary
-                                  : customColors.inputFill,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      Row(
-                        children: [
-                          widget.user.verificationStatus !=
-                                  VerificationStatus.verified
-                              ? CustomCardButton(
-                                  icon: Icons.account_circle,
-                                  onTap: () async {
+                                    // Optional: show loading indicator or disable switch
                                     try {
-                                      await DioClient.instance.post(
-                                        'time_entry_management_application_function/reInviteEmployees',
-                                        data: {
-                                          'email_id': widget.user.emailAddress
-                                              .toString(),
-                                          'first_name': widget.user.firstName
-                                              .toString(),
-                                          'last_name': widget.user.lastName
-                                              .toString(),
-                                          'role_id': widget.user.roleId
-                                              .toString(),
-                                          'user_id': widget.user.userId
-                                              .toString(),
-                                        },
-                                      );
+                                      // Call API based on switch value
+                                      final path = value
+                                          // to make it active (now value is true, previous was false)
+                                          ? 'time_entry_management_application_function/employee/DISABLED/${widget.user.userId}'
+                                          // to make it inactive (now value is false, previous was true)
+                                          : 'time_entry_management_application_function/employee/ACTIVE/${widget.user.userId}';
+                                      await DioClient.instance.post(path);
 
                                       AppSnackBar.show(
                                         context,
-                                        message:
-                                            'Re-invitation sent successfully',
+                                        message: value
+                                            ? 'Employee is active'
+                                            : 'Employee is inactive',
                                       );
+
+                                      // Refresh users provider (sync with backend)
+                                      ref.invalidate(usersRepositoryProvider);
                                     } catch (e) {
-                                      debugPrint(
-                                        '❌ Failed to sent invitation: $e',
-                                      );
-
                                       AppSnackBar.show(
                                         context,
-                                        message:
-                                            'Failed to sent re-invitation.',
+                                        message: 'Failed to update work status',
+                                        icon: Icons.error_outline,
                                       );
                                     }
                                   },
-                                )
-                              :
-                                // nothing
-                                SizedBox(),
-
-                          const SizedBox(width: 5.0),
-                          CustomCardButton(
-                            icon: Icons.edit,
-                            onTap: () {
-                              // TODO: Handle edit action
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) =>
-                                      AddEditUserPage(user: widget.user),
                                 ),
-                              );
-                            },
-                          ),
-                          const SizedBox(width: 5.0),
-                          CustomCardButton(
-                            icon: Icons.delete,
-                            onTap: () {
-                              _showDeleteUserSheet(
-                                context,
-                                user: widget.user, // List<Task>
-                                usersList: widget.userList,
-                              );
-                            },
-                            color: customColors.error,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              isActive ? 'Active' : 'Inactive',
+                              style: TextStyle(
+                                color: isActive
+                                    ? customColors.primary
+                                    : customColors.inputFill,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        Row(
+                          children: [
+                            widget.user.verificationStatus !=
+                                    VerificationStatus.verified
+                                ? CustomCardButton(
+                                    icon: Icons.account_circle,
+                                    onTap: () async {
+                                      try {
+                                        await DioClient.instance.post(
+                                          'time_entry_management_application_function/reInviteEmployees',
+                                          data: {
+                                            'email_id': widget.user.emailAddress
+                                                .toString(),
+                                            'first_name': widget.user.firstName
+                                                .toString(),
+                                            'last_name': widget.user.lastName
+                                                .toString(),
+                                            'role_id': widget.user.roleId
+                                                .toString(),
+                                            'user_id': widget.user.userId
+                                                .toString(),
+                                          },
+                                        );
+
+                                        AppSnackBar.show(
+                                          context,
+                                          message:
+                                              'Re-invitation sent successfully',
+                                        );
+                                      } catch (e) {
+                                        debugPrint(
+                                          '❌ Failed to sent invitation: $e',
+                                        );
+
+                                        AppSnackBar.show(
+                                          context,
+                                          message:
+                                              'Failed to sent re-invitation.',
+                                        );
+                                      }
+                                    },
+                                  )
+                                :
+                                  // nothing
+                                  SizedBox(),
+
+                            const SizedBox(width: 5.0),
+                            CustomCardButton(
+                              icon: Icons.edit,
+                              onTap: () {
+                                // TODO: Handle edit action
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        AddEditUserPage(user: widget.user),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 5.0),
+                            CustomCardButton(
+                              icon: Icons.delete,
+                              onTap: () {
+                                _showDeleteUserSheet(
+                                  context,
+                                  user: widget.user, // List<Task>
+                                  usersList: widget.userList,
+                                );
+                              },
+                              color: customColors.error,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
+            
           ],
         ),
       ),
