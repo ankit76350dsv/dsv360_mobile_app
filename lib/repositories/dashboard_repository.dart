@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:dsv360/core/constants/server_constant.dart';
+import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/models/dashboard_model.dart';
 
 class DashboardRepository {
@@ -18,10 +19,16 @@ class DashboardRepository {
       'Year': year,
     });
 
-    // debugPrint('🩸 Fetching dashboard data | URL: $url');
+    debugPrint('🩸 Fetching dashboard data | URL: $url');
 
     try {
-      final response = await http.get(url);
+      final token = await TokenManager.instance.getToken();
+      final response = await http.get(
+        url,
+        headers: {
+          'Authorization': 'Zoho-oauthtoken $token',
+        },
+      );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);

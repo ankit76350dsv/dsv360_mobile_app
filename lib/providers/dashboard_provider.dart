@@ -61,6 +61,7 @@ final dashboardDataProvider = FutureProvider<DashboardModel>((ref) async {
   // I will use `50026358236` as a fallback or if the user object doesn't have it, based on the prompt's example request.
   // But ideally, the code should be:
   // final orgId = user.orgId ?? '50026358236'; 
+  // print('👤 Fetching dashboard data for User ID: $userId, Org ID: 50026358236, Year: $year');
   
   return repository.fetchDashboardData(
     userId: userId,
