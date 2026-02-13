@@ -19,7 +19,7 @@ class DashboardRepository {
       'Year': year,
     });
 
-    debugPrint('🩸 Fetching dashboard data | URL: $url');
+    // debugPrint('🩸 Fetching dashboard data | URL: $url');
 
     try {
       final token = await TokenManager.instance.getToken();
