@@ -1,4 +1,5 @@
 import 'dart:developer' as developer;
+import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert' as convert;
@@ -11,35 +12,49 @@ class EmployeeRepository {
   Future<List<Employee>> fetchAllEmployees() async {
     try {
       debugPrint('👥 Fetching all employees');
-      
-      // Get access token
-      final accessToken = await TokenManager.instance.getToken();
-      if (accessToken == null) {
-        debugPrint('❌ No access token available');
-        return [];
-      }
-      
-      final url = '${ServerConstant.serverURL}time_entry_management_application_function/employee';
+
+      final app = AppInitManager.instance.catalystApp;
+      final token = await app.getAccessToken();
+
+      debugPrint('🔑🔑🔑🔑🔑🔑🔑🔑🔑🔑 Access Token: $token');
+   
+
+      final url =
+          '${ServerConstant.serverURL}time_entry_management_application_function/employee';
       debugPrint('🌐 URL: $url');
-      
+
+      //this is the first method how i am calling the api but it is not working
       final response = await http.get(
         Uri.parse(url),
         headers: {
-          'Authorization': 'Bearer $accessToken',
+          'Authorization': 'Bearer $token', 
           'Content-Type': 'application/json',
         },
       );
+
+
+      // this is the second method how i am calling the api and it is also not woking working fine
+      // Step 2: Make API request
+      // final response = await http.get(
+      //   Uri.parse(url),
+      //   headers: {
+      //     'Content-Type': 'application/json',
+      //     'Authorization': 'Zoho-oauthtoken $token',
+      //   },
+      // );
       debugPrint('📊 Response Status: ${response.statusCode}');
       debugPrint('📄 Response Body: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final Map<String, dynamic> jsonResponse = convert.json.decode(response.body);
-        
+        final Map<String, dynamic> jsonResponse = convert.json.decode(
+          response.body,
+        );
+
         // API returns "users" array, not "success" and "data"
         if (jsonResponse.containsKey('users')) {
           final List<dynamic> employeeList = jsonResponse['users'] ?? [];
           debugPrint('✅ Employees fetched: ${employeeList.length}');
-          
+
           return employeeList
               .map((e) => Employee.fromJson(e as Map<String, dynamic>))
               .toList();
@@ -63,17 +78,17 @@ class EmployeeRepository {
   Future<Employee?> fetchEmployeeById(String userId) async {
     try {
       debugPrint('👤 Fetching employee by ID: $userId');
-      
+
       // Get access token
       final accessToken = await TokenManager.instance.getToken();
       if (accessToken == null) {
         debugPrint('❌ No access token available');
         return null;
       }
-      
+
       final url = '${ServerConstant.serverURL}emp/$userId';
       debugPrint('🌐 URL: $url');
-      
+
       final response = await http.get(
         Uri.parse(url),
         headers: {
@@ -84,8 +99,10 @@ class EmployeeRepository {
       debugPrint('📊 Response Status: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final Map<String, dynamic> jsonResponse = convert.json.decode(response.body);
-        
+        final Map<String, dynamic> jsonResponse = convert.json.decode(
+          response.body,
+        );
+
         if (jsonResponse['success'] == true) {
           final employeeData = jsonResponse['data'] as Map<String, dynamic>;
           debugPrint('✅ Employee fetched: ${employeeData['first_name']}');
@@ -109,20 +126,22 @@ class EmployeeRepository {
   Future<List<Employee>> fetchUnassignedEmployees() async {
     try {
       debugPrint('👥 Fetching unassigned employees');
-      
+
       final url = '${ServerConstant.serverURL}unassignedEmployees';
       debugPrint('🌐 URL: $url');
-      
+
       final response = await http.get(Uri.parse(url));
       debugPrint('📊 Response Status: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final Map<String, dynamic> jsonResponse = convert.json.decode(response.body);
-        
+        final Map<String, dynamic> jsonResponse = convert.json.decode(
+          response.body,
+        );
+
         if (jsonResponse['success'] == true) {
           final List<dynamic> employeeList = jsonResponse['data'] ?? [];
           debugPrint('✅ Unassigned employees fetched: ${employeeList.length}');
-          
+
           return employeeList
               .map((e) => Employee.fromJson(e as Map<String, dynamic>))
               .toList();
@@ -136,7 +155,10 @@ class EmployeeRepository {
       }
     } catch (e, st) {
       debugPrint('❌ Error fetching unassigned employees: $e');
-      developer.log('Error fetching unassigned employees: $e', name: 'EmployeeRepository');
+      developer.log(
+        'Error fetching unassigned employees: $e',
+        name: 'EmployeeRepository',
+      );
       return [];
     }
   }
