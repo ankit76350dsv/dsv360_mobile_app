@@ -241,6 +241,10 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           ),
           TextButton(
             onPressed: () async {
+              // Capture the scaffold messenger before popping dialog
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              Navigator.pop(context);
+              
               try {
                 // Delete task using repository
                 final userId = ref.read(currentUserIdProvider);
@@ -251,21 +255,45 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 // Refresh the tasks list
                 if (mounted) {
                   ref.refresh(tasksListRepositoryProvider(userId));
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  scaffoldMessenger.showSnackBar(
                     SnackBar(
-                      content: Text('Task deleted successfully'),
-                      backgroundColor: customColors.error,
+                      content: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Task "${task.taskName}" deleted successfully',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: customColors.primary,
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 3),
                     ),
                   );
                 }
               } catch (e) {
                 if (mounted) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  scaffoldMessenger.showSnackBar(
                     SnackBar(
-                      content: Text('Error deleting task: $e'),
+                      content: Row(
+                        children: [
+                          Icon(Icons.error_outline, color: Colors.white),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Error deleting task: $e',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
                       backgroundColor: customColors.error,
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 3),
                     ),
                   );
                 }
@@ -411,7 +439,17 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                     icon: Icons.attach_file,
                                     count: '0',
                                     isActive: false,
-                                    onTap: null,
+                                    onTap: () {
+                                      FocusScope.of(context).unfocus();
+                                      showModalBottomSheet(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) => AttachmentListModal(
+                                          attachments: [],
+                                        ),
+                                      );
+                                    },
                                   ),
                                   CardChip(
                                     icon: Icons.access_time,

@@ -7,8 +7,10 @@ import 'dart:io';
 import '../../models/project_model.dart';
 import '../../models/employee.dart';
 import '../../models/attachment.dart';
+import '../../models/organization.dart';
 import '../../repositories/project_repository.dart';
 import '../../repositories/employee_repository.dart';
+import '../../repositories/organization_repository.dart';
 import '../widgets/custom_input_field.dart';
 import '../widgets/custom_popup_dropdown.dart';
 import '../widgets/TopBar.dart';
@@ -42,17 +44,25 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
   final List<Attachment> _attachments = [];
 
   List<Employee> _employeeList = [];
+  List<Organization> _organizationList = [];
   bool _isLoadingEmployees = false;
+  bool _isLoadingOrganizations = false;
   bool _isSubmitting = false;
 
-  final List<String> _clientOptions = ['Wipro', 'Test', 'Bala & Co', 'TCS'];
-  final List<String> _statusOptions = ['Open', 'Work In Process', 'Completed', 'Closed', 'On Hold'];
+  final List<String> _statusOptions = [
+    'Open',
+    'Work In Process',
+    'Completed',
+    'Closed',
+    'On Hold',
+  ];
 
   @override
   void initState() {
     super.initState();
     _loadEmployees();
-    
+    _loadOrganizations();
+
     if (widget.project != null) {
       _projectNameController.text = widget.project!.projectName;
       _descriptionController.text = widget.project!.description ?? '';
@@ -60,15 +70,17 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
       _selectedStatus = widget.project!.status;
       _startDate = widget.project!.startDate;
       _endDate = widget.project!.endDate;
-      
+
       // Convert existing attachment URLs to Attachment objects
       for (var url in widget.project!.attachments) {
-        _attachments.add(Attachment(
-          fileName: url.split('/').last,
-          fileType: _getFileType(url),
-          fileSize: 0,
-          fileUrl: url,
-        ));
+        _attachments.add(
+          Attachment(
+            fileName: url.split('/').last,
+            fileType: _getFileType(url),
+            fileSize: 0,
+            fileUrl: url,
+          ),
+        );
       }
     }
   }
@@ -97,6 +109,29 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
       }
     } finally {
       setState(() => _isLoadingEmployees = false);
+    }
+  }
+
+  Future<void> _loadOrganizations() async {
+    setState(() => _isLoadingOrganizations = true);
+    try {
+      final orgRepository = OrganizationRepository();
+      final organizations = await orgRepository.fetchOrganizations();
+      
+      // Filter to only include active organizations
+      final activeOrgs = organizations.where((org) => org.isActive).toList();
+      
+      setState(() {
+        _organizationList = activeOrgs;
+        debugPrint('✅ Loaded ${activeOrgs.length} active organizations');
+      });
+    } catch (e) {
+      debugPrint('❌ Failed to load organizations: $e');
+      if (mounted) {
+        _showError('Failed to load organizations: $e');
+      }
+    } finally {
+      setState(() => _isLoadingOrganizations = false);
     }
   }
 
@@ -158,7 +193,16 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
       final result = await FilePicker.platform.pickFiles(
         allowMultiple: false,
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'xls', 'xlsx'],
+        allowedExtensions: [
+          'pdf',
+          'doc',
+          'docx',
+          'jpg',
+          'jpeg',
+          'png',
+          'xls',
+          'xlsx',
+        ],
       );
 
       if (result != null && result.files.isNotEmpty) {
@@ -213,15 +257,14 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
       setState(() => _isSubmitting = true);
 
       try {
-        // Hardcoded client IDs based on client name (you can make this dynamic later)
-        final clientIdMap = {
-          'Wipro': '17682000000675650',
-          'Test': '17682000000675651',
-          'Bala & Co': '17682000000675652',
-          'TCS': '17682000000675653',
-        };
+        // Find the selected organization and use its ROWID
+        final selectedOrg = _organizationList.firstWhere(
+          (org) => org.orgName == _selectedClient,
+          orElse: () => throw Exception('Selected client organization not found'),
+        );
 
-        final clientId = clientIdMap[_selectedClient] ?? '17682000000675650';
+        final clientId = selectedOrg.rowId;
+        debugPrint('📤 Using client ID: $clientId for organization: ${selectedOrg.orgName}');
 
         if (widget.project == null) {
           // Create new project
@@ -260,7 +303,9 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
       } catch (e) {
         if (mounted) {
           setState(() => _isSubmitting = false);
-          _showError('Failed to ${widget.project == null ? "create" : "update"} project: $e');
+          _showError(
+            'Failed to ${widget.project == null ? "create" : "update"} project: $e',
+          );
         }
       }
     }
@@ -269,10 +314,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
   void _showError(String message) {
     final customColors = Theme.of(context).custom;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: customColors.error!,
-      ),
+      SnackBar(content: Text(message), backgroundColor: customColors.error!),
     );
   }
 
@@ -284,7 +326,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(120),
         child: Padding(
-          padding: const EdgeInsets.only(top: 24),
+          padding: const EdgeInsets.only(top: 48),
           child: TopBar(
             title: widget.project == null ? 'Add New Project' : 'Edit Project',
             onBack: () => Navigator.of(context).pop(),
@@ -301,348 +343,397 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-              // Project Name
-              CustomInputField(
-                        controller: _projectNameController,
-                        hintText: 'Project Name',
-                        labelText: 'Project Name',
-                        prefixIcon: Icons.folder_outlined,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter project name';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 20),
+                // Project Name
+                CustomInputField(
+                  controller: _projectNameController,
+                  hintText: 'Project Name',
+                  labelText: 'Project Name',
+                  prefixIcon: Icons.folder_outlined,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter project name';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
 
-                      // Client Name Dropdown
-                      CustomPopupDropdown(
-                        value: _selectedClient,
-                        hint: 'Client Name',
-                        items: _clientOptions,
-                        icon: Icons.business_outlined,
-                        onChanged: (value) {
-                          setState(() => _selectedClient = value);
-                        },
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Status Dropdown
-                      CustomPopupDropdown(
-                        value: _selectedStatus,
-                        hint: 'Status',
-                        items: _statusOptions,
-                        icon: Icons.assignment_outlined,
-                        onChanged: (value) => setState(() => _selectedStatus = value),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Start Date and End Date Row
-                      Row(
-                        children: [
-                          // Start Date
-                          Expanded(
-                            child: InkWell(
-                              onTap: () => _selectDate(context, true),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: customColors.cardBackground,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: customColors.inputBorder!,
-                                    width: 1.5,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_today_outlined,
-                                      color: customColors.textSecondary,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        _startDate == null
-                                            ? 'Start Date'
-                                            : DateFormat('dd-MM-yyyy').format(_startDate!),
-                                        style: TextStyle(
-                                          color: _startDate == null
-                                              ? customColors.textHint
-                                              : customColors.textPrimary,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          // End Date
-                          Expanded(
-                            child: InkWell(
-                              onTap: () => _selectDate(context, false),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: customColors.cardBackground,
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: customColors.inputBorder!,
-                                    width: 1.5,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
-                                      blurRadius: 8,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.calendar_today_outlined,
-                                      color: customColors.textSecondary!,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        _endDate == null
-                                            ? 'End Date'
-                                            : DateFormat('dd-MM-yyyy').format(_endDate!),
-                                        style: TextStyle(
-                                          color: _endDate == null
-                                              ? customColors.textHint
-                                              : customColors.textPrimary,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Employee Dropdown
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
+                // Client Name Dropdown
+                _isLoadingOrganizations
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 16,
+                        ),
                         decoration: BoxDecoration(
-                          color: customColors.cardBackground,
+                          color: customColors.inputFill,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
                             color: customColors.inputBorder!,
                             width: 1.5,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
                         ),
                         child: Row(
                           children: [
                             Icon(
-                              Icons.person_outline,
-                              color: customColors.textSecondary!,
+                              Icons.business_outlined,
+                              color: customColors.textSecondary,
                               size: 20,
                             ),
                             const SizedBox(width: 12),
-                            Expanded(
-                              child: _isLoadingEmployees
-                                  ? Padding(
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
-                                      child: Text(
-                                        'Loading employees...',
-                                        style: TextStyle(
-                                          color: customColors.textHint,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    )
-                                  : DropdownButton<Employee>(
-                                      value: _selectedEmployee,
-                                      hint: Text(
-                                        'Assign To',
-                                        style: TextStyle(
-                                          color: customColors.textHint,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      isExpanded: true,
-                                      underline: const SizedBox(),
-                                      dropdownColor: customColors.cardBackground,
-                                      style: TextStyle(
-                                        color: customColors.textPrimary,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      icon: Icon(
-                                        Icons.arrow_drop_down,
-                                        color: customColors.textSecondary,
-                                      ),
-                                      items: _employeeList.map((Employee employee) {
-                                        return DropdownMenuItem<Employee>(
-                                          value: employee,
-                                          child: Text(employee.fullName),
-                                        );
-                                      }).toList(),
-                                      onChanged: (Employee? value) {
-                                        setState(() => _selectedEmployee = value);
-                                      },
-                                    ),
+                            Text(
+                              'Loading organizations...',
+                              style: TextStyle(
+                                color: customColors.textHint,
+                                fontSize: 16,
+                              ),
                             ),
                           ],
                         ),
+                      )
+                    : CustomPopupDropdown(
+                        value: _selectedClient,
+                        hint: 'Client Name',
+                        items: _organizationList
+                            .map((org) => org.orgName)
+                            .toList(),
+                        icon: Icons.business_outlined,
+                        onChanged: (value) {
+                          setState(() => _selectedClient = value);
+                        },
                       ),
-                      const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-                      // Description
-                      CustomInputField(
-                        controller: _descriptionController,
-                        hintText: 'Description',
-                        labelText: 'Project Description',
-                        prefixIcon: Icons.description_outlined,
-                        isMultiline: true,
-                        maxLines: 4,
-                        minLines: 4,
-                      ),
-                      const SizedBox(height: 24),
+                // Status Dropdown
+                CustomPopupDropdown(
+                  value: _selectedStatus,
+                  hint: 'Status',
+                  items: _statusOptions,
+                  icon: Icons.assignment_outlined,
+                  onChanged: (value) => setState(() => _selectedStatus = value),
+                ),
+                const SizedBox(height: 20),
 
-                      // Attachments
-                      if (_attachments.isNotEmpty) ...[
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: _attachments.asMap().entries.map((entry) {
-                            return Chip(
-                              label: Text(entry.value.fileName),
-                              deleteIcon: const Icon(Icons.close, size: 18),
-                              onDeleted: () {
-                                setState(() {
-                                  _attachments.removeAt(entry.key);
-                                });
-                              },
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-
-                      // Add Attachment Button
-                      OutlinedButton.icon(
-                        onPressed: _isSubmitting ? null : _handleAddAttachment,
-                        icon: const Icon(Icons.attach_file, size: 18),
-                        label: const Text('ATTACHMENT', style: TextStyle(fontSize: 13)),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: customColors.primary,
-                          side: BorderSide(color: customColors.primary!),
+                // Start Date and End Date Row
+                Row(
+                  children: [
+                    // Start Date
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _selectDate(context, true),
+                        child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
+                            horizontal: 18,
+                            vertical: 12,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Action Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: customColors.primary!.withOpacity(0.3),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton(
-                      onPressed: _isSubmitting ? null : _handleSubmit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: customColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: _isSubmitting
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : Text(
-                              widget.project == null ? 'ADD' : 'UPDATE',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
-                              ),
+                          decoration: BoxDecoration(
+                            color: customColors.inputFill,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: customColors.inputBorder!,
+                              width: 1.5,
                             ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today_outlined,
+                                color: customColors.textSecondary,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _startDate == null
+                                      ? 'Start Date'
+                                      : DateFormat(
+                                          'dd-MM-yyyy',
+                                        ).format(_startDate!),
+                                  style: TextStyle(
+                                    color: _startDate == null
+                                        ? customColors.textHint
+                                        : customColors.textPrimary,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // End Date
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _selectDate(context, false),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: customColors.inputFill,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: customColors.inputBorder!,
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.calendar_today_outlined,
+                                color: customColors.textSecondary!,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  _endDate == null
+                                      ? 'End Date'
+                                      : DateFormat(
+                                          'dd-MM-yyyy',
+                                        ).format(_endDate!),
+                                  style: TextStyle(
+                                    color: _endDate == null
+                                        ? customColors.textHint
+                                        : customColors.textPrimary,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Employee Dropdown
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: customColors.inputFill,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: customColors.inputBorder!,
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.person_outline,
+                        color: customColors.textSecondary!,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _isLoadingEmployees
+                            ? Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                child: Text(
+                                  'Loading employees...',
+                                  style: TextStyle(
+                                    color: customColors.textHint,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              )
+                            : DropdownButton<Employee>(
+                                value: _selectedEmployee,
+                                hint: Text(
+                                  'Assign To',
+                                  style: TextStyle(
+                                    color: customColors.textHint,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                isExpanded: true,
+                                underline: const SizedBox(),
+                                dropdownColor: customColors.inputFill,
+                                style: TextStyle(
+                                  color: customColors.textPrimary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                icon: Icon(
+                                  Icons.arrow_drop_down,
+                                  color: customColors.textSecondary,
+                                ),
+                                items: _employeeList.map((Employee employee) {
+                                  return DropdownMenuItem<Employee>(
+                                    value: employee,
+                                    child: Text(employee.fullName),
+                                  );
+                                }).toList(),
+                                onChanged: (Employee? value) {
+                                  setState(() => _selectedEmployee = value);
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Description
+                CustomInputField(
+                  controller: _descriptionController,
+                  hintText: 'Description',
+                  labelText: 'Project Description',
+                  prefixIcon: Icons.description_outlined,
+                  isMultiline: true,
+                  maxLines: 4,
+                  minLines: 4,
+                ),
+                const SizedBox(height: 24),
+
+                // Attachments
+                if (_attachments.isNotEmpty) ...[
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _attachments.asMap().entries.map((entry) {
+                      return Chip(
+                        label: Text(entry.value.fileName),
+                        deleteIcon: const Icon(Icons.close, size: 18),
+                        onDeleted: () {
+                          setState(() {
+                            _attachments.removeAt(entry.key);
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // Add Attachment Button
+                OutlinedButton.icon(
+                  onPressed: _isSubmitting ? null : _handleAddAttachment,
+                  icon: const Icon(Icons.attach_file, size: 18),
+                  label: const Text(
+                    'ATTACHMENT',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: customColors.primary,
+                    side: BorderSide(color: customColors.primary!),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: customColors.error,
-                      side: BorderSide(color: customColors.error!, width: 2),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
+                const SizedBox(height: 24),
+
+                // Action Buttons
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(18),
+                          boxShadow: [
+                            BoxShadow(
+                              color: customColors.primary!.withOpacity(0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: _isSubmitting ? null : _handleSubmit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: customColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: _isSubmitting
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  widget.project == null ? 'ADD' : 'UPDATE',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                        ),
                       ),
                     ),
-                    child: const Text(
-                      'CANCEL',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: customColors.error,
+                          side: BorderSide(
+                            color: customColors.error!,
+                            width: 2,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                        ),
+                        child: const Text(
+                          'CANCEL',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
                     ),
                   ],
                 ),
@@ -650,7 +741,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
             ),
           ),
         ),
-        ));
+      ),
+    );
   }
 }
-

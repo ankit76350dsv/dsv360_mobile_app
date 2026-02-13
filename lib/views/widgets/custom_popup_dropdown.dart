@@ -53,7 +53,8 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
     });
 
     final colors = Theme.of(_buttonKey.currentContext!).colorScheme;
-    final RenderBox renderBox = _buttonKey.currentContext!.findRenderObject() as RenderBox;
+    final RenderBox renderBox =
+        _buttonKey.currentContext!.findRenderObject() as RenderBox;
     final offset = renderBox.localToGlobal(Offset.zero);
     final size = renderBox.size;
 
@@ -95,19 +96,33 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
                                     _filteredItems = widget.items;
                                   } else {
                                     _filteredItems = widget.items
-                                        .where((item) =>
-                                            item.toLowerCase().contains(query.toLowerCase()))
+                                        .where(
+                                          (item) => item.toLowerCase().contains(
+                                            query.toLowerCase(),
+                                          ),
+                                        )
                                         .toList();
                                   }
                                 });
                               },
                               decoration: InputDecoration(
                                 hintText: 'Search...',
-                                hintStyle: TextStyle(color: customColors.textHint, fontSize: 14),
-                                prefixIcon: Icon(Icons.search, color: customColors.textSecondary, size: 20),
+                                hintStyle: TextStyle(
+                                  color: customColors.textHint,
+                                  fontSize: 14,
+                                ),
+                                prefixIcon: Icon(
+                                  Icons.search,
+                                  color: customColors.textSecondary,
+                                  size: 20,
+                                ),
                                 suffixIcon: _searchController.text.isNotEmpty
                                     ? IconButton(
-                                        icon: Icon(Icons.clear, color: customColors.textSecondary, size: 20),
+                                        icon: Icon(
+                                          Icons.clear,
+                                          color: customColors.textSecondary,
+                                          size: 20,
+                                        ),
                                         onPressed: () {
                                           setOverlayState(() {
                                             _searchController.clear();
@@ -118,22 +133,37 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
                                     : null,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(color: customColors.inputBorder!, width: 1),
+                                  borderSide: BorderSide(
+                                    color: customColors.inputBorder!,
+                                    width: 1,
+                                  ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(color: customColors.inputBorder!, width: 1),
+                                  borderSide: BorderSide(
+                                    color: customColors.inputBorder!,
+                                    width: 1,
+                                  ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
-                                  borderSide: BorderSide(color: customColors.primary!, width: 1.5),
+                                  borderSide: BorderSide(
+                                    color: customColors.primary!,
+                                    width: 1.5,
+                                  ),
                                 ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
                                 filled: true,
                                 fillColor: customColors.cardBackground,
                                 isDense: true,
                               ),
-                              style: TextStyle(color: customColors.textPrimary, fontSize: 14),
+                              style: TextStyle(
+                                color: customColors.textPrimary,
+                                fontSize: 14,
+                              ),
                               cursorColor: customColors.primary,
                             ),
                           ),
@@ -153,20 +183,32 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
                                     _removeOverlay();
                                   },
                                   child: Container(
-                                    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: isSelected
-                                          ? customColors.primary!.withOpacity(0.1)
+                                          ? customColors.primary!.withOpacity(
+                                              0.1,
+                                            )
                                           : Colors.transparent,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
-                                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                      horizontal: 16,
+                                    ),
                                     child: Text(
                                       item,
                                       style: TextStyle(
-                                        color: isSelected ? customColors.primary : customColors.textPrimary,
+                                        color: isSelected
+                                            ? customColors.primary
+                                            : customColors.textPrimary,
                                         fontSize: 16,
-                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w600
+                                            : FontWeight.normal,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -202,12 +244,16 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
         decoration: BoxDecoration(
-          color: colors.secondary,
-          border: Border.all(
-            color: customColors.inputBorder!,
-            width: 1.5,
-          ),
+          color: customColors.inputFill,
+          border: Border.all(color: customColors.inputBorder!, width: 1.5),
           borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -218,7 +264,9 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
               child: Text(
                 widget.value ?? widget.hint,
                 style: TextStyle(
-                  color: widget.value == null ? customColors.textHint : customColors.textPrimary,
+                  color: widget.value == null
+                      ? customColors.textHint
+                      : customColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),

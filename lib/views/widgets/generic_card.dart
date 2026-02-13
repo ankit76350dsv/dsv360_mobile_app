@@ -283,40 +283,45 @@ class GenericCard extends StatelessWidget {
     final customColors = Theme.of(context).extension<CustomColors>()!;
     // If label is provided, render as label badge
     if (chip.label != null) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color:
-              chip.backgroundColor?.withValues(alpha: 0.15) ??
-              customColors.primary!.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: chip.backgroundColor ?? customColors.primary!,
-            width: 1,
+      return GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: chip.onTap ?? () {},
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color:
+                chip.backgroundColor?.withValues(alpha: 0.15) ??
+                customColors.primary!.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: chip.backgroundColor ?? customColors.primary!,
+              width: 1,
+            ),
           ),
-        ),
-        child: Text(
-          chip.label!,
-          style: TextStyle(
-            color: chip.backgroundColor ?? customColors.primary,
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
+          child: Text(
+            chip.label!,
+            style: TextStyle(
+              color: chip.backgroundColor ?? customColors.primary,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
           ),
         ),
       );
     }
 
     // Otherwise render as icon with count
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: chip.isActive
-            ? customColors.primary!.withValues(alpha: 0.1)
-            : customColors.textSecondary!.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: GestureDetector(
-        onTap: chip.onTap,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: chip.onTap ?? () {},
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: chip.isActive
+              ? customColors.primary!.withValues(alpha: 0.1)
+              : customColors.textSecondary!.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
