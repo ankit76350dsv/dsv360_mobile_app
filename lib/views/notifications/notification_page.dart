@@ -81,6 +81,13 @@ class NotificationPage extends StatelessWidget {
               title: 'Notifications',
               onBack: () => Navigator.pop(context),
             ),
+            Text(
+              'This is not your real notification.',
+              style: TextStyle(
+                fontSize: 14,
+                color: Theme.of(context).custom.textSecondary,
+              ),
+            ),
             Expanded(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
