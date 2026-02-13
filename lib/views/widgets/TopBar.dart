@@ -51,8 +51,7 @@ class TopBar extends StatelessWidget {
             splashRadius: 20,
             onPressed: onInfoTap,
             icon: Icon(
-              actionIcon ??
-                  (Platform.isAndroid ? Icons.more_vert : Icons.more_horiz),
+              actionIcon,
               size: 18,
             ),
             color: customColors.textPrimary,
