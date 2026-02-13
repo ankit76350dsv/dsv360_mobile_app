@@ -445,7 +445,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(120),
         child: Padding(
-          padding: const EdgeInsets.only(top: 24),
+          padding: const EdgeInsets.only(top: 48),
           child: TopBar(
             title: '${widget.taskName} - Time Entries',
             onBack: () => Navigator.of(context).pop(),
