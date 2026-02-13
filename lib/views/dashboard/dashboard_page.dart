@@ -1,4 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/constants/user_manager.dart';
+import 'package:dsv360/models/active_user.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
@@ -31,6 +33,7 @@ class _DashboardScaffold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeUser = ref.watch(activeUserRepositoryProvider);
+    final userProfile = UserManager.instance.userProfile;
     final connectivityStatus = ref.watch(connectivityStatusProvider);
     final dashboardAsyncValue = ref.watch(dashboardDataProvider);
     final customColors = Theme.of(context).custom;
@@ -41,24 +44,25 @@ class _DashboardScaffold extends ConsumerWidget {
         elevation: 0,
         backgroundColor: Colors.transparent,
         automaticallyImplyLeading: false, // Hide default hamburger
+        titleSpacing: 0,
         title: Text(
           'DSV360',
-          // 'DSV360',
           style: TextStyle(color: customColors.textPrimary),
         ),
+        leadingWidth: 46,
         leading: Builder(
           builder: (context) {
             return GestureDetector(
               onTap: () => Scaffold.of(context).openDrawer(),
               child: Container(
-                margin: const EdgeInsets.all(8.0),
+                margin: const EdgeInsets.only(left: 0.0, top: 8.0, bottom: 8.0),
                 child: CircleAvatar(
                   radius: 16,
                   backgroundColor: customColors.inputFill,
-                  child: Icon(
-                    Icons.person_outline,
-                    size: 18,
-                    color: customColors.textPrimary,
+                  child: Image.asset(
+                    'assets/images/dsv.png',
+                    width: 25,
+                    height: 25,
                   ),
                 ),
               ),
@@ -83,12 +87,20 @@ class _DashboardScaffold extends ConsumerWidget {
                 context,
               ).push(MaterialPageRoute(builder: (_) => const ProfilePage()));
             },
-            icon: Icon(
-              Icons.account_circle_outlined,
-              color: customColors.textPrimary,
-            ),
+            icon: userProfile?.profileLink != null &&
+                    userProfile!.profileLink.isNotEmpty
+                ? SizedBox(
+                    width: 30,
+                    height: 30,
+                    child: CircleAvatar(
+                      backgroundImage: NetworkImage(userProfile.profileLink),
+                    ),
+                  )
+                : Icon(
+                    Icons.account_circle_outlined,
+                    color: customColors.textPrimary,
+                  ),
           ),
-          const SizedBox(width: 12),
         ],
       ),
       body: SafeArea(
