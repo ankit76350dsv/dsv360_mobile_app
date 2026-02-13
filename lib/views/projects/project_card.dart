@@ -38,36 +38,32 @@ class ProjectCard extends StatelessWidget {
         icon: Icons.attach_file,
         count: project.attachments.length.toString(),
         isActive: project.attachments.isNotEmpty,
-        onTap: project.attachments.isNotEmpty
-            ? () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (context) => AttachmentListModal(
-                    attachments: project.attachments,
-                  ),
-                );
-              }
-            : null,
+        onTap: () {
+          showModalBottomSheet(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (context) => AttachmentListModal(
+              attachments: project.attachments,
+            ),
+          );
+        },
       ),
       CardChip(
         icon: Icons.task_alt,
         count: project.tasksCount.toString(),
         isActive: project.tasksCount > 0,
-        onTap: project.tasksCount > 0
-            ? () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TasksScreen(
-                      projectId: project.id,
-                      projectName: project.projectName,
-                    ),
-                  ),
-                );
-              }
-            : null,
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => TasksScreen(
+                projectId: project.id,
+                projectName: project.projectName,
+              ),
+            ),
+          );
+        },
       ),
       // Show different chip based on role
       if (isAdmin)
@@ -95,16 +91,14 @@ class ProjectCard extends StatelessWidget {
           icon: Icons.assignment_outlined,
           count: project.issuesCount.toString(),
           isActive: project.issuesCount > 0,
-          onTap: project.issuesCount > 0
-              ? () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const IssuesScreen(),
-                    ),
-                  );
-                }
-              : null,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const IssuesScreen(),
+              ),
+            );
+          },
         ),
     ];
 

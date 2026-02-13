@@ -17,11 +17,7 @@ class AddTaskDialog extends ConsumerStatefulWidget {
   final Task? task; // For edit mode
   final String projectId;
 
-  const AddTaskDialog({
-    super.key,
-    this.task,
-    required this.projectId,
-  });
+  const AddTaskDialog({super.key, this.task, required this.projectId});
 
   @override
   ConsumerState<AddTaskDialog> createState() => _AddTaskDialogState();
@@ -55,44 +51,69 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
       _endDate = widget.task!.endDate;
       _selectedProjectId = widget.task!.projectId;
       _selectedProjectName = widget.task!.projectName;
-      
+
       // Initialize assignees from task data
       // We need to convert assignee IDs and names back to Employee objects
       // For now, we'll create temporary Employee objects with the available data
-      if (widget.task!.assignedToId.isNotEmpty && widget.task!.assignedTo.isNotEmpty) {
-        final assigneeIds = widget.task!.assignedToId.split(',').map((e) => e.trim()).toList();
-        final assigneeNames = widget.task!.assignedTo.split(',').map((e) => e.trim()).toList();
-        
-        for (int i = 0; i < assigneeIds.length && i < assigneeNames.length; i++) {
+      if (widget.task!.assignedToId.isNotEmpty &&
+          widget.task!.assignedTo.isNotEmpty) {
+        final assigneeIds = widget.task!.assignedToId
+            .split(',')
+            .map((e) => e.trim())
+            .toList();
+        final assigneeNames = widget.task!.assignedTo
+            .split(',')
+            .map((e) => e.trim())
+            .toList();
+
+        for (
+          int i = 0;
+          i < assigneeIds.length && i < assigneeNames.length;
+          i++
+        ) {
           final nameParts = assigneeNames[i].split(' ');
-          final firstName = nameParts.isNotEmpty ? nameParts[0] : assigneeNames[i];
-          final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
-          
+          final firstName = nameParts.isNotEmpty
+              ? nameParts[0]
+              : assigneeNames[i];
+          final lastName = nameParts.length > 1
+              ? nameParts.sublist(1).join(' ')
+              : '';
+
           // Create a temporary Employee object with the data we have
-          _selectedAssignees.add(Employee(
-            userId: assigneeIds[i],
-            firstName: firstName,
-            lastName: lastName,
-            emailId: '', // Not available from task data
-            status: 'ACTIVE',
-            isConfirmed: true,
-            roleId: '',
-            roleName: '',
-          ));
+          _selectedAssignees.add(
+            Employee(
+              userId: assigneeIds[i],
+              firstName: firstName,
+              lastName: lastName,
+              emailId: '', // Not available from task data
+              status: 'ACTIVE',
+              isConfirmed: true,
+              roleId: '',
+              roleName: '',
+            ),
+          );
         }
-        debugPrint('✏️ EDIT MODE - Loaded ${_selectedAssignees.length} assignee(s)');
+        debugPrint(
+          '✏️ EDIT MODE - Loaded ${_selectedAssignees.length} assignee(s)',
+        );
       }
-      
-      debugPrint('✏️ EDIT MODE - Editing existing task: ${widget.task!.taskName}');
+
+      debugPrint(
+        '✏️ EDIT MODE - Editing existing task: ${widget.task!.taskName}',
+      );
     } else {
       // For new tasks, use the passed projectId if available
-      _selectedProjectId = widget.projectId.isNotEmpty ? widget.projectId : null;
+      _selectedProjectId = widget.projectId.isNotEmpty
+          ? widget.projectId
+          : null;
       debugPrint('➕ CREATE MODE - Creating new task');
     }
-    
+
     debugPrint('📁 Initial Project ID: "${widget.projectId}"');
     if (widget.projectId.isEmpty) {
-      debugPrint('⚠️ WARNING: No project ID provided - will fetch from dropdown');
+      debugPrint(
+        '⚠️ WARNING: No project ID provided - will fetch from dropdown',
+      );
     }
   }
 
@@ -107,7 +128,9 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
     final customColors = Theme.of(context).custom;
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: isStartDate ? (_startDate ?? DateTime.now()) : (_endDate ?? DateTime.now()),
+      initialDate: isStartDate
+          ? (_startDate ?? DateTime.now())
+          : (_endDate ?? DateTime.now()),
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
       builder: (context, child) {
@@ -139,10 +162,10 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
 
   void _handleSubmit() {
     debugPrint('🔧 SUBMIT - Form submission started');
-    
+
     if (_formKey.currentState!.validate()) {
       debugPrint('✅ Form validation passed');
-      
+
       if (_selectedStatus == null) {
         debugPrint('❌ Status is null');
         _showError('Please select a status');
@@ -174,7 +197,9 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
       _selectedAssignees.forEach((emp) => debugPrint('   - ${emp.fullName}'));
       debugPrint('📋 Description: ${_descriptionController.text.trim()}');
 
-      final taskId = widget.task?.taskId ?? 'T${DateTime.now().millisecondsSinceEpoch % 1000}';
+      final taskId =
+          widget.task?.taskId ??
+          'T${DateTime.now().millisecondsSinceEpoch % 1000}';
 
       final task = Task(
         taskName: _taskNameController.text.trim(),
@@ -183,10 +208,10 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
         status: _selectedStatus!,
         projectId: _selectedProjectId!,
         projectName: _selectedProjectName ?? '', // Use selected project name
-        assignedTo: _selectedAssignees.isNotEmpty 
+        assignedTo: _selectedAssignees.isNotEmpty
             ? _selectedAssignees.map((e) => e.fullName).join(', ')
             : '',
-        assignedToId: _selectedAssignees.isNotEmpty 
+        assignedToId: _selectedAssignees.isNotEmpty
             ? _selectedAssignees.map((e) => e.userId).join(',')
             : '',
         startDate: _startDate,
@@ -204,16 +229,14 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
   void _showError(String message) {
     final customColors = Theme.of(context).custom;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: customColors.error,
-      ),
+      SnackBar(content: Text(message), backgroundColor: customColors.error),
     );
   }
 
   String _getFileType(String extension) {
     extension = extension.toLowerCase();
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].contains(extension)) return 'image';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].contains(extension))
+      return 'image';
     if (extension == 'pdf') return 'pdf';
     if (['doc', 'docx'].contains(extension)) return 'document';
     if (['xlsx', 'xls'].contains(extension)) return 'spreadsheet';
@@ -243,7 +266,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(120),
         child: Padding(
-          padding: const EdgeInsets.only(top: 24),
+          padding: const EdgeInsets.only(top: 48),
           child: TopBar(
             title: widget.task == null ? 'Add New Task' : 'Edit Task',
             onBack: () => Navigator.of(context).pop(),
@@ -264,7 +287,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                 Consumer(
                   builder: (context, ref, child) {
                     final projectsAsync = ref.watch(projectListProvider);
-                    
+
                     return projectsAsync.when(
                       loading: () => const Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
@@ -275,28 +298,41 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                         child: Text('Error loading projects: $error'),
                       ),
                       data: (projects) {
-                        final projectMap = {for (var p in projects) p.id: p.projectName};
-                        final projectIdList = projects.map((p) => p.id).toList();
-                        final projectNameList = projects.map((p) => p.projectName).toList();
-                        
-                        debugPrint('📦 Projects loaded: ${projectNameList.length} projects');
-                        projectNameList.forEach((name) => debugPrint('  - $name'));
-                        
+                        final projectMap = {
+                          for (var p in projects) p.id: p.projectName,
+                        };
+                        final projectIdList = projects
+                            .map((p) => p.id)
+                            .toList();
+                        final projectNameList = projects
+                            .map((p) => p.projectName)
+                            .toList();
+
+                        debugPrint(
+                          '📦 Projects loaded: ${projectNameList.length} projects',
+                        );
+                        projectNameList.forEach(
+                          (name) => debugPrint('  - $name'),
+                        );
+
                         return CustomPopupDropdown(
-                          value: _selectedProjectId != null 
-                            ? projectMap[_selectedProjectId!]
-                            : null,
+                          value: _selectedProjectId != null
+                              ? projectMap[_selectedProjectId!]
+                              : null,
                           hint: 'Select Project',
                           items: projectNameList,
                           icon: Icons.folder_outlined,
                           onChanged: (value) {
                             if (value != null) {
-                              final selectedId = projectIdList[projectNameList.indexOf(value)];
+                              final selectedId =
+                                  projectIdList[projectNameList.indexOf(value)];
                               setState(() {
                                 _selectedProjectId = selectedId;
                                 _selectedProjectName = value;
                               });
-                              debugPrint('✅ Project selected: $value (ID: $selectedId)');
+                              debugPrint(
+                                '✅ Project selected: $value (ID: $selectedId)',
+                              );
                             }
                           },
                         );
@@ -344,7 +380,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: customColors.cardBackground!,
+                            color: customColors.inputFill,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: customColors.inputBorder!,
@@ -370,7 +406,9 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                                 child: Text(
                                   _startDate == null
                                       ? 'Start Date'
-                                      : DateFormat('dd-MM-yyyy').format(_startDate!),
+                                      : DateFormat(
+                                          'dd-MM-yyyy',
+                                        ).format(_startDate!),
                                   style: TextStyle(
                                     color: _startDate == null
                                         ? customColors.textHint
@@ -396,7 +434,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                             vertical: 12,
                           ),
                           decoration: BoxDecoration(
-                            color: customColors.cardBackground,
+                            color: customColors.inputFill,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: customColors.inputBorder!,
@@ -422,7 +460,9 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                                 child: Text(
                                   _endDate == null
                                       ? 'End Date'
-                                      : DateFormat('dd-MM-yyyy').format(_endDate!),
+                                      : DateFormat(
+                                          'dd-MM-yyyy',
+                                        ).format(_endDate!),
                                   style: TextStyle(
                                     color: _endDate == null
                                         ? customColors.textHint
@@ -445,7 +485,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                 Consumer(
                   builder: (context, ref, child) {
                     final employeesAsync = ref.watch(employeeListProvider);
-                    
+
                     return employeesAsync.when(
                       loading: () => const Padding(
                         padding: EdgeInsets.symmetric(vertical: 12),
@@ -457,8 +497,9 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                       ),
                       data: (employees) {
                         // Filter only active employees
-                        final activeEmployees =
-                            employees.where((e) => e.status == 'ACTIVE').toList();
+                        final activeEmployees = employees
+                            .where((e) => e.status == 'ACTIVE')
+                            .toList();
 
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,12 +511,19 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.secondary,
+                                color: customColors.inputFill,
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
                                   color: customColors.inputBorder!,
                                   width: 1.5,
                                 ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
                               child: DropdownButton<Employee>(
                                 isExpanded: true,
@@ -501,7 +549,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                                   color: customColors.textPrimary,
                                   fontSize: 14,
                                 ),
-                                dropdownColor: customColors.cardBackground!,
+                                dropdownColor: customColors.inputFill!,
                                 items: activeEmployees.map((employee) {
                                   return DropdownMenuItem<Employee>(
                                     value: employee,
@@ -523,9 +571,11 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                                   if (employee != null) {
                                     setState(() {
                                       if (_selectedAssignees.any(
-                                          (e) => e.userId == employee.userId)) {
+                                        (e) => e.userId == employee.userId,
+                                      )) {
                                         _selectedAssignees.removeWhere(
-                                            (e) => e.userId == employee.userId);
+                                          (e) => e.userId == employee.userId,
+                                        );
                                       } else {
                                         _selectedAssignees.add(employee);
                                       }
@@ -552,14 +602,15 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                                     onDeleted: () {
                                       setState(() {
                                         _selectedAssignees.removeWhere(
-                                            (e) => e.userId == employee.userId);
+                                          (e) => e.userId == employee.userId,
+                                        );
                                       });
                                       debugPrint(
                                         '❌ Assignee removed: ${employee.fullName}',
                                       );
                                     },
-                                    backgroundColor: customColors.primary
-                                        !.withOpacity(0.2),
+                                    backgroundColor: customColors.primary!
+                                        .withOpacity(0.2),
                                     labelStyle: TextStyle(
                                       color: customColors.textPrimary,
                                       fontSize: 13,
@@ -606,7 +657,17 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                         final result = await FilePicker.platform.pickFiles(
                           allowMultiple: true,
                           type: FileType.custom,
-                          allowedExtensions: ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'xlsx', 'xls', 'txt'],
+                          allowedExtensions: [
+                            'pdf',
+                            'doc',
+                            'docx',
+                            'jpg',
+                            'jpeg',
+                            'png',
+                            'xlsx',
+                            'xls',
+                            'txt',
+                          ],
                         );
 
                         if (result != null) {
@@ -667,9 +728,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                         decoration: BoxDecoration(
                           color: customColors.cardBackground,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: customColors.inputBorder!,
-                          ),
+                          border: Border.all(color: customColors.inputBorder!),
                         ),
                         child: Row(
                           children: [
@@ -763,7 +822,10 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                         onPressed: () => Navigator.of(context).pop(),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: customColors.error,
-                          side: BorderSide(color: customColors.error!, width: 2),
+                          side: BorderSide(
+                            color: customColors.error!,
+                            width: 2,
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24),

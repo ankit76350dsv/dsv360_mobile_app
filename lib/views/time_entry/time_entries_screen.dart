@@ -231,6 +231,8 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
           ),
           TextButton(
             onPressed: () async {
+              // Capture the scaffold messenger before popping dialog
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
               Navigator.pop(context);
               try {
                 final success = await _repository.deleteTimeEntry(entry.id);
@@ -239,10 +241,23 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
                     _allEntries.removeWhere((e) => e.id == entry.id);
                     _applyFilters();
                   });
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  scaffoldMessenger.showSnackBar(
                     SnackBar(
-                      content: Text('Time entry deleted'),
-                      backgroundColor:  customColors.error,
+                      content: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Time entry deleted successfully',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: customColors.primary,
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 3),
                     ),
                   );
                 } else {
@@ -250,10 +265,23 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
                 }
               } catch (e) {
                 debugPrint('❌ Error deleting entry: $e');
-                ScaffoldMessenger.of(context).showSnackBar(
+                scaffoldMessenger.showSnackBar(
                   SnackBar(
-                    content: Text('Failed to delete: $e'),
+                    content: Row(
+                      children: [
+                        Icon(Icons.error_outline, color: Colors.white),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Failed to delete: $e',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
                     backgroundColor: customColors.error,
+                    behavior: SnackBarBehavior.floating,
+                    duration: const Duration(seconds: 3),
                   ),
                 );
               }

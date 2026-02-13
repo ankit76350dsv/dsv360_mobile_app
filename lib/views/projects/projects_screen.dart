@@ -106,17 +106,27 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Project'),
+        backgroundColor: customColors.cardBackground,
+        title: Text(
+          'Delete Project',
+          style: TextStyle(color: customColors.textPrimary),
+        ),
         content: Text(
           'Are you sure you want to delete "${project.projectName}"?',
+          style: TextStyle(color: customColors.textPrimary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(color: customColors.textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () async {
+              // Capture the scaffold messenger before popping dialog
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
               Navigator.pop(context);
 
               try {
@@ -125,21 +135,45 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
                 if (mounted) {
                   ref.refresh(projectListProvider);
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  scaffoldMessenger.showSnackBar(
                     SnackBar(
-                      content: Text('Project deleted successfully'),
-                      backgroundColor: customColors.avatarBackground,
+                      content: Row(
+                        children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Project "${project.projectName}" deleted successfully',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
+                      ),
+                      backgroundColor: customColors.primary,
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 3),
                     ),
                   );
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  scaffoldMessenger.showSnackBar(
                     SnackBar(
-                      content: Text(
-                        'Failed to delete project: ${e.toString()}',
+                      content: Row(
+                        children: [
+                          Icon(Icons.error_outline, color: Colors.white),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Failed to delete project: ${e.toString()}',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ],
                       ),
                       backgroundColor: customColors.error,
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 3),
                     ),
                   );
                 }
