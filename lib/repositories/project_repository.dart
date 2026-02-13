@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:dsv360/core/constants/auth_manager.dart';
@@ -15,7 +16,6 @@ class ProjectRepository {
       throw Exception('User not logged in');
     }
 
-    final isDevelopment = ServerConstant.serverURL.contains('development');
     // Using simple string check for role for now based on context, or just checking fetching logic.
     // The user provided URLs:
     // User: .../projects/17682000000114004 (ID)
@@ -47,7 +47,13 @@ class ProjectRepository {
       '🩸 Fetching projects | isAdmin: $isAdmin | URL: $url | Role: ${user.role?.name}',
     );
     try {
-      final response = await http.get(Uri.parse(url));
+      final token = await TokenManager.instance.getToken();
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Authorization': 'Zoho-oauthtoken $token',
+        },
+      );
 
       debugPrint('📊 Project API Response Status: ${response.statusCode}');
       debugPrint('📊 Project API Response Body: ${response.body}');

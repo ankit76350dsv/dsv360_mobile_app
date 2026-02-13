@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:dsv360/core/constants/auth_manager.dart';
@@ -33,7 +34,11 @@ class IssueRepository {
     );
 
     try {
-      final response = await http.get(Uri.parse(url));
+      final token = await TokenManager.instance.getToken();
+        final response = await http.get(
+          Uri.parse(url),
+          headers: {'Authorization': 'Zoho-oauthtoken $token'},
+        );
 
       debugPrint('🩸 Issue Response Status: ${response.statusCode}');
       debugPrint('🩸 Issue Response Body: ${response.body}');
