@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
               // home: const TasksScreen(),
               // home: const IssuesScreen(),
               // home: const FeedbacksScreen(),
-              // home: const ProfilePage(),
+              // home: const ProfilePage(), 
               home: const SplashScreen(),
               // home: const AccountsPage(),
               // home: const BadgesPage(),
