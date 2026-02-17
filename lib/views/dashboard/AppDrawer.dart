@@ -3,6 +3,7 @@ import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
+import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/core/services/auth_service.dart';
 
 import 'package:dsv360/views/welcome/welcome_page.dart';
@@ -21,7 +22,6 @@ import 'package:dsv360/views/feedback/feedbacks_screen.dart';
 import 'package:dsv360/views/feedback/feedback_form_screen.dart';
 import 'package:dsv360/views/settings/settings_page.dart';
 
-
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
 
@@ -29,8 +29,6 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final customColors = Theme.of(context).custom;
-
-
 
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.8, // 80% screen
@@ -168,7 +166,8 @@ class AppDrawer extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (_) => ClientContactsPage()),
+                            builder: (_) => ClientContactsPage(),
+                          ),
                         );
                       },
                     ),
@@ -258,8 +257,7 @@ class AppDrawer extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (_) => const SettingsPage()),
+                        MaterialPageRoute(builder: (_) => const SettingsPage()),
                       );
                     },
                   ),
@@ -268,18 +266,21 @@ class AppDrawer extends StatelessWidget {
                     label: 'Logout',
                     subLabel: 'Sign out of your account',
                     onTap: () async {
+                      // Capture navigator before async operation prevents "context not mounted" issues
+                      final navigator = Navigator.of(context);
+
                       // Close drawer first
-                      Navigator.pop(context);
+                      navigator.pop();
 
                       await AppInitManager.instance.catalystApp.logout();
-                      if (context.mounted) {
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (context) => const WelcomePage(),
-                          ),
-                          (route) => false,
-                        );
-                      }
+                      TokenManager.instance.clearToken();
+
+                      navigator.pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (context) => const WelcomePage(),
+                        ),
+                        (route) => false,
+                      );
                     },
                     borderRadius: const BorderRadius.vertical(
                       bottom: Radius.circular(0.0),
@@ -335,7 +336,6 @@ class AppDrawer extends StatelessWidget {
     final userProfile = UserManager.instance.userProfile;
     final user = AuthManager.instance.currentUser;
 
-
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 1, left: 6.0, right: 6.0),
@@ -350,11 +350,12 @@ class AppDrawer extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 36,
-                backgroundImage: (userProfile?.profileLink != null &&
+                backgroundImage:
+                    (userProfile?.profileLink != null &&
                         userProfile!.profileLink!.isNotEmpty)
                     ? NetworkImage(userProfile.profileLink!)
                     : const AssetImage("assets/icons/profile.png")
-                        as ImageProvider,
+                          as ImageProvider,
               ),
               Positioned(
                 bottom: 2,

@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
-import 'package:dsv360/core/utils/functions.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/active_user.dart';
@@ -46,15 +46,10 @@ class PeoplePage extends ConsumerStatefulWidget {
 class _PeoplePageState extends ConsumerState<PeoplePage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-  bool isAdmin = false;
 
   @override
   void initState() {
     super.initState();
-    final activeUser = ref.read(activeUserRepositoryProvider);
-    if (activeUser != null) {
-      isAdmin = Functions.isAdmin(activeUser);
-    }
     _tabController = TabController(length: 4, vsync: this);
   }
 
@@ -67,7 +62,6 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
-    final activeUser = ref.watch(activeUserRepositoryProvider);
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -142,14 +136,14 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
                 dividerColor: Colors.transparent,
                 tabs: [
                   const Tab(text: 'Check In'),
-                  if (!isAdmin)
+                  if (!IsHaveAccess.instance.isAdmin)
                     const Tab(text: 'Activities'),
                   const Tab(text: 'Leave'),
-                  if (!isAdmin)
+                  if (!IsHaveAccess.instance.isAdmin)
                     const Tab(text: 'Attendance'),
-                  if (isAdmin)
+                  if (IsHaveAccess.instance.isAdmin)
                     const Tab(text: 'Attendance Tracker'),
-                  if (isAdmin)
+                  if (IsHaveAccess.instance.isAdmin)
                     const Tab(text: 'Leave Calendar'),
                 ],
               ),
@@ -162,14 +156,14 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
               controller: _tabController,
               children: [
                 const _CheckInTab(),
-                if (!isAdmin)
+                if (!IsHaveAccess.instance.isAdmin)
                   const _ActivitiesTab(),
                 const _LeaveTab(),
-                if (!isAdmin)
+                if (!IsHaveAccess.instance.isAdmin)
                   const _AttendanceTab(),
-                if (isAdmin)
+                if (IsHaveAccess.instance.isAdmin)
                   const _AttendanceTrackerTab(),
-                if (isAdmin)
+                if (IsHaveAccess.instance.isAdmin)
                   const _LeaveCalendarTab(),
               ],
             ),
@@ -676,7 +670,7 @@ class _LeaveTab extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
                   // Summary cards
-                  if (activeUser != null && !Functions.isAdmin(activeUser))
+                  if (IsHaveAccess.instance.isAdmin)
                     leaveSummaryAsync.when(
                       loading: () => const GlobalLoader(
                         message: 'Loading leave summary...',
@@ -743,7 +737,7 @@ class _LeaveTab extends ConsumerWidget {
                       ),
                     ),
 
-                  if (activeUser != null && !Functions.isAdmin(activeUser))
+                  if (IsHaveAccess.instance.isAdmin)
                     const SizedBox(height: 24),
 
                   // Header row
@@ -757,10 +751,10 @@ class _LeaveTab extends ConsumerWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      if (activeUser != null && !Functions.isAdmin(activeUser))
+                      if (IsHaveAccess.instance.isAdmin)
                         const Spacer(),
                       
-                      if (activeUser != null && !Functions.isAdmin(activeUser))
+                      if (IsHaveAccess.instance.isAdmin)
                         ElevatedButton(
                           onPressed: () {
                             Navigator.push(
@@ -845,7 +839,7 @@ class _LeaveTab extends ConsumerWidget {
                                 ),
                               );
                             },
-                            isAdmin: activeUser != null ? Functions.isAdmin(activeUser) : false,
+                            isAdmin: IsHaveAccess.instance.isAdmin,
                           );
                         },
                       );
@@ -856,7 +850,7 @@ class _LeaveTab extends ConsumerWidget {
             );
           },
           error: (error, stack) => GlobalError(
-            message: 'Failed to check connectivity: $error',
+            message: 'Failed to check connectivity: Try Again',
             onRetry: () => ref.invalidate(connectivityStatusProvider),
           ),
           loading: () => const GlobalLoader(message: 'Checking connection...'),
@@ -1162,7 +1156,7 @@ class _AttendanceTabState extends ConsumerState<_AttendanceTab> {
             ),
             error: (err, st) => Center(
               child: GlobalError(
-                message: 'Failed to load attendance: $err',
+                message: 'Failed to load attendance: Try Again',
                 onRetry: () => ref.refresh(
                   attendanceDetailListRepositoryProvider(
                     userId: userId,
@@ -1677,7 +1671,7 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
         return usersAsync.when(
           loading: () => const GlobalLoader(message: 'Loading users info...'),
           error: (error, stack) => GlobalError(
-            message: 'Failed to load users data: $error',
+            message: 'Failed to load users data: Try Again',
             onRetry: () => ref.refresh(usersRepositoryProvider),
           ),
           data: (users) {
@@ -1834,7 +1828,7 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                                 ),
                                 error: (error, stack) => GlobalError(
                                   message:
-                                      'Failed to load attendance data: $error',
+                                      'Failed to load attendance data: Try Again',
                                   onRetry: () => ref.refresh(
                                     attendanceTrackerListRepositoryProvider(
                                       userId: _queryUserId!,
@@ -2364,7 +2358,7 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
               const Center(child: GlobalLoader(message: 'Loading calendar...')),
           error: (err, stack) => Center(
             child: GlobalError(
-              message: 'Failed to load calendar: $err',
+              message: 'Failed to load calendar: Try Again',
               onRetry: () => ref.refresh(leaveCalendarRepositoryProvider),
             ),
           ),

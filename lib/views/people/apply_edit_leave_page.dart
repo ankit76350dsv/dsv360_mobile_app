@@ -117,6 +117,7 @@ class _ApplyEditLeavePageState extends ConsumerState<ApplyEditLeavePage> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
+                      const SizedBox(height: 16),
 
                       /// Leave Type
                       CustomDropDownField(

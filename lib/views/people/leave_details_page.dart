@@ -1,5 +1,5 @@
+import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/constants/theme.dart';
-import 'package:dsv360/core/utils/functions.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/leave_details.dart';
@@ -145,10 +145,10 @@ class LeaveDetailsPage extends ConsumerWidget {
                         return _LeaveBalanceSection(leaveSummary: leaveSummary);
                       },
                     ),
-                    if (activeUser != null && Functions.isAdmin(activeUser))
+                    if (IsHaveAccess.instance.isAdmin)
                       const SizedBox(height: 32.0),
 
-                    if (activeUser != null && Functions.isAdmin(activeUser))
+                    if (IsHaveAccess.instance.isAdmin)
                       BottomTwoButtons(
                         loadingKey: bottomTwoButtonsLoadingKey,
                         button1Text: "reject",
