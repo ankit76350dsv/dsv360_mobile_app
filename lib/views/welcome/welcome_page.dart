@@ -1,8 +1,5 @@
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
-import 'package:dsv360/core/constants/auth_manager.dart';
-import 'package:dsv360/core/constants/user_manager.dart';
-import 'package:dsv360/core/constants/token_manager.dart';
-import 'package:dsv360/views/dashboard/dashboard_page.dart';
+import 'package:dsv360/views/auth/loading_page.dart';
 import 'package:flutter/material.dart';
 
 class WelcomePage extends StatelessWidget {
@@ -44,24 +41,26 @@ class WelcomePage extends StatelessWidget {
                 height: 50,
                 child: ElevatedButton(
                   onPressed: () async {
-                    await AppInitManager.instance.catalystApp.login();
-                    // Fetch user details after successful login
-                    final user = await AuthManager.instance.fetchUser();
-                    
-                    if (user != null) {
-                       await UserManager.instance.fetchUserProfile(user.id);
-                    }
-                    
-                    // Fetch access token
-                    await TokenManager.instance.getToken();
-
-                    if (context.mounted) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const DashboardPage(),
-                        ),
-                      );
+                    try {
+                      await AppInitManager.instance.catalystApp.login();
+                      if (context.mounted) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoadingPage(),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      debugPrint("Login Failed: $e");
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Login Failed. Please try again."),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(

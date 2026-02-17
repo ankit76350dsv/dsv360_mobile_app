@@ -10,6 +10,7 @@ class TopHeader extends StatelessWidget {
   final int issueCnt;
 
   const TopHeader({
+    super.key,
     required this.isLarge,
     required this.projectCnt,
     required this.completedProjectCnt,
@@ -34,7 +35,6 @@ class TopHeader extends StatelessWidget {
 
     final height = (isLarge ? 140.0 : 180.0) * 0.55;
     // reserve a fixed width on the right for stacked metrics
-    final rightColumnWidth = (w * 0.22).clamp(96.0, 140.0);
 
     final projectPct = projectCnt == 0 ? 0 : (completedProjectCnt / projectCnt * 100).toInt();
     final taskPct = taskCnt == 0 ? 0 : (taskClosedCnt / taskCnt * 100).toInt();
@@ -46,7 +46,6 @@ class TopHeader extends StatelessWidget {
     // I'll show 'Total' vs 'N/A' or just 0%.
     // To match design 'Issue Resolved' label:
     // I'll put issueCnt as denominator? '0 of X'.
-    final issuePct = 0; 
 
     return Container(
       height: height,

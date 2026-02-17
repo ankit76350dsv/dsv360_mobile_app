@@ -1,9 +1,7 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import '../../models/time_entry_model.dart';
-import '../../core/constants/app_colors.dart';
 import '../../repositories/time_entry_repository.dart';
 import '../widgets/time_entry_card.dart';
 import '../widgets/TopBar.dart';

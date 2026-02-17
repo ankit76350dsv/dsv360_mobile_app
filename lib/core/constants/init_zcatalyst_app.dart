@@ -4,10 +4,8 @@ import 'package:dsv360/core/constants/environment.dart';
 
 class AppInitManager {
   AppInitManager._internal();
-  static final AppInitManager _instance =
-      AppInitManager._internal(); // Created only first time the object/instance
-  static AppInitManager get instance =>
-      _instance; // Get the same instance all time with this method
+  static final AppInitManager _instance = AppInitManager._internal(); // Created only first time the object/instance
+  static AppInitManager get instance => _instance; // Get the same instance all time with this method
 
   late ZCatalystApp app;
   bool _isInitialized = false;

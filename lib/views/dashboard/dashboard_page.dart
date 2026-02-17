@@ -1,12 +1,10 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
-import 'package:dsv360/models/active_user.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/providers/dashboard_provider.dart';
-import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/DashboardTitle.dart';
 import 'package:dsv360/views/dashboard/ProjectAnalyticsCard.dart';
@@ -32,7 +30,6 @@ class _DashboardScaffold extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final activeUser = ref.watch(activeUserRepositoryProvider);
     final userProfile = UserManager.instance.userProfile;
     final connectivityStatus = ref.watch(connectivityStatusProvider);
     final dashboardAsyncValue = ref.watch(dashboardDataProvider);
