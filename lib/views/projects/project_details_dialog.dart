@@ -82,7 +82,7 @@ class ProjectDetailsDialog extends StatelessWidget {
           // Content
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 24),
               child: Column(
                 children: [
                   // Row 1: Project ID and Project Name
@@ -92,7 +92,9 @@ class ProjectDetailsDialog extends StatelessWidget {
                         child: _buildDetailCard(
                           icon: Icons.info_outline,
                           label: 'Project ID',
-                          value: project.id,
+                          value: project.id.length > 4 
+                              ? 'P${project.id.substring(project.id.length - 4)}' 
+                              : 'P${project.id}',
                           context: context,
                         ),
                       ),

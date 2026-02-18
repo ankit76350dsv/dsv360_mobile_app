@@ -1,5 +1,6 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
@@ -11,11 +12,12 @@ import '../../models/organization.dart';
 import '../../repositories/project_repository.dart';
 import '../../repositories/employee_repository.dart';
 import '../../repositories/organization_repository.dart';
+import '../../repositories/active_user_repository.dart';
 import '../widgets/custom_input_field.dart';
 import '../widgets/custom_popup_dropdown.dart';
 import '../widgets/TopBar.dart';
 
-class AddProjectDialog extends StatefulWidget {
+class AddProjectDialog extends ConsumerStatefulWidget {
   final ProjectModel? project; // For edit mode
   final ProjectRepository projectRepository;
   final EmployeeRepository employeeRepository;
@@ -28,10 +30,10 @@ class AddProjectDialog extends StatefulWidget {
   });
 
   @override
-  State<AddProjectDialog> createState() => _AddProjectDialogState();
+  ConsumerState<AddProjectDialog> createState() => _AddProjectDialogState();
 }
 
-class _AddProjectDialogState extends State<AddProjectDialog> {
+class _AddProjectDialogState extends ConsumerState<AddProjectDialog> {
   final _formKey = GlobalKey<FormState>();
   final _projectNameController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -52,9 +54,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
   final List<String> _statusOptions = [
     'Open',
     'Work In Process',
-    'Completed',
-    'Closed',
-    'On Hold',
+    'Close',
   ];
 
   @override
@@ -257,6 +257,9 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
       setState(() => _isSubmitting = true);
 
       try {
+        // Get the current active user
+        final activeUser = ref.read(activeUserRepositoryProvider);
+        
         // Find the selected organization and use its ROWID
         final selectedOrg = _organizationList.firstWhere(
           (org) => org.orgName == _selectedClient,
@@ -265,6 +268,7 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
 
         final clientId = selectedOrg.rowId;
         debugPrint('📤 Using client ID: $clientId for organization: ${selectedOrg.orgName}');
+        debugPrint('📤 Using owner: ${activeUser?.fullName} (${activeUser?.userId})');
 
         if (widget.project == null) {
           // Create new project
@@ -272,9 +276,13 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
             projectName: _projectNameController.text.trim(),
             status: _selectedStatus!,
             clientId: clientId,
+            clientName: selectedOrg.orgName,
             startDate: _startDate!,
             endDate: _endDate!,
             assignedToId: _selectedEmployee?.userId,
+            assignedToName: _selectedEmployee?.fullName,
+            ownerId: activeUser?.userId,
+            ownerName: activeUser?.fullName,
             description: _descriptionController.text.trim(),
             attachments: _attachments.isEmpty ? null : _attachments,
           );
@@ -289,9 +297,13 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
             projectName: _projectNameController.text.trim(),
             status: _selectedStatus!,
             clientId: clientId,
+            clientName: selectedOrg.orgName,
             startDate: _startDate!,
             endDate: _endDate!,
             assignedToId: _selectedEmployee?.userId,
+            assignedToName: _selectedEmployee?.fullName,
+            ownerId: activeUser?.userId,
+            ownerName: activeUser?.fullName,
             description: _descriptionController.text.trim(),
             attachments: _attachments.isEmpty ? null : _attachments,
           );
@@ -334,15 +346,19 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
           ),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+      body: GestureDetector(
+        onTap: () {
+          FocusScope.of(context).unfocus();
+        },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 // Project Name
                 CustomInputField(
                   controller: _projectNameController,
@@ -529,85 +545,53 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
                 const SizedBox(height: 20),
 
                 // Employee Dropdown
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: customColors.inputFill,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: customColors.inputBorder!,
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.person_outline,
-                        color: customColors.textSecondary!,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _isLoadingEmployees
-                            ? Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                child: Text(
-                                  'Loading employees...',
-                                  style: TextStyle(
-                                    color: customColors.textHint,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              )
-                            : DropdownButton<Employee>(
-                                value: _selectedEmployee,
-                                hint: Text(
-                                  'Assign To',
-                                  style: TextStyle(
-                                    color: customColors.textHint,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                isExpanded: true,
-                                underline: const SizedBox(),
-                                dropdownColor: customColors.inputFill,
-                                style: TextStyle(
-                                  color: customColors.textPrimary,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                icon: Icon(
-                                  Icons.arrow_drop_down,
-                                  color: customColors.textSecondary,
-                                ),
-                                items: _employeeList.map((Employee employee) {
-                                  return DropdownMenuItem<Employee>(
-                                    value: employee,
-                                    child: Text(employee.fullName),
-                                  );
-                                }).toList(),
-                                onChanged: (Employee? value) {
-                                  setState(() => _selectedEmployee = value);
-                                },
+                _isLoadingEmployees
+                    ? Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: customColors.inputFill,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: customColors.inputBorder!,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.person_outline,
+                              color: customColors.textSecondary,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Loading employees...',
+                              style: TextStyle(
+                                color: customColors.textHint,
+                                fontSize: 16,
                               ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : CustomPopupDropdown(
+                        value: _selectedEmployee?.fullName,
+                        hint: 'Assign To',
+                        items: _employeeList
+                            .map((emp) => emp.fullName)
+                            .toList(),
+                        icon: Icons.person_outline,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedEmployee = _employeeList.firstWhere(
+                              (emp) => emp.fullName == value,
+                            );
+                          });
+                        },
                       ),
-                    ],
-                  ),
-                ),
                 const SizedBox(height: 20),
 
                 // Description
@@ -742,6 +726,6 @@ class _AddProjectDialogState extends State<AddProjectDialog> {
           ),
         ),
       ),
-    );
+    ));
   }
 }

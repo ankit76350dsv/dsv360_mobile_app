@@ -325,7 +325,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               children: [
                 // ---------- Top bar ----------
                 TopBar(
-                  title: 'Tasks',
+                  title: widget.projectName != null && widget.projectName!.isNotEmpty
+                      ? '${widget.projectName} - Tasks'
+                      : 'Tasks',
                   onBack: () {
                     if (Navigator.canPop(context)) {
                       Navigator.pop(context);
@@ -365,10 +367,15 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           Expanded(
             child: tasksAsync.when(
               data: (tasks) {
-                // Filter tasks based on search query
+                // Filter by project first if projectId is provided
+                final projectFilteredTasks = widget.projectId != null && widget.projectId!.isNotEmpty
+                    ? tasks.where((task) => task.projectId == widget.projectId).toList()
+                    : tasks;
+
+                // Then filter based on search query
                 final filteredTasks = searchQuery.isEmpty
-                    ? tasks
-                    : tasks.where((task) {
+                    ? projectFilteredTasks
+                    : projectFilteredTasks.where((task) {
                         return task.taskName.toLowerCase().contains(
                               searchQuery.toLowerCase(),
                             ) ||

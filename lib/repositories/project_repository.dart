@@ -93,9 +93,13 @@ class ProjectRepository {
     required String projectName,
     required String status,
     required String clientId,
+    required String clientName,
     required DateTime startDate,
     required DateTime endDate,
     String? assignedToId,
+    String? assignedToName,
+    String? ownerId,
+    String? ownerName,
     String? description,
     List<Attachment>? attachments,
   }) async {
@@ -106,9 +110,13 @@ class ProjectRepository {
         projectName: projectName,
         status: status,
         clientId: clientId,
+        clientName: clientName,
         startDate: startDate,
         endDate: endDate,
         assignedToId: assignedToId,
+        assignedToName: assignedToName,
+        ownerId: ownerId,
+        ownerName: ownerName,
         description: description,
         attachments: attachments,
       );
@@ -117,9 +125,13 @@ class ProjectRepository {
         projectName: projectName,
         status: status,
         clientId: clientId,
+        clientName: clientName,
         startDate: startDate,
         endDate: endDate,
         assignedToId: assignedToId,
+        assignedToName: assignedToName,
+        ownerId: ownerId,
+        ownerName: ownerName,
         description: description,
       );
     }
@@ -129,9 +141,13 @@ class ProjectRepository {
     required String projectName,
     required String status,
     required String clientId,
+    required String clientName,
     required DateTime startDate,
     required DateTime endDate,
     String? assignedToId,
+    String? assignedToName,
+    String? ownerId,
+    String? ownerName,
     String? description,
   }) async {
     final url = '${ServerConstant.serverURL}time_entry_management_application_function/projects';
@@ -140,9 +156,13 @@ class ProjectRepository {
       'Project_Name': projectName,
       'Status': status,
       'Client_ID': clientId,
+      'Client_Name': clientName,
       'Start_Date': startDate.toIso8601String().split('T')[0],
       'End_Date': endDate.toIso8601String().split('T')[0],
       if (assignedToId != null) 'Assigned_To_Id': assignedToId,
+      if (assignedToName != null) 'Assigned_To': assignedToName,
+      if (ownerId != null) 'Owner_Id': ownerId,
+      if (ownerName != null) 'Owner': ownerName,
       if (description != null && description.isNotEmpty) 'Description': description,
     };
 
@@ -178,9 +198,13 @@ class ProjectRepository {
     required String projectName,
     required String status,
     required String clientId,
+    required String clientName,
     required DateTime startDate,
     required DateTime endDate,
     String? assignedToId,
+    String? assignedToName,
+    String? ownerId,
+    String? ownerName,
     String? description,
     required List<Attachment> attachments,
   }) async {
@@ -192,9 +216,13 @@ class ProjectRepository {
       request.fields['Project_Name'] = projectName;
       request.fields['Status'] = status;
       request.fields['Client_ID'] = clientId;
+      request.fields['Client_Name'] = clientName;
       request.fields['Start_Date'] = startDate.toIso8601String().split('T')[0];
       request.fields['End_Date'] = endDate.toIso8601String().split('T')[0];
       if (assignedToId != null) request.fields['Assigned_To_Id'] = assignedToId;
+      if (assignedToName != null) request.fields['Assigned_To'] = assignedToName;
+      if (ownerId != null) request.fields['Owner_Id'] = ownerId;
+      if (ownerName != null) request.fields['Owner'] = ownerName;
       if (description != null && description.isNotEmpty) request.fields['Description'] = description;
 
       // Add files
@@ -241,9 +269,13 @@ class ProjectRepository {
     required String projectName,
     required String status,
     required String clientId,
+    required String clientName,
     required DateTime startDate,
     required DateTime endDate,
     String? assignedToId,
+    String? assignedToName,
+    String? ownerId,
+    String? ownerName,
     String? description,
     List<Attachment>? attachments,
   }) async {
@@ -255,9 +287,13 @@ class ProjectRepository {
         projectName: projectName,
         status: status,
         clientId: clientId,
+        clientName: clientName,
         startDate: startDate,
         endDate: endDate,
         assignedToId: assignedToId,
+        assignedToName: assignedToName,
+        ownerId: ownerId,
+        ownerName: ownerName,
         description: description,
         attachments: attachments,
       );
@@ -267,9 +303,13 @@ class ProjectRepository {
         projectName: projectName,
         status: status,
         clientId: clientId,
+        clientName: clientName,
         startDate: startDate,
         endDate: endDate,
         assignedToId: assignedToId,
+        assignedToName: assignedToName,
+        ownerId: ownerId,
+        ownerName: ownerName,
         description: description,
       );
     }
@@ -280,9 +320,13 @@ class ProjectRepository {
     required String projectName,
     required String status,
     required String clientId,
+    required String clientName,
     required DateTime startDate,
     required DateTime endDate,
     String? assignedToId,
+    String? assignedToName,
+    String? ownerId,
+    String? ownerName,
     String? description,
   }) async {
     final url = '${ServerConstant.serverURL}time_entry_management_application_function/projects/$projectId';
@@ -291,9 +335,13 @@ class ProjectRepository {
       'Project_Name': projectName,
       'Status': status,
       'Client_ID': clientId,
+      'Client_Name': clientName,
       'Start_Date': startDate.toIso8601String().split('T')[0],
       'End_Date': endDate.toIso8601String().split('T')[0],
       if (assignedToId != null) 'Assigned_To_Id': assignedToId,
+      if (assignedToName != null) 'Assigned_To': assignedToName,
+      if (ownerId != null) 'Owner_Id': ownerId,
+      if (ownerName != null) 'Owner': ownerName,
       if (description != null && description.isNotEmpty) 'Description': description,
     };
 
@@ -330,9 +378,13 @@ class ProjectRepository {
     required String projectName,
     required String status,
     required String clientId,
+    required String clientName,
     required DateTime startDate,
     required DateTime endDate,
     String? assignedToId,
+    String? assignedToName,
+    String? ownerId,
+    String? ownerName,
     String? description,
     required List<Attachment> attachments,
   }) async {
@@ -344,9 +396,13 @@ class ProjectRepository {
       request.fields['Project_Name'] = projectName;
       request.fields['Status'] = status;
       request.fields['Client_ID'] = clientId;
+      request.fields['Client_Name'] = clientName;
       request.fields['Start_Date'] = startDate.toIso8601String().split('T')[0];
       request.fields['End_Date'] = endDate.toIso8601String().split('T')[0];
       if (assignedToId != null) request.fields['Assigned_To_Id'] = assignedToId;
+      if (assignedToName != null) request.fields['Assigned_To'] = assignedToName;
+      if (ownerId != null) request.fields['Owner_Id'] = ownerId;
+      if (ownerName != null) request.fields['Owner'] = ownerName;
       if (description != null && description.isNotEmpty) request.fields['Description'] = description;
 
       // Add new files (those with localFile)

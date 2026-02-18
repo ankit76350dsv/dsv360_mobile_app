@@ -289,9 +289,32 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                     final projectsAsync = ref.watch(projectListProvider);
 
                     return projectsAsync.when(
-                      loading: () => const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: CircularProgressIndicator(),
+                      loading: () => Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 18, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: customColors.inputFill,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                              color: customColors.inputBorder!, width: 1.5),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.folder_outlined,
+                              color: customColors.textSecondary,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Loading projects...',
+                              style: TextStyle(
+                                color: customColors.textHint,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       error: (error, st) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -487,9 +510,36 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                     final employeesAsync = ref.watch(employeeListProvider);
 
                     return employeesAsync.when(
-                      loading: () => const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: CircularProgressIndicator(),
+                      loading: () => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: customColors.inputFill,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: customColors.inputBorder!,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.person_outline,
+                              color: customColors.textSecondary,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Loading assignees...',
+                              style: TextStyle(
+                                color: customColors.textHint,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       error: (error, st) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
@@ -501,94 +551,42 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                             .where((e) => e.status == 'ACTIVE')
                             .toList();
 
+                        final employeeMap = {
+                          for (var e in activeEmployees) e.fullName: e,
+                        };
+                        final employeeNameList = activeEmployees
+                            .map((e) => e.fullName)
+                            .toList();
+
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             // Dropdown field
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: customColors.inputFill,
-                                borderRadius: BorderRadius.circular(14),
-                                border: Border.all(
-                                  color: customColors.inputBorder!,
-                                  width: 1.5,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: DropdownButton<Employee>(
-                                isExpanded: true,
-                                hint: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.person_outline,
-                                      color: customColors.textSecondary,
-                                      size: 18,
-                                    ),
-                                    SizedBox(width: 8),
-                                    Text(
-                                      'Select Assignees',
-                                      style: TextStyle(
-                                        color: customColors.textHint,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                underline: const SizedBox(),
-                                style: TextStyle(
-                                  color: customColors.textPrimary,
-                                  fontSize: 14,
-                                ),
-                                dropdownColor: customColors.inputFill!,
-                                items: activeEmployees.map((employee) {
-                                  return DropdownMenuItem<Employee>(
-                                    value: employee,
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 8.0,
-                                      ),
-                                      child: Text(
-                                        employee.fullName,
-                                        style: TextStyle(
-                                          color: customColors.textPrimary,
-                                          fontSize: 14,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (employee) {
+                            CustomPopupDropdown(
+                              value: null, // Always null to act as a selector
+                              hint: 'Select Assignees',
+                              items: employeeNameList,
+                              icon: Icons.person_outline,
+                              onChanged: (value) {
+                                if (value != null) {
+                                  final employee = employeeMap[value];
                                   if (employee != null) {
                                     setState(() {
-                                      if (_selectedAssignees.any(
+                                      if (!_selectedAssignees.any(
                                         (e) => e.userId == employee.userId,
                                       )) {
-                                        _selectedAssignees.removeWhere(
-                                          (e) => e.userId == employee.userId,
-                                        );
-                                      } else {
                                         _selectedAssignees.add(employee);
                                       }
                                     });
                                     debugPrint(
-                                      '✅ Assignee toggled: ${employee.fullName}',
+                                      '✅ Assignee added: ${employee.fullName}',
                                     );
                                     debugPrint(
                                       '👥 Total selected: ${_selectedAssignees.length}',
                                     );
                                   }
-                                },
-                              ),
+                                }
+                              },
                             ),
                             const SizedBox(height: 12),
                             // Chips below the dropdown
