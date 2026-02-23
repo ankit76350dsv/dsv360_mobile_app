@@ -68,6 +68,8 @@ class ActiveUserModel {
     this.modifiedTime,
   });
 
+  String get fullName => '${firstName ?? ''} ${lastName ?? ''}'.trim();
+
   ActiveUserModel copyWith({
     int? rowId,
     int? creatorId,

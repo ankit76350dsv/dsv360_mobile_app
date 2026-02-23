@@ -80,7 +80,7 @@ class TaskDetailsDialog extends StatelessWidget {
           // Content
           Flexible(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 24),
               child: Column(
                 children: [
                   // Row 1: Task ID and Task Name
@@ -125,7 +125,7 @@ class TaskDetailsDialog extends StatelessWidget {
                         child: _buildDetailCard(
                           icon: Icons.folder_outlined,
                           label: 'Project Name',
-                          value: task.projectId,
+                          value: task.projectName,
                           context: context
                         ),
                       ),
@@ -166,22 +166,17 @@ class TaskDetailsDialog extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   
-                  // Type (Full width)
-                  _buildTypeCard(
-                    label: 'Type',
-                    value: task.status,
-                    context: context
-                  ),
-                  const SizedBox(height: 12),
-                  
                   // Description if available
                   if (task.description != null && task.description!.isNotEmpty)
-                    _buildDetailCard(
-                      icon: Icons.description,
-                      label: 'Description',
-                      value: task.description!,
-                      context: context
-                    ),
+                    ...[
+                      _buildDetailCard(
+                        icon: Icons.description,
+                        label: 'Description',
+                        value: task.description!,
+                        context: context
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                 ],
               ),
             ),
