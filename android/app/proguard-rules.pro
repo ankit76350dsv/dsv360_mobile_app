@@ -36,3 +36,18 @@
 # Google Play Core (Deferred Components)
 -dontwarn com.google.android.play.core.**
 -keep class com.google.android.play.core.** { *; }
+
+# Zoho Catalyst SDK
+-keep class com.zoho.** { *; }
+-dontwarn com.zoho.**
+-keep class com.catalyst.** { *; }
+-dontwarn com.catalyst.**
+
+# BouncyCastle / Conscrypt / OpenJSSE (required by Catalyst SDK for SSL)
+-keep class org.bouncycastle.** { *; }
+-dontwarn org.bouncycastle.**
+-keep class org.conscrypt.** { *; }
+-dontwarn org.conscrypt.**
+-keep class org.openjsse.** { *; }
+-dontwarn org.openjsse.**
+
