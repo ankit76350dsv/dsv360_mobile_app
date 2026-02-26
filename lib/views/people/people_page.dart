@@ -26,7 +26,6 @@ import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/people/apply_edit_leave_page.dart';
 import 'package:dsv360/views/people/holiday_calendar_page.dart';
 import 'package:dsv360/views/people/leave_details_page.dart';
-import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/single_button.dart';
 import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
@@ -50,7 +49,10 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: IsHaveAccess.instance.isManager ? 6 : 4, vsync: this);
+    _tabController = TabController(
+      length: IsHaveAccess.instance.isManager ? 6 : 4,
+      vsync: this,
+    );
   }
 
   @override
@@ -136,14 +138,18 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
                 dividerColor: Colors.transparent,
                 tabs: [
                   const Tab(text: 'Check In'),
-                  if (!IsHaveAccess.instance.isAdmin || IsHaveAccess.instance.isManager)
+                  if (!IsHaveAccess.instance.isAdmin ||
+                      IsHaveAccess.instance.isManager)
                     const Tab(text: 'Activities'),
                   const Tab(text: 'Leave'),
-                  if (!IsHaveAccess.instance.isAdmin || IsHaveAccess.instance.isManager)
+                  if (!IsHaveAccess.instance.isAdmin ||
+                      IsHaveAccess.instance.isManager)
                     const Tab(text: 'Attendance'),
-                  if (IsHaveAccess.instance.isAdmin || IsHaveAccess.instance.isManager)
+                  if (IsHaveAccess.instance.isAdmin ||
+                      IsHaveAccess.instance.isManager)
                     const Tab(text: 'Attendance Tracker'),
-                  if (IsHaveAccess.instance.isAdmin || IsHaveAccess.instance.isManager)
+                  if (IsHaveAccess.instance.isAdmin ||
+                      IsHaveAccess.instance.isManager)
                     const Tab(text: 'Leave Calendar'),
                 ],
               ),
@@ -156,14 +162,18 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
               controller: _tabController,
               children: [
                 const _CheckInTab(),
-                if (!IsHaveAccess.instance.isAdmin || IsHaveAccess.instance.isManager) 
+                if (!IsHaveAccess.instance.isAdmin ||
+                    IsHaveAccess.instance.isManager)
                   const _ActivitiesTab(),
                 const _LeaveTab(),
-                if (!IsHaveAccess.instance.isAdmin || IsHaveAccess.instance.isManager) 
+                if (!IsHaveAccess.instance.isAdmin ||
+                    IsHaveAccess.instance.isManager)
                   const _AttendanceTab(),
-                if (IsHaveAccess.instance.isAdmin || IsHaveAccess.instance.isManager)
+                if (IsHaveAccess.instance.isAdmin ||
+                    IsHaveAccess.instance.isManager)
                   const _AttendanceTrackerTab(),
-                if (IsHaveAccess.instance.isAdmin || IsHaveAccess.instance.isManager) 
+                if (IsHaveAccess.instance.isAdmin ||
+                    IsHaveAccess.instance.isManager)
                   const _LeaveCalendarTab(),
               ],
             ),
@@ -737,7 +747,8 @@ class _LeaveTab extends ConsumerWidget {
                       ),
                     ),
 
-                  if (!IsHaveAccess.instance.isAdmin) const SizedBox(height: 24),
+                  if (!IsHaveAccess.instance.isAdmin)
+                    const SizedBox(height: 24),
 
                   // Header row
                   Row(
@@ -1050,7 +1061,9 @@ class LeaveTile extends StatelessWidget {
                 padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
                 child: Row(
                   children: [
-                    if ((!IsHaveAccess.instance.isAdmin && !IsHaveAccess.instance.isManager) && status.toLowerCase() == "pending")
+                    if ((!IsHaveAccess.instance.isAdmin &&
+                            !IsHaveAccess.instance.isManager) &&
+                        status.toLowerCase() == "pending")
                       CustomCardButton(icon: Icons.edit, onTap: onEditTap!),
                     const SizedBox(width: 8),
                     CustomCardButton(icon: Icons.remove_red_eye, onTap: onTap!),
@@ -1368,7 +1381,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
       }
 
       // Invalidate both repositories to refresh UI
-      ref.invalidate(userStatusRepositoryProvider(userId));
+      ref.invalidate(userStatusRepositoryProvider);
       ref.invalidate(timeLogsRepositoryProvider);
     } catch (e) {
       if (mounted) {
@@ -1386,14 +1399,12 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
     final customColors = Theme.of(context).custom;
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final userId = activeUser?.userId ?? '';
-    final username =
-        "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}".trim();
-
     if (userId.isEmpty) {
-      return const Center(child: GlobalLoader(message: 'Loading user info...'));
+      throw Exception("User ID is missing.");
     }
 
-    final userStatusAsync = ref.watch(userStatusRepositoryProvider(userId));
+    final userStatusAsync = ref.watch(userStatusRepositoryProvider);
+    debugPrint("userStatusAsync: $userStatusAsync");
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -1402,7 +1413,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
             const GlobalLoader(message: 'Loading Check In/Out status...'),
         error: (error, stack) => GlobalError(
           message: 'Failed to load Check In/Out status: Try Again',
-          onRetry: () => ref.invalidate(userStatusRepositoryProvider(userId)),
+          onRetry: () => ref.invalidate(userStatusRepositoryProvider),
         ),
         data: (status) {
           final isCheckedIn = status.isCheckIn;
@@ -1420,7 +1431,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                   Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Text(
-                      username,
+                      "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}".trim(),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -1528,7 +1539,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                       text: isCheckedIn ? 'CHECK OUT' : 'CHECK IN NOW',
                       onPressed: () => _handleAction(
                         userId: userId,
-                        username: username,
+                        username: "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}".trim(),
                         activeStatus: status,
                       ),
                       icon: isCheckedIn ? Icons.logout : Icons.login,

@@ -104,7 +104,9 @@ class ActiveUserModel {
   }) {
     return ActiveUserModel(
       //<return_value_field> : <parameter> ?? <instance_variable>
-      rowId: rowId ?? this.rowId, //rowId (From parameter) ?? this.rowId (from object instance if parameter is not exist it will keep the old one.),
+      rowId:
+          rowId ??
+          this.rowId, //rowId (From parameter) ?? this.rowId (from object instance if parameter is not exist it will keep the old one.),
       creatorId: creatorId ?? this.creatorId,
       customerOwner: customerOwner ?? this.customerOwner,
       currency: currency ?? this.currency,
@@ -143,9 +145,11 @@ class ActiveUserModel {
   //It handles null values and ensures that the UserModel is created correctly.
   factory ActiveUserModel.fromCatalystUser(ZCatalystUser user) {
     return ActiveUserModel(
-      zuid: user.zuid,
-      zaaid: user.zaaid,
-      userId: user.id,
+      zuid: user.zuid.toString(),
+      zaaid: user.zaaid.toString(),
+      userId: user.id.toString().isEmpty
+          ? user.zuid.toString()
+          : user.id.toString(),
       firstName: user.firstName,
       lastName: user.lastName,
       emailId: user.emailId,
