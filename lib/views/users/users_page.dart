@@ -7,13 +7,13 @@ import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/task.dart';
 import 'package:dsv360/models/users.dart';
-import 'package:dsv360/repositories/active_user_repository.dart';
+
 import 'package:dsv360/repositories/pending_tasks_repository.dart';
-import 'package:dsv360/repositories/task_repository.dart';
+
 import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
-import 'package:dsv360/views/notifications/notification_page.dart';
+
 import 'package:dsv360/views/users/add_edit_user_page.dart';
 import 'package:dsv360/views/users/user_details_page.dart';
 import 'package:dsv360/views/widgets/app_snackbar.dart';
@@ -79,8 +79,8 @@ class _UsersPageState extends ConsumerState<UsersPage> {
             return null; // FAB hidden when no internet
           }
 
-          if (!IsHaveAccess.instance.isAdmin) {
-            return null; // FAB hidden when user not admin
+          if (!IsHaveAccess.instance.isAdmin || !IsHaveAccess.instance.isManager) {
+            return null; // FAB hidden when user not admin/manager
           }
 
           return FloatingActionButton(
@@ -114,47 +114,107 @@ class _UsersPageState extends ConsumerState<UsersPage> {
             }
 
             // When connected, show accounts data
-            return Column(
-              children: [
-                Padding(
-                  padding: EdgeInsetsGeometry.symmetric(
-                    horizontal: 16.0,
-                    vertical: 8.0,
+            return RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(usersRepositoryProvider);
+              },
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
+                    child: CustomInputSearch(
+                      searchProvider: usersSearchQueryProvider,
+                      hint: "Search users",
+                    ),
                   ),
-                  child: CustomInputSearch(
-                    searchProvider: usersSearchQueryProvider,
-                    hint: "Search users",
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsetsGeometry.symmetric(horizontal: 16.0),
-                    child: usersAsync.when(
-                      loading: () =>
-                          const GlobalLoader(message: 'Loading users info...'),
-                      error: (error, stack) => GlobalError(
-                        message: 'Failed to load users data: Try Again',
-                        onRetry: () => ref.refresh(usersRepositoryProvider),
-                      ),
-                      data: (users) {
-                        final filteredUsers = users.where((u) {
-                          final q = query.toLowerCase();
-                          return u.firstName.toLowerCase().contains(q) ||
-                              u.lastName.toLowerCase().contains(q) ||
-                              u.userId.toLowerCase().contains(q) ||
-                              u.emailAddress.toLowerCase().contains(q) ||
-                              u.role.toLowerCase().contains(q);
-                        }).toList();
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: usersAsync.when(
+                        loading: () => const GlobalLoader(
+                          message: 'Loading users info...',
+                        ),
+                        error: (error, stack) => GlobalError(
+                          message: 'Failed to load users data: Try Again',
+                          onRetry: () => ref.refresh(usersRepositoryProvider),
+                        ),
+                        data: (users) {
+                          final filteredUsers = users.where((u) {
+                            final q = query.toLowerCase();
+                            return u.firstName.toLowerCase().contains(q) ||
+                                u.lastName.toLowerCase().contains(q) ||
+                                u.userId.toLowerCase().contains(q) ||
+                                u.emailAddress.toLowerCase().contains(q) ||
+                                u.role.toLowerCase().contains(q);
+                          }).toList();
 
-                        if (filteredUsers.isEmpty) {
-                          return const Center(child: Text('No users found'));
-                        }
+                          if (filteredUsers.isEmpty) {
+                            return ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              children: [
+                                SizedBox(
+                                  height:
+                                      MediaQuery.of(context).size.height * 0.5,
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(20),
+                                          decoration: BoxDecoration(
+                                            color:
+                                                (customColors.primary ??
+                                                        Colors.blue)
+                                                    .withOpacity(0.1),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            Icons.person_search_outlined,
+                                            size: 48,
+                                            color:
+                                                customColors.primary ??
+                                                Colors.blue,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          'No Users Found',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                            color: customColors.textPrimary,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 32.0,
+                                          ),
+                                          child: Text(
+                                            query.isEmpty
+                                                ? 'There are currently no users to display.'
+                                                : 'No users match your search query "$query".',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: customColors.textSecondary,
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
 
-                        return RefreshIndicator(
-                          onRefresh: () async {
-                            ref.refresh(usersRepositoryProvider);
-                          },
-                          child: ListView.builder(
+                          return ListView.builder(
+                            physics: const AlwaysScrollableScrollPhysics(),
                             itemCount: filteredUsers.length,
                             itemBuilder: (context, index) {
                               return UserCard(
@@ -162,13 +222,13 @@ class _UsersPageState extends ConsumerState<UsersPage> {
                                 userList: users,
                               );
                             },
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             );
           },
           error: (error, stack) => GlobalError(
@@ -312,7 +372,7 @@ class _UserCardState extends ConsumerState<UserCard> {
                 thickness: 1,
                 color: Colors.grey.withOpacity(0.2),
               ),
-            
+
             if (IsHaveAccess.instance.isAdmin)
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -372,7 +432,7 @@ class _UserCardState extends ConsumerState<UserCard> {
                               style: TextStyle(
                                 color: isActive
                                     ? customColors.primary
-                                    : customColors.inputFill,
+                                    : customColors.textWhite,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
                               ),
@@ -459,7 +519,6 @@ class _UserCardState extends ConsumerState<UserCard> {
                   ],
                 ),
               ),
-            
           ],
         ),
       ),

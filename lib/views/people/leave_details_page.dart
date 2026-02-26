@@ -28,7 +28,10 @@ class LeaveDetailsPage extends ConsumerWidget {
     final activeUser = ref.watch(activeUserRepositoryProvider);
 
     final leaveSummaryAsync = ref.watch(
-      leaveSummaryRepositoryProvider(userId: leave.userId, username: leave.username),
+      leaveSummaryRepositoryProvider(
+        userId: leave.userId,
+        username: leave.username,
+      ),
     );
 
     return Scaffold(
@@ -148,7 +151,11 @@ class LeaveDetailsPage extends ConsumerWidget {
                     if (IsHaveAccess.instance.isAdmin)
                       const SizedBox(height: 32.0),
 
-                    if (IsHaveAccess.instance.isAdmin)
+                    // Only display the Reject/Approve buttons to admins if the leave is still pending. 
+                    // If the status is not pending,
+                    // it means a decision has already been made.
+                    if ((IsHaveAccess.instance.isAdmin || IsHaveAccess.instance.isManager) &&
+                        leave.status.toLowerCase() == "pending")
                       BottomTwoButtons(
                         loadingKey: bottomTwoButtonsLoadingKey,
                         button1Text: "reject",

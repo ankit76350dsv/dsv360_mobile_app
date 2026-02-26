@@ -20,9 +20,9 @@ class LeaveDetailsListRepository extends AsyncNotifier<List<LeaveDetails>> {
 
     try {
       final userId = activeUser.userId;
-      final isAdmin = IsHaveAccess.instance.isAdmin;
+      final isAdminOrManager = IsHaveAccess.instance.isAdmin || IsHaveAccess.instance.isManager;
 
-      final url = isAdmin
+      final url = isAdminOrManager
           ? 'time_entry_management_application_function/leave/approval'
           : 'time_entry_management_application_function/leave/approval/$userId';
 
