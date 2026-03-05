@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/time_entry_model.dart';
 import '../core/constants/server_constant.dart';
+import '../core/constants/token_manager.dart';
 
 class TimeEntryRepository {
   final http.Client httpClient;
@@ -16,8 +17,10 @@ class TimeEntryRepository {
   Future<Map<String, dynamic>> checkTimerStatus(String userId) async {
     try {
       debugPrint('⏱️ Checking timer status for userId: $userId');
+      final token = await TokenManager.instance.getToken();
       final response = await httpClient.get(
         Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/timer?userId=$userId'),
+        headers: {'Authorization': 'Zoho-oauthtoken $token'},
       );
 
       debugPrint('⏱️ Timer Status Response: ${response.statusCode}');
@@ -50,9 +53,13 @@ class TimeEntryRepository {
         if (description != null) 'description': description,
       };
 
+      final token = await TokenManager.instance.getToken();
       final response = await httpClient.post(
         Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/timer/start'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Zoho-oauthtoken $token',
+        },
         body: jsonEncode(body),
       );
 
@@ -82,9 +89,13 @@ class TimeEntryRepository {
         'timerId': timerId,
       };
 
+      final token = await TokenManager.instance.getToken();
       final response = await httpClient.post(
         Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/timer/end'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Zoho-oauthtoken $token',
+        },
         body: jsonEncode(body),
       );
 
@@ -112,7 +123,11 @@ class TimeEntryRepository {
           ? '${ServerConstant.serverURL}time_entry_management_application_function/timeentry/$taskId?userId=$userId'
           : '${ServerConstant.serverURL}time_entry_management_application_function/timeentry/$taskId';
       
-      final response = await httpClient.get(Uri.parse(url));
+      final token = await TokenManager.instance.getToken();
+      final response = await httpClient.get(
+        Uri.parse(url),
+        headers: {'Authorization': 'Zoho-oauthtoken $token'},
+      );
 
       debugPrint('📋 Time Entry Response Status: ${response.statusCode}');
       debugPrint('📋 Time Entry Response Body: ${response.body}');
@@ -178,7 +193,11 @@ class TimeEntryRepository {
           ? '${ServerConstant.serverURL}time_entry_management_application_function/time_entry/project/$projectId?startDate=$startDateStr&endDate=$endDateStr'
           : '${ServerConstant.serverURL}time_entry_management_application_function/time_entry/project/$projectId';
       
-      final response = await httpClient.get(Uri.parse(url));
+      final token = await TokenManager.instance.getToken();
+      final response = await httpClient.get(
+        Uri.parse(url),
+        headers: {'Authorization': 'Zoho-oauthtoken $token'},
+      );
 
       debugPrint('📋 Project Time Entry Response: ${response.statusCode}');
       debugPrint('📋 Project Time Entry Response Body: ${response.body}');
@@ -220,8 +239,10 @@ class TimeEntryRepository {
   Future<List<TimeEntry>> getTimeEntriesByProject(String projectId) async {
     try {
       debugPrint('📋 Fetching time entries for projectId: $projectId');
+      final token = await TokenManager.instance.getToken();
       final response = await httpClient.get(
         Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/time_entry/project/$projectId'),
+        headers: {'Authorization': 'Zoho-oauthtoken $token'},
       );
 
       debugPrint('📋 Project Time Entry Response: ${response.statusCode}');
@@ -273,9 +294,11 @@ class TimeEntryRepository {
       debugPrint(
           '📋 Fetching user time entries - userId: $userId, from: $startDateStr to: $endDateStr');
 
+      final token = await TokenManager.instance.getToken();
       final response = await httpClient.get(
         Uri.parse(
             '${ServerConstant.serverURL}time_entry_management_application_function/user-timeentry?userId=$userId&startDate=$startDateStr&endDate=$endDateStr'),
+        headers: {'Authorization': 'Zoho-oauthtoken $token'},
       );
 
       debugPrint('📋 User Time Entry Response: ${response.statusCode}');
@@ -329,9 +352,13 @@ class TimeEntryRepository {
 
       debugPrint('Request Body: $body');
 
+      final token = await TokenManager.instance.getToken();
       final response = await httpClient.post(
         Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Zoho-oauthtoken $token',
+        },
         body: jsonEncode(body),
       );
 
@@ -381,9 +408,13 @@ class TimeEntryRepository {
         if (type != null) 'Type': type,
       };
 
+      final token = await TokenManager.instance.getToken();
       final response = await httpClient.post(
         Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/$timeEntryId'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Zoho-oauthtoken $token',
+        },
         body: jsonEncode(body),
       );
 
@@ -410,8 +441,10 @@ class TimeEntryRepository {
   Future<bool> deleteTimeEntry(String timeEntryId) async {
     try {
       debugPrint('🗑️ Deleting time entry: $timeEntryId');
+      final token = await TokenManager.instance.getToken();
       final response = await httpClient.delete(
         Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/$timeEntryId'),
+        headers: {'Authorization': 'Zoho-oauthtoken $token'},
       );
 
       debugPrint('🗑️ Delete Time Entry Response: ${response.statusCode}');
@@ -440,9 +473,13 @@ class TimeEntryRepository {
         'timeEntryIds': timeEntryIds,
       };
 
+      final token = await TokenManager.instance.getToken();
       final response = await httpClient.post(
         Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/approval/$userId'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Zoho-oauthtoken $token',
+        },
         body: jsonEncode(body),
       );
 
@@ -477,9 +514,13 @@ class TimeEntryRepository {
         if (reviewerId != null) 'reviewerId': reviewerId,
       };
 
+      final token = await TokenManager.instance.getToken();
       final response = await httpClient.post(
         Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/approval'),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Zoho-oauthtoken $token',
+        },
         body: jsonEncode(body),
       );
 
@@ -500,8 +541,10 @@ class TimeEntryRepository {
   Future<List<dynamic>> getUserApprovals(String userId) async {
     try {
       debugPrint('✅ Fetching user approvals for: $userId');
+      final token = await TokenManager.instance.getToken();
       final response = await httpClient.get(
         Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/approval/$userId'),
+        headers: {'Authorization': 'Zoho-oauthtoken $token'},
       );
 
       debugPrint('✅ User Approvals Response: ${response.statusCode}');
@@ -522,8 +565,10 @@ class TimeEntryRepository {
   Future<List<dynamic>> getTeamApprovals(String managerId) async {
     try {
       debugPrint('✅ Fetching team approvals for manager: $managerId');
+      final token = await TokenManager.instance.getToken();
       final response = await httpClient.get(
         Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/approval?managerId=$managerId'),
+        headers: {'Authorization': 'Zoho-oauthtoken $token'},
       );
 
       debugPrint('✅ Team Approvals Response: ${response.statusCode}');

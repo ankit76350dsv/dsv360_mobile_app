@@ -10,6 +10,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:http/http.dart' as http;
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/server_constant.dart';
+import 'package:dsv360/core/constants/environment.dart';
 import 'package:dsv360/models/task.dart';
 import 'package:dsv360/models/attachment.dart';
 
@@ -47,6 +48,10 @@ class TasksListRepository extends _$TasksListRepository {
             '${ServerConstant.serverURL}time_entry_management_application_function/tasks';
 
         final token = await TokenManager.instance.getToken();
+        debugPrint('🔐 Token in Production: ${token?.substring(0, 20)}...');
+        debugPrint('🔐 Full Environment: ${ENVIRONMENT.environment}');
+        debugPrint('🔐 Current User: ${user?.firstName} ${user?.lastName}');
+        debugPrint('🔐 User Role: ${user?.role?.name}');
         final response = await http.get(
           Uri.parse(url),
           headers: {'Authorization': 'Zoho-oauthtoken $token'},
@@ -111,7 +116,11 @@ class TasksListRepository extends _$TasksListRepository {
             '${ServerConstant.serverURL}time_entry_management_application_function/tasks/employee/$userId';
         debugPrint("📋 User endpoint: $url");
 
-        final response = await http.get(Uri.parse(url));
+        final token = await TokenManager.instance.getToken();
+        final response = await http.get(
+          Uri.parse(url),
+          headers: {'Authorization': 'Zoho-oauthtoken $token'},
+        );
         debugPrint("Response From fetchTasks - Status: ${response.statusCode}");
         debugPrint("📊 Task API Response Body: ${response.body}");
 

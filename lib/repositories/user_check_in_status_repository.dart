@@ -1,13 +1,18 @@
 import 'dart:async';
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/models/user_check_in_status.dart';
+import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class UserStatusRepository
-    extends AutoDisposeFamilyAsyncNotifier<UserCheckInStatus, String> {
+class UserStatusRepository extends AutoDisposeAsyncNotifier<UserCheckInStatus> {
   @override
-  FutureOr<UserCheckInStatus> build(String userId) async {
+  FutureOr<UserCheckInStatus> build() async {
+    final activeUser = ref.watch(activeUserRepositoryProvider);
+    final userId = activeUser?.userId ?? '';
+    if (userId.isEmpty) {
+      throw Exception("User ID is missing.");
+    }
     return fetchStatus(userId);
   }
 
@@ -27,7 +32,7 @@ class UserStatusRepository
   }
 }
 
-final userStatusRepositoryProvider = AsyncNotifierProvider.family
-    .autoDispose<UserStatusRepository, UserCheckInStatus, String>(
+final userStatusRepositoryProvider =
+    AsyncNotifierProvider.autoDispose<UserStatusRepository, UserCheckInStatus>(
       UserStatusRepository.new,
     );
