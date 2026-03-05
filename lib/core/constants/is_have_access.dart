@@ -13,4 +13,11 @@ class IsHaveAccess {
     // Assuming 'Admin' is the role name based on typical setups.
     return user?.role?.name == 'Admin';
   }
+
+  // Check if the current user has manager access
+  bool get isManager {
+    final user = AuthManager.instance.currentUser;
+    // Safely check if role name contains "manager" (case-insensitive)
+    return user?.role?.name.toLowerCase().contains("manager") ?? false;
+  }
 }
