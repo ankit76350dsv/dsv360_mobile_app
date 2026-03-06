@@ -524,7 +524,7 @@ class _ProjectsTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final projectsAsync = ref.watch(projectListProvider);
+    final projectsAsync = ref.watch(projectsByIdOnlyProvider(user.userId));
     final connectivityStatus = ref.watch(connectivityStatusProvider);
 
     return connectivityStatus.when(
@@ -544,28 +544,28 @@ class _ProjectsTab extends ConsumerWidget {
               const GlobalLoader(message: 'Loading projects info...'),
           error: (error, stack) => GlobalError(
             message: 'Failed to load projects data: $error',
-            onRetry: () => ref.refresh(projectListProvider),
+            onRetry: () => ref.refresh(projectsByIdOnlyProvider(user.userId)),
           ),
           data: (projects) {
             final userId = user.userId;
 
             final assignedProjects = projects
-                .where((p) => p.assignedToId == userId)
+                .where((p) => p.assignedToId?.contains(userId) ?? false)
                 .toList();
 
-            if (assignedProjects.isEmpty) {
+            if (projects.isEmpty) {
               return const Center(child: Text("No projects assigned"));
             }
 
             return RefreshIndicator(
               onRefresh: () async {
-                ref.refresh(projectListProvider);
+                ref.refresh(projectsByIdOnlyProvider(user.userId));
               },
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: assignedProjects.length,
                 itemBuilder: (context, index) {
-                  return _ProjectCard(project: projects[index]);
+                  return _ProjectCard(project: assignedProjects[index]);
                 },
               ),
             );
@@ -621,7 +621,7 @@ class _ProjectCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        "P${project.id.substring(project.id.length - 4)}",
+                        "P${project.id.length >= 4 ? project.id.substring(project.id.length - 4) : project.id}",
                         style: TextStyle(color: Colors.white),
                       ),
                     ),
@@ -689,7 +689,7 @@ class _TasksTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final tasksAsync = ref.watch(tasksListRepositoryProvider(user.userId));
+    final tasksAsync = ref.watch(tasksByEmpOnlyProvider(user.userId));
     final connectivityStatus = ref.watch(connectivityStatusProvider);
 
     return connectivityStatus.when(
@@ -708,32 +708,26 @@ class _TasksTab extends ConsumerWidget {
           loading: () => const GlobalLoader(message: 'Loading tasks info...'),
           error: (error, stack) => GlobalError(
             message: 'Failed to load tasks data: Try Again',
-            onRetry: () =>
-                ref.refresh(tasksListRepositoryProvider(user.userId)),
+            onRetry: () => ref.refresh(tasksByEmpOnlyProvider(user.userId)),
           ),
           data: (tasks) {
             if (tasks.isEmpty) {
               return const Center(child: Text("No tasks assigned"));
             }
 
-            final userId = user.userId;
-            final assignedTasks = tasks
-                .where((t) => t.assignedToId == userId)
-                .toList();
-
-            if (assignedTasks.isEmpty) {
+            if (tasks.isEmpty) {
               return const Center(child: Text("No tasks assigned"));
             }
 
             return RefreshIndicator(
               onRefresh: () async {
-                ref.refresh(tasksListRepositoryProvider(user.userId));
+                ref.refresh(tasksByEmpOnlyProvider(user.userId));
               },
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
-                itemCount: assignedTasks.length,
+                itemCount: tasks.length,
                 itemBuilder: (context, index) {
-                  return _TaskCard(task: assignedTasks[index]);
+                  return _TaskCard(task: tasks[index]);
                 },
               ),
             );
@@ -785,7 +779,7 @@ class _TaskCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        "T${task.taskId.substring(task.taskId.length - 4)}",
+                        "T${task.taskId.length >= 4 ? task.taskId.substring(task.taskId.length - 4) : task.taskId}",
                         style: TextStyle(color: Colors.white),
                       ),
                     ),

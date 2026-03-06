@@ -8,6 +8,7 @@ import 'package:dsv360/core/constants/server_constant.dart';
 import 'package:dsv360/models/project_model.dart';
 import 'package:dsv360/models/attachment.dart';
 import 'package:zcatalyst_sdk/zcatalyst_sdk.dart'; // For UserRole or similar if needed
+import 'package:dsv360/core/network/dio_client.dart';
 
 class ProjectRepository {
   Future<List<ProjectModel>> fetchProjects() async {
@@ -20,27 +21,27 @@ class ProjectRepository {
     // The user provided URLs:
     // User: .../projects/17682000000114004 (ID)
     // Admin: .../projects or .../projects/
-    
+
     // We need to know if the user is Admin or AppUser.
     // AuthManager has currentUser.role.name usually.
     // Let's assume 'Super Admin' or similar for Admin.
-    
+
     final roleName = user.role?.name ?? '';
     // For endpoint selection: Only true Admin roles get all projects
     // Manager and other roles should use user-specific endpoint
     final isAdmin = roleName == 'Admin' ||
-                    roleName == 'Admin (Default)' || 
-                    roleName == 'Super Admin' || 
-                    roleName == 'App Administrator'; 
+        roleName == 'Admin (Default)' ||
+        roleName == 'Super Admin' ||
+        roleName == 'App Administrator';
     // Adjust based on actual role names if known, typically 'Super Admin' in Catalyst.
 
 
     String url;
     if (isAdmin) {
-       // Admin URL logic
+      // Admin URL logic
        url = '${ServerConstant.serverURL}time_entry_management_application_function/projects';
     } else {
-       // AppUser URL logic
+      // AppUser URL logic
        url = '${ServerConstant.serverURL}time_entry_management_application_function/projects/${user.id}';
     }
     debugPrint(
@@ -61,20 +62,20 @@ class ProjectRepository {
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = json.decode(response.body);
         debugPrint('📊 Parsed JSON Response: $jsonResponse');
-        
+
         if (jsonResponse['success'] == true) {
           final List<dynamic> data = jsonResponse['data'];
           debugPrint('📊 Data List: $data');
-          
+
           if (isAdmin) {
             // Admin response: direct list of project objects
             return data.map((json) => ProjectModel.fromJson(json)).toList();
           } else {
-             // AppUser response: list of objects with "Projects" key
-             return data.map((json) {
-               final projectData = json['Projects'];
-               return ProjectModel.fromJson(projectData);
-             }).toList();
+            // AppUser response: list of objects with "Projects" key
+            return data.map((json) {
+              final projectData = json['Projects'];
+              return ProjectModel.fromJson(projectData);
+            }).toList();
           }
         } else {
           throw Exception('API returned success: false');
@@ -84,6 +85,43 @@ class ProjectRepository {
       }
     } catch (e) {
       debugPrint('❌ Error fetching projects: $e');
+      throw Exception('Error fetching projects: $e');
+    }
+  }
+
+  Future<List<ProjectModel>> fetchProjectsByIdOnly(String id) async {
+    final path = 'time_entry_management_application_function/projects/$id';
+    try {
+      final response = await DioClient.instance.get(path);
+      debugPrint('📊 Project API Response Status: ${response.statusCode}');
+
+      final dynamic responseData = response.data;
+      final Map<String, dynamic> jsonResponse = responseData is String
+          ? json.decode(responseData)
+          : responseData;
+
+      if (jsonResponse['success'] == true) {
+        final List<dynamic> data = jsonResponse['data'] ?? [];
+        return data
+            .map((json) {
+              try {
+                final rawProjectData = json as Map<String, dynamic>;
+                final projectData = rawProjectData.containsKey('Projects')
+                    ? rawProjectData['Projects'] as Map<String, dynamic>
+                    : rawProjectData;
+                return ProjectModel.fromJson(projectData);
+              } catch (parseError) {
+                debugPrint("⚠️ Error parsing project: $parseError");
+                return null;
+              }
+            })
+            .whereType<ProjectModel>()
+            .toList();
+      } else {
+        throw Exception('API returned success: false');
+      }
+    } catch (e) {
+      debugPrint('❌ Error fetching projects by id only: $e');
       throw Exception('Error fetching projects: $e');
     }
   }
@@ -100,7 +138,7 @@ class ProjectRepository {
     List<Attachment>? attachments,
   }) async {
     debugPrint('🔵 Creating project: $projectName');
-    
+
     if (attachments != null && attachments.isNotEmpty) {
       return _createWithMultipart(
         projectName: projectName,
@@ -135,7 +173,7 @@ class ProjectRepository {
     String? description,
   }) async {
     final url = '${ServerConstant.serverURL}time_entry_management_application_function/projects';
-    
+
     final body = {
       'Project_Name': projectName,
       'Status': status,

@@ -12,6 +12,7 @@ import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/server_constant.dart';
 import 'package:dsv360/models/task.dart';
 import 'package:dsv360/models/attachment.dart';
+import 'package:dsv360/core/network/dio_client.dart';
 
 part 'task_repository.g.dart';
 
@@ -123,6 +124,57 @@ class TasksListRepository extends _$TasksListRepository {
       debugPrint("⚠️ Tasks endpoint not available. Returning empty list.");
       debugPrint(
         "📌 To fix: Ensure the tasks endpoint is properly configured on the server.",
+      );
+      return [];
+    }
+  }
+
+  Future<List<Task>> fetchTaskByEmpOnly(String id) async {
+    try {
+      final path = 'time_entry_management_application_function/emp/$id';
+      debugPrint("📋 Fetching tasks by emp only endpoint: $path");
+
+      final response = await DioClient.instance.get(path);
+      debugPrint(
+        "Response From fetchTaskByEmpOnly - Status: ${response.statusCode}",
+      );
+      debugPrint("📊 Task API Response Body: ${response.data}");
+
+      final dynamic responseData = response.data;
+      final Map<String, dynamic> jsonResponse = responseData is String
+          ? json.decode(responseData)
+          : responseData;
+
+      if (jsonResponse['success'] == true) {
+        final List<dynamic> list = jsonResponse["data"] ?? [];
+
+        return list
+            .map((e) {
+              try {
+                final rawTaskData = e as Map<String, dynamic>;
+                // The new emp/$id API returns tasks wrapped in a "Tasks" key inside the data items
+                final taskData = rawTaskData.containsKey('Tasks')
+                    ? rawTaskData['Tasks'] as Map<String, dynamic>
+                    : rawTaskData;
+
+                return Task.fromJson(taskData);
+              } catch (parseError) {
+                debugPrint("⚠️ Error parsing task: $parseError");
+                return null;
+              }
+            })
+            .whereType<Task>()
+            .toList();
+      } else {
+        throw Exception('API returned success: false');
+      }
+    } catch (e) {
+      developer.log(
+        "Error fetching tasks by emp only: $e",
+        name: "TasksListRepository",
+      );
+      debugPrint(
+        "⚠️ Tasks by emp endpoint not available. Returning empty list.",
       );
       return [];
     }
@@ -621,4 +673,10 @@ class TasksListRepository extends _$TasksListRepository {
         return 'application/octet-stream';
     }
   }
+}
+
+@riverpod
+Future<List<Task>> tasksByEmpOnly(TasksByEmpOnlyRef ref, String userId) async {
+  final repository = ref.watch(tasksListRepositoryProvider(userId).notifier);
+  return repository.fetchTaskByEmpOnly(userId);
 }

@@ -12,3 +12,10 @@ final projectListProvider = FutureProvider<List<ProjectModel>>((ref) async {
   final repository = ref.watch(projectRepositoryProvider);
   return repository.fetchProjects();
 });
+
+// Projects By Id Only Provider
+final projectsByIdOnlyProvider =
+    FutureProvider.family<List<ProjectModel>, String>((ref, id) async {
+      final repository = ref.watch(projectRepositoryProvider);
+      return repository.fetchProjectsByIdOnly(id);
+    });

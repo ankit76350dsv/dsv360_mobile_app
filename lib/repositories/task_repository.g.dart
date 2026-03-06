@@ -6,8 +6,7 @@ part of 'task_repository.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$tasksListRepositoryHash() =>
-    r'7e917368467e8d2ed6a2ae4486af7eae289a65f7';
+String _$tasksByEmpOnlyHash() => r'b6fab780e847a90ef562c7dd81a17bb30f5c0c3e';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -29,6 +28,127 @@ class _SystemHash {
     return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
   }
 }
+
+/// See also [tasksByEmpOnly].
+@ProviderFor(tasksByEmpOnly)
+const tasksByEmpOnlyProvider = TasksByEmpOnlyFamily();
+
+/// See also [tasksByEmpOnly].
+class TasksByEmpOnlyFamily extends Family<AsyncValue<List<Task>>> {
+  /// See also [tasksByEmpOnly].
+  const TasksByEmpOnlyFamily();
+
+  /// See also [tasksByEmpOnly].
+  TasksByEmpOnlyProvider call(String userId) {
+    return TasksByEmpOnlyProvider(userId);
+  }
+
+  @override
+  TasksByEmpOnlyProvider getProviderOverride(
+    covariant TasksByEmpOnlyProvider provider,
+  ) {
+    return call(provider.userId);
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'tasksByEmpOnlyProvider';
+}
+
+/// See also [tasksByEmpOnly].
+class TasksByEmpOnlyProvider extends AutoDisposeFutureProvider<List<Task>> {
+  /// See also [tasksByEmpOnly].
+  TasksByEmpOnlyProvider(String userId)
+    : this._internal(
+        (ref) => tasksByEmpOnly(ref as TasksByEmpOnlyRef, userId),
+        from: tasksByEmpOnlyProvider,
+        name: r'tasksByEmpOnlyProvider',
+        debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+            ? null
+            : _$tasksByEmpOnlyHash,
+        dependencies: TasksByEmpOnlyFamily._dependencies,
+        allTransitiveDependencies:
+            TasksByEmpOnlyFamily._allTransitiveDependencies,
+        userId: userId,
+      );
+
+  TasksByEmpOnlyProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.userId,
+  }) : super.internal();
+
+  final String userId;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<Task>> Function(TasksByEmpOnlyRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: TasksByEmpOnlyProvider._internal(
+        (ref) => create(ref as TasksByEmpOnlyRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        userId: userId,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<Task>> createElement() {
+    return _TasksByEmpOnlyProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is TasksByEmpOnlyProvider && other.userId == userId;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, userId.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin TasksByEmpOnlyRef on AutoDisposeFutureProviderRef<List<Task>> {
+  /// The parameter `userId` of this provider.
+  String get userId;
+}
+
+class _TasksByEmpOnlyProviderElement
+    extends AutoDisposeFutureProviderElement<List<Task>>
+    with TasksByEmpOnlyRef {
+  _TasksByEmpOnlyProviderElement(super.provider);
+
+  @override
+  String get userId => (origin as TasksByEmpOnlyProvider).userId;
+}
+
+String _$tasksListRepositoryHash() =>
+    r'd18c0148a0371b996cbe42f241d9c1319b137fda';
 
 abstract class _$TasksListRepository
     extends BuildlessAutoDisposeAsyncNotifier<List<Task>> {
