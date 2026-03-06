@@ -28,3 +28,10 @@ final filteredTasksProvider =
   return ref.watch(tasksListRepositoryProvider(userId));
 });
 
+// Tasks by Project Provider - fetches tasks for a specific project
+final tasksByProjectProvider = FutureProvider.family.autoDispose<List<Task>, String>((ref, projectId) async {
+  final repository = TasksListRepository();
+  debugPrint('📋 Fetching tasks for project: $projectId');
+  return await repository.fetchTasksByProject(projectId);
+});
+

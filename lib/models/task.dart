@@ -38,7 +38,7 @@ class Task {
       taskId: json['ROWID']?.toString() ?? "",
       description: json['Description']?.toString() ?? "",
       status: json['Status']?.toString() ?? "",
-      projectId: json['ProjectID']?.toString() ?? "",
+      projectId: json['Project_ID']?.toString() ?? json['ProjectID']?.toString() ?? "",
       projectName: json['Project_Name']?.toString() ?? "",
       assignedTo: json['Assign_To']?.toString() ?? "",
       assignedToId: json['Assign_To_ID']?.toString() ?? "",
