@@ -553,7 +553,7 @@ class _ProjectsTab extends ConsumerWidget {
                 .where((p) => p.assignedToId?.contains(userId) ?? false)
                 .toList();
 
-            if (projects.isEmpty) {
+            if (assignedProjects.isEmpty) {
               return const Center(child: Text("No projects assigned"));
             }
 
