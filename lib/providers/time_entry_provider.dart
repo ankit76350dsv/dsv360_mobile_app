@@ -13,10 +13,31 @@ final timeEntriesByTaskProvider = FutureProvider.family<List<TimeEntry>, String>
   return repository.getTimeEntriesByTask(taskId);
 });
 
+/// Get time entries by task with date filter
+final timeEntriesByTaskWithDateFilterProvider = FutureProvider.family<List<TimeEntry>, ({String taskId, String? userId, DateTime? startDate, DateTime? endDate})>((ref, params) async {
+  final repository = ref.watch(timeEntryRepositoryProvider);
+  return repository.getTimeEntriesByTaskWithDateFilter(
+    taskId: params.taskId,
+    userId: params.userId,
+    startDate: params.startDate,
+    endDate: params.endDate,
+  );
+});
+
 /// Get time entries by project
 final timeEntriesByProjectProvider = FutureProvider.family<List<TimeEntry>, String>((ref, projectId) async {
   final repository = ref.watch(timeEntryRepositoryProvider);
   return repository.getTimeEntriesByProject(projectId);
+});
+
+/// Get time entries by project with date filter
+final timeEntriesByProjectWithDateFilterProvider = FutureProvider.family<List<TimeEntry>, ({String projectId, DateTime? startDate, DateTime? endDate})>((ref, params) async {
+  final repository = ref.watch(timeEntryRepositoryProvider);
+  return repository.getTimeEntriesByProjectWithDateFilter(
+    projectId: params.projectId,
+    startDate: params.startDate,
+    endDate: params.endDate,
+  );
 });
 
 /// Get user time entries (current user)

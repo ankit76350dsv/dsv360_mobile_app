@@ -123,6 +123,8 @@ class TimeEntryRepository {
           ? '${ServerConstant.serverURL}time_entry_management_application_function/timeentry/$taskId?userId=$userId'
           : '${ServerConstant.serverURL}time_entry_management_application_function/timeentry/$taskId';
       
+      debugPrint('🌐 Time Entry URL: $url');
+      
       final token = await TokenManager.instance.getToken();
       final response = await httpClient.get(
         Uri.parse(url),
@@ -177,6 +179,80 @@ class TimeEntryRepository {
     }
   }
 
+  /// Get time entries by task ID with optional date range filter
+  Future<List<TimeEntry>> getTimeEntriesByTaskWithDateFilter({
+    required String taskId,
+    String? userId,
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    try {
+      final startDateStr = startDate?.toString().split(' ')[0]; // YYYY-MM-DD
+      final endDateStr = endDate?.toString().split(' ')[0]; // YYYY-MM-DD
+      
+      debugPrint('📋 Fetching time entries for taskId: $taskId, userId: $userId, from: $startDateStr to: $endDateStr');
+      
+      // Build URL with optional parameters
+      String url = '${ServerConstant.serverURL}time_entry_management_application_function/timeentry/$taskId';
+      final params = <String>[];
+      if (userId != null) params.add('userId=$userId');
+      if (startDateStr != null) params.add('startDate=$startDateStr');
+      if (endDateStr != null) params.add('endDate=$endDateStr');
+      if (params.isNotEmpty) url += '?${params.join('&')}';
+      
+      debugPrint('🌐 Time Entry URL: $url');
+      
+      final token = await TokenManager.instance.getToken();
+      final response = await httpClient.get(
+        Uri.parse(url),
+        headers: {'Authorization': 'Zoho-oauthtoken $token'},
+      );
+
+      debugPrint('📋 Task Time Entry Response: ${response.statusCode}');
+      debugPrint('📋 Task Time Entry Response Body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final jsonData = jsonDecode(response.body);
+        debugPrint('📋 Full JSON Structure: $jsonData');
+        
+        final List<dynamic> data = jsonData['data'] ?? [];
+        debugPrint('📋 Data array length: ${data.length}');
+        
+        if (data.isEmpty) {
+          return [];
+        }
+        
+        // Check if response has nested structure
+        if (data.isNotEmpty && data.first is Map && data.first.containsKey('details')) {
+          final List<TimeEntry> timeEntries = [];
+          for (final taskItem in data) {
+            final details = taskItem['details'] as List<dynamic>?;
+            if (details != null) {
+              for (final detailItem in details) {
+                final timeEntry = detailItem['Time_Entries'];
+                if (timeEntry != null) {
+                  timeEntries.add(TimeEntry.fromJson(timeEntry));
+                }
+              }
+            }
+          }
+          debugPrint('📋 Parsed ${timeEntries.length} time entries with date filter (nested structure)');
+          return timeEntries;
+        } else {
+          // Direct array of time entries
+          final timeEntries = data.map((item) => TimeEntry.fromJson(item)).toList();
+          debugPrint('📋 Parsed ${timeEntries.length} time entries with date filter');
+          return timeEntries;
+        }
+      } else {
+        throw Exception('Failed to fetch task time entries: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ Error fetching task time entries with date filter: $e');
+      rethrow;
+    }
+  }
+
   /// Get time entries by project ID with optional date range filter
   Future<List<TimeEntry>> getTimeEntriesByProjectWithDateFilter({
     required String projectId,
@@ -192,6 +268,8 @@ class TimeEntryRepository {
       final url = startDateStr != null && endDateStr != null
           ? '${ServerConstant.serverURL}time_entry_management_application_function/time_entry/project/$projectId?startDate=$startDateStr&endDate=$endDateStr'
           : '${ServerConstant.serverURL}time_entry_management_application_function/time_entry/project/$projectId';
+      
+      debugPrint('🌐 Time Entry URL: $url');
       
       final token = await TokenManager.instance.getToken();
       final response = await httpClient.get(
@@ -239,9 +317,12 @@ class TimeEntryRepository {
   Future<List<TimeEntry>> getTimeEntriesByProject(String projectId) async {
     try {
       debugPrint('📋 Fetching time entries for projectId: $projectId');
+      final url = '${ServerConstant.serverURL}time_entry_management_application_function/time_entry/project/$projectId';
+      debugPrint('🌐 Time Entry URL: $url');
+      
       final token = await TokenManager.instance.getToken();
       final response = await httpClient.get(
-        Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/time_entry/project/$projectId'),
+        Uri.parse(url),
         headers: {'Authorization': 'Zoho-oauthtoken $token'},
       );
 

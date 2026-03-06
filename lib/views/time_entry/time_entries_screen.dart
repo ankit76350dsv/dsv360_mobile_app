@@ -1,18 +1,20 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../models/time_entry_model.dart';
 import '../../repositories/time_entry_repository.dart';
+import '../../providers/time_entry_provider.dart';
 import '../widgets/time_entry_card.dart';
 import '../widgets/TopBar.dart';
 import 'add_time_entry_dialog.dart';
 
-class TimeEntriesScreen extends StatefulWidget {
+class TimeEntriesScreen extends ConsumerStatefulWidget {
   final String taskId;
   final String projectId;
   final String taskName;
   final String projectName;
-  final List<TimeEntry> timeEntries;
+  final List<TimeEntry> timeEntries; // UNUSED: We fetch from providers now, kept for API compatibility
 
   const TimeEntriesScreen({
     super.key,
@@ -24,101 +26,56 @@ class TimeEntriesScreen extends StatefulWidget {
   });
 
   @override
-  State<TimeEntriesScreen> createState() => _TimeEntriesScreenState();
+  ConsumerState<TimeEntriesScreen> createState() => _TimeEntriesScreenState();
 }
 
-class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
-  late List<TimeEntry> _allEntries;
-  late List<TimeEntry> displayedEntries;
+class _TimeEntriesScreenState extends ConsumerState<TimeEntriesScreen> {
+  // late List<TimeEntry> displayedEntries; // UNUSED: Now using local variable in build method
   late TimeEntryRepository _repository;
-  bool _isLoading = true;
-  String? _error;
   
   // Filter variables
   DateTime? _fromDate;
   DateTime? _toDate;
   String? _billableFilter; // 'All', 'Billable', 'Non-Billable'
+  
+  // int _refreshKey = 0; // UNUSED: Riverpod auto-refreshes on setState
 
   @override
   void initState() {
     super.initState();
     _repository = TimeEntryRepository();
-    _allEntries = List.from(widget.timeEntries);
-    displayedEntries = List.from(_allEntries);
+    // displayedEntries = []; // UNUSED
     _billableFilter = 'All';
-    _fetchTimeEntries();
   }
 
-  Future<void> _fetchTimeEntries() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _error = null;
-      });
-      
-      debugPrint('🔍 Fetching time entries for projectId: ${widget.projectId}');
-      final entries = await _repository.getTimeEntriesByProject(widget.projectId);
-      
-      setState(() {
-        _allEntries = entries;
-        displayedEntries = List.from(_allEntries);
-        _isLoading = false;
-      });
-      
-      debugPrint('✅ Fetched ${entries.length} time entries');
-    } catch (e) {
-      debugPrint('❌ Error fetching time entries: $e');
-      setState(() {
-        _error = 'Failed to load time entries: $e';
-        _isLoading = false;
-      });
-    }
+  void _refreshEntries() {
+    setState(() {
+      // _refreshKey++; // UNUSED: Just setState is enough for Riverpod to rebuild
+    });
   }
-
-  Future<void> _applyFilters() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _error = null;
-      });
-
-      // If date filters are applied, fetch from API with date parameters
-      if (_fromDate != null || _toDate != null) {
-        debugPrint('🔍 Fetching time entries with date filter - from: $_fromDate to: $_toDate');
-        final entries = await _repository.getTimeEntriesByProjectWithDateFilter(
-          projectId: widget.projectId,
-          startDate: _fromDate,
-          endDate: _toDate,
-        );
-        
-        debugPrint('✅ Fetched ${entries.length} time entries with date filter');
-        _allEntries = entries;
+  
+  List<TimeEntry> _applyClientSideFilters(List<TimeEntry> entries) {
+    return entries.where((entry) {
+      // Only apply billable filter here (date filters are handled by API)
+      if (_billableFilter != 'All') {
+        if (_billableFilter == 'Billable' && entry.type != 'Billable') {
+          return false;
+        }
+        if (_billableFilter == 'Non-Billable' && entry.type != 'Non-Billable') {
+          return false;
+        }
       }
       
-      // Apply billable filter client-side
-      setState(() {
-        displayedEntries = _allEntries.where((entry) {
-          // Billable filter
-          if (_billableFilter != 'All') {
-            if (_billableFilter == 'Billable' && entry.type != 'Billable') {
-              return false;
-            }
-            if (_billableFilter == 'Non-Billable' && entry.type != 'Non-Billable') {
-              return false;
-            }
-          }
-          return true;
-        }).toList();
-        _isLoading = false;
-      });
-    } catch (e) {
-      debugPrint('❌ Error applying filters: $e');
-      setState(() {
-        _error = 'Failed to apply filters: $e';
-        _isLoading = false;
-      });
-    }
+      return true;
+    }).toList();
   }
+
+  // UNUSED: Riverpod automatically rebuilds when _fromDate/_toDate change
+  // void _applyFilters() {
+  //   setState(() {
+  //     // Filters will be applied in build method
+  //   });
+  // }
 
   
 
@@ -130,8 +87,6 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
       _toDate = null;
       _billableFilter = 'All';
     });
-    // Fetch all entries (without date filter)
-    _fetchTimeEntries();
   }
 
   void _showFilterDialog(BuildContext context) {
@@ -147,16 +102,14 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
         fromDate: _fromDate,
         toDate: _toDate,
         billableFilter: _billableFilter ?? 'All',
-        onApply: (fromDate, toDate, billableFilter) async {
+        onApply: (fromDate, toDate, billableFilter) {
           setState(() {
             _fromDate = fromDate;
             _toDate = toDate;
             _billableFilter = billableFilter;
           });
-          await _applyFilters();
-          if (mounted) {
-            Navigator.pop(context);
-          }
+          // _applyFilters(); // UNUSED: setState already triggers rebuild
+          Navigator.pop(context);
         },
         onClear: () {
           _clearFilters();
@@ -188,13 +141,7 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
       ),
     ).then((updatedEntry) {
       if (updatedEntry != null && updatedEntry is TimeEntry) {
-        setState(() {
-          final index = _allEntries.indexWhere((e) => e.id == entry.id);
-          if (index != -1) {
-            _allEntries[index] = updatedEntry;
-          }
-          _applyFilters();
-        });
+        _refreshEntries();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Time entry updated'),
@@ -235,10 +182,7 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
               try {
                 final success = await _repository.deleteTimeEntry(entry.id);
                 if (success) {
-                  setState(() {
-                    _allEntries.removeWhere((e) => e.id == entry.id);
-                    _applyFilters();
-                  });
+                  _refreshEntries();
                   scaffoldMessenger.showSnackBar(
                     SnackBar(
                       content: Row(
@@ -295,6 +239,43 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
+    
+    // Determine which provider to use based on taskId and date filters
+    final AsyncValue<List<TimeEntry>> timeEntriesAsync;
+    
+    if (widget.taskId.isNotEmpty) {
+      // Task-based view
+      if (_fromDate != null || _toDate != null) {
+        // With date filter
+        timeEntriesAsync = ref.watch(timeEntriesByTaskWithDateFilterProvider((
+          taskId: widget.taskId,
+          userId: null,
+          startDate: _fromDate,
+          endDate: _toDate,
+        )));
+        debugPrint('🔍 Loading task time entries WITH date filter - taskId: ${widget.taskId}, from: $_fromDate, to: $_toDate');
+      } else {
+        // Without date filter
+        timeEntriesAsync = ref.watch(timeEntriesByTaskProvider(widget.taskId));
+        debugPrint('🔍 Loading task time entries - taskId: ${widget.taskId}');
+      }
+    } else {
+      // Project-based view
+      if (_fromDate != null || _toDate != null) {
+        // With date filter
+        timeEntriesAsync = ref.watch(timeEntriesByProjectWithDateFilterProvider((
+          projectId: widget.projectId,
+          startDate: _fromDate,
+          endDate: _toDate,
+        )));
+        debugPrint('🔍 Loading project time entries WITH date filter - projectId: ${widget.projectId}, from: $_fromDate, to: $_toDate');
+      } else {
+        // Without date filter
+        timeEntriesAsync = ref.watch(timeEntriesByProjectProvider(widget.projectId));
+        debugPrint('🔍 Loading project time entries - projectId: ${widget.projectId}');
+      }
+    }
+    
     return Scaffold(
       backgroundColor: customColors.background,
       body: Column(
@@ -314,38 +295,13 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
           ),
           // Body Content
           Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
-                : _error != null
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              size: 64,
-                              color: customColors.error,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              _error!,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: customColors.error,
-                                fontSize: 18, // bodyLarge equivalent
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            ElevatedButton(
-                              onPressed: _fetchTimeEntries,
-                              child: const Text('Retry'),
-                            ),
-                          ],
-                        ),
-                      )
-                    : Column(
+            child: timeEntriesAsync.when(
+              data: (allEntries) {
+                debugPrint('✅ Loaded ${allEntries.length} time entries');
+                final displayedEntries = _applyClientSideFilters(allEntries);
+                // displayedEntries = filteredEntries; // UNUSED: Now local variable
+                
+                return Column(
                         children: [
                     // Filter Button Section
                     Padding(
@@ -421,7 +377,41 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
                             ),
                     ),
                   ],
-                ),
+                );
+              },
+              loading: () => const Center(
+                child: CircularProgressIndicator(),
+              ),
+              error: (error, stack) {
+                debugPrint('❌ Error loading time entries: $error');
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: customColors.error,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Failed to load time entries: $error',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: customColors.error,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: _refreshEntries,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
