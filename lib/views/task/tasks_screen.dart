@@ -310,9 +310,13 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   @override
   Widget build(BuildContext context) {
     final userId = ref.watch(currentUserIdProvider);
-    final tasksAsync = ref.watch(tasksListRepositoryProvider(userId));
     final searchQuery = ref.watch(tasksSearchQueryProvider);
     final customColors = Theme.of(context).custom;
+
+    // Smart provider selection: Use project provider if projectId exists, otherwise user provider
+    final tasksAsync = widget.projectId != null && widget.projectId!.isNotEmpty
+        ? ref.watch(tasksByProjectProvider(widget.projectId!))
+        : ref.watch(tasksListRepositoryProvider(userId));
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -367,15 +371,11 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           Expanded(
             child: tasksAsync.when(
               data: (tasks) {
-                // Filter by project first if projectId is provided
-                final projectFilteredTasks = widget.projectId != null && widget.projectId!.isNotEmpty
-                    ? tasks.where((task) => task.projectId == widget.projectId).toList()
-                    : tasks;
-
-                // Then filter based on search query
+                // Tasks are already filtered by project if projectId was provided
+                // Only apply search filter here
                 final filteredTasks = searchQuery.isEmpty
-                    ? projectFilteredTasks
-                    : projectFilteredTasks.where((task) {
+                    ? tasks
+                    : tasks.where((task) {
                         return task.taskName.toLowerCase().contains(
                               searchQuery.toLowerCase(),
                             ) ||

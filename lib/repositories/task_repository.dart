@@ -64,40 +64,70 @@ class TasksListRepository extends _$TasksListRepository {
         // Manager gets tasks by projects - need to fetch all manager's projects first
         debugPrint("📋 Manager detected - fetching projects first");
 
+        final token = await TokenManager.instance.getToken();
+        
         // Fetch manager's projects
         final projectsUrl =
             '${ServerConstant.serverURL}time_entry_management_application_function/projects/$userId';
-        final projectsResponse = await http.get(Uri.parse(projectsUrl));
+        debugPrint('🔐 Fetching projects for manager: $projectsUrl');
+        
+        final projectsResponse = await http.get(
+          Uri.parse(projectsUrl),
+          headers: {'Authorization': 'Zoho-oauthtoken $token'},
+        );
+
+        debugPrint('📊 Projects Response Status: ${projectsResponse.statusCode}');
+        debugPrint('📊 Projects Response Body: ${projectsResponse.body}');
 
         if (projectsResponse.statusCode == 200) {
           final projectsJson = json.decode(projectsResponse.body);
           if (projectsJson['success'] == true) {
             final List<dynamic> projectsData = projectsJson['data'] ?? [];
+            debugPrint('📊 Manager has ${projectsData.length} projects');
 
             // Collect all tasks from all manager's projects
             List<Task> allTasks = [];
 
             for (var projectItem in projectsData) {
-              // Extract project data (it's wrapped in "Projects" key)
-              final projectData = projectItem['Projects'];
-              final projectId = projectData['ROWID']?.toString() ?? '';
+              try {
+                // Extract project data (it's wrapped in "Projects" key)
+                final projectData = projectItem['Projects'];
+                final projectId = projectData['ROWID']?.toString() ?? '';
+                final projectName = projectData['Project_Name']?.toString() ?? 'Unknown';
 
-              if (projectId.isNotEmpty) {
-                debugPrint("📋 Fetching tasks for project: $projectId");
+                debugPrint("📋 Processing project: $projectName (ID: $projectId)");
+
+                if (projectId.isNotEmpty) {
+                  debugPrint("📋 Fetching tasks for project: $projectId");
 
                 // Fetch tasks for this project using POST /tasks/project
                 final tasksUrl =
                     '${ServerConstant.serverURL}time_entry_management_application_function/tasks/project';
                 final tasksResponse = await http.post(
                   Uri.parse(tasksUrl),
-                  headers: {'Content-Type': 'application/json'},
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Zoho-oauthtoken $token',
+                  },
                   body: json.encode({'projectID': projectId}),
                 );
 
+                debugPrint('📊 Tasks Response for project $projectId: ${tasksResponse.statusCode}');
+
                 if (tasksResponse.statusCode == 200) {
                   final tasks = _parseTasks(tasksResponse);
+                  debugPrint('📊 Found ${tasks.length} tasks for project $projectId');
                   allTasks.addAll(tasks);
+                } else {
+                  debugPrint('❌ Failed to fetch tasks for project $projectId: ${tasksResponse.statusCode}');
+                  debugPrint('❌ Response body: ${tasksResponse.body}');
                 }
+                } else {
+                  debugPrint('⚠️ Skipping project with empty ID');
+                }
+              } catch (e) {
+                debugPrint('❌ Error processing project: $e');
+                debugPrint('❌ Project item: $projectItem');
               }
             }
 
@@ -105,10 +135,17 @@ class TasksListRepository extends _$TasksListRepository {
               "📊 Total tasks fetched for manager: ${allTasks.length}",
             );
             return allTasks;
+          } else {
+            debugPrint('❌ Projects API returned success=false for manager');
+            return [];
           }
+        } else {
+          debugPrint('❌ Failed to fetch projects for manager: ${projectsResponse.statusCode}');
+          debugPrint('❌ Response body: ${projectsResponse.body}');
+          return [];
         }
 
-        // Fallback if projects fetch fails
+        // Fallback if projects fetch fails (shouldn't reach here now)
         return [];
       } else {
         // Regular users get only their assigned tasks
@@ -221,11 +258,16 @@ class TasksListRepository extends _$TasksListRepository {
   /// 2.3 Get Tasks by Project
   Future<List<Task>> fetchTasksByProject(String projectID) async {
     try {
+      final token = await TokenManager.instance.getToken();
       final url =
           '${ServerConstant.serverURL}time_entry_management_application_function/tasks/project';
+      debugPrint('🔐 Fetching tasks for project: $projectID');
       final response = await http.post(
         Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Zoho-oauthtoken $token',
+        },
         body: json.encode({"projectID": projectID}),
       );
       debugPrint("Response From fetchTasksByProject: ${response.statusCode}");
@@ -255,10 +297,15 @@ class TasksListRepository extends _$TasksListRepository {
     String userId,
   ) async {
     try {
+      final token = await TokenManager.instance.getToken();
       final uri = Uri.parse(
         '${ServerConstant.serverURL}time_entry_management_application_function/taskByProjectAndUser',
       ).replace(queryParameters: {"projectId": projectId, "userId": userId});
-      final response = await http.get(uri);
+      debugPrint('🔐 Fetching tasks for project: $projectId, user: $userId');
+      final response = await http.get(
+        uri,
+        headers: {'Authorization': 'Zoho-oauthtoken $token'},
+      );
       debugPrint(
         "Response From fetchTasksByProjectAndUser: ${response.statusCode}",
       );
