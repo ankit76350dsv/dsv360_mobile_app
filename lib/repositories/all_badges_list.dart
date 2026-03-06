@@ -5,8 +5,8 @@ import 'package:dsv360/models/dsvbadge.dart';
 class AllDSVBadgesList extends AsyncNotifier<List<DSVBadge>> {
   @override
   FutureOr<List<DSVBadge>> build() async {
-    // TODO: implement build
-    return fetchAllDSVBadgesList(isInitial: true) ?? [];
+    //todo : implement build
+    return fetchAllDSVBadgesList(isInitial: true);
   }
 
   FutureOr<List<DSVBadge>> fetchAllDSVBadgesList({bool isInitial = false}) async {

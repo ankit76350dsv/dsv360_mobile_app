@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dsv360/models/task.dart';
 import 'package:dsv360/repositories/task_repository.dart';
-import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 
 // Provider to get the current user's ID from AuthManager (more reliable)

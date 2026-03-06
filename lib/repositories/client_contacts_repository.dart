@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class ClientContactsRepository extends AsyncNotifier<List<ClientContacts>> {
   @override
   Future<List<ClientContacts>> build() async {
-    return fetchClientContactsList(isInitial: true) ?? [];
+    return fetchClientContactsList(isInitial: true);
   }
 
   Future<List<ClientContacts>> fetchClientContactsList({

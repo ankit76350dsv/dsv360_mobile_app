@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer' as developer;
-import 'dart:io';
+//import 'dart:io';
 
 import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+//import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:http/http.dart' as http;
 import 'package:dsv360/core/constants/auth_manager.dart';
@@ -126,7 +126,7 @@ class TasksListRepository extends _$TasksListRepository {
 
         return _parseTasks(response);
       }
-    } catch (e, st) {
+    } catch (e) {
       developer.log("Error fetching tasks: $e", name: "TasksListRepository");
       // Return empty list as fallback if endpoint is not available
       debugPrint("⚠️ Tasks endpoint not available. Returning empty list.");
@@ -209,7 +209,7 @@ class TasksListRepository extends _$TasksListRepository {
         }
       }
       return [];
-    } catch (e, st) {
+    } catch (e) {
       developer.log(
         "Error fetching all tasks: $e",
         name: "TasksListRepository",
@@ -240,7 +240,7 @@ class TasksListRepository extends _$TasksListRepository {
         }
       }
       return [];
-    } catch (e, st) {
+    } catch (e) {
       developer.log(
         "Error fetching tasks by project: $e",
         name: "TasksListRepository",
@@ -273,7 +273,7 @@ class TasksListRepository extends _$TasksListRepository {
         }
       }
       return [];
-    } catch (e, st) {
+    } catch (e) {
       developer.log(
         "Error fetching tasks by project and user: $e",
         name: "TasksListRepository",
@@ -511,8 +511,7 @@ class TasksListRepository extends _$TasksListRepository {
       debugPrint("❌ Multipart request failed: $e");
       debugPrint("📍 Stack Trace: $st");
       rethrow;
-      developer.log("Error creating task: $e", name: "TasksListRepository");
-      throw AsyncError(e, st);
+      
     }
   }
 

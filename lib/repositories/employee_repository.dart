@@ -115,7 +115,7 @@ class EmployeeRepository {
         debugPrint('❌ HTTP Error ${response.statusCode}');
         return null;
       }
-    } catch (e, st) {
+    } catch (e) {
       debugPrint('❌ Error fetching employee: $e');
       developer.log('Error fetching employee: $e', name: 'EmployeeRepository');
       return null;
@@ -153,7 +153,7 @@ class EmployeeRepository {
         debugPrint('❌ HTTP Error ${response.statusCode}');
         return [];
       }
-    } catch (e, st) {
+    } catch (e) {
       debugPrint('❌ Error fetching unassigned employees: $e');
       developer.log(
         'Error fetching unassigned employees: $e',

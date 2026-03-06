@@ -5,11 +5,11 @@ import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/accounts.dart';
 import 'package:dsv360/repositories/accounts_list_repository.dart';
-import 'package:dsv360/repositories/active_user_repository.dart';
-import 'package:dsv360/views/accounts/add_edit_accounts_page.dart';
+//import 'package:dsv360/repositories/active_user_repository.dart';
+//import 'package:dsv360/views/accounts/add_edit_accounts_page.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
-import 'package:dsv360/views/notifications/notification_page.dart';
+//import 'package:dsv360/views/notifications/notification_page.dart';
 import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:flutter/gestures.dart';
@@ -141,7 +141,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                         borderSide: BorderSide(
-                          color: Colors.grey.withOpacity(0.2),
+                          color: Colors.grey.shade600,
                           width: 1.5,
                         ),
                       ),
@@ -215,7 +215,8 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final customColors = theme.custom;
-    final activeUser = ref.watch(activeUserRepositoryProvider);
+    //never used
+   //final activeUser = ref.watch(activeUserRepositoryProvider);
 
     return GestureDetector(
       onTap: () {},
@@ -393,7 +394,7 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
               onPressed: () {
                 try {
                   ref.invalidate(accountsListRepositoryProvider);
-                } catch (e, st) {}
+                } catch (e) {}
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor: theme.colorScheme.primary,
@@ -405,7 +406,7 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                // TODO: call delete API here
+                // todo : call delete API here
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.error,

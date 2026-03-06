@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer' as developer;
 
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/models/attendance_detail.dart';
