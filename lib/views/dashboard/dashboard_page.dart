@@ -117,7 +117,9 @@ class _DashboardScaffold extends ConsumerWidget {
               data: (dashboard) {
                 return RefreshIndicator(
                   onRefresh: () async {
-                    // Refetch data
+                    // Refresh page stats + both chart cards independently.
+                    ref.invalidate(taskStatusDataProvider);
+                    ref.invalidate(projectAnalyticsDataProvider);
                     return await ref.refresh(dashboardDataProvider.future);
                   },
                   child: Center(
@@ -175,31 +177,23 @@ class _DashboardScaffold extends ConsumerWidget {
                                           children: [
                                             Expanded(
                                               flex: 2,
-                                              child: ProjectAnalyticsCard(
-                                                monthData: dashboard
-                                                    .yearMonthwiseUserProjects,
-                                              ),
+                                              // No monthData param — card fetches its own data.
+                                              child: ProjectAnalyticsCard(),
                                             ),
                                             const SizedBox(width: 12),
                                             Expanded(
                                               flex: 1,
-                                              child: TaskStatusCard(
-                                                taskData:
-                                                    dashboard.yearTaskData,
-                                              ),
+                                              // No taskData param — card fetches its own data.
+                                              child: TaskStatusCard(),
                                             ),
                                           ],
                                         )
                                       : Column(
                                           children: [
-                                            ProjectAnalyticsCard(
-                                              monthData: dashboard
-                                                  .yearMonthwiseUserProjects,
-                                            ),
+                                            // No monthData/taskData params — cards self-fetch.
+                                            ProjectAnalyticsCard(),
                                             const SizedBox(height: 12),
-                                            TaskStatusCard(
-                                              taskData: dashboard.yearTaskData,
-                                            ),
+                                            TaskStatusCard(),
                                           ],
                                         ),
                                 ),

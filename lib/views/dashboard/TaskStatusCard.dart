@@ -1,21 +1,31 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/models/dashboard_model.dart';
+import 'package:dsv360/providers/dashboard_provider.dart'; // for selectedYearProvider
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-// import 'package:dsv360/core/constants/app_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // ConsumerWidget + WidgetRef
 
-class TaskStatusCard extends StatelessWidget {
-  final YearTaskData taskData;
-
-  const TaskStatusCard({super.key, required this.taskData});
+// Changed StatelessWidget → ConsumerWidget so we can read/write selectedYearProvider.
+class TaskStatusCard extends ConsumerWidget {
+  // No taskData param — the card fetches its own data via taskStatusDataProvider.
+  const TaskStatusCard({super.key});
 
  
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final height = MediaQuery.of(context).size.height * 0.28;
     final customColors = Theme.of(context).custom;
-   
+
+    // Read the currently selected year.
+    final selectedYear = ref.watch(selectedYearProvider);
+
+    // Build selectable year list: current year + 2 years back (e.g. 2026, 2025 … 2022).
+    final currentYear = DateTime.now().year;
+    final years = List.generate(2, (i) => currentYear - i);
+
+    // Watch the task-specific provider — only this card rebuilds when year changes.
+    final taskAsync = ref.watch(taskStatusDataProvider);
 
     return Card(
       elevation: 0,
@@ -38,14 +48,43 @@ class TaskStatusCard extends StatelessWidget {
                   color: customColors.textPrimary,
                 ),
               ),
-              trailing: Icon(
-                Icons.filter_list,
-                color: customColors.textPrimary!.withOpacity(0.6),
+              // Replaced the static filter icon with a PopupMenuButton.
+              // Tapping it shows year options; picking one writes to
+              // selectedYearProvider → dashboardDataProvider re-fetches automatically.
+              trailing: PopupMenuButton<int>(
+                initialValue: selectedYear,
+                onSelected: (year) =>
+                    ref.read(selectedYearProvider.notifier).state = year,
+                itemBuilder: (_) => years
+                    .map((y) => PopupMenuItem(value: y, child: Text('$y')))
+                    .toList(),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$selectedYear',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: customColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Icon(
+                      Icons.arrow_drop_down,
+                      color: customColors.textPrimary!.withValues(alpha: 0.6),
+                    ),
+                  ],
+                ),
               ),
             ),
             ConstrainedBox(
               constraints: BoxConstraints(maxHeight: height, minHeight: 140),
-              child: TaskStatusContent(taskData: taskData),
+              // when() renders loader/error/data inline — page is never touched.
+              child: taskAsync.when(
+                data: (taskData) => TaskStatusContent(taskData: taskData),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => const Center(child: Text('Failed to load')),
+              ),
             ),
           ],
         ),
@@ -174,7 +213,7 @@ class _LegendDot extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
           ),
         ),
       ],

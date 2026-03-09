@@ -4,8 +4,6 @@ import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/constants/token_manager.dart';
-import 'package:dsv360/core/services/auth_service.dart';
-
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/views/projects/projects_screen.dart';

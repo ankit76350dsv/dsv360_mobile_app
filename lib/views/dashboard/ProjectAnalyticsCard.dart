@@ -1,18 +1,30 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/models/dashboard_model.dart';
+import 'package:dsv360/providers/dashboard_provider.dart'; // for selectedProjectYearProvider
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // ConsumerWidget + WidgetRef
 // import 'package:dsv360/core/constants/app_colors.dart';
 
-class ProjectAnalyticsCard extends StatelessWidget {
-  final List<YearMonthProjectData> monthData;
-
-  const ProjectAnalyticsCard({super.key, required this.monthData});
+// Changed StatelessWidget → ConsumerWidget to support its own year picker.
+// No monthData param — the card fetches its own data via projectAnalyticsDataProvider.
+class ProjectAnalyticsCard extends ConsumerWidget {
+  const ProjectAnalyticsCard({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // constrain chart height so it doesn't overflow on small devices
     final chartHeight = MediaQuery.of(context).size.height * 0.35;
     final customColors = Theme.of(context).custom;
+
+    // Read the analytics card's own selected year.
+    final selectedYear = ref.watch(selectedProjectYearProvider);
+
+    // Same year list as TaskStatusCard.
+    final currentYear = DateTime.now().year;
+    final years = List.generate(2, (i) => currentYear - i);
+
+    // Watch analytics-specific provider — only this card rebuilds when year changes.
+    final analyticsAsync = ref.watch(projectAnalyticsDataProvider);
 
     return Card(
       elevation: 0,
@@ -26,7 +38,7 @@ class ProjectAnalyticsCard extends StatelessWidget {
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(
                 backgroundColor: customColors.inputFill,
-                child: Icon(Icons.bar_chart, color: customColors.textPrimary,),
+                child: Icon(Icons.bar_chart, color: customColors.textPrimary),
               ),
               title: Text(
                 'Project Analytics',
@@ -35,24 +47,58 @@ class ProjectAnalyticsCard extends StatelessWidget {
                   color: customColors.textPrimary,
                 ),
               ),
-              trailing: Icon(Icons.filter_list, color: customColors.textSecondary),
+              // Same PopupMenuButton pattern as TaskStatusCard — writes to selectedProjectYearProvider.
+              trailing: PopupMenuButton<int>(
+                initialValue: selectedYear,
+                onSelected: (year) =>
+                    ref.read(selectedProjectYearProvider.notifier).state = year,
+                itemBuilder: (_) => years
+                    .map((y) => PopupMenuItem(value: y, child: Text('$y')))
+                    .toList(),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '$selectedYear',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: customColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Icon(
+                      Icons.arrow_drop_down,
+                      color: customColors.textSecondary,
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 8),
-            Container(
-              height: chartHeight,
-              child: ListView.separated(
-                itemCount: monthData.length, // Should be 12
-                separatorBuilder: (ctx, i) =>
-                    Divider(color: customColors.divider),
-                itemBuilder: (context, index) {
-                  // Ensure we don't go out of bounds if API returns fewer items
-                  if (index >= monthData.length) return const SizedBox.shrink();
-                  // API data might be index 0 = Jan? It's a list. Prompt shows 12 items.
-                  return _MonthAnalyticsRow(
-                    monthIndex: index,
-                    data: monthData[index],
-                  );
-                },
+            // when() renders loader/error/data inline — page is never touched.
+            analyticsAsync.when(
+              data: (monthData) => SizedBox(
+                height: chartHeight,
+                child: ListView.separated(
+                  itemCount: monthData.length,
+                  separatorBuilder: (ctx, i) =>
+                      Divider(color: customColors.divider),
+                  itemBuilder: (context, index) {
+                    if (index >= monthData.length) return const SizedBox.shrink();
+                    return _MonthAnalyticsRow(
+                      monthIndex: index,
+                      data: monthData[index],
+                    );
+                  },
+                ),
+              ),
+              loading: () => SizedBox(
+                height: chartHeight,
+                child: const Center(child: CircularProgressIndicator()),
+              ),
+              error: (e, _) => const SizedBox(
+                height: 80,
+                child: Center(child: Text('Failed to load')),
               ),
             ),
             const SizedBox(height: 8),
@@ -60,9 +106,9 @@ class ProjectAnalyticsCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _LegendDot(color: customColors.statusCompleted!, label: 'Open'),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 _LegendDot(color: customColors.statusInProgress!, label: 'Working'),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 _LegendDot(color: customColors.error!, label: 'Closed'),
               ],
             ),
@@ -184,7 +230,7 @@ class _HorizontalBar extends StatelessWidget {
           '${value.toInt()}',
           style: TextStyle(
             fontSize: 10,
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
           ),
         ),
       ],

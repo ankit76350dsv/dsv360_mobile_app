@@ -3,7 +3,6 @@ class Task {
   final String taskId;
   final String description;
   final String status;
-
   final String projectId;
   final String projectName;
   final String assignedTo;
