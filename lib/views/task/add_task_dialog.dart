@@ -235,8 +235,9 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
 
   String _getFileType(String extension) {
     extension = extension.toLowerCase();
-    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].contains(extension))
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp'].contains(extension)) {
       return 'image';
+    }
     if (extension == 'pdf') return 'pdf';
     if (['doc', 'docx'].contains(extension)) return 'document';
     if (['xlsx', 'xls'].contains(extension)) return 'spreadsheet';

@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../models/task.dart';
 import '../../models/attachment.dart';
-import '../../core/constants/auth_manager.dart';
 import '../time_entry/add_time_entry_dialog.dart';
 import '../widgets/custom_search_bar.dart';
 import '../widgets/generic_card.dart';

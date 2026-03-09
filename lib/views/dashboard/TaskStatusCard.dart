@@ -4,6 +4,7 @@ import 'package:dsv360/providers/dashboard_provider.dart'; // for selectedYearPr
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // ConsumerWidget + WidgetRef
+import '../widgets/custom_popup_dropdown.dart';
 
 // Changed StatelessWidget → ConsumerWidget so we can read/write selectedYearProvider.
 class TaskStatusCard extends ConsumerWidget {
@@ -48,32 +49,20 @@ class TaskStatusCard extends ConsumerWidget {
                   color: customColors.textPrimary,
                 ),
               ),
-              // Replaced the static filter icon with a PopupMenuButton.
-              // Tapping it shows year options; picking one writes to
-              // selectedYearProvider → dashboardDataProvider re-fetches automatically.
-              trailing: PopupMenuButton<int>(
-                initialValue: selectedYear,
-                onSelected: (year) =>
-                    ref.read(selectedYearProvider.notifier).state = year,
-                itemBuilder: (_) => years
-                    .map((y) => PopupMenuItem(value: y, child: Text('$y')))
-                    .toList(),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '$selectedYear',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: customColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    Icon(
-                      Icons.arrow_drop_down,
-                      color: customColors.textPrimary!.withValues(alpha: 0.6),
-                    ),
-                  ],
+              // CustomPopupDropdown replaces the old PopupMenuButton — same year logic, new themed UI.
+              trailing: SizedBox(
+                width: 110,
+                child: CustomPopupDropdown(
+                  value: selectedYear.toString(),
+                  hint: 'Year',
+                  items: years.map((y) => y.toString()).toList(),
+                  icon: Icons.calendar_today,
+                  iconSize: 18,
+                  onChanged: (v) {
+                    if (v != null) {
+                      ref.read(selectedYearProvider.notifier).state = int.parse(v);
+                    }
+                  },
                 ),
               ),
             ),

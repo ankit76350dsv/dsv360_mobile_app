@@ -3,6 +3,7 @@ import 'package:dsv360/models/dashboard_model.dart';
 import 'package:dsv360/providers/dashboard_provider.dart'; // for selectedProjectYearProvider
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // ConsumerWidget + WidgetRef
+import '../widgets/custom_popup_dropdown.dart'; // themed year picker
 // import 'package:dsv360/core/constants/app_colors.dart';
 
 // Changed StatelessWidget → ConsumerWidget to support its own year picker.
@@ -47,31 +48,21 @@ class ProjectAnalyticsCard extends ConsumerWidget {
                   color: customColors.textPrimary,
                 ),
               ),
-              // Same PopupMenuButton pattern as TaskStatusCard — writes to selectedProjectYearProvider.
-              trailing: PopupMenuButton<int>(
-                initialValue: selectedYear,
-                onSelected: (year) =>
-                    ref.read(selectedProjectYearProvider.notifier).state = year,
-                itemBuilder: (_) => years
-                    .map((y) => PopupMenuItem(value: y, child: Text('$y')))
-                    .toList(),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '$selectedYear',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: customColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: 2),
-                    Icon(
-                      Icons.arrow_drop_down,
-                      color: customColors.textSecondary,
-                    ),
-                  ],
-                ),
+              // CustomPopupDropdown replaces the old PopupMenuButton — same year logic, new themed UI.
+              trailing: SizedBox(
+                width: 110,
+                child: CustomPopupDropdown(
+                  value: selectedYear.toString(),
+                  hint: 'Year',
+                  items: years.map((y) => y.toString()).toList(),
+                  icon: Icons.calendar_today,
+                  iconSize: 18,
+                  onChanged: (v) {
+                    if (v != null) {
+                      ref.read(selectedProjectYearProvider.notifier).state = int.parse(v);
+                    }
+                  },
+                ), 
               ),
             ),
             const SizedBox(height: 8),
