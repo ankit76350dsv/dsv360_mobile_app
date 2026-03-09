@@ -298,13 +298,13 @@ class ProfilePage extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 16),
                                 // Dynamic Skills Parsing
-                                if (userProfile?.skills != null && userProfile!.skills!.isNotEmpty)
+                                if (userProfile?.skills != null && userProfile!.skills.isNotEmpty)
                                   Wrap(
                                     spacing: 12,
                                     runSpacing: 12,
-                                    children: (userProfile!.skills!.contains(',') 
-                                            ? userProfile!.skills!.split(',') 
-                                            : [userProfile!.skills!])
+                                    children: (userProfile.skills.contains(',') 
+                                            ? userProfile.skills.split(',') 
+                                            : [userProfile.skills])
                                         .map((skill) => _buildSkillChip(
                                               skill.trim(),
                                               customColors.textSecondary!,
@@ -470,9 +470,9 @@ class ProfilePage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.2),
+        color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

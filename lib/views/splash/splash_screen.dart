@@ -3,7 +3,6 @@ import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
-import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/models/active_user.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
@@ -103,31 +102,46 @@ class _SplashScreenState extends ConsumerState<ConsumerStatefulWidget>
     return Scaffold(
       body: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
+            SizedBox(width: 10,),
             FadeTransition(
               opacity: _fadeAnimation,
-              child: Image.asset(
-                'assets/images/FI_logo.png',
-                width: 150,
-                height: 150,
+              child: Column(
+                children: [
+                  Image.asset(
+                    'assets/images/FI_logo.png',
+                    width: 150,
+                    height: 150,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                      'DSV360',
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: customColors.logoColor,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
+            
             SlideTransition(
               position: _slideAnimation,
               child: FadeTransition(
                 opacity: _fadeAnimation,
-                child: Text(
-                  'DSV360',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: customColors.logoColor,
-                    letterSpacing: 1.2,
-                  ),
+                child: Column(
+                  
+                  children: [
+                    
+                    Image.asset("assets/images/bottomSplashScreen.png",width: 100,),
+                  ],
                 ),
               ),
             ),
+
+
           ],
         ),
       ),
