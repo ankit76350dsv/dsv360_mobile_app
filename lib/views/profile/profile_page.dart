@@ -376,8 +376,57 @@ class ProfilePage extends StatelessWidget {
                             width: double.infinity,
                             child: ElevatedButton.icon(
                               onPressed: () async {
-                                await AppInitManager.instance.catalystApp
-                                    .logout();
+                                // Show same themed confirmation dialog as AppDrawer.
+                                final confirmed = await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) {
+                                    final dc = Theme.of(ctx).custom;
+                                    return AlertDialog(
+                                      backgroundColor: dc.cardBackground,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      title: Text(
+                                        'Logout',
+                                        style: TextStyle(
+                                          color: dc.textPrimary,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      content: Text(
+                                        'Are you sure you want to logout?',
+                                        style: TextStyle(
+                                          color: dc.textSecondary,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.of(ctx).pop(false),
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: Colors.grey,
+                                          ),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.of(ctx).pop(true),
+                                          style: TextButton.styleFrom(
+                                            foregroundColor: dc.error,
+                                          ),
+                                          child: const Text(
+                                            'Logout',
+                                            style: TextStyle(fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+
+                                if (confirmed != true) return;
+
+                                await AppInitManager.instance.catalystApp.logout();
                                 if (context.mounted) {
                                   Navigator.of(context).pushAndRemoveUntil(
                                     MaterialPageRoute(
