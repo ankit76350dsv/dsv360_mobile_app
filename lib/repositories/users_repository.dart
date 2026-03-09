@@ -16,7 +16,7 @@ class UsersRepository extends AsyncNotifier<List<UsersModel>> {
   Future<List<UsersModel>> fetchUsersBatchProfile() async {
     try {
       // Send the list to batchProfile to get full details
-      final batchResponse = await DioClient.instance.post(
+      final batchResponse = await ApiClient.instance.post(
         'time_entry_management_application_function/batchProfile',
       );
       debugPrint("Batch Response: $batchResponse");

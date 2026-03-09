@@ -18,7 +18,7 @@ class UserStatusRepository extends AutoDisposeAsyncNotifier<UserCheckInStatus> {
 
   Future<UserCheckInStatus> fetchStatus(String userId) async {
     try {
-      final response = await DioClient.instance.get(
+      final response = await ApiClient.instance.get(
         'time_entry_management_application_function/status/$userId',
       );
       debugPrint("Response From UserStatusRepository: $response");

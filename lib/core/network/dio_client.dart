@@ -4,13 +4,13 @@ import 'package:dsv360/core/constants/token_manager.dart';
 // import 'package:esd_mobile_app/core/constants/token_manager.dart';
 import 'package:flutter/material.dart';
 
-class DioClient {
-  static final DioClient _instance = DioClient._internal();
-  static DioClient get instance => _instance;
+class ApiClient {
+  static final ApiClient _instance = ApiClient._internal();
+  static ApiClient get instance => _instance;
 
   late final Dio _dio = Dio();
 
-  DioClient._internal() {
+  ApiClient._internal() {
     _dio.options.baseUrl = ServerConstant.serverURL;
     // Maximum time Dio will wait to establish a connection.
     _dio.options.connectTimeout = const Duration(seconds: 10);
@@ -74,8 +74,8 @@ class DioClient {
         options: options,
       );
 
-      debugPrint("DioClient response: ${response.data}");
-      debugPrint("DioClient response: ${response.statusCode}");
+      debugPrint("ApiClientresponse: ${response.data}");
+      debugPrint("ApiClientresponse: ${response.statusCode}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response;
@@ -197,8 +197,8 @@ class DioClient {
         data: data, // optional body (some APIs need this)
       );
 
-      // debugPrint("DioClient response: ${response.data}");
-      // debugPrint("DioClient response code: ${response.statusCode}");
+      // debugPrint("ApiClient response: ${response.data}");
+      // debugPrint("ApiClient response code: ${response.statusCode}");
 
       if (response.statusCode == 200 || response.statusCode == 204) {
         return response;

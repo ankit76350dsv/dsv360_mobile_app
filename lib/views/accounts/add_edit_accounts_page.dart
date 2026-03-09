@@ -236,13 +236,13 @@ class _AddEditAccountsPageState extends ConsumerState<AddEditAccountsPage> {
                           try {
                             if (isEditing) {
                               // UPDATE ACCOUNTS (example)
-                              await DioClient.instance.post(
+                              await ApiClient.instance.post(
                                 '/server/time_entry_management_application_function//updateClient/${widget.account!.rowId}',
                                 data: body,
                               );
                             } else {
                               // ADD ACCOUNTS
-                              await DioClient.instance.post(
+                              await ApiClient.instance.post(
                                 '/server/time_entry_management_application_function/createClient',
                                 data: body,
                               );

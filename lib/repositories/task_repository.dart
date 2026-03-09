@@ -1,23 +1,27 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:developer' as developer;
-//import 'dart:io';
-
-import 'package:dsv360/core/constants/token_manager.dart';
+import 'package:dio/dio.dart'; // needed only for FormData and MultipartFile (file uploads)
+import 'package:dsv360/core/network/dio_client.dart';// single import — no raw Dio or TokenManager needed
 import 'package:flutter/material.dart';
-//import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:http/http.dart' as http;
 import 'package:dsv360/core/constants/auth_manager.dart';
-import 'package:dsv360/core/constants/server_constant.dart';
 import 'package:dsv360/core/constants/environment.dart';
 import 'package:dsv360/models/task.dart';
 import 'package:dsv360/models/attachment.dart';
-
 part 'task_repository.g.dart';
+
+// ---------------------------------------------------------------------------
+// How this repository uses ApiClient:
+//   - ApiClient.instance is the shared singleton defined in api_client.dart.
+//   - The base URL and Authorization header are handled inside ApiClient,
+//     so this file only passes relative paths and query/body parameters.
+// ---------------------------------------------------------------------------
 
 @riverpod
 class TasksListRepository extends _$TasksListRepository {
+
+  // Use the centralized client — no manual Dio, no manual token injection.
+  final _client = ApiClient.instance;
   @override
   Future<List<Task>> build(String userId) async {
     return fetchTasks(userId);
@@ -25,6 +29,7 @@ class TasksListRepository extends _$TasksListRepository {
 
   /// 2.2 Get Tasks by Employee (Current implementation) or All Tasks if Admin
   Future<List<Task>> fetchTasks(String userId) async {
+
     try {
       // Check if user is Admin or Manager to determine which endpoint to use
       final user = AuthManager.instance.currentUser;
@@ -43,34 +48,28 @@ class TasksListRepository extends _$TasksListRepository {
       );
 
       if (isAdmin) {
-        // Admin gets all tasks
-        String url =
-            '${ServerConstant.serverURL}time_entry_management_application_function/tasks';
+        // Admin gets all tasks — relative path, token injected automatically.
+        const adminPath = 'time_entry_management_application_function/tasks';
 
-        final token = await TokenManager.instance.getToken();
-        debugPrint('🔐 Token in Production: ${token?.substring(0, 20)}...');
         debugPrint('🔐 Full Environment: ${ENVIRONMENT.environment}');
         debugPrint('🔐 Current User: ${user?.firstName} ${user?.lastName}');
         debugPrint('🔐 User Role: ${user?.role?.name}');
-        final response = await http.get(
-          Uri.parse(url),
-          headers: {'Authorization': 'Zoho-oauthtoken $token'},
-        );
+        final response = await _client.get(adminPath);
         debugPrint("Response From fetchTasks - Status: ${response.statusCode}");
-        debugPrint("📊 Task API Response Body: ${response.body}");
+        debugPrint("📊 Task API Response Body: ${response.data}");
 
         return _parseTasks(response);
       } else if (isManager) {
         // Manager gets tasks by projects - need to fetch all manager's projects first
         debugPrint("📋 Manager detected - fetching projects first");
 
-        // Fetch manager's projects
-        final projectsUrl =
-            '${ServerConstant.serverURL}time_entry_management_application_function/projects/$userId';
-        final projectsResponse = await http.get(Uri.parse(projectsUrl));
+        // Fetch manager's projects — relative path, token injected automatically.
+        final projectsPath =
+            'time_entry_management_application_function/projects/$userId';
+        final projectsResponse = await _client.get(projectsPath);
 
         if (projectsResponse.statusCode == 200) {
-          final projectsJson = json.decode(projectsResponse.body);
+          final projectsJson = projectsResponse.data as Map<String, dynamic>; // response.data, no json.decode
           if (projectsJson['success'] == true) {
             final List<dynamic> projectsData = projectsJson['data'] ?? [];
 
@@ -85,13 +84,12 @@ class TasksListRepository extends _$TasksListRepository {
               if (projectId.isNotEmpty) {
                 debugPrint("📋 Fetching tasks for project: $projectId");
 
-                // Fetch tasks for this project using POST /tasks/project
-                final tasksUrl =
-                    '${ServerConstant.serverURL}time_entry_management_application_function/tasks/project';
-                final tasksResponse = await http.post(
-                  Uri.parse(tasksUrl),
-                  headers: {'Content-Type': 'application/json'},
-                  body: json.encode({'projectID': projectId}),
+                // Fetch tasks for this project — relative path, token injected automatically.
+                const tasksPath =
+                    'time_entry_management_application_function/tasks/project';
+                final tasksResponse = await _client.post(
+                  tasksPath,
+                  data: {'projectID': projectId},
                 );
 
                 if (tasksResponse.statusCode == 200) {
@@ -111,18 +109,14 @@ class TasksListRepository extends _$TasksListRepository {
         // Fallback if projects fetch fails
         return [];
       } else {
-        // Regular users get only their assigned tasks
-        final url =
-            '${ServerConstant.serverURL}time_entry_management_application_function/tasks/employee/$userId';
-        debugPrint("📋 User endpoint: $url");
+        // Regular users get only their assigned tasks — relative path, token injected automatically.
+        final userPath =
+            'time_entry_management_application_function/tasks/employee/$userId';
+        debugPrint("📋 User path: $userPath");
 
-        final token = await TokenManager.instance.getToken();
-        final response = await http.get(
-          Uri.parse(url),
-          headers: {'Authorization': 'Zoho-oauthtoken $token'},
-        );
+        final response = await _client.get(userPath);
         debugPrint("Response From fetchTasks - Status: ${response.statusCode}");
-        debugPrint("📊 Task API Response Body: ${response.body}");
+        debugPrint("📊 Task API Response Body: ${response.data}");
 
         return _parseTasks(response);
       }
@@ -138,9 +132,9 @@ class TasksListRepository extends _$TasksListRepository {
   }
 
   // Helper method to parse task response
-  List<Task> _parseTasks(http.Response response) {
+  List<Task> _parseTasks(Response response) { // Response is Dio's type, was http.Response
     if (response.statusCode == 200) {
-      final Map<String, dynamic> jsonResponse = json.decode(response.body);
+      final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>; // response.data, no json.decode
       debugPrint("📊 Parsed Task JSON Response: $jsonResponse");
 
       if (jsonResponse['success'] == true) {
@@ -194,13 +188,13 @@ class TasksListRepository extends _$TasksListRepository {
   /// 2.1 Get All Tasks (Admin only)
   Future<List<Task>> fetchAllTasks() async {
     try {
-      final url =
-          '${ServerConstant.serverURL}time_entry_management_application_function/tasks';
-      final response = await http.get(Uri.parse(url));
+      // Relative path — base URL and token handled by ApiClient.
+      const path = 'time_entry_management_application_function/tasks';
+      final response = await _client.get(path);
       debugPrint("Response From fetchAllTasks: ${response.statusCode}");
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>; // response.data, no json.decode
         if (jsonResponse['success'] == true) {
           final List<dynamic> list = jsonResponse["data"] ?? [];
           return list
@@ -221,17 +215,16 @@ class TasksListRepository extends _$TasksListRepository {
   /// 2.3 Get Tasks by Project
   Future<List<Task>> fetchTasksByProject(String projectID) async {
     try {
-      final url =
-          '${ServerConstant.serverURL}time_entry_management_application_function/tasks/project';
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({"projectID": projectID}),
+      // Relative path — base URL and token handled by ApiClient.
+      const path = 'time_entry_management_application_function/tasks/project';
+      final response = await _client.post(
+        path,
+        data: {"projectID": projectID},
       );
       debugPrint("Response From fetchTasksByProject: ${response.statusCode}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>; // response.data, no json.decode
         if (jsonResponse['success'] == true) {
           final List<dynamic> list = jsonResponse["data"] ?? [];
           return list
@@ -255,16 +248,18 @@ class TasksListRepository extends _$TasksListRepository {
     String userId,
   ) async {
     try {
-      final uri = Uri.parse(
-        '${ServerConstant.serverURL}time_entry_management_application_function/taskByProjectAndUser',
-      ).replace(queryParameters: {"projectId": projectId, "userId": userId});
-      final response = await http.get(uri);
+      // Relative path — base URL and token handled by ApiClient.
+      const path = 'time_entry_management_application_function/taskByProjectAndUser';
+      final response = await _client.get(
+        path,
+        queryParameters: {"projectId": projectId, "userId": userId},
+      );
       debugPrint(
         "Response From fetchTasksByProjectAndUser: ${response.statusCode}",
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>; // response.data, no json.decode
         if (jsonResponse['success'] == true) {
           final List<dynamic> list = jsonResponse["data"] ?? [];
           return list
@@ -305,9 +300,9 @@ class TasksListRepository extends _$TasksListRepository {
       debugPrint("📅 Due Date: $dueDate");
       debugPrint("📎 Attachments: ${attachments?.length ?? 0} file(s)");
 
-      final url =
-          '${ServerConstant.serverURL}time_entry_management_application_function/tasks';
-      debugPrint("🌐 URL: $url");
+      // Relative path — base URL and token handled by ApiClient.
+      const path = 'time_entry_management_application_function/tasks';
+      debugPrint("🌐 Path: $path");
 
       // Check if we have attachments - use multipart if we do
       if (attachments != null && attachments.isNotEmpty) {
@@ -322,7 +317,7 @@ class TasksListRepository extends _$TasksListRepository {
           startDate: startDate,
           dueDate: dueDate,
           attachments: attachments,
-          url: url,
+          path: path,
         );
       } else {
         // Use JSON request for tasks without attachments
@@ -336,7 +331,7 @@ class TasksListRepository extends _$TasksListRepository {
           description: description,
           startDate: startDate,
           dueDate: dueDate,
-          url: url,
+          path: path,
         );
       }
     } catch (e, st) {
@@ -358,7 +353,7 @@ class TasksListRepository extends _$TasksListRepository {
     String? description,
     String? startDate,
     String? dueDate,
-    required String url,
+    required String path,
   }) async {
     final body = {
       "Task_Name": taskName,
@@ -371,19 +366,16 @@ class TasksListRepository extends _$TasksListRepository {
       if (startDate != null) "Start_Date": startDate,
       if (dueDate != null) "End_Date": dueDate,
     };
-    debugPrint("📦 Request Body: ${json.encode(body)}");
+    debugPrint("📦 Request Body: $body");
 
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(body),
-    );
+    // Relative path — base URL and token handled by ApiClient.
+    final response = await _client.post(path, data: body);
     debugPrint("✅ Response Status Code: ${response.statusCode}");
-    debugPrint("📄 Response Body: ${response.body}");
+    debugPrint("📄 Response Body: ${response.data}"); // response.data, no response.body
 
     if (response.statusCode == 200 || response.statusCode == 201) {
       try {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>; // response.data, no json.decode
         debugPrint("✨ Parsed JSON Success: ${jsonResponse['success']}");
 
         if (jsonResponse['success'] == true) {
@@ -405,9 +397,9 @@ class TasksListRepository extends _$TasksListRepository {
         rethrow;
       }
     } else {
-      debugPrint("❌ HTTP Error ${response.statusCode}: ${response.body}");
+      debugPrint("❌ HTTP Error ${response.statusCode}: ${response.data}"); // response.data, no response.body
       throw Exception(
-        'Failed to create task: ${response.statusCode} - ${response.body}',
+        'Failed to create task: ${response.statusCode} - ${response.data}',
       );
     }
   }
@@ -424,24 +416,23 @@ class TasksListRepository extends _$TasksListRepository {
     String? startDate,
     String? dueDate,
     required List<Attachment> attachments,
-    required String url,
+    required String path,
   }) async {
     try {
       debugPrint("📤 Using multipart form-data for file upload");
 
-      // Create multipart request
-      final request = http.MultipartRequest('POST', Uri.parse(url));
-
-      // Add form fields
-      request.fields['Task_Name'] = taskName;
-      request.fields['ProjectID'] = projectID;
-      if (projectName != null) request.fields['Project_Name'] = projectName;
-      if (assignToId != null) request.fields['Assign_To_ID'] = assignToId;
-      if (assignToName != null) request.fields['Assign_To'] = assignToName;
-      if (status != null) request.fields['Status'] = status;
-      if (description != null) request.fields['Description'] = description;
-      if (startDate != null) request.fields['Start_Date'] = startDate;
-      if (dueDate != null) request.fields['End_Date'] = dueDate;
+      // Build FormData - Dio's multipart replacement for http.MultipartRequest
+      final formData = FormData.fromMap({ // FormData replaces http.MultipartRequest + request.fields
+        'Task_Name': taskName,
+        'ProjectID': projectID,
+        if (projectName != null) 'Project_Name': projectName,
+        if (assignToId != null) 'Assign_To_ID': assignToId,
+        if (assignToName != null) 'Assign_To': assignToName,
+        if (status != null) 'Status': status,
+        if (description != null) 'Description': description,
+        if (startDate != null) 'Start_Date': startDate,
+        if (dueDate != null) 'End_Date': dueDate,
+      });
 
       // Add files
       for (var i = 0; i < attachments.length; i++) {
@@ -456,29 +447,29 @@ class TasksListRepository extends _$TasksListRepository {
           final mimeType = _getMimeType(attachment.fileName);
           debugPrint("📄 File MIME type: $mimeType");
 
-          // Use indexed field name for multiple files
-          request.files.add(
-            await http.MultipartFile.fromPath(
-              'attachments',
+          // MultipartFile.fromFileSync replaces http.MultipartFile.fromPath
+          formData.files.add(MapEntry(
+            'attachments',
+            MultipartFile.fromFileSync( // Dio's MultipartFile, no await needed
               file.path,
               filename: attachment.fileName,
-              contentType: http.MediaType.parse(mimeType),
+              contentType: DioMediaType.parse(mimeType), // DioMediaType replaces http.MediaType
             ),
-          );
+          ));
           debugPrint("✅ File added to multipart request");
         }
       }
 
       debugPrint("🚀 Sending multipart request");
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      // Relative path — base URL and token handled by ApiClient.
+      final response = await _client.post(path, data: formData);
 
       debugPrint("✅ Response Status Code: ${response.statusCode}");
-      debugPrint("📄 Response Body: ${response.body}");
+      debugPrint("📄 Response Body: ${response.data}"); // response.data, no response.body
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         try {
-          final Map<String, dynamic> jsonResponse = json.decode(response.body);
+          final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>; // response.data, no json.decode
           debugPrint("✨ Parsed JSON Success: ${jsonResponse['success']}");
 
           if (jsonResponse['success'] == true) {
@@ -502,9 +493,9 @@ class TasksListRepository extends _$TasksListRepository {
           rethrow;
         }
       } else {
-        debugPrint("❌ HTTP Error ${response.statusCode}: ${response.body}");
+        debugPrint("❌ HTTP Error ${response.statusCode}: ${response.data}"); // response.data, no response.body
         throw Exception(
-          'Failed to create task: ${response.statusCode} - ${response.body}',
+          'Failed to create task: ${response.statusCode} - ${response.data}',
         );
       }
     } catch (e, st) {
@@ -530,8 +521,8 @@ class TasksListRepository extends _$TasksListRepository {
     String? dueDate,
   }) async {
     try {
-      final url =
-          '${ServerConstant.serverURL}time_entry_management_application_function/tasks/$rowId';
+      // Relative path — base URL and token handled by ApiClient.
+      final path = 'time_entry_management_application_function/tasks/$rowId';
       final body = {
         if (taskName != null) "Task_Name": taskName,
         if (projectID != null) "ProjectID": projectID,
@@ -545,17 +536,13 @@ class TasksListRepository extends _$TasksListRepository {
         if (dueDate != null) "End_Date": dueDate,
       };
 
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(body),
-      );
+      final response = await _client.post(path, data: body);
       debugPrint("Response From updateTask: ${response.statusCode}");
-      debugPrint("📄 Response Body: ${response.body}");
-      debugPrint("📦 Request Body: ${json.encode(body)}");
+      debugPrint("📄 Response Body: ${response.data}"); // response.data, no response.body
+      debugPrint("📦 Request Body: $body"); // no json.encode needed
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>; // response.data, no json.decode
         if (jsonResponse['success'] == true) {
           final taskData = jsonResponse["data"] as Map<String, dynamic>;
           final updatedTask = Task.fromJson(taskData);
@@ -572,9 +559,9 @@ class TasksListRepository extends _$TasksListRepository {
   /// 2.7 Delete Task
   Future<void> deleteTask(String rowId) async {
     try {
-      final url =
-          '${ServerConstant.serverURL}time_entry_management_application_function/tasks/$rowId';
-      final response = await http.delete(Uri.parse(url));
+      // Relative path — base URL and token handled by ApiClient.
+      final path = 'time_entry_management_application_function/tasks/$rowId';
+      final response = await _client.delete(path);
       debugPrint("Response From deleteTask: ${response.statusCode}");
       if (response.statusCode != 200) {
         throw Exception('Failed to delete task: ${response.statusCode}');
@@ -630,3 +617,4 @@ class TasksListRepository extends _$TasksListRepository {
     }
   }
 }
+

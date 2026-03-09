@@ -14,7 +14,7 @@ class AiRepository {
     List<String>? images,
   }) async {
     try {
-      final response = await DioClient.instance.post(
+      final response = await ApiClient.instance.post(
         'ai_service/api/llm/answer',
         data: {
           "prompt": prompt,
@@ -49,7 +49,7 @@ class AiRepository {
     required List<String> documents,
   }) async {
     try {
-      final response = await DioClient.instance.post(
+      final response = await ApiClient.instance.post(
         'ai_service/api/rag/answer',
         data: {"query": query, "documents": documents},
       );

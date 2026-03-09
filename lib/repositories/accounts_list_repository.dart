@@ -15,7 +15,7 @@ class AccountsListRepository extends AsyncNotifier<List<Account>> {
 
   Future<List<Account>> fetchAccountsList({bool isInitial = false}) async {
     try {
-      final response = await DioClient.instance.get(
+      final response = await ApiClient.instance.get(
         'time_entry_management_application_function/clientOrg',
       );
       debugPrint('Response From fetchAccounts: $response');

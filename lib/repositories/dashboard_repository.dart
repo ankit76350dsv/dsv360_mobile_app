@@ -1,46 +1,48 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
-import 'package:dsv360/core/constants/server_constant.dart';
-import 'package:dsv360/core/constants/token_manager.dart';
+import 'package:dsv360/core/network/dio_client.dart';// single import — no raw Dio needed
 import 'package:dsv360/models/dashboard_model.dart';
 
+// ---------------------------------------------------------------------------
+// How this repository uses ApiClient:
+//   - ApiClient.instance is the shared singleton defined in api_client.dart.
+//   - The base URL and Authorization header are handled inside ApiClient,
+//     so this file only passes the relative path and query parameters.
+// ---------------------------------------------------------------------------
+
 class DashboardRepository {
+
+  // Use the centralized client — no manual Dio, no manual token injection.
+  final _client = ApiClient.instance;
+
   Future<DashboardModel> fetchDashboardData({
     required String userId,
     required String orgId,
     required String year,
   }) async {
-    final url = Uri.parse(
-      '${ServerConstant.serverURL}time_entry_management_application_function/mobile/dashboard',
-    ).replace(queryParameters: {
-      'User_Id': userId,
-      'Org_Id': orgId,
-      'Year': year,
-    });
+    //full url : '${ServerConstant.serverURL}time_entry_management_application_function/mobile/dashboard';
 
-    // debugPrint('🩸 Fetching dashboard data | URL: $url');
+    // Relative path — base URL is already set inside ApiClient.
+    const path = 'time_entry_management_application_function/mobile/dashboard';
 
     try {
-      final token = await TokenManager.instance.getToken();
-      final response = await http.get(
-        url,
-        headers: {
-          'Authorization': 'Zoho-oauthtoken $token',
+      final response = await _client.get(
+        path,
+        queryParameters: {
+          'User_Id': userId,
+          'Org_Id': orgId,
+          'Year': year,
         },
       );
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
-        if (jsonResponse['success'] == true) {
-          return DashboardModel.fromJson(jsonResponse);
-        } else {
-          throw Exception('API returned success: false');
-        }
+      final Map<String, dynamic> jsonResponse = response.data;
+
+      if (jsonResponse['success'] == true) {
+        debugPrint('📋 yearTaskData raw from API: ${jsonResponse['yearTaskData']}');
+        return DashboardModel.fromJson(jsonResponse);
       } else {
-        throw Exception(
-            'Failed to load dashboard data: ${response.statusCode}');
+        throw Exception('API returned success: false');
       }
+
     } catch (e) {
       debugPrint('Error fetching dashboard data: $e');
       throw Exception('Error fetching dashboard data: $e');

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class DashboardModel {
   final bool success;
   final int userCnt;
@@ -48,9 +50,11 @@ class YearTaskData {
   });
 
   factory YearTaskData.fromJson(Map<String, dynamic> json) {
+    debugPrint('📊 YearTaskData raw JSON: $json');
     return YearTaskData(
       open: json['open'] ?? 0,
-      inProgress: json['inProgress'] ?? 0,
+      // Backend sends snake_case 'in_progress' for the 'In Progress' task status
+      inProgress: json['in_progress'] ?? 0,
       closed: json['closed'] ?? 0,
     );
   }
@@ -70,7 +74,7 @@ class YearMonthProjectData {
   factory YearMonthProjectData.fromJson(Map<String, dynamic> json) {
     return YearMonthProjectData(
       open: json['open'] ?? 0,
-      inProgress: json['inProgress'] ?? 0,
+      inProgress: json['in_progress'] ?? 0,
       closed: json['closed'] ?? 0,
     );
   }

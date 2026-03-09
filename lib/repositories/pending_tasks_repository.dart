@@ -17,7 +17,7 @@ class PendingTasksListRepository extends _$PendingTasksListRepository {
 
   Future<List<Task>> fetchPendingTasks(String userId) async {
     try {
-      final response = await DioClient.instance.get(
+      final response = await ApiClient.instance.get(
         'time_entry_management_application_function/employees/$userId',
       );
       debugPrint("Response From fetchPendingTasks: $response");

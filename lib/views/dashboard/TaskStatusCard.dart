@@ -9,10 +9,13 @@ class TaskStatusCard extends StatelessWidget {
 
   const TaskStatusCard({super.key, required this.taskData});
 
+ 
+
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height * 0.28;
     final customColors = Theme.of(context).custom;
+   
 
     return Card(
       elevation: 0,
@@ -28,6 +31,7 @@ class TaskStatusCard extends StatelessWidget {
                 child: Icon(Icons.schedule, color: customColors.textPrimary),
               ),
               title: Text(
+                
                 'Task Status',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
@@ -58,7 +62,17 @@ class TaskStatusContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final custom = Theme.of(context).custom;
+    
+    // taskData is YearTaskData, passed from dashboard_page.dart via:
+    //   TaskStatusCard(taskData: dashboard.yearTaskData)
+    // where `dashboard` is a DashboardModel fetched by DashboardRepository
+    //   → API: GET .../time_entry_management_application_function/mobile/dashboard
+    //   → parsed in DashboardModel.fromJson → json['yearTaskData']
+    //   → then YearTaskData.fromJson → keys: 'open', 'in_progress', 'closed'
     final total = taskData.open + taskData.inProgress + taskData.closed;
+
+    debugPrint('📊 TaskStatusCard — open: ${taskData.open}, inProgress: ${taskData.inProgress}, closed: ${taskData.closed}, total: $total');
+  
     // Avoid division by zero
     final openPct = total == 0 ? 0.0 : (taskData.open / total) * 100;
     final inProgressPct = total == 0

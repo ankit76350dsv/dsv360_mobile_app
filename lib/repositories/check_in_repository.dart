@@ -20,7 +20,7 @@ class CheckInRepository extends _$CheckInRepository {
     required String dayDate,
   }) async {
     try {
-      final response = await DioClient.instance.post(
+      final response = await ApiClient.instance.post(
         'time_entry_management_application_function/checkIn',
         data: {
           "CIN_Device": device,
@@ -47,7 +47,7 @@ class CheckInRepository extends _$CheckInRepository {
     required String rowId,
   }) async {
     try {
-      final response = await DioClient.instance.put(
+      final response = await ApiClient.instance.put(
         'time_entry_management_application_function/checkOut',
         data: {
           "COUT_Device": device,

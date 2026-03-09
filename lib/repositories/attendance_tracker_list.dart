@@ -29,7 +29,7 @@ class AttendanceTrackerListRepository
     required String endDate,
   }) async {
     try {
-      final response = await DioClient.instance.post(
+      final response = await ApiClient.instance.post(
         'time_entry_management_application_function/attendance/dashboard?Start_date=$startDate&End_date=$endDate',
         data: {"UserID": userId},
       );

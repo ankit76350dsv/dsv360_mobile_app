@@ -13,7 +13,7 @@ class ClientContactsRepository extends AsyncNotifier<List<ClientContacts>> {
     bool isInitial = false,
   }) async {
     try {
-      final response = await DioClient.instance.get(
+      final response = await ApiClient.instance.get(
         'time_entry_management_application_function/contact',
       );
       debugPrint("Response From fetchClientContactsList: $response");

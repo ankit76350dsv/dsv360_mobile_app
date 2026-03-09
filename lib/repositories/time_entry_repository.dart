@@ -1,15 +1,18 @@
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
+import 'package:dsv360/core/network/dio_client.dart'; // single import — no raw http or TokenManager needed
 import '../models/time_entry_model.dart';
-import '../core/constants/server_constant.dart';
-import '../core/constants/token_manager.dart';
+
+// ---------------------------------------------------------------------------
+// How this repository uses ApiClient:
+//   - ApiClient.instance is the shared singleton defined in api_client.dart.
+//   - The base URL and Authorization header are handled inside ApiClient,
+//     so this file only passes relative paths and query/body parameters.
+// ---------------------------------------------------------------------------
 
 class TimeEntryRepository {
-  final http.Client httpClient;
 
-  TimeEntryRepository({http.Client? httpClient})
-      : httpClient = httpClient ?? http.Client();
+  // Use the centralized client — no manual http, no manual token injection.
+  final _client = ApiClient.instance;
 
   // ============ Timer Management ============
 
@@ -17,17 +20,15 @@ class TimeEntryRepository {
   Future<Map<String, dynamic>> checkTimerStatus(String userId) async {
     try {
       debugPrint('⏱️ Checking timer status for userId: $userId');
-      final token = await TokenManager.instance.getToken();
-      final response = await httpClient.get(
-        Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/timer?userId=$userId'),
-        headers: {'Authorization': 'Zoho-oauthtoken $token'},
-      );
+      // Relative path — base URL and token handled by ApiClient.
+      const path = 'time_entry_management_application_function/timeentry/timer';
+      final response = await _client.get(path, queryParameters: {'userId': userId});
 
       debugPrint('⏱️ Timer Status Response: ${response.statusCode}');
-      debugPrint('⏱️ Timer Status Body: ${response.body}');
+      debugPrint('⏱️ Timer Status Data: ${response.data}');
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return response.data as Map<String, dynamic>;
       } else {
         throw Exception('Failed to check timer status: ${response.statusCode}');
       }
@@ -53,21 +54,15 @@ class TimeEntryRepository {
         if (description != null) 'description': description,
       };
 
-      final token = await TokenManager.instance.getToken();
-      final response = await httpClient.post(
-        Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/timer/start'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Zoho-oauthtoken $token',
-        },
-        body: jsonEncode(body),
-      );
+      // Relative path — base URL and token handled by ApiClient.
+      const path = 'time_entry_management_application_function/timeentry/timer/start';
+      final response = await _client.post(path, data: body);
 
       debugPrint('⏱️ Start Timer Response: ${response.statusCode}');
-      debugPrint('⏱️ Start Timer Body: ${response.body}');
+      debugPrint('⏱️ Start Timer Data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return jsonDecode(response.body);
+        return response.data as Map<String, dynamic>;
       } else {
         throw Exception('Failed to start timer: ${response.statusCode}');
       }
@@ -89,21 +84,15 @@ class TimeEntryRepository {
         'timerId': timerId,
       };
 
-      final token = await TokenManager.instance.getToken();
-      final response = await httpClient.post(
-        Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/timer/end'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Zoho-oauthtoken $token',
-        },
-        body: jsonEncode(body),
-      );
+      // Relative path — base URL and token handled by ApiClient.
+      const path = 'time_entry_management_application_function/timeentry/timer/end';
+      final response = await _client.post(path, data: body);
 
       debugPrint('⏱️ End Timer Response: ${response.statusCode}');
-      debugPrint('⏱️ End Timer Body: ${response.body}');
+      debugPrint('⏱️ End Timer Data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return jsonDecode(response.body);
+        return response.data as Map<String, dynamic>;
       } else {
         throw Exception('Failed to end timer: ${response.statusCode}');
       }
@@ -119,21 +108,18 @@ class TimeEntryRepository {
   Future<List<TimeEntry>> getTimeEntriesByTask(String taskId, {String? userId}) async {
     try {
       debugPrint('📋 Fetching time entries for taskId: $taskId, userId: $userId');
-      final url = userId != null 
-          ? '${ServerConstant.serverURL}time_entry_management_application_function/timeentry/$taskId?userId=$userId'
-          : '${ServerConstant.serverURL}time_entry_management_application_function/timeentry/$taskId';
-      
-      final token = await TokenManager.instance.getToken();
-      final response = await httpClient.get(
-        Uri.parse(url),
-        headers: {'Authorization': 'Zoho-oauthtoken $token'},
+      // Relative path — base URL and token handled by ApiClient.
+      final path = 'time_entry_management_application_function/timeentry/$taskId';
+      final response = await _client.get(
+        path,
+        queryParameters: userId != null ? {'userId': userId} : null,
       );
 
       debugPrint('📋 Time Entry Response Status: ${response.statusCode}');
-      debugPrint('📋 Time Entry Response Body: ${response.body}');
+      debugPrint('📋 Time Entry Response Data: ${response.data}');
       
       if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
+        final jsonData = response.data as Map<String, dynamic>;
         debugPrint('📋 Full JSON Structure: $jsonData');
         debugPrint('📋 Response Keys: ${jsonData.keys}');
         
@@ -184,26 +170,25 @@ class TimeEntryRepository {
     DateTime? endDate,
   }) async {
     try {
-      final startDateStr = startDate?.toString().split(' ')[0]; // YYYY-MM-DD
-      final endDateStr = endDate?.toString().split(' ')[0]; // YYYY-MM-DD
+      final startDateStr = startDate?.toString().split(' ')[0];
+      final endDateStr = endDate?.toString().split(' ')[0];
       
       debugPrint('📋 Fetching time entries for projectId: $projectId, from: $startDateStr to: $endDateStr');
       
-      final url = startDateStr != null && endDateStr != null
-          ? '${ServerConstant.serverURL}time_entry_management_application_function/time_entry/project/$projectId?startDate=$startDateStr&endDate=$endDateStr'
-          : '${ServerConstant.serverURL}time_entry_management_application_function/time_entry/project/$projectId';
-      
-      final token = await TokenManager.instance.getToken();
-      final response = await httpClient.get(
-        Uri.parse(url),
-        headers: {'Authorization': 'Zoho-oauthtoken $token'},
+      // Relative path — base URL and token handled by ApiClient.
+      final path = 'time_entry_management_application_function/time_entry/project/$projectId';
+      final response = await _client.get(
+        path,
+        queryParameters: startDateStr != null && endDateStr != null
+            ? {'startDate': startDateStr, 'endDate': endDateStr}
+            : null,
       );
 
       debugPrint('📋 Project Time Entry Response: ${response.statusCode}');
-      debugPrint('📋 Project Time Entry Response Body: ${response.body}');
+      debugPrint('📋 Project Time Entry Response Data: ${response.data}');
 
       if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
+        final jsonData = response.data as Map<String, dynamic>;
         debugPrint('📋 Full JSON Structure: $jsonData');
         
         final List<dynamic> data = jsonData['data'] ?? [];
@@ -239,17 +224,15 @@ class TimeEntryRepository {
   Future<List<TimeEntry>> getTimeEntriesByProject(String projectId) async {
     try {
       debugPrint('📋 Fetching time entries for projectId: $projectId');
-      final token = await TokenManager.instance.getToken();
-      final response = await httpClient.get(
-        Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/time_entry/project/$projectId'),
-        headers: {'Authorization': 'Zoho-oauthtoken $token'},
-      );
+      // Relative path — base URL and token handled by ApiClient.
+      final path = 'time_entry_management_application_function/time_entry/project/$projectId';
+      final response = await _client.get(path);
 
       debugPrint('📋 Project Time Entry Response: ${response.statusCode}');
-      debugPrint('📋 Project Time Entry Response Body: ${response.body}');
+      debugPrint('📋 Project Time Entry Response Data: ${response.data}');
 
       if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
+        final jsonData = response.data as Map<String, dynamic>;
         debugPrint('📋 Full JSON Structure: $jsonData');
         
         final List<dynamic> data = jsonData['data'] ?? [];
@@ -288,24 +271,24 @@ class TimeEntryRepository {
     required DateTime endDate,
   }) async {
     try {
-      final startDateStr = startDate.toString().split(' ')[0]; // YYYY-MM-DD
-      final endDateStr = endDate.toString().split(' ')[0]; // YYYY-MM-DD
+      final startDateStr = startDate.toString().split(' ')[0];
+      final endDateStr = endDate.toString().split(' ')[0];
 
       debugPrint(
           '📋 Fetching user time entries - userId: $userId, from: $startDateStr to: $endDateStr');
 
-      final token = await TokenManager.instance.getToken();
-      final response = await httpClient.get(
-        Uri.parse(
-            '${ServerConstant.serverURL}time_entry_management_application_function/user-timeentry?userId=$userId&startDate=$startDateStr&endDate=$endDateStr'),
-        headers: {'Authorization': 'Zoho-oauthtoken $token'},
+      // Relative path — base URL and token handled by ApiClient.
+      const path = 'time_entry_management_application_function/user-timeentry';
+      final response = await _client.get(
+        path,
+        queryParameters: {'userId': userId, 'startDate': startDateStr, 'endDate': endDateStr},
       );
 
       debugPrint('📋 User Time Entry Response: ${response.statusCode}');
-      debugPrint('📋 User Time Entry Body: ${response.body}');
+      debugPrint('📋 User Time Entry Data: ${response.data}');
 
       if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
+        final jsonData = response.data as Map<String, dynamic>;
         final List<dynamic> data = jsonData['data'] ?? [];
         return data.map((item) => TimeEntry.fromJson(item)).toList();
       } else {
@@ -352,21 +335,15 @@ class TimeEntryRepository {
 
       debugPrint('Request Body: $body');
 
-      final token = await TokenManager.instance.getToken();
-      final response = await httpClient.post(
-        Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Zoho-oauthtoken $token',
-        },
-        body: jsonEncode(body),
-      );
+      // Relative path — base URL and token handled by ApiClient.
+      const path = 'time_entry_management_application_function/timeentry';
+      final response = await _client.post(path, data: body);
 
       debugPrint('Create Time Entry Response: ${response.statusCode}');
-      debugPrint('Response Body: ${response.body}');
+      debugPrint('Response Data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final jsonData = jsonDecode(response.body);
+        final jsonData = response.data as Map<String, dynamic>;
         if (jsonData['success'] == true || jsonData['data'] != null) {
           return TimeEntry.fromJson(jsonData['data']);
         } else {
@@ -408,21 +385,15 @@ class TimeEntryRepository {
         if (type != null) 'Type': type,
       };
 
-      final token = await TokenManager.instance.getToken();
-      final response = await httpClient.post(
-        Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/$timeEntryId'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Zoho-oauthtoken $token',
-        },
-        body: jsonEncode(body),
-      );
+      // Relative path — base URL and token handled by ApiClient.
+      final path = 'time_entry_management_application_function/timeentry/$timeEntryId';
+      final response = await _client.post(path, data: body);
 
       debugPrint('✏️ Update Time Entry Response: ${response.statusCode}');
-      debugPrint('✏️ Update Response Body: ${response.body}');
+      debugPrint('✏️ Update Response Data: ${response.data}');
 
       if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
+        final jsonData = response.data as Map<String, dynamic>;
         if (jsonData['success'] == true || jsonData['data'] != null) {
           return TimeEntry.fromJson(jsonData['data']);
         } else {
@@ -441,11 +412,9 @@ class TimeEntryRepository {
   Future<bool> deleteTimeEntry(String timeEntryId) async {
     try {
       debugPrint('🗑️ Deleting time entry: $timeEntryId');
-      final token = await TokenManager.instance.getToken();
-      final response = await httpClient.delete(
-        Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/$timeEntryId'),
-        headers: {'Authorization': 'Zoho-oauthtoken $token'},
-      );
+      // Relative path — base URL and token handled by ApiClient.
+      final path = 'time_entry_management_application_function/timeentry/$timeEntryId';
+      final response = await _client.delete(path);
 
       debugPrint('🗑️ Delete Time Entry Response: ${response.statusCode}');
 
@@ -473,21 +442,15 @@ class TimeEntryRepository {
         'timeEntryIds': timeEntryIds,
       };
 
-      final token = await TokenManager.instance.getToken();
-      final response = await httpClient.post(
-        Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/approval/$userId'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Zoho-oauthtoken $token',
-        },
-        body: jsonEncode(body),
-      );
+      // Relative path — base URL and token handled by ApiClient.
+      final path = 'time_entry_management_application_function/timeentry/approval/$userId';
+      final response = await _client.post(path, data: body);
 
       debugPrint('✅ Create Approval Response: ${response.statusCode}');
-      debugPrint('✅ Response Body: ${response.body}');
+      debugPrint('✅ Response Data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return jsonDecode(response.body);
+        return response.data as Map<String, dynamic>;
       } else {
         throw Exception(
             'Failed to create approval request: ${response.statusCode}');
@@ -514,20 +477,14 @@ class TimeEntryRepository {
         if (reviewerId != null) 'reviewerId': reviewerId,
       };
 
-      final token = await TokenManager.instance.getToken();
-      final response = await httpClient.post(
-        Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/approval'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Zoho-oauthtoken $token',
-        },
-        body: jsonEncode(body),
-      );
+      // Relative path — base URL and token handled by ApiClient.
+      const path = 'time_entry_management_application_function/timeentry/approval';
+      final response = await _client.post(path, data: body);
 
       debugPrint('✅ Approval Response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        return response.data as Map<String, dynamic>;
       } else {
         throw Exception('Failed to respond to approval: ${response.statusCode}');
       }
@@ -541,16 +498,14 @@ class TimeEntryRepository {
   Future<List<dynamic>> getUserApprovals(String userId) async {
     try {
       debugPrint('✅ Fetching user approvals for: $userId');
-      final token = await TokenManager.instance.getToken();
-      final response = await httpClient.get(
-        Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/approval/$userId'),
-        headers: {'Authorization': 'Zoho-oauthtoken $token'},
-      );
+      // Relative path — base URL and token handled by ApiClient.
+      final path = 'time_entry_management_application_function/timeentry/approval/$userId';
+      final response = await _client.get(path);
 
       debugPrint('✅ User Approvals Response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
+        final jsonData = response.data as Map<String, dynamic>;
         return jsonData['data'] ?? [];
       } else {
         throw Exception('Failed to fetch user approvals: ${response.statusCode}');
@@ -565,16 +520,14 @@ class TimeEntryRepository {
   Future<List<dynamic>> getTeamApprovals(String managerId) async {
     try {
       debugPrint('✅ Fetching team approvals for manager: $managerId');
-      final token = await TokenManager.instance.getToken();
-      final response = await httpClient.get(
-        Uri.parse('${ServerConstant.serverURL}time_entry_management_application_function/timeentry/approval?managerId=$managerId'),
-        headers: {'Authorization': 'Zoho-oauthtoken $token'},
-      );
+      // Relative path — base URL and token handled by ApiClient.
+      const path = 'time_entry_management_application_function/timeentry/approval';
+      final response = await _client.get(path, queryParameters: {'managerId': managerId});
 
       debugPrint('✅ Team Approvals Response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
-        final jsonData = jsonDecode(response.body);
+        final jsonData = response.data as Map<String, dynamic>;
         return jsonData['data'] ?? [];
       } else {
         throw Exception('Failed to fetch team approvals: ${response.statusCode}');

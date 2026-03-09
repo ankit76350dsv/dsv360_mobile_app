@@ -1,12 +1,20 @@
-import 'dart:convert';
-import 'package:dsv360/core/constants/token_manager.dart';
+import 'package:dsv360/core/network/dio_client.dart'; // single import — no raw http or TokenManager needed
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:dsv360/core/constants/auth_manager.dart';
-import 'package:dsv360/core/constants/server_constant.dart';
 import 'package:dsv360/models/issue_model.dart';
 
+// ---------------------------------------------------------------------------
+// How this repository uses ApiClient:
+//   - ApiClient.instance is the shared singleton defined in api_client.dart.
+//   - The base URL and Authorization header are handled inside ApiClient,
+//     so this file only passes relative paths and query/body parameters.
+// ---------------------------------------------------------------------------
+
 class IssueRepository {
+
+  // Use the centralized client — no manual http, no manual token injection.
+  final _client = ApiClient.instance;
+
   Future<List<IssueModel>> fetchIssues() async {
     final user = AuthManager.instance.currentUser;
     if (user == null) {
@@ -20,31 +28,26 @@ class IssueRepository {
                     roleName == 'Super Admin' || 
                     roleName == 'App Administrator';
 
-    String url;
+    // Relative path — base URL and token handled by ApiClient.
+    final String path;
     if (isAdmin) {
-      // Admin URL - fetch all issues
-      url = '${ServerConstant.serverURL}time_entry_management_application_function/issue';
+      path = 'time_entry_management_application_function/issue';
     } else {
-      // AppUser URL - fetch issues assigned to user
-      url = '${ServerConstant.serverURL}time_entry_management_application_function/assignissue/${user.id}';
+      path = 'time_entry_management_application_function/assignissue/${user.id}';
     }
 
     debugPrint(
-      '🩸 Fetching issues | isAdmin: $isAdmin | URL: $url | Role: ${user.role?.name}',
+      '🩸 Fetching issues | isAdmin: $isAdmin | path: $path | Role: ${user.role?.name}',
     );
 
     try {
-      final token = await TokenManager.instance.getToken();
-        final response = await http.get(
-          Uri.parse(url),
-          headers: {'Authorization': 'Zoho-oauthtoken $token'},
-        );
+      final response = await _client.get(path);
 
       debugPrint('🩸 Issue Response Status: ${response.statusCode}');
-      debugPrint('🩸 Issue Response Body: ${response.body}');
+      debugPrint('🩸 Issue Response Data: ${response.data}');
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>;
         
         debugPrint('🩸 Parsed JSON Response: $jsonResponse');
         
@@ -53,7 +56,6 @@ class IssueRepository {
           
           debugPrint('🩸 Total issues fetched: ${data.length}');
           
-          // Parse issues from response
           final issues = data.map((json) => IssueModel.fromJson(json)).toList();
           
           debugPrint('🩸 Successfully parsed ${issues.length} issues');
@@ -85,7 +87,8 @@ class IssueRepository {
       throw Exception('User not logged in');
     }
 
-    final url = '${ServerConstant.serverURL}time_entry_management_application_function/issue';
+    // Relative path — base URL and token handled by ApiClient.
+    const path = 'time_entry_management_application_function/issue';
     
     final body = {
       'Issue_name': issueName,
@@ -98,20 +101,16 @@ class IssueRepository {
       'Reporter_ID': user.id,
     };
 
-    debugPrint('📤 POST $url with body: $body');
+    debugPrint('📤 POST $path with body: $body');
 
     try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(body),
-      );
+      final response = await _client.post(path, data: body);
 
       debugPrint('📥 Response status: ${response.statusCode}');
-      debugPrint('📥 Response body: ${response.body}');
+      debugPrint('📥 Response data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final jsonResponse = json.decode(response.body);
+        final jsonResponse = response.data as Map<String, dynamic>;
         if (jsonResponse['success'] == true) {
           return IssueModel.fromJson(jsonResponse['data']);
         } else {
@@ -136,7 +135,8 @@ class IssueRepository {
     required String assigneeId,
     required String dueDate,
   }) async {
-    final url = '${ServerConstant.serverURL}time_entry_management_application_function/issue/$issueId';
+    // Relative path — base URL and token handled by ApiClient.
+    final path = 'time_entry_management_application_function/issue/$issueId';
     
     final body = {
       'Issue_name': issueName,
@@ -148,20 +148,16 @@ class IssueRepository {
       'Due_Date': dueDate,
     };
 
-    debugPrint('📤 POST $url with body: $body');
+    debugPrint('📤 POST $path with body: $body');
 
     try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(body),
-      );
+      final response = await _client.post(path, data: body);
 
       debugPrint('📥 Response status: ${response.statusCode}');
-      debugPrint('📥 Response body: ${response.body}');
+      debugPrint('📥 Response data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final jsonResponse = json.decode(response.body);
+        final jsonResponse = response.data as Map<String, dynamic>;
         if (jsonResponse['success'] == true) {
           return IssueModel.fromJson(jsonResponse['data']);
         } else {
@@ -177,18 +173,16 @@ class IssueRepository {
   }
 
   Future<void> deleteIssue(String issueId) async {
-    final url = '${ServerConstant.serverURL}time_entry_management_application_function/issue/$issueId';
+    // Relative path — base URL and token handled by ApiClient.
+    final path = 'time_entry_management_application_function/issue/$issueId';
     
-    debugPrint('🗑️ DELETE $url');
+    debugPrint('🗑️ DELETE $path');
 
     try {
-      final response = await http.delete(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-      );
+      final response = await _client.delete(path);
 
       debugPrint('📥 Response status: ${response.statusCode}');
-      debugPrint('📥 Response body: ${response.body}');
+      debugPrint('📥 Response data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 204) {
         debugPrint('✅ Issue deleted successfully');

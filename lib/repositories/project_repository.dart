@@ -1,15 +1,21 @@
-import 'dart:convert';
-//import 'dart:io';
-import 'package:dsv360/core/constants/token_manager.dart';
+import 'package:dio/dio.dart'; // needed only for FormData and MultipartFile (file uploads)
+import 'package:dsv360/core/network/dio_client.dart'; // single import — no raw http, Dio, or TokenManager needed
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:dsv360/core/constants/auth_manager.dart';
-import 'package:dsv360/core/constants/server_constant.dart';
 import 'package:dsv360/models/project_model.dart';
 import 'package:dsv360/models/attachment.dart';
-//import 'package:zcatalyst_sdk/zcatalyst_sdk.dart'; // For UserRole or similar if needed
+
+// ---------------------------------------------------------------------------
+// How this repository uses ApiClient:
+//   - ApiClient.instance is the shared singleton defined in api_client.dart.
+//   - The base URL and Authorization header are handled inside ApiClient,
+//     so this file only passes relative paths and query/body parameters.
+// ---------------------------------------------------------------------------
 
 class ProjectRepository {
+
+  // Use the centralized client — no manual http, no manual token injection.
+  final _client = ApiClient.instance;
   Future<List<ProjectModel>> fetchProjects() async {
     final user = AuthManager.instance.currentUser;
     if (user == null) {
@@ -37,29 +43,23 @@ class ProjectRepository {
 
     String url;
     if (isAdmin) {
-       // Admin URL logic
-       url = '${ServerConstant.serverURL}time_entry_management_application_function/projects';
+       // Relative path for admin — base URL and token handled by ApiClient.
+       url = 'time_entry_management_application_function/projects';
     } else {
-       // AppUser URL logic
-       url = '${ServerConstant.serverURL}time_entry_management_application_function/projects/${user.id}';
+       // Relative path for regular user.
+       url = 'time_entry_management_application_function/projects/${user.id}';
     }
     debugPrint(
-      '🩸 Fetching projects | isAdmin: $isAdmin | URL: $url | Role: ${user.role?.name}',
+      '🩸 Fetching projects | isAdmin: $isAdmin | path: $url | Role: ${user.role?.name}',
     );
     try {
-      final token = await TokenManager.instance.getToken();
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Zoho-oauthtoken $token',
-        },
-      );
+      final response = await _client.get(url);
 
       debugPrint('📊 Project API Response Status: ${response.statusCode}');
-      debugPrint('📊 Project API Response Body: ${response.body}');
+      debugPrint('📊 Project API Response Body: ${response.data}');
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonResponse = json.decode(response.body);
+        final Map<String, dynamic> jsonResponse = response.data;
         debugPrint('📊 Parsed JSON Response: $jsonResponse');
         
         if (jsonResponse['success'] == true) {
@@ -150,8 +150,9 @@ class ProjectRepository {
     String? ownerName,
     String? description,
   }) async {
-    final url = '${ServerConstant.serverURL}time_entry_management_application_function/projects';
-    
+    // Relative path — base URL and token handled by ApiClient.
+    const path = 'time_entry_management_application_function/projects';
+
     final body = {
       'Project_Name': projectName,
       'Status': status,
@@ -166,20 +167,16 @@ class ProjectRepository {
       if (description != null && description.isNotEmpty) 'Description': description,
     };
 
-    debugPrint('📤 POST $url with body: $body');
+    debugPrint('📤 POST $path with body: $body');
 
     try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(body),
-      );
+      final response = await _client.post(path, data: body);
 
       debugPrint('📥 Response status: ${response.statusCode}');
-      debugPrint('📥 Response body: ${response.body}');
+      debugPrint('📥 Response data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final jsonResponse = json.decode(response.body);
+        final jsonResponse = response.data as Map<String, dynamic>;
         if (jsonResponse['success'] == true) {
           return ProjectModel.fromJson(jsonResponse['data']);
         } else {
@@ -208,47 +205,44 @@ class ProjectRepository {
     String? description,
     required List<Attachment> attachments,
   }) async {
-    final url = '${ServerConstant.serverURL}time_entry_management_application_function/projects';
+    // Relative path — base URL and token handled by ApiClient.
+    const path = 'time_entry_management_application_function/projects';
 
     try {
-      final request = http.MultipartRequest('POST', Uri.parse(url));
+      // Build multipart form data using Dio's FormData.
+      final formData = FormData.fromMap({
+        'Project_Name': projectName,
+        'Status': status,
+        'Client_ID': clientId,
+        'Client_Name': clientName,
+        'Start_Date': startDate.toIso8601String().split('T')[0],
+        'End_Date': endDate.toIso8601String().split('T')[0],
+        if (assignedToId != null) 'Assigned_To_Id': assignedToId,
+        if (assignedToName != null) 'Assigned_To': assignedToName,
+        if (ownerId != null) 'Owner_Id': ownerId,
+        if (ownerName != null) 'Owner': ownerName,
+        if (description != null && description.isNotEmpty) 'Description': description,
+      });
 
-      request.fields['Project_Name'] = projectName;
-      request.fields['Status'] = status;
-      request.fields['Client_ID'] = clientId;
-      request.fields['Client_Name'] = clientName;
-      request.fields['Start_Date'] = startDate.toIso8601String().split('T')[0];
-      request.fields['End_Date'] = endDate.toIso8601String().split('T')[0];
-      if (assignedToId != null) request.fields['Assigned_To_Id'] = assignedToId;
-      if (assignedToName != null) request.fields['Assigned_To'] = assignedToName;
-      if (ownerId != null) request.fields['Owner_Id'] = ownerId;
-      if (ownerName != null) request.fields['Owner'] = ownerName;
-      if (description != null && description.isNotEmpty) request.fields['Description'] = description;
-
-      // Add files
       for (var attachment in attachments) {
         if (attachment.localFile != null) {
           final file = attachment.localFile!;
-          request.files.add(
-            await http.MultipartFile.fromPath(
-              'files',
-              file.path,
-              filename: attachment.fileName,
-            ),
-          );
+          formData.files.add(MapEntry(
+            'files',
+            MultipartFile.fromFileSync(file.path, filename: attachment.fileName),
+          ));
         }
       }
 
-      debugPrint('📤 Multipart POST $url with ${attachments.length} files');
+      debugPrint('📤 Multipart POST $path with ${attachments.length} files');
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      final response = await _client.post(path, data: formData);
 
       debugPrint('📥 Response status: ${response.statusCode}');
-      debugPrint('📥 Response body: ${response.body}');
+      debugPrint('📥 Response data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final jsonResponse = json.decode(response.body);
+        final jsonResponse = response.data as Map<String, dynamic>;
         if (jsonResponse['success'] == true) {
           return ProjectModel.fromJson(jsonResponse['data']);
         } else {
@@ -329,7 +323,8 @@ class ProjectRepository {
     String? ownerName,
     String? description,
   }) async {
-    final url = '${ServerConstant.serverURL}time_entry_management_application_function/projects/$projectId';
+    // Relative path — base URL and token handled by ApiClient.
+    final path = 'time_entry_management_application_function/projects/$projectId';
 
     final body = {
       'Project_Name': projectName,
@@ -345,20 +340,16 @@ class ProjectRepository {
       if (description != null && description.isNotEmpty) 'Description': description,
     };
 
-    debugPrint('📤 POST $url with body: $body');
+    debugPrint('📤 POST $path with body: $body');
 
     try {
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(body),
-      );
+      final response = await _client.post(path, data: body);
 
       debugPrint('📥 Response status: ${response.statusCode}');
-      debugPrint('📥 Response body: ${response.body}');
+      debugPrint('📥 Response data: ${response.data}');
 
       if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
+        final jsonResponse = response.data as Map<String, dynamic>;
         if (jsonResponse['success'] == true) {
           return ProjectModel.fromJson(jsonResponse['data']);
         } else {
@@ -388,47 +379,44 @@ class ProjectRepository {
     String? description,
     required List<Attachment> attachments,
   }) async {
-    final url = '${ServerConstant.serverURL}time_entry_management_application_function/projects/$projectId';
+    // Relative path — base URL and token handled by ApiClient.
+    final path = 'time_entry_management_application_function/projects/$projectId';
 
     try {
-      final request = http.MultipartRequest('POST', Uri.parse(url));
+      // Build multipart form data using Dio's FormData.
+      final formData = FormData.fromMap({
+        'Project_Name': projectName,
+        'Status': status,
+        'Client_ID': clientId,
+        'Client_Name': clientName,
+        'Start_Date': startDate.toIso8601String().split('T')[0],
+        'End_Date': endDate.toIso8601String().split('T')[0],
+        if (assignedToId != null) 'Assigned_To_Id': assignedToId,
+        if (assignedToName != null) 'Assigned_To': assignedToName,
+        if (ownerId != null) 'Owner_Id': ownerId,
+        if (ownerName != null) 'Owner': ownerName,
+        if (description != null && description.isNotEmpty) 'Description': description,
+      });
 
-      request.fields['Project_Name'] = projectName;
-      request.fields['Status'] = status;
-      request.fields['Client_ID'] = clientId;
-      request.fields['Client_Name'] = clientName;
-      request.fields['Start_Date'] = startDate.toIso8601String().split('T')[0];
-      request.fields['End_Date'] = endDate.toIso8601String().split('T')[0];
-      if (assignedToId != null) request.fields['Assigned_To_Id'] = assignedToId;
-      if (assignedToName != null) request.fields['Assigned_To'] = assignedToName;
-      if (ownerId != null) request.fields['Owner_Id'] = ownerId;
-      if (ownerName != null) request.fields['Owner'] = ownerName;
-      if (description != null && description.isNotEmpty) request.fields['Description'] = description;
-
-      // Add new files (those with localFile)
       for (var attachment in attachments) {
         if (attachment.localFile != null) {
           final file = attachment.localFile!;
-          request.files.add(
-            await http.MultipartFile.fromPath(
-              'files',
-              file.path,
-              filename: attachment.fileName,
-            ),
-          );
+          formData.files.add(MapEntry(
+            'files',
+            MultipartFile.fromFileSync(file.path, filename: attachment.fileName),
+          ));
         }
       }
 
-      debugPrint('📤 Multipart POST $url with ${attachments.where((a) => a.localFile != null).length} new files');
+      debugPrint('📤 Multipart POST $path with ${attachments.where((a) => a.localFile != null).length} new files');
 
-      final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      final response = await _client.post(path, data: formData);
 
       debugPrint('📥 Response status: ${response.statusCode}');
-      debugPrint('📥 Response body: ${response.body}');
+      debugPrint('📥 Response data: ${response.data}');
 
       if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
+        final jsonResponse = response.data as Map<String, dynamic>;
         if (jsonResponse['success'] == true) {
           return ProjectModel.fromJson(jsonResponse['data']);
         } else {
@@ -445,18 +433,19 @@ class ProjectRepository {
 
   // Delete project
   Future<void> deleteProject(String projectId) async {
-    final url = '${ServerConstant.serverURL}time_entry_management_application_function/delete/$projectId';
+    // Relative path — base URL and token handled by ApiClient.
+    final path = 'time_entry_management_application_function/delete/$projectId';
 
-    debugPrint('🔴 DELETE $url');
+    debugPrint('🔴 DELETE $path');
 
     try {
-      final response = await http.delete(Uri.parse(url));
+      final response = await _client.delete(path);
 
       debugPrint('📥 Response status: ${response.statusCode}');
-      debugPrint('📥 Response body: ${response.body}');
+      debugPrint('📥 Response data: ${response.data}');
 
       if (response.statusCode == 200) {
-        final jsonResponse = json.decode(response.body);
+        final jsonResponse = response.data as Map<String, dynamic>;
         if (jsonResponse['success'] != true) {
           throw Exception(jsonResponse['message'] ?? 'Failed to delete project');
         }

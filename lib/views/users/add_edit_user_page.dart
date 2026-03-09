@@ -209,14 +209,14 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
                           try {
                             if (isEditing) {
                               // UPDATE USER (example)
-                              await DioClient.instance.post(
+                              await ApiClient.instance.post(
                                 '/server/time_entry_management_application_function/UpdateEmployee/${widget.user!.userId}',
                                 data: body,
                               );
                             } else {
                               final formData = FormData.fromMap(body);
                               // ADD USER
-                              await DioClient.instance.post(
+                              await ApiClient.instance.post(
                                 '/server/time_entry_management_application_function/AddEmployees',
                                 data: formData,
                               );
