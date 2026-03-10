@@ -3,8 +3,6 @@ import 'package:dsv360/models/dashboard_model.dart';
 import 'package:dsv360/providers/dashboard_provider.dart'; // for selectedProjectYearProvider
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // ConsumerWidget + WidgetRef
-import '../widgets/custom_popup_dropdown.dart'; // themed year picker
-// import 'package:dsv360/core/constants/app_colors.dart';
 
 // Changed StatelessWidget → ConsumerWidget to support its own year picker.
 // No monthData param — the card fetches its own data via projectAnalyticsDataProvider.
@@ -48,21 +46,129 @@ class ProjectAnalyticsCard extends ConsumerWidget {
                   color: customColors.textPrimary,
                 ),
               ),
-              // CustomPopupDropdown replaces the old PopupMenuButton — same year logic, new themed UI.
-              trailing: SizedBox(
-                width: 110,
-                child: CustomPopupDropdown(
-                  value: selectedYear.toString(),
-                  hint: 'Year',
-                  items: years.map((y) => y.toString()).toList(),
-                  icon: Icons.calendar_today,
-                  iconSize: 18,
-                  onChanged: (v) {
-                    if (v != null) {
-                      ref.read(selectedProjectYearProvider.notifier).state = int.parse(v);
-                    }
+              // Premium year picker — same pattern as TaskStatusCard, dark-mode aware.
+              trailing: Theme(
+                data: Theme.of(context).copyWith(
+                  splashColor: const Color.fromARGB(0, 255, 119, 119),
+                  highlightColor: Colors.transparent,
+                  hoverColor: Colors.transparent,
+                ),
+                child: PopupMenuButton<String>(
+                  // ─── POPUP MENU BACKGROUND COLOR ───────────────────────────────
+                  // This uses the same color as the Card widget (cardBackground).
+                  // To change it, edit the values in lib/core/constants/app_colors.dart:
+                  //   • Light mode: AppColorsLight.cardBackground  (default: 0xFFFFFFFF)
+                  //   • Dark mode:  AppColorsDark.cardBackground   (default: 0xFF1E1E1E)
+                  // ───────────────────────────────────────────────────────────────
+                  color: customColors.cardBackground,
+                  elevation: 8,
+                  shadowColor: Colors.black.withValues(alpha: 0.10),
+                  offset: const Offset(0, 8),
+                  constraints: const BoxConstraints(minWidth: 120),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.15),
+                      width: 1,
+                    ),
+                  ),
+                  onSelected: (v) {
+                    ref.read(selectedProjectYearProvider.notifier).state = int.parse(v);
                   },
-                ), 
+                  itemBuilder: (context) => years.map((year) {
+                    final isSelected = year == selectedYear;
+                    final cs = Theme.of(context).colorScheme;
+                    return PopupMenuItem<String>(
+                      value: year.toString(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: isSelected
+                              ? Colors.blue.withValues(alpha: 0.12)
+                              : Theme.of(context).custom.cardBackground!,
+                          border: Border.all(
+                            color: isSelected
+                                ? Colors.blue.withValues(alpha: 0.45)
+                                : cs.outline.withValues(alpha: 0.25),
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              year.toString(),
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
+                                color: isSelected
+                                    ? Colors.blue.shade400
+                                    : cs.onSurface,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (isSelected)
+                              Icon(
+                                Icons.check_rounded,
+                                size: 16,
+                                color: Colors.blue.shade400,
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: customColors.inputFill,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.filter_list,
+                          size: 14,
+                          color: customColors.textPrimary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          selectedYear.toString(),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: customColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          size: 16,
+                          color: customColors.textPrimary,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 8),
