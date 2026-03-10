@@ -30,6 +30,10 @@ flutter_ios_podfile_setup
 target 'Runner' do
   use_frameworks!
 
+  # Override zcatalyst_sdk's pinned ZohoPortalAuth 1.0.5 (fat binary, no arm64-simulator)
+  # with 1.1.0 which ships as an XCFramework supporting arm64-simulator.
+  pod 'ZohoPortalAuth', '1.1.0'
+
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
     inherit! :search_paths
@@ -39,5 +43,9 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      # Allow arm64 simulator builds on Apple Silicon Macs.
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = ''
+    end
   end
 end
