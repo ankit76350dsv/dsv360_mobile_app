@@ -28,7 +28,7 @@ class _SplashScreenState extends ConsumerState<ConsumerStatefulWidget>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
 
@@ -134,8 +134,11 @@ class _SplashScreenState extends ConsumerState<ConsumerStatefulWidget>
                 child: Column(
                   
                   children: [
+                    Text("Powered by", style: TextStyle(color: Colors.grey.shade600, fontSize: 14),),
+                    SizedBox(height: 6,),
+                    Text("DSV Group", style: TextStyle(color: Color.fromARGB(255, 1, 76, 181),fontWeight: FontWeight.w800, fontSize: 20)),
+                    //Text("Digital Synergy Venture Group", style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.bold ),),
                     
-                    Image.asset("assets/images/bottomSplashScreen.png",width: 100,),
                   ],
                 ),
               ),
