@@ -1,4 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/widgets/loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -344,9 +345,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                     );
                   },
                   loading: () => Center(
-                    child: CircularProgressIndicator(
-                      color: customColors.primary,
-                    ),
+                    child: VelocityMorphLoader(),
                   ),
                   error: (error, stack) => Center(
                     child: Column(

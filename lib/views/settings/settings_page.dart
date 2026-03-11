@@ -1,7 +1,7 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/widgets/loader.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
-import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 
 /// Simple settings page that lets the user toggle between
@@ -72,6 +72,11 @@ class SettingsPage extends StatelessWidget {
                 },
               ),
             ),
+            //testing animation here remove this later
+            
+
+            VelocityMorphLoader(),
+
           ],
         ),
       ),
