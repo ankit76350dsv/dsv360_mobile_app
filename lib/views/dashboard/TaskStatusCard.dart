@@ -1,11 +1,10 @@
 import 'package:dsv360/core/constants/theme.dart';
-import 'package:dsv360/core/widgets/custom_app_loader.dart';
+import 'package:dsv360/core/widgets/circular_loader.dart';
 import 'package:dsv360/models/dashboard_model.dart';
 import 'package:dsv360/providers/dashboard_provider.dart'; // for selectedYearProvider
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // ConsumerWidget + WidgetRef
-import '../widgets/custom_popup_dropdown.dart';
 
 // Changed StatelessWidget → ConsumerWidget so we can read/write selectedYearProvider.
 class TaskStatusCard extends ConsumerWidget {
@@ -202,7 +201,7 @@ class TaskStatusCard extends ConsumerWidget {
               // when() renders loader/error/data inline — page is never touched.
               child: taskAsync.when(
                 data: (taskData) => TaskStatusContent(taskData: taskData),
-                loading: () => const Center(child: CustomAppLoader()),
+                loading: () => const Center(child: CircularLoader()),
                 error: (e, _) => const Center(child: Text('Failed to load')),
               ),
             ),

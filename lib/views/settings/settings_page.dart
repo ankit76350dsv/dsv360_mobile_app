@@ -3,6 +3,7 @@ import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:flutter/material.dart';
 
+
 /// Simple settings page that lets the user toggle between
 /// light and dark theme modes.
 class SettingsPage extends StatelessWidget {
@@ -71,8 +72,9 @@ class SettingsPage extends StatelessWidget {
                 },
               ),
             ),
-            //testing animation here remove this later
             
+            
+        
 
             
 

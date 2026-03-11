@@ -1,7 +1,7 @@
 
 
 import 'package:dsv360/core/constants/theme.dart';
-import 'package:dsv360/core/widgets/custom_app_loader.dart';
+import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:flutter/material.dart';
 
 class GlobalLoader extends StatelessWidget {
@@ -19,7 +19,7 @@ class GlobalLoader extends StatelessWidget {
         children: [
           //CircularProgressIndicator(color: customColors.primary),
           
-          CustomAppLoader(color: customColors.primary ?? Theme.of(context).colorScheme.primary),
+          DsvLoader(color: customColors.primary ?? Theme.of(context).colorScheme.primary),
 
           if (message != null) ...[
             const SizedBox(height: 16),

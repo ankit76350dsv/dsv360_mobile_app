@@ -11,17 +11,17 @@ import 'package:flutter/material.dart';
 ///   → shrinks to dot at center
 ///   → dot slides back left
 ///   → dot fades out → restart
-class CustomAppLoader extends StatefulWidget {
+class DsvLoader extends StatefulWidget {
   final Color? color;
   final String label;
 
-  const CustomAppLoader({super.key, this.color, this.label = 'DSV360'});
+  const DsvLoader({super.key, this.color, this.label = 'DSV360'});
 
   @override
-  State<CustomAppLoader> createState() => _CustomAppLoaderState();
+  State<DsvLoader> createState() => _DsvLoaderState();
 }
 
-class _CustomAppLoaderState extends State<CustomAppLoader>
+class _DsvLoaderState extends State<DsvLoader>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
