@@ -74,7 +74,7 @@ class SettingsPage extends StatelessWidget {
             //testing animation here remove this later
             
 
-            //VelocityMorphLoader(),
+            
 
           ],
         ),

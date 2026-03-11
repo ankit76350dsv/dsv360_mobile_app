@@ -14,8 +14,9 @@ import 'package:flutter/material.dart';
 ///   → dot fades out → restart
 class VelocityMorphLoader extends StatefulWidget {
   final Color? color;
+  final String label;
 
-  const VelocityMorphLoader({super.key, this.color});
+  const VelocityMorphLoader({super.key, this.color, this.label = 'DSV360'});
 
   @override
   State<VelocityMorphLoader> createState() => _VelocityMorphLoaderState();
@@ -43,14 +44,14 @@ class _VelocityMorphLoaderState extends State<VelocityMorphLoader>
   @override
   Widget build(BuildContext context) {
     // Use the exact dark blue from CustomColors.primary (seed 0xFF004da7)
-    final color = widget.color ??
-        Theme.of(context).custom.primary ??
-        const Color.fromARGB(255, 0, 98, 235);
+    final color = 
+       //original color// const Color.fromARGB(255, 0, 87, 164);
+       const Color.fromARGB(255, 20, 91, 167);
     return AnimatedBuilder(
       animation: _controller,
       builder: (_, __) => CustomPaint(
-        size: const Size(220, 48),
-        painter: _MorphPainter(progress: _controller.value, color: color),
+        size: const Size(220, 64),
+        painter: _MorphPainter(progress: _controller.value, color: color, label: widget.label),
       ),
     );
   }
@@ -59,8 +60,9 @@ class _VelocityMorphLoaderState extends State<VelocityMorphLoader>
 class _MorphPainter extends CustomPainter {
   final double progress;
   final Color color;
+  final String label;
 
-  _MorphPainter({required this.progress, required this.color});
+  _MorphPainter({required this.progress, required this.color, required this.label});
 
   // Clamp t into [0,1] within segment [from, to]
   static double _seg(double t, double from, double to) =>
@@ -86,10 +88,13 @@ class _MorphPainter extends CustomPainter {
 
     // ── Dimension constants ──────────────────────────────────────────────────
     final pad = W * 0.045;
-    final dotD = H * 0.28;        // dot diameter      ≈ 13 px @ H=48
-    final lineH = H * 0.17;       // line (pill) height ≈ 8 px
-    final rectH = H * 0.82;       // rectangle height   ≈ 39 px
-    final rectW = W * 0.52;       // rectangle width    ≈ 114 px @ W=220
+    final dotD = H * 0.28;        // dot diameter      ≈ 18 px @ H=64
+    final lineH = H * 0.17;       // line (pill) height ≈ 11 px
+    // baseRectH tracks canvas proportion; _kExtraPadding expands the rect on all sides
+    final baseRectH = H * 0.60;   // core rect height   ≈ 38 px @ H=64
+    final rectH = baseRectH + 2.0 * _kExtraPadding;
+    // Measure text to derive responsive rectangle width
+    final rectW = _computeRectWidth(label, rectH, W - 2.0 * pad);
     final circleD = rectH;        // circle diameter = rectH → perfect circle
 
     // ── Anchor X positions ───────────────────────────────────────────────────
@@ -175,47 +180,63 @@ class _MorphPainter extends CustomPainter {
       }
     }
 
-    // ── Animated gradient ────────────────────────────────────────────────────
-    // `shimmer` oscillates 0→1→0→1 twice per loop (2 cycles via sin)
-    // This pulses the gradient between lighter and darker shades of `color`
-    final shimmer = sin(t * pi * 4.0) * 0.5 + 0.5;
-
-    final cLighter = _shiftLightness(color, 0.32 * shimmer);
-    final cLight = _shiftLightness(color, 0.14 * shimmer);
-    final cBase = color;
-    final cDark = _shiftLightness(color, -0.16 * shimmer);
-
-    // Apply frame opacity directly to each color (avoids saveLayer overhead)
-    Color withOp(Color c) => opacity >= 0.999
-        ? c
-        : Color.fromARGB(
-            (c.alpha * opacity).round(), c.red, c.green, c.blue);
-
-    // Gradient rect wider than shape so the shading looks soft even on tiny shapes
-    final gradRect = shapeRect.inflate(w * 0.35 + 6.0);
-
-    final shader = LinearGradient(
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
-      colors: [
-        withOp(cLighter),
-        withOp(cLight),
-        withOp(cBase),
-        withOp(cDark),
-        withOp(cLight),
-        withOp(cLighter),
-      ],
-      stops: const [0.0, 0.15, 0.38, 0.62, 0.85, 1.0],
-    ).createShader(gradRect);
-
     canvas.drawRRect(
       RRect.fromRectAndRadius(shapeRect, Radius.circular(r)),
-      Paint()..shader = shader,
+      Paint()..color = color,
     );
 
     if (textOpacity > 0.01 && textScale > 0.01) {
       _drawDSV(canvas, shapeRect.center, w, h, textOpacity, textScale);
     }
+  }
+
+  /// Measures [text] at the same font size used in [_drawDSV] and returns
+  /// the rectangle width so that all four edges have equal padding.
+  ///
+  /// ── HOW TO ADJUST PADDING ─────────────────────────────────────────────
+  /// Two independent knobs. Change either and the rectangle resizes while the
+  /// text stays the same size (or vice-versa).
+  ///
+  ///   [_kExtraPadding]  — extra pixels added on EACH of the four sides,
+  ///                       on top of the natural equal-padding from the text.
+  ///     ↑ increase → bigger rectangle (wider & taller), text UNCHANGED
+  ///     ↓ decrease → smaller rectangle, text UNCHANGED
+  ///     e.g.   0.0 → no extra space (rect is snug around text)
+  ///            6.0 → current (~6 px extra per side)
+  ///           12.0 → roomy
+  ///
+  ///   [_kTextFillRatio] — fraction of the INNER rect height (rect minus
+  ///                       extra padding) that the text height fills.
+  ///     ↑ increase → larger text, less natural padding
+  ///     ↓ decrease → smaller text, more natural padding
+  ///     0.50 = original size (current)
+  ///
+  /// Tip: only want more padding?  →  raise [_kExtraPadding]
+  ///      only want bigger text?    →  raise [_kTextFillRatio]
+  static const double _kExtraPadding  = 6.0;   // ← extra px per side  (rect grows)
+  static const double _kTextFillRatio = 0.50;  // ← text fill ratio    (0.50 = original size)
+  double _computeRectWidth(String text, double rectH, double maxW) {
+    final ref = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: const TextStyle(
+          fontSize: 100,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    // Text is sized against inner height (rect minus extra padding on both sides),
+    // so text stays the same absolute size even when _kExtraPadding changes.
+    final innerH = rectH - 2.0 * _kExtraPadding;
+    final scale = (innerH * _kTextFillRatio) / ref.height;
+    final scaledW = ref.width * scale;
+    // p = equal padding on each edge = (rectH - textH) / 2
+    // This automatically includes _kExtraPadding since rectH is already expanded.
+    final p = (rectH - ref.height * scale) / 2.0;
+    // clamp: at minimum a square (rectH), at maximum the canvas width minus margins
+    return (scaledW + 2.0 * p).clamp(rectH, maxW);
   }
 
   /// Draws "DSV" centred inside the shape with equal padding on all four edges.
@@ -226,13 +247,13 @@ class _MorphPainter extends CustomPainter {
   ///   letterSpacing = (targetTextW - naturalTextW) / charCount
   /// This stretches "D   S   V" horizontally to fill the shape symmetrically.
   void _drawDSV(Canvas canvas, Offset center, double rW, double rH, double alpha, [double textScale = 1.0]) {
-    const text = 'DSV';
+    final text = label;
 
     // ── Step 1: measure natural dimensions at a reference font size ──────────
     final ref = TextPainter(
-      text: const TextSpan(
+      text: TextSpan(
         text: text,
-        style: TextStyle(
+        style: const TextStyle(
           fontSize: 100,
           fontWeight: FontWeight.w800,
           letterSpacing: 0,
@@ -241,14 +262,17 @@ class _MorphPainter extends CustomPainter {
       textDirection: TextDirection.ltr,
     )..layout();
 
-    // ── Step 2: scale font so text height fills 50% of the shape height (more padding) ──────
-    final scale = (rH * 0.50) / ref.height;
+    // ── Step 2: scale font against INNER height so text size is independent of extra padding ──
+    // inner height = shape height minus the extra padding added on each side.
+    // Changing _kExtraPadding only affects whitespace; _kTextFillRatio controls text size.
+    final innerH = rH - 2.0 * _kExtraPadding;
+    final scale = (innerH * _kTextFillRatio) / ref.height;
     final fontSize = 100.0 * scale;
     final scaledH = ref.height * scale;
     final scaledWnatural = ref.width * scale;
 
     // ── Step 3: derive equal padding and required text width ─────────────────
-    final p = (rH - scaledH) / 2.0; // equal vertical padding
+    final p = (rH - scaledH) / 2; // equal vertical padding
     final targetW = rW - 2.0 * p;   // matching horizontal constraint
 
     // Distribute any extra width as letter spacing across all characters
@@ -279,13 +303,7 @@ class _MorphPainter extends CustomPainter {
     canvas.restore();
   }
 
-  Color _shiftLightness(Color c, double delta) {
-    final hsl = HSLColor.fromColor(c);
-    return hsl
-        .withLightness((hsl.lightness + delta).clamp(0.0, 1.0))
-        .toColor();
-  }
-
   @override
-  bool shouldRepaint(_MorphPainter old) => old.progress != progress;
+  bool shouldRepaint(_MorphPainter old) =>
+      old.progress != progress || old.label != label;
 }
