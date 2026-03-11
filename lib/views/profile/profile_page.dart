@@ -1,6 +1,7 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:dsv360/views/profile/AboutMe.dart';
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
@@ -376,50 +377,139 @@ class ProfilePage extends StatelessWidget {
                             width: double.infinity,
                             child: ElevatedButton.icon(
                               onPressed: () async {
-                                // Show same themed confirmation dialog as AppDrawer.
-                                final confirmed = await showDialog<bool>(
+                                // Show logout confirmation bottom sheet.
+                                final confirmed =
+                                    await showModalBottomSheet<bool>(
                                   context: context,
+                                  backgroundColor: Colors.transparent,
+                                  isScrollControlled: true,
                                   builder: (ctx) {
                                     final dc = Theme.of(ctx).custom;
-                                    return AlertDialog(
-                                      backgroundColor: dc.cardBackground,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      title: Text(
-                                        'Logout',
-                                        style: TextStyle(
-                                          color: dc.textPrimary,
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
+                                    final isDark =
+                                        Theme.of(ctx).brightness ==
+                                        Brightness.dark;
+                                    return Container(
+                                      decoration: BoxDecoration(
+                                        color: dc.cardBackground,
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                          top: Radius.circular(24),
                                         ),
                                       ),
-                                      content: Text(
-                                        'Are you sure you want to logout?',
-                                        style: TextStyle(
-                                          color: dc.textSecondary,
-                                          fontSize: 14,
-                                        ),
+                                      padding: EdgeInsets.only(
+                                        left: 24,
+                                        right: 24,
+                                        top: 16,
+                                        bottom:
+                                            MediaQuery.of(ctx)
+                                                .viewInsets
+                                                .bottom +
+                                            32,
                                       ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.of(ctx).pop(false),
-                                          style: TextButton.styleFrom(
-                                            foregroundColor: Colors.grey,
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          // Drag handle
+                                          Container(
+                                            width: 40,
+                                            height: 4,
+                                            margin: const EdgeInsets.only(
+                                              bottom: 20,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: isDark
+                                                  ? Colors.white24
+                                                  : Colors.black12,
+                                              borderRadius:
+                                                  BorderRadius.circular(2),
+                                            ),
                                           ),
-                                          child: const Text('Cancel'),
-                                        ),
-                                        TextButton(
-                                          onPressed: () => Navigator.of(ctx).pop(true),
-                                          style: TextButton.styleFrom(
-                                            foregroundColor: dc.error,
+                                          // Lottie animation
+                                          Lottie.asset(
+                                            'assets/animations/logout_animation.json',
+                                            width: 140,
+                                            height: 140,
+                                            fit: BoxFit.contain,
                                           ),
-                                          child: const Text(
-                                            'Logout',
-                                            style: TextStyle(fontWeight: FontWeight.bold),
+                                          const SizedBox(height: 12),
+                                          Text(
+                                            'You will be logged out',
+                                            style: TextStyle(
+                                              color: dc.textPrimary,
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
-                                        ),
-                                      ],
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Are you sure you want to logout?\nYou\'ll need to sign in again to access your account.',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              color: dc.textSecondary,
+                                              fontSize: 14,
+                                              height: 1.5,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 28),
+                                          // Logout button
+                                          SizedBox(
+                                            width: double.infinity,
+                                            height: 50,
+                                            child: ElevatedButton(
+                                              onPressed: () =>
+                                                  Navigator.of(ctx).pop(true),
+                                              style:
+                                                  ElevatedButton.styleFrom(
+                                                backgroundColor: dc.error,
+                                                foregroundColor: Colors.white,
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                    12,
+                                                  ),
+                                                ),
+                                                elevation: 0,
+                                              ),
+                                              child: const Text(
+                                                'Logout',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          // Cancel button
+                                          SizedBox(
+                                            width: double.infinity,
+                                            height: 50,
+                                            child: OutlinedButton(
+                                              onPressed: () =>
+                                                  Navigator.of(ctx).pop(false),
+                                              style:
+                                                  OutlinedButton.styleFrom(
+                                                foregroundColor: dc.textPrimary,
+                                                side: BorderSide(
+                                                  color: isDark
+                                                      ? Colors.white24
+                                                      : Colors.black12,
+                                                ),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                    12,
+                                                  ),
+                                                ),
+                                              ),
+                                              child: const Text(
+                                                'Cancel',
+                                                style: TextStyle(fontSize: 16),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     );
                                   },
                                 );
