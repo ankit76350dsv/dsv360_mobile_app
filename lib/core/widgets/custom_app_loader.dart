@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 
 /// Horizontal morphing velocity loader.
@@ -12,17 +11,17 @@ import 'package:flutter/material.dart';
 ///   → shrinks to dot at center
 ///   → dot slides back left
 ///   → dot fades out → restart
-class VelocityMorphLoader extends StatefulWidget {
+class CustomAppLoader extends StatefulWidget {
   final Color? color;
   final String label;
 
-  const VelocityMorphLoader({super.key, this.color, this.label = 'DSV360'});
+  const CustomAppLoader({super.key, this.color, this.label = 'DSV360'});
 
   @override
-  State<VelocityMorphLoader> createState() => _VelocityMorphLoaderState();
+  State<CustomAppLoader> createState() => _CustomAppLoaderState();
 }
 
-class _VelocityMorphLoaderState extends State<VelocityMorphLoader>
+class _CustomAppLoaderState extends State<CustomAppLoader>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 

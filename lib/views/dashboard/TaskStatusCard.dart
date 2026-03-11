@@ -1,5 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
-import 'package:dsv360/core/widgets/loader.dart';
+import 'package:dsv360/core/widgets/custom_app_loader.dart';
 import 'package:dsv360/models/dashboard_model.dart';
 import 'package:dsv360/providers/dashboard_provider.dart'; // for selectedYearProvider
 import 'package:fl_chart/fl_chart.dart';
@@ -202,7 +202,7 @@ class TaskStatusCard extends ConsumerWidget {
               // when() renders loader/error/data inline — page is never touched.
               child: taskAsync.when(
                 data: (taskData) => TaskStatusContent(taskData: taskData),
-                loading: () => const Center(child: VelocityMorphLoader()),
+                loading: () => const Center(child: CustomAppLoader()),
                 error: (e, _) => const Center(child: Text('Failed to load')),
               ),
             ),

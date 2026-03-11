@@ -1,5 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
-import 'package:dsv360/core/widgets/loader.dart';
+import 'package:dsv360/core/widgets/custom_app_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -345,7 +345,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                     );
                   },
                   loading: () => Center(
-                    child: VelocityMorphLoader(),
+                    child: CustomAppLoader(),
                   ),
                   error: (error, stack) => Center(
                     child: Column(

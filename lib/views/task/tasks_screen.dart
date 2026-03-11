@@ -1,5 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
-import 'package:dsv360/core/widgets/loader.dart';
+import 'package:dsv360/core/widgets/custom_app_loader.dart';
 import 'package:dsv360/providers/task_provider.dart';
 import 'package:dsv360/repositories/task_repository.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
@@ -500,7 +500,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                         ),
                       );
               },
-              loading: () => const Center(child: VelocityMorphLoader()),
+              loading: () => const Center(child: CustomAppLoader()),
               error: (err, stack) => Center(
                 child: SingleChildScrollView(
                   child: Column(

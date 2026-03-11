@@ -1,5 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
-import 'package:dsv360/core/widgets/loader.dart';
+import 'package:dsv360/core/widgets/custom_app_loader.dart';
 import 'package:dsv360/models/dashboard_model.dart';
 import 'package:dsv360/providers/dashboard_provider.dart'; // for selectedProjectYearProvider
 import 'package:flutter/material.dart';
@@ -192,7 +192,7 @@ class ProjectAnalyticsCard extends ConsumerWidget {
               ),
               loading: () => SizedBox(
                 height: chartHeight,
-                child: const Center(child: VelocityMorphLoader()),
+                child: const Center(child: CustomAppLoader()),
               ),
               error: (e, _) => const SizedBox(
                 height: 80,
