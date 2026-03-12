@@ -29,10 +29,6 @@ class _LoadingPageState extends ConsumerState<LoadingPage> {
       final user = await AuthManager.instance.fetchUser();
 
       if (user != null) {
-        // Populate the Riverpod provider so People/Check-In/Leave tabs work.
-        final activeUser = ActiveUserModel.fromCatalystUser(user);
-        ref.read(activeUserRepositoryProvider.notifier).setUser(activeUser);
-
         await UserManager.instance.fetchUserProfile(user.id);
       }
 
@@ -40,12 +36,20 @@ class _LoadingPageState extends ConsumerState<LoadingPage> {
       await TokenManager.instance.getToken();
 
       if (mounted) {
-        // Invalidate all cached providers NOW — user is valid, DashboardPage
-        // is not yet mounted so no active listeners → no immediate re-fetch.
-        // This guarantees every screen loads fresh data for the new user.
+        // 1. Invalidate all stale providers from the previous user session
+        //    BEFORE setting the new user. This clears old data without
+        //    wiping the new user that is about to be set.
         SessionManager.invalidateAllProviders(
           ProviderScope.containerOf(context, listen: false),
         );
+
+        // 2. Set the new active user AFTER invalidation so that when
+        //    DashboardPage's children (CheckIn tab, Leave tab, etc.) build,
+        //    they read the correct user from activeUserRepositoryProvider.
+        if (user != null) {
+          final activeUser = ActiveUserModel.fromCatalystUser(user);
+          ref.read(activeUserRepositoryProvider.notifier).setUser(activeUser);
+        }
 
         Navigator.pushReplacement(
           context,
