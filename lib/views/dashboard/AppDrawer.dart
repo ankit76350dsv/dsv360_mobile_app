@@ -395,7 +395,7 @@ class AppDrawer extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(
-                        'Powered by DSV360',
+                        'DSV360',
                         textAlign: TextAlign.center,
                         style: textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w600,
