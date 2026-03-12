@@ -5,7 +5,7 @@ import 'package:dsv360/core/constants/auth_manager.dart';
 
 final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
   return DashboardRepository();
-});
+}); 
 
 // Year selected in the Task Status pie chart picker.
 final selectedYearProvider = StateProvider<int>((ref) => DateTime.now().year);

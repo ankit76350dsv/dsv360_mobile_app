@@ -159,3 +159,216 @@ data.closed      → Closed bar  (label 'Closed')
 // Bar width formula:
 barWidth = (value / 12) * 200.0
 ```
+
+---
+
+## Complete Data Flow — Task Status Card (open / inProgress / closed)
+
+> Start: Zoho Catalyst server → End: numbers shown in the pie chart on the dashboard
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  SOURCE  ·  Zoho Catalyst Serverless API                                    │
+│                                                                             │
+│  URL (prod) : https://project.dsv360.ai/server/                             │
+│               time_entry_management_application_function/mobile/dashboard   │
+│  URL (dev)  : https://project-management-...development.catalystserverless  │
+│               .in/server/time_entry_management_application_function/        │
+│               mobile/dashboard                                              │
+│                                                                             │
+│  File       : lib/core/constants/server_constant.dart                       │
+│  Class      : ServerConstant                                                │
+│  Variable   : ServerConstant.serverURL                                      │
+└──────────────────────────┬──────────────────────────────────────────────────┘
+                           │  HTTP GET  + query params
+                           ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 1  ·  HTTP Client                                                    │
+│                                                                             │
+│  File    : lib/core/network/dio_client.dart                                 │
+│  Class   : ApiClient  (singleton)                                           │
+│  Access  : ApiClient.instance                                               │
+│  Field   : _dio  (Dio)  — baseUrl = ServerConstant.serverURL                │
+│                                                                             │
+│  Auth interceptor reads:                                                    │
+│    token ← TokenManager.instance.getToken()                                 │
+│    header: 'Authorization': 'Zoho-oauthtoken $token'                        │
+│                                                                             │
+│  Method called:                                                             │
+│    _client.get(path, queryParameters: {                                     │
+│      'User_Id' : userId,                                                    │
+│      'Org_Id'  : orgId,                                                     │
+│      'Year'    : year,                                                      │
+│    })                                                                       │
+│                                                                             │
+│  Returns: Response  (Dio)                                                   │
+└──────────────────────────┬──────────────────────────────────────────────────┘
+                           │  Response.data  →  Map<String, dynamic>
+                           ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 2  ·  User Identity (query param source)                             │
+│                                                                             │
+│  File    : lib/core/constants/auth_manager.dart                             │
+│  Class   : AuthManager  (singleton)                                         │
+│  Access  : AuthManager.instance                                             │
+│  Field   : currentUser  (ZCatalystUser?)                                    │
+│                                                                             │
+│  Values read from currentUser:                                              │
+│    currentUser.id     → passed as  User_Id  query param                     │
+│    currentUser.zaaid  → passed as  Org_Id   query param                     │
+│                                                                             │
+│  ZCatalystUser is a model from the zcatalyst_sdk package                    │
+└──────────────────────────┬──────────────────────────────────────────────────┘
+                           │  userId, orgId, year
+                           ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 3  ·  Repository                                                     │
+│                                                                             │
+│  File    : lib/repositories/dashboard_repository.dart                       │
+│  Class   : DashboardRepository                                              │
+│  Field   : _client = ApiClient.instance                                     │
+│                                                                             │
+│  Method  : fetchDashboardData({userId, orgId, year})                        │
+│    1. calls _client.get(path, queryParameters)                              │
+│    2. stores result in:  final response = await _client.get(...)            │
+│    3. extracts body  :   final jsonResponse = response.data                 │
+│                          // Map<String, dynamic>                            │
+│    4. checks guard  :    jsonResponse['success'] == true                    │
+│    5. parses        :    return DashboardModel.fromJson(jsonResponse)        │
+│                                                                             │
+│  Raw JSON keys available in jsonResponse:                                   │
+│    jsonResponse['success']                    → bool                        │
+│    jsonResponse['userCnt']                    → int                         │
+│    jsonResponse['taskCnt']                    → int                         │
+│    jsonResponse['projectCnt']                 → int                         │
+│    jsonResponse['completedProjectCnt']        → int                         │
+│    jsonResponse['issueCnt']                   → int                         │
+│    jsonResponse['yearTaskData']               → Map  ← WE WANT THIS         │
+│    jsonResponse['yearMonthwiseUserProjects']  → List                        │
+└──────────────────────────┬──────────────────────────────────────────────────┘
+                           │  jsonResponse  →  DashboardModel.fromJson()
+                           ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 4  ·  Model — DashboardModel                                         │
+│                                                                             │
+│  File    : lib/models/dashboard_model.dart                                  │
+│  Class   : DashboardModel                                                   │
+│                                                                             │
+│  DashboardModel.fromJson(jsonResponse):                                     │
+│    field: yearTaskData  ← YearTaskData.fromJson(                            │
+│                               jsonResponse['yearTaskData']                  │
+│                             )                                               │
+│                                                                             │
+│  (other fields are irrelevant for the Task Status card)                     │
+└──────────────────────────┬──────────────────────────────────────────────────┘
+                           │  jsonResponse['yearTaskData']  →  YearTaskData.fromJson()
+                           ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 5  ·  Model — YearTaskData                                           │
+│                                                                             │
+│  File    : lib/models/dashboard_model.dart                                  │
+│  Class   : YearTaskData                                                     │
+│                                                                             │
+│  YearTaskData.fromJson(json):                                               │
+│    json['open']        → field: open        (int)  ← Open tasks             │
+│    json['in_progress'] → field: inProgress  (int)  ← In Progress tasks      │
+│    json['closed']      → field: closed      (int)  ← Completed tasks        │
+│                                                                             │
+│  NOTE: backend sends snake_case 'in_progress',                              │
+│        Dart model stores it in camelCase 'inProgress'                       │
+└──────────────────────────┬──────────────────────────────────────────────────┘
+                           │  returns DashboardModel  (contains .yearTaskData)
+                           ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 6  ·  Year State                                                     │
+│                                                                             │
+│  File     : lib/providers/dashboard_provider.dart                           │
+│  Provider : selectedYearProvider  (StateProvider<int>)                      │
+│  Default  : DateTime.now().year                                             │
+│                                                                             │
+│  Changed by user via PopupMenuButton in TaskStatusCard:                     │
+│    onSelected: (v) =>                                                       │
+│      ref.read(selectedYearProvider.notifier).state = int.parse(v)           │
+│                                                                             │
+│  When this changes → taskStatusDataProvider is invalidated → re-fetches    │
+└──────────────────────────┬──────────────────────────────────────────────────┘
+                           │  year (String)  passed into fetchDashboardData
+                           ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 7  ·  Riverpod Provider                                              │
+│                                                                             │
+│  File     : lib/providers/dashboard_provider.dart                           │
+│  Provider : taskStatusDataProvider  (FutureProvider<YearTaskData>)          │
+│                                                                             │
+│  Inside the provider:                                                       │
+│    final repository = ref.watch(dashboardRepositoryProvider)                │
+│    final user       = AuthManager.instance.currentUser                      │
+│    final year       = ref.watch(selectedYearProvider).toString()            │
+│                                                                             │
+│    final dash = await repository.fetchDashboardData(                        │
+│      userId : user.id,                                                      │
+│      orgId  : user.zaaid,                                                   │
+│      year   : year,                                                         │
+│    )                                                                        │
+│    return dash.yearTaskData    ←  YearTaskData object                       │
+│                                                                             │
+│  Exposed type: AsyncValue<YearTaskData>                                     │
+└──────────────────────────┬──────────────────────────────────────────────────┘
+                           │  AsyncValue<YearTaskData>
+                           ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 8  ·  Widget — TaskStatusCard                                        │
+│                                                                             │
+│  File    : lib/views/dashboard/TaskStatusCard.dart                          │
+│  Class   : TaskStatusCard  (ConsumerWidget)                                 │
+│                                                                             │
+│  final taskAsync = ref.watch(taskStatusDataProvider)                        │
+│    → AsyncValue<YearTaskData>                                               │
+│                                                                             │
+│  taskAsync.when(                                                            │
+│    loading: () → shows CircularLoader()                                     │
+│    error  : (e, _) → shows Text('Failed to load')                          │
+│    data   : (taskData) → passes to TaskStatusContent(taskData: taskData)    │
+│  )                                                                          │
+└──────────────────────────┬──────────────────────────────────────────────────┘
+                           │  taskData  (YearTaskData)
+                           ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  LAYER 9  ·  Widget — TaskStatusContent                                     │
+│                                                                             │
+│  File    : lib/views/dashboard/TaskStatusCard.dart                          │
+│  Class   : TaskStatusContent  (StatelessWidget)                             │
+│  Param   : taskData  (YearTaskData)                                         │
+│                                                                             │
+│  Calculations:                                                              │
+│    total         = taskData.open + taskData.inProgress + taskData.closed    │
+│    closedPct     = (taskData.closed      / total) * 100                     │
+│    openPct       = (taskData.open        / total) * 100                     │
+│    inProgressPct = (taskData.inProgress  / total) * 100                     │
+│                                                                             │
+│  PieChart sections (fl_chart):                                              │
+│    sections[0]  value=closedPct      color=statusCompleted  (green)         │
+│    sections[1]  value=openPct        color=statusInProgress (blue)          │
+│    sections[2]  value=inProgressPct  color=error            (red)           │
+│                                                                             │
+│  Legend labels:                                                             │
+│    • "Completed   (taskData.closed)"                                        │
+│    • "Open        (taskData.open)"                                          │
+│    • "In Progress (taskData.inProgress)"                                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Files involved — quick reference
+
+| Layer | File | Key identifier |
+|---|---|---|
+| Base URL | `lib/core/constants/server_constant.dart` | `ServerConstant.serverURL` |
+| HTTP client | `lib/core/network/dio_client.dart` | `ApiClient.instance` → `_dio.get()` |
+| Auth / user | `lib/core/constants/auth_manager.dart` | `AuthManager.instance.currentUser` → `.id`, `.zaaid` |
+| Repository | `lib/repositories/dashboard_repository.dart` | `DashboardRepository.fetchDashboardData()` → `response.data` → `jsonResponse` |
+| Full model | `lib/models/dashboard_model.dart` | `DashboardModel` → `.yearTaskData` |
+| Task model | `lib/models/dashboard_model.dart` | `YearTaskData` → `.open` `.inProgress` `.closed` |
+| Year state | `lib/providers/dashboard_provider.dart` | `selectedYearProvider` |
+| Data provider | `lib/providers/dashboard_provider.dart` | `taskStatusDataProvider` → returns `YearTaskData` |
+| Card shell | `lib/views/dashboard/TaskStatusCard.dart` | `TaskStatusCard` → `ref.watch(taskStatusDataProvider)` |
+| Chart + legend | `lib/views/dashboard/TaskStatusCard.dart` | `TaskStatusContent(taskData:)` → `taskData.open / .inProgress / .closed` |
