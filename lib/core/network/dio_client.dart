@@ -30,6 +30,36 @@ class ApiClient {
       ),
     );
 
+    // FIX (401 intermittent error): if the server rejects the token with 401,
+    // clear the cached token, fetch a fresh one, and retry the original request
+    // once. This handles the case where the in-memory token has expired but the
+    // proactive 50-min refresh in TokenManager did not fire (e.g. app was
+    // backgrounded for a long time).
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onError: (DioException error, ErrorInterceptorHandler handler) async {
+          if (error.response?.statusCode == 401) {
+            debugPrint('🔄 401 received — clearing stale token and retrying...');
+            TokenManager.instance.clearToken();
+            final newToken = await TokenManager.instance.getToken();
+            if (newToken != null) {
+              // Retry the original request with the refreshed token.
+              final opts = error.requestOptions;
+              opts.headers['Authorization'] = 'Zoho-oauthtoken $newToken';
+              try {
+                final retryResponse = await _dio.fetch(opts);
+                return handler.resolve(retryResponse);
+              } catch (e) {
+                // Retry also failed — let the error propagate normally.
+                return handler.next(error);
+              }
+            }
+          }
+          return handler.next(error);
+        },
+      ),
+    );
+
     // Automatically logs: Request URL, Headers, Body, Response body
     _dio.interceptors.add(
       LogInterceptor(requestBody: true, responseBody: true),
@@ -98,16 +128,7 @@ class ApiClient {
     List<MultipartFile>? attachments,
   }) async {
     try {
-      // Token interceptor added ONCE here
-      // _dio.interceptors.add(InterceptorsWrapper(
-      //   onRequest: (options, handler) {
-      //     // final token = TokenManager.instance.token;
-      //     // if (token != null) {
-      //     //   options.headers['Authorization'] = 'Zoho-oauthtoken $token';
-      //     // }
-      //     return handler.next(options);
-      //   },
-      // ));
+      
 
       final response = await _dio.post(
         path,

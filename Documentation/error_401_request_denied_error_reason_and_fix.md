@@ -1,3 +1,5 @@
+
+
 # 401 Unauthorised Error — Projects Screen (Intermittent)
 
 > **Symptom:** After login, or during normal app use, the Projects screen (and potentially other screens) suddenly shows  
@@ -5,6 +7,8 @@
 > The error disappears only after a **hot restart**.
 
 ---
+![401 Error Screenshot](error_401.png)
+
 
 ## What a 401 means here
 
