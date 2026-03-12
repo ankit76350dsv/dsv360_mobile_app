@@ -117,6 +117,7 @@ class _DashboardScaffold extends ConsumerWidget {
             }
             // When connected, show dashboard data
             return dashboardAsyncValue.when(
+              skipLoadingOnRefresh: false,
               data: (dashboard) {
                 return RefreshIndicator(
                   onRefresh: () async {

@@ -1,8 +1,8 @@
+import 'package:dsv360/core/constants/session_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/views/profile/AboutMe.dart';
-import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
@@ -492,7 +492,7 @@ class ProfilePage extends StatelessWidget {
 
                                 if (confirmed != true) return;
 
-                                await AppInitManager.instance.catalystApp.logout();
+                                await SessionManager.logout(context);
                                 if (context.mounted) {
                                   Navigator.of(context).pushAndRemoveUntil(
                                     MaterialPageRoute(

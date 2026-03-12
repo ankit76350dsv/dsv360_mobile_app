@@ -1,5 +1,6 @@
 // lib/main.dart
 //
+import 'package:dsv360/core/constants/app_navigator_key.dart';
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/views/splash/splash_screen.dart';
@@ -26,6 +27,7 @@ class MyApp extends StatelessWidget {
           valueListenable: themeController.themeMode,
           builder: (context, themeMode, _) {
             return MaterialApp(
+              navigatorKey: appNavigatorKey,
               themeMode: themeMode,
               theme: buildLightTheme(themeController.seedColor.value),
               darkTheme: buildDarkTheme(themeController.seedColor.value),

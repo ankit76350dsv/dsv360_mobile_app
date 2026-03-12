@@ -1399,8 +1399,9 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
     final customColors = Theme.of(context).custom;
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final userId = activeUser?.userId ?? '';
+    // Show loader while activeUser is still being fetched instead of throwing.
     if (userId.isEmpty) {
-      throw Exception("User ID is missing.");
+      return const GlobalLoader(message: 'Loading user info...');
     }
 
     final userStatusAsync = ref.watch(userStatusRepositoryProvider);

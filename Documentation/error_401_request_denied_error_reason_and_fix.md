@@ -128,28 +128,60 @@ Hot restart is essentially a manual "clear token cache and re-fetch" — which i
 
 ---
 
-## Potential Solutions
+## ❌ Update — 13 March 2026: Previous Fix Did Not Fully Resolve the Issue
 
-### Solution A — Clear token and retry on 401 in ApiClient (Recommended)
+### What was done
+- Added proactive 50-minute expiry to `TokenManager` (avoids sending an expired token).
+- Added a `onError` interceptor in `ApiClient` that catches 401, calls `clearToken()`, fetches a new token, and retries the request once.
 
-Add a **response/error interceptor** in `ApiClient._internal()` (in `dio_client.dart`) that:
-1. Catches any `DioException` where `response.statusCode == 401`.
-2. Calls `TokenManager.instance.clearToken()`.
-3. Fetches a fresh token via `TokenManager.instance.getToken()`.
-4. Retries the original request with the new token by calling `handler.resolve(retryResponse)`.
+### Why it still fails
 
-This is the standard Dio interceptor pattern for OAuth token refresh. No screen or repository code needs to change.
+**The interceptor IS running** (you can confirm by checking for `🔄 401 received — clearing stale token and retrying...` in the debug console). However, **the retry also gets 401**, so `handler.next(error)` is called and the error propagates through to the `on DioException catch` in `get()`, producing the same visible error.
+
+**Root cause of the retry failure — Catalyst SDK `getAccessToken()` returns the same expired token:**
+
+```
+clearToken()
+  → _accessToken = null
+  → getToken() called
+  → _isTokenExpired == true → _fetchTokenInternal()
+  → app.getAccessToken()   ← Catalyst SDK also caches internally
+                             Returns the SAME expired string
+  → retry with same expired token
+  → server returns 401 again
+  → handler.next(error)
+  → DioException propagates to get() catch block
+  → user sees the error
+```
+
+The Catalyst SDK (`zcatalyst_sdk`) stores its own access token internally. When `app.getAccessToken()` is called, it returns its cached value without checking whether the server has rejected it. Clearing our `TokenManager` cache does not clear the SDK's internal cache.
+
+### Additional New Root Cause — Infinite retry recursion risk
+
+`_dio.fetch(opts)` inside the `onError` interceptor goes through the full Dio interceptor chain again. If the retry also gets a 401, our `onError` interceptor fires **again recursively** for the retry request. The recursion terminates because the inner retry is wrapped in try-catch and calls `handler.next(error)` on failure, but it means `app.getAccessToken()` is called twice per 401 — both times returning the same invalid token.
+
+### Diagnosis steps
+
+1. Run the app and trigger the 401 (navigate to Projects, or open Add Project dialog).
+2. Look in the Flutter debug console for:
+   - `🔄 401 received — clearing stale token and retrying...` → interceptor is running.
+   - If this appears **twice in a row**, the recursion is happening.
+   - If it appears once and the request still fails, `app.getAccessToken()` is returning the same expired token.
+3. Look for `✅ Access Token fetched: <token_string>` immediately after — compare the token string to previous logs. If it is **identical** to the expired token, the SDK is returning stale data.
 
 ---
 
-### Solution B — Never cache the token in TokenManager; always ask the SDK
+## Potential Solutions
 
-In `TokenManager.getToken()`, remove the `if (_accessToken != null) return _accessToken` guard, or add an **expiry timestamp** check:
-- Store `_tokenFetchedAt = DateTime.now()` when the token is fetched.
-- In `getToken()`, if `DateTime.now().difference(_tokenFetchedAt) > Duration(minutes: 50)`, treat the cached token as expired and call `_fetchTokenInternal()` again.
-- 50 minutes is a safe margin before the Catalyst token's 1-hour expiry.
+### Solution A — Clear token and retry on 401 in ApiClient ✅ Implemented (partial fix)
 
-This ensures every API call after ~50 minutes automatically gets a fresh token before the old one actually expires — preventing 401 entirely.
+This was implemented. The interceptor catches 401, clears `TokenManager`, and retries. However this alone is insufficient because `app.getAccessToken()` returns the SDK's cached (expired) token. See Solution E for the full fix.
+
+---
+
+### Solution B — Proactive 50-minute token expiry in TokenManager ✅ Implemented
+
+This was implemented. `TokenManager` now tracks `_tokenFetchedAt` and proactively refreshes the token after 50 minutes. This prevents 401 from ever happening when the app is actively used. However it does not help after long backgrounding where the SDK session itself has expired.
 
 ---
 
@@ -170,13 +202,53 @@ As a fallback safety net (not a primary fix):
 
 ---
 
-## Files to change (when implementing the fix)
+### Solution E ⭐ — Force Catalyst SDK session logout + re-login on persistent 401 (Recommended new fix)
 
-| File | What to change |
-|---|---|
-| `lib/core/network/dio_client.dart` | Add error interceptor to catch 401, clear token, retry |
-| `lib/core/constants/token_manager.dart` | Add expiry timestamp + proactive refresh before token expires |
-| `lib/core/constants/auth_manager.dart` | Add `clearUser()` method for logout-on-auth-failure flow |
+When the Catalyst SDK's own session has expired, there is no way to get a valid token without re-authenticating. The correct response is to **force the user back to the login screen** when a retry also gets 401.
+
+**In `dio_client.dart` `onError` interceptor:**
+- If the retry also fails with 401 (or any exception), instead of silently propagating the error, trigger app-wide logout:
+  1. Call `AppInitManager.instance.catalystApp.logout()` — clears SDK internal session.
+  2. Call `TokenManager.instance.clearToken()`.
+  3. Call `UserManager.instance.clear()` and `AuthManager.instance.currentUser = null`.
+  4. Navigate the user back to `WelcomePage` (login screen).
+
+This way the user is never stuck in a broken state where every request returns 401. They are prompted to log in again cleanly.
+
+**Files to change:** `lib/core/network/dio_client.dart` — update the `onError` interceptor retry catch block.
+
+---
+
+### Solution F — Add a retry guard flag to prevent recursive interceptor calls
+
+When `_dio.fetch(opts)` is called for the retry inside `onError`, if that retry also gets 401, the `onError` interceptor fires again recursively. Add a custom header flag (`_isRetry: true`) to the retry request options, and in the interceptor skip retry logic if the flag is already set.
+
+```dart
+// In onError interceptor:
+if (error.response?.statusCode == 401 &&
+    error.requestOptions.headers['_isRetry'] != true) {
+  // ... clear token, fetch new token ...
+  opts.headers['_isRetry'] = true;  // mark as retry
+  // ... _dio.fetch(opts) ...
+}
+```
+
+This prevents the recursive double-retry and makes the failure path cleaner.
+
+**Files to change:** `lib/core/network/dio_client.dart` — update `onError` interceptor.
+
+---
+
+## Files to change (remaining work)
+
+| File | What to change | Status |
+|---|---|---|
+| `lib/core/network/dio_client.dart` | Add `_isRetry` guard flag (Solution F) + force logout on retry failure (Solution E) | ❌ Not done |
+| `lib/core/constants/token_manager.dart` | Proactive 50-min expiry already added | ✅ Done |
+| `lib/core/constants/auth_manager.dart` | Add `currentUser = null` to logout flow | ❌ Not done |
+| `lib/core/constants/user_manager.dart` | Add `UserManager.instance.clear()` to logout flow | ❌ Not done |
+| `lib/views/dashboard/AppDrawer.dart` | Call `UserManager.instance.clear()` on logout | ❌ Not done |
+| `lib/views/profile/profile_page.dart` | Call `TokenManager.clearToken()` + `UserManager.clear()` on logout | ❌ Not done |
 
 ---
 

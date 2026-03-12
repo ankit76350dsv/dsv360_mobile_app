@@ -1,9 +1,8 @@
 import 'package:dsv360/core/constants/auth_manager.dart';
-import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
+import 'package:dsv360/core/constants/session_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
-import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/views/projects/projects_screen.dart';
@@ -370,8 +369,7 @@ class AppDrawer extends StatelessWidget {
                       // Close drawer first
                       navigator.pop();
 
-                      await AppInitManager.instance.catalystApp.logout();
-                      TokenManager.instance.clearToken();
+                      await SessionManager.logout(context);
 
                       navigator.pushAndRemoveUntil(
                         MaterialPageRoute(

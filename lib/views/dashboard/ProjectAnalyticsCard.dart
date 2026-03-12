@@ -175,6 +175,7 @@ class ProjectAnalyticsCard extends ConsumerWidget {
             const SizedBox(height: 8),
             // when() renders loader/error/data inline — page is never touched.
             analyticsAsync.when(
+              skipLoadingOnRefresh: false,
               data: (monthData) => SizedBox(
                 height: chartHeight,
                 child: ListView.separated(

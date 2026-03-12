@@ -1,18 +1,22 @@
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/constants/session_manager.dart';
 import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
+import 'package:dsv360/models/active_user.dart';
+import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class LoadingPage extends StatefulWidget {
+class LoadingPage extends ConsumerStatefulWidget {
   const LoadingPage({super.key});
 
   @override
-  State<LoadingPage> createState() => _LoadingPageState();
+  ConsumerState<LoadingPage> createState() => _LoadingPageState();
 }
 
-class _LoadingPageState extends State<LoadingPage> {
+class _LoadingPageState extends ConsumerState<LoadingPage> {
   @override
   void initState() {
     super.initState();
@@ -25,6 +29,10 @@ class _LoadingPageState extends State<LoadingPage> {
       final user = await AuthManager.instance.fetchUser();
 
       if (user != null) {
+        // Populate the Riverpod provider so People/Check-In/Leave tabs work.
+        final activeUser = ActiveUserModel.fromCatalystUser(user);
+        ref.read(activeUserRepositoryProvider.notifier).setUser(activeUser);
+
         await UserManager.instance.fetchUserProfile(user.id);
       }
 
@@ -32,6 +40,13 @@ class _LoadingPageState extends State<LoadingPage> {
       await TokenManager.instance.getToken();
 
       if (mounted) {
+        // Invalidate all cached providers NOW — user is valid, DashboardPage
+        // is not yet mounted so no active listeners → no immediate re-fetch.
+        // This guarantees every screen loads fresh data for the new user.
+        SessionManager.invalidateAllProviders(
+          ProviderScope.containerOf(context, listen: false),
+        );
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(

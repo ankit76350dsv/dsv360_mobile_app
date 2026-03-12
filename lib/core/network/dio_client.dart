@@ -1,6 +1,11 @@
 import 'package:dio/dio.dart';
+import 'package:dsv360/core/constants/app_navigator_key.dart';
+import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/core/constants/server_constant.dart';
 import 'package:dsv360/core/constants/token_manager.dart';
+import 'package:dsv360/core/constants/user_manager.dart';
+import 'package:dsv360/views/welcome/welcome_page.dart';
 // import 'package:esd_mobile_app/core/constants/token_manager.dart';
 import 'package:flutter/material.dart';
 
@@ -32,26 +37,38 @@ class ApiClient {
 
     // FIX (401 intermittent error): if the server rejects the token with 401,
     // clear the cached token, fetch a fresh one, and retry the original request
-    // once. This handles the case where the in-memory token has expired but the
-    // proactive 50-min refresh in TokenManager did not fire (e.g. app was
-    // backgrounded for a long time).
+    // once. If the retry also fails, the Catalyst SDK session has fully expired
+    // — force a logout so the user can re-authenticate cleanly.
     _dio.interceptors.add(
       InterceptorsWrapper(
         onError: (DioException error, ErrorInterceptorHandler handler) async {
-          if (error.response?.statusCode == 401) {
+          // FIX (Solution F): only retry once — skip if this IS the retry
+          // request (header '_isRetry' was set below before calling _dio.fetch).
+          // Without this guard, a second 401 on the retry fires this interceptor
+          // recursively, causing an infinite loop.
+          final isRetry = error.requestOptions.headers['_isRetry'] == true;
+
+          if (error.response?.statusCode == 401 && !isRetry) {
             debugPrint('🔄 401 received — clearing stale token and retrying...');
             TokenManager.instance.clearToken();
             final newToken = await TokenManager.instance.getToken();
+
             if (newToken != null) {
-              // Retry the original request with the refreshed token.
               final opts = error.requestOptions;
               opts.headers['Authorization'] = 'Zoho-oauthtoken $newToken';
+              // Mark as retry so the interceptor does not fire a second time.
+              opts.headers['_isRetry'] = true;
               try {
                 final retryResponse = await _dio.fetch(opts);
                 return handler.resolve(retryResponse);
               } catch (e) {
-                // Retry also failed — let the error propagate normally.
-                return handler.next(error);
+                // FIX (Solution E): retry ALSO got 401 — the Catalyst OAuth
+                // session has fully expired (SDK returned a stale token).
+                // Force a full logout so the user lands back on the login screen.
+                debugPrint(
+                  '❌ Retry also failed with 401 — forcing session logout...',
+                );
+                _forceLogout();
               }
             }
           }
@@ -231,5 +248,24 @@ class ApiClient {
     } catch (e, trace) {
       throw Exception('Unexpected error in DELETE request: $e $trace');
     }
+  }
+
+  /// FIX (Solution E): called when a retried request also returns 401.
+  /// Clears all local session state and sends the user back to the login screen.
+  void _forceLogout() {
+    TokenManager.instance.clearToken();
+    UserManager.instance.clear();
+    AuthManager.instance.currentUser = null;
+    PaintingBinding.instance.imageCache.clear();
+
+    // Fire-and-forget the Catalyst SDK logout (no BuildContext needed).
+    AppInitManager.instance.catalystApp.logout().catchError((_) {});
+
+    // Navigate to login. Provider invalidation is handled by LoadingPage on
+    // the next login — safe moment after user is valid and before Dashboard mounts.
+    appNavigatorKey.currentState?.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const WelcomePage()),
+      (route) => false,
+    );
   }
 }
