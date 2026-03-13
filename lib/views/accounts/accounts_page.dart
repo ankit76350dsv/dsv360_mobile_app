@@ -5,11 +5,9 @@ import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/models/accounts.dart';
 import 'package:dsv360/repositories/accounts_list_repository.dart';
-//import 'package:dsv360/repositories/active_user_repository.dart';
-//import 'package:dsv360/views/accounts/add_edit_accounts_page.dart';
+import 'package:dsv360/views/accounts/add_edit_accounts_page.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
-//import 'package:dsv360/views/notifications/notification_page.dart';
 import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:flutter/gestures.dart';
@@ -79,7 +77,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
               //   ),
               // );
             },
-            child: Icon(Icons.apartment, size: 22, color: Colors.white,),
+            child: Icon(Icons.add, size: 28, color: Colors.white,),
           );
         },
         loading: () => null, // hide FAB while checking
