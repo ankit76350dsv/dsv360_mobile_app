@@ -70,7 +70,7 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
             elevation: 8,
             shadowColor: Colors.black.withOpacity(0.10),
             offset: const Offset(0, 8),
-            constraints: BoxConstraints(minWidth: listWidth - 50),
+            constraints: BoxConstraints(minWidth: listWidth -40),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
               side: BorderSide(
@@ -104,7 +104,7 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
                         color: isSelected
                             ? Colors.blue.withOpacity(0.45)
                             : cs.outline.withOpacity(0.25),
-                        width: 1.2,
+                        width: 0,
                       ),
                     ),
                     child: Row(

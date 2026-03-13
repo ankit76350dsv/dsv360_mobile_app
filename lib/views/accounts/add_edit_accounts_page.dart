@@ -137,7 +137,7 @@ class _AddEditAccountsPageState extends ConsumerState<AddEditAccountsPage> {
                       CustomDropDownField(
                         hintText: "Organization Status",
                         labelText: "Organization Status",
-                        prefixIcon: Icons.business,
+                        prefixIcon: Icons.radio_button_checked_outlined,
                         selectedOption: _orgStatus,
                         options: [
                           DropdownMenuItem(
@@ -153,7 +153,7 @@ class _AddEditAccountsPageState extends ConsumerState<AddEditAccountsPage> {
                             child: Text('Inactive'),
                           ),
                         ],
-                        onChanged: (value) => setState(() => _orgType = value),
+                        onChanged: (value) => setState(() => _orgStatus = value),
                       ),
                       const SizedBox(height: 20),
 
