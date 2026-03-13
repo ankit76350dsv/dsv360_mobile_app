@@ -69,7 +69,7 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
             color: customColors.cardBackground,
             elevation: 8,
             shadowColor: Colors.black.withOpacity(0.10),
-            offset: const Offset(0, 8),
+            offset: const Offset(0, 40),
             constraints: BoxConstraints(minWidth: listWidth -40),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
@@ -90,7 +90,7 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
                 final cs = Theme.of(context).colorScheme;
                 return PopupMenuItem<String>(
                   value: value,
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     width: double.infinity,

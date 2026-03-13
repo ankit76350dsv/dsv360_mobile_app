@@ -10,7 +10,7 @@ import 'package:dsv360/providers/employee_provider.dart';
 import 'package:dsv360/providers/time_entry_provider.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/repositories/organization_repository.dart';
-import 'package:dsv360/repositories/accounts_list_repository.dart';
+import 'package:dsv360/features/accounts/reposetories/accounts_list_repository.dart';
 import 'package:dsv360/repositories/feedback_repository.dart';
 import 'package:dsv360/repositories/leaves_repository.dart';
 import 'package:dsv360/repositories/users_repository.dart';

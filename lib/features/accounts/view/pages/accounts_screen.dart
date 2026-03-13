@@ -12,7 +12,6 @@ import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -79,12 +78,12 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
                 ),
               );
 
-	// If the Add screen reports success, refresh the list.
-	if (result == true && mounted) {
-		ref.refresh(accountsListRepositoryProvider);
-	}
-},
-            child: Icon(Icons.add, size: 28, color: Colors.white,),
+              // If the Add screen reports success, refresh the list.
+              if (result == true && mounted) {
+                ref.refresh(accountsListRepositoryProvider);
+              }
+            },
+            child: Icon(Icons.add, size: 28, color: Colors.white),
           );
         },
         loading: () => null, // hide FAB while checking
@@ -216,12 +215,35 @@ class AccountsCard extends ConsumerStatefulWidget {
 }
 
 class _AccountsCardState extends ConsumerState<AccountsCard> {
+  bool _is404Error(Object error) {
+    return error.toString().contains('404');
+  }
+
+  Future<void> _deleteAccountWithFallback(String rowId) async {
+    try {
+       await ApiClient.instance.delete(
+        'time_entry_management_application_function/org/$rowId',
+      );
+      
+      return;
+    } 
+      
+     
+    catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+
+   
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final customColors = theme.custom;
     //never used
-   //final activeUser = ref.watch(activeUserRepositoryProvider);
+    //final activeUser = ref.watch(activeUserRepositoryProvider);
 
     return GestureDetector(
       onTap: () {},
@@ -234,30 +256,21 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 8),
               child: Column(
                 children: [
                   Row(
                     children: [
-                      Text(
-                        widget.account.orgName,
-                        style: theme.textTheme.bodyLarge,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Expanded(
+                        child: Text(
+                          widget.account.orgName,
+                          style: theme.textTheme.bodyLarge,
+                          softWrap: true,
+                        ),
                       ),
 
-                      const Spacer(),
-                      CustomChip(
-                        label: widget.account.orgType,
-                        color: customColors.primary!,
-                        icon: null,
-                      ),
-                      const SizedBox(width: 6.0),
-                      CustomChip(
-                        label: widget.account.status,
-                        color: customColors.primary!,
-                        icon: Icons.add_comment_outlined,
-                      ),
+                      
+                      
                     ],
                   ),
                 ],
@@ -270,9 +283,14 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
               thickness: 1,
               color: Colors.grey.withOpacity(0.2),
             ),
-
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
+              child: _accountInfoRow(Icons.email, widget.account.email),
+            ),
+                          
+            
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
               child: Column(
                 children: [
                   Row(
@@ -281,8 +299,7 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _accountInfoRow(Icons.email, widget.account.email),
-                            _websiteRow(
+                              _websiteRow(
                               Icons.web_sharp,
                               widget.account.website,
                             ),
@@ -322,8 +339,26 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
                           ),
                         ],
                       ),
+                      
                     ],
                   ),
+                  SizedBox(height: 10,),
+                  Divider(color: Colors.grey.shade200,),
+                  Row(
+                        children: [
+                          CustomChip(
+                        label: widget.account.orgType,
+                        color: customColors.primary!,
+                        icon: null,
+                      ),
+                      const SizedBox(width: 6.0),
+                      CustomChip(
+                        label: widget.account.status,
+                        color: customColors.primary!,
+                        icon: Icons.add_comment_outlined,
+                      ),
+                        ],
+                      )
                 ],
               ),
             ),
@@ -343,21 +378,25 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
       children: [
         Icon(icon, size: 18, color: customColors.textSecondary),
         const SizedBox(width: 8),
-        RichText(
-          text: TextSpan(
-            text: value,
+        TextButton(
+          onPressed: () async {
+            final uri = Uri.parse(websiteUrl);
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri, mode: LaunchMode.externalApplication);
+            }
+          },
+          style: TextButton.styleFrom(
+            padding: EdgeInsets.zero,
+            minimumSize: const Size(0, 0),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: Text(
+            'Open website',
             style: TextStyle(
               fontSize: 14,
               color: customColors.primary,
               decoration: TextDecoration.underline,
             ),
-            recognizer: TapGestureRecognizer()
-              ..onTap = () async {
-                final uri = Uri.parse(websiteUrl);
-                if (await canLaunchUrl(uri)) {
-                  await launchUrl(uri, mode: LaunchMode.externalApplication);
-                }
-              },
           ),
         ),
       ],
@@ -371,10 +410,11 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
       children: [
         Icon(icon, size: 18, color: customColors.textSecondary),
         const SizedBox(width: 8),
-        Text(
-          text,
-          style: TextStyle(
-            color: customColors.textSecondary,
+        Expanded(
+          child: Text(
+            text,
+            softWrap: true,
+            style: TextStyle(color: customColors.textSecondary),
           ),
         ),
       ],
@@ -388,29 +428,23 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
       subtitle: 'Are you sure you want to delete Account "$orgName" ?',
       primaryText: 'DELETE',
       onPrimaryPressed: (dialogContext) async {
-       
-        // todo : call delete API here
-        try{
-          await ApiClient.instance.delete(
-            'time_entry_management_application_function/clientOrg/${widget.account.rowId}',
-          );
-          if (!mounted) return;
-           Navigator.of(dialogContext).pop(true);
-           ref.invalidate(accountsListRepositoryProvider);
-           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Account deleted successfully')),
-           );
+        try {
+          await _deleteAccountWithFallback(widget.account.rowId);
 
-        } catch (e){
-          if(!mounted) return;
+          if (!mounted) return;
+          Navigator.of(dialogContext).pop(true);
+          ref.invalidate(accountsListRepositoryProvider);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Account deleted successfully')),
+          );
+        } catch (e) {
+          if (!mounted) return;
           Navigator.of(dialogContext).pop(false);
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Failed to delete account: $e')),
           );
-
         }
-
       },
     ).then((confirmed) {
       if (confirmed != true) {

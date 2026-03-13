@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:dsv360/core/network/dio_client.dart';
-import 'package:dsv360/models/accounts.dart';
+import 'package:dsv360/features/accounts/model/accounts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

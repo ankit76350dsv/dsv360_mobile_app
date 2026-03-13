@@ -1,6 +1,7 @@
 import 'package:dsv360/core/constants/session_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
+import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/views/profile/AboutMe.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
@@ -24,7 +25,9 @@ class ProfilePage extends StatelessWidget {
     // final fullName = 'Priya Malhotra';
     // final email = 'priya.malhotra@dsv360app.com';
     // final role = 'Operations Coordinator';
-    debugPrint('👤 👤 👤 👤 👤 👤 👤 👤 👤 👤 Building ProfilePage for user: ${userProfile?.skills}');
+    debugPrint(
+      '👤 👤 👤 👤 👤 👤 👤 👤 👤 👤 Building ProfilePage for user: ${userProfile?.skills}',
+    );
 
     final customColors = Theme.of(context).custom;
 
@@ -46,11 +49,11 @@ class ProfilePage extends StatelessWidget {
                         Container(
                           height: 200,
                           width: double.infinity,
-                          decoration:  BoxDecoration(
+                          decoration: BoxDecoration(
                             image: DecorationImage(
                               image: NetworkImage(
                                 userProfile?.coverLink ??
-                                'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=1000&q=80', // City Skyline
+                                    'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=1000&q=80', // City Skyline
                               ),
                               fit: BoxFit.cover,
                             ),
@@ -82,11 +85,11 @@ class ProfilePage extends StatelessWidget {
                                   color: customColors.background,
                                   shape: BoxShape.circle,
                                 ),
-                                child:  CircleAvatar(
+                                child: CircleAvatar(
                                   radius: 50,
                                   backgroundImage: NetworkImage(
                                     userProfile?.profileLink ??
-                                    'https://wallpapers.com/images/high/anonymous-hacker-theme-full-hd-h1g36h1m0iet2dih.webp',
+                                        'https://wallpapers.com/images/high/anonymous-hacker-theme-full-hd-h1g36h1m0iet2dih.webp',
                                   ),
                                 ),
                               ),
@@ -142,12 +145,12 @@ class ProfilePage extends StatelessWidget {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: customColors.statusCompleted
-                                          !.withOpacity(0.2),
+                                      color: customColors.statusCompleted!
+                                          .withOpacity(0.2),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
-                                        color: customColors.statusCompleted
-                                            !.withOpacity(0.5),
+                                        color: customColors.statusCompleted!
+                                            .withOpacity(0.5),
                                       ),
                                     ),
                                     child: Text(
@@ -182,8 +185,10 @@ class ProfilePage extends StatelessWidget {
                           // About Me Section
                           AboutMe(
                             title: 'About Me',
-                            content: userProfile?.aboutMe ?? 'No description available.',
-                            // content: 
+                            content:
+                                userProfile?.aboutMe ??
+                                'No description available.',
+                            // content:
                             //     'No description available.',
                             backgroundColor: customColors.cardBackground!,
                             textColor: customColors.textPrimary!,
@@ -239,9 +244,10 @@ class ProfilePage extends StatelessWidget {
                                 _buildContactRow(
                                   Icons.phone_outlined,
                                   'Phone',
-                                  userProfile?.phone ?? 'No Phone details available.',
-                                  // '+91 91234 56789',
+                                  userProfile?.phone ??
+                                      'No Phone details available.',
 
+                                  // '+91 91234 56789',
                                   customColors.textSecondary!,
                                   context,
                                 ),
@@ -252,9 +258,10 @@ class ProfilePage extends StatelessWidget {
                                 _buildContactRow(
                                   Icons.location_on_outlined,
                                   'Address',
-                                  userProfile?.address ?? 'No Address available.',
-                                  // '3rd Floor, Orion Business Hub, Andheri East, Mumbai, Maharashtra',
+                                  userProfile?.address ??
+                                      'No Address available.',
 
+                                  // '3rd Floor, Orion Business Hub, Andheri East, Mumbai, Maharashtra',
                                   customColors.textSecondary!,
                                   context,
                                 ),
@@ -298,19 +305,23 @@ class ProfilePage extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 16),
                                 // Dynamic Skills Parsing
-                                if (userProfile?.skills != null && userProfile!.skills.isNotEmpty)
+                                if (userProfile?.skills != null &&
+                                    userProfile!.skills.isNotEmpty)
                                   Wrap(
                                     spacing: 12,
                                     runSpacing: 12,
-                                    children: (userProfile.skills.contains(',') 
-                                            ? userProfile.skills.split(',') 
-                                            : [userProfile.skills])
-                                        .map((skill) => _buildSkillChip(
-                                              skill.trim(),
-                                              customColors.textSecondary!,
-                                              context,
-                                            ))
-                                        .toList(),
+                                    children:
+                                        (userProfile.skills.contains(',')
+                                                ? userProfile.skills.split(',')
+                                                : [userProfile.skills])
+                                            .map(
+                                              (skill) => _buildSkillChip(
+                                                skill.trim(),
+                                                customColors.textSecondary!,
+                                                context,
+                                              ),
+                                            )
+                                            .toList(),
                                   )
                                 else
                                   Text(
@@ -376,119 +387,16 @@ class ProfilePage extends StatelessWidget {
                             width: double.infinity,
                             child: ElevatedButton.icon(
                               onPressed: () async {
-                                // Show logout confirmation dialog.
-                                final confirmed = await showDialog<bool>(
-                                  context: context,
-                                  builder: (ctx) {
-                                    final dc = Theme.of(ctx).custom;
-                                    final isDark =
-                                        Theme.of(ctx).brightness ==
-                                        Brightness.dark;
-                                    return Dialog(
-                                      backgroundColor: dc.background,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(24),
-                                      ),
-                                      child: Padding(
-                                        padding: const EdgeInsets.all(24),
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text(
-                                              'You will be logged out',
-                                              style: TextStyle(
-                                                color: dc.textPrimary,
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 8),
-                                            Text(
-                                              'Are you sure you want to logout?',
-                                              textAlign: TextAlign.center,
-                                              style: TextStyle(
-                                                color: dc.textSecondary,
-                                                fontSize: 14,
-                                                height: 1.5,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 28),
-                                            // Logout + Cancel buttons side by side
-                                            Row(
-                                              children: [
-                                                Expanded(
-                                                  child: OutlinedButton(
-                                                    onPressed: () =>
-                                                        Navigator.of(ctx)
-                                                            .pop(false),
-                                                    style:
-                                                        OutlinedButton.styleFrom(
-                                                      foregroundColor:
-                                                          dc.textPrimary,
-                                                      side: BorderSide(
-                                                        color: isDark
-                                                            ? Colors.white24
-                                                            : Colors.black12,
-                                                      ),
-                                                      shape:
-                                                          RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(100),
-                                                      ),
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                              vertical: 2),
-                                                    ),
-                                                    child: const Text(
-                                                      'Cancel',
-                                                      style: TextStyle(
-                                                          fontSize: 15),
-                                                    ),
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 12),
-                                                Expanded(
-                                                  child: ElevatedButton(
-                                                    onPressed: () =>
-                                                        Navigator.of(ctx)
-                                                            .pop(true),
-                                                    style:
-                                                        ElevatedButton.styleFrom(
-                                                      backgroundColor:
-                                                          dc.error,
-                                                      foregroundColor:
-                                                          Colors.white,
-                                                      shape:
-                                                          RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(100),
-                                                      ),
-                                                      elevation: 0,
-                                                      padding: const EdgeInsets
-                                                          .symmetric(
-                                                              vertical: 2),
-                                                    ),
-                                                    child: const Text(
-                                                      'Logout',
-                                                      style: TextStyle(
-                                                        fontSize: 15,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                      ),
+                                final confirmed =
+                                    await showWarningDialogueBox<bool>(
+                                      context: context,
+                                      title: 'You will be logged out',
+                                      subtitle:
+                                          'Are you sure you want to logout?',
+                                      primaryText: 'Logout',
+                                      onPrimaryPressed: (dialogContext) =>
+                                          Navigator.of(dialogContext).pop(true),
                                     );
-                                  },
-                                );
 
                                 if (confirmed != true) return;
 
