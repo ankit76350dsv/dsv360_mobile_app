@@ -24,15 +24,11 @@ class CustomDropDownField extends StatefulWidget {
 }
 
 class _CustomDropDownFieldState extends State<CustomDropDownField> {
-  bool _isFocused = false;
-  late FocusNode _focusNode;
   String? _selectedOption;
 
   @override
   void initState() {
     super.initState();
-    _focusNode = FocusNode();
-    _focusNode.addListener(_updateFocusState);
     _selectedOption = widget.selectedOption;
   }
 
@@ -45,107 +41,140 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
   }
 
   @override
-  void dispose() {
-    _focusNode.removeListener(_updateFocusState);
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  void _updateFocusState() {
-    setState(() {
-      _isFocused = _focusNode.hasFocus;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
+    final colorScheme = Theme.of(context).colorScheme;
+    final listWidth = MediaQuery.of(context).size.width;
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: _isFocused
-            ? [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
-      child: DropdownButtonFormField<String>(
-        value: _selectedOption,
-        hint: Text(
-          widget.hintText,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.labelText,
           style: TextStyle(
-            color: Colors.grey,
-            fontSize: 15,
+            color: Colors.grey.withOpacity(0.85),
+            fontSize: 13,
             fontWeight: FontWeight.w600,
           ),
         ),
-        style: TextStyle(
-          color: customColors.textPrimary,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
+        const SizedBox(height: 6),
+        Theme(
+          data: Theme.of(context).copyWith(
+            splashColor: Colors.transparent,
+            highlightColor: Colors.transparent,
+            hoverColor: Colors.transparent,
+          ),
+          // Changed dropdown implementation to PopupMenuButton for better menu styling and responsiveness.
+          child: PopupMenuButton<String>(
+            color: customColors.cardBackground,
+            elevation: 8,
+            shadowColor: Colors.black.withOpacity(0.10),
+            offset: const Offset(0, 8),
+            constraints: BoxConstraints(minWidth: listWidth - 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: BorderSide(
+                color: colorScheme.outline.withOpacity(0.15),
+                width: 1,
+              ),
+            ),
+            onSelected: (value) {
+              setState(() => _selectedOption = value);
+              widget.onChanged(value);
+            },
+            itemBuilder: (context) {
+              return widget.options.map((item) {
+                final value = item.value;
+                if (value == null) return const PopupMenuItem<String>(child: SizedBox.shrink());
+                final isSelected = value == _selectedOption;
+                final cs = Theme.of(context).colorScheme;
+                return PopupMenuItem<String>(
+                  value: value,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: isSelected
+                          ? Colors.blue.withOpacity(0.12)
+                          : Theme.of(context).custom.cardBackground!,
+                      border: Border.all(
+                        color: isSelected
+                            ? Colors.blue.withOpacity(0.45)
+                            : cs.outline.withOpacity(0.25),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        DefaultTextStyle.merge(
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                            color: isSelected ? Colors.blue.shade400 : cs.onSurface,
+                          ),
+                          child: item.child,
+                        ),
+                        const Spacer(),
+                        if (isSelected)
+                          Icon(
+                            Icons.check_rounded,
+                            size: 16,
+                            color: Colors.blue.shade400,
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList();
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: customColors.inputFill,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: colorScheme.outline.withOpacity(0.2),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  Icon(
+                    widget.prefixIcon,
+                    size: 20,
+                    color: Colors.grey.withOpacity(0.85),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      _selectedOption ?? widget.hintText,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: _selectedOption == null
+                            ? Colors.grey
+                            : customColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 18,
+                    color: customColors.textPrimary,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-        dropdownColor: customColors.cardBackground,
-        decoration: InputDecoration(
-          labelText: widget.labelText,
-          labelStyle: TextStyle(
-            color: _isFocused
-                ? Colors.grey.withOpacity(0.9)
-                : Colors.grey.withOpacity(0.8),
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
-          filled: true,
-          fillColor: customColors.inputFill,
-          prefixIcon: Icon(
-            widget.prefixIcon,
-            color: _isFocused
-                ? Colors.grey.withOpacity(0.9)
-                : Colors.grey.withOpacity(0.8),
-            size: 20,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-              color: Colors.grey.withOpacity(0.6),
-              width: 1.5,
-            ),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-              color: Colors.grey.withOpacity(0.6),
-              width: 1.5,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide(
-              color: Colors.grey.withOpacity(0.9),
-              width: 2,
-            ),
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 18,
-            vertical: 12,
-          ),
-        ),
-        items: widget.options,
-        onChanged: (value) {
-          setState(() => _selectedOption = value);
-          widget.onChanged(value);
-        },
-      ),
+      ],
     );
   }
 }

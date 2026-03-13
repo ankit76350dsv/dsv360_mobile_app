@@ -67,16 +67,21 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
           return FloatingActionButton(
             shape: const CircleBorder(),
             backgroundColor: customColors.primary,
-            onPressed: () {
-              // do nothing for the moment
+            onPressed: () async {
+              // Open the Add Account screen.
+              // Passing `account: null` means "create new" mode.
+              final bool? result = await Navigator.push<bool>(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AddEditAccountsPage(account: null),
+                ),
+              );
 
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(
-              //     builder: (_) => AddEditAccountsPage(account: null),
-              //   ),
-              // );
-            },
+	// If the Add screen reports success, refresh the list.
+	if (result == true && mounted) {
+		ref.refresh(accountsListRepositoryProvider);
+	}
+},
             child: Icon(Icons.add, size: 28, color: Colors.white,),
           );
         },
@@ -405,6 +410,7 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
               onPressed: () {
                 Navigator.pop(context);
                 // todo : call delete API here
+
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.error,

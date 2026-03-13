@@ -126,7 +126,7 @@ class _AddEditAccountsPageState extends ConsumerState<AddEditAccountsPage> {
                         prefixIcon: Icons.web_sharp,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please Website Address';
+                            return 'Please Add Website Address';
                           }
                           return null;
                         },

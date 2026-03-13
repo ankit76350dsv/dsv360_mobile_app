@@ -46,23 +46,7 @@ class TaskStatusCard extends ConsumerWidget {
                   color: customColors.textPrimary,
                 ),
               ),
-              // commented out old custompopup
-
-              // trailing: SizedBox(
-              //   width: 110,
-              //   child: CustomPopupDropdown(
-              //     value: selectedYear.toString(),
-              //     hint: 'Year',
-              //     items: years.map((y) => y.toString()).toList(),
-              //     icon: Icons.calendar_today,
-              //     iconSize: 18,
-              //     onChanged: (v) {
-              //       if (v != null) {
-              //         ref.read(selectedYearProvider.notifier).state = int.parse(v);
-              //       }
-              //     },
-              //   ),
-              // ),
+             
 
               // Premium year picker: trigger shows selected year, only the inner
               // container highlights on hover/tap — not the whole menu row.
@@ -73,12 +57,7 @@ class TaskStatusCard extends ConsumerWidget {
                   hoverColor: Colors.transparent,
                 ),
                 child: PopupMenuButton<String>(
-                  // ─── POPUP MENU BACKGROUND COLOR ───────────────────────────────
-                  // This uses the same color as the Card widget (cardBackground).
-                  // To change it, edit the values in lib/core/constants/app_colors.dart:
-                  //   • Light mode: AppColorsLight.cardBackground  (default: 0xFFFFFFFF)
-                  //   • Dark mode:  AppColorsDark.cardBackground   (default: 0xFF1E1E1E)
-                  // ───────────────────────────────────────────────────────────────
+                  
                   color: customColors.cardBackground,
                   elevation: 8,
                   shadowColor: Colors.black.withValues(alpha: 0.10),
