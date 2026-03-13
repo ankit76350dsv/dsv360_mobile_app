@@ -66,7 +66,7 @@ class TaskStatusCard extends ConsumerWidget {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide(
-                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.15),
+                      color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
@@ -101,7 +101,7 @@ class TaskStatusCard extends ConsumerWidget {
                           border: Border.all(
                             color: isSelected
                                 ? Colors.blue.withValues(alpha: 0.45)
-                                : cs.outline.withValues(alpha: 0.25),
+                                : cs.outline.withValues(alpha: 0),
                             width: 1.2,
                           ),
                         ),
