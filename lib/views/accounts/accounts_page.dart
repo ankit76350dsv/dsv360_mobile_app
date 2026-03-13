@@ -294,14 +294,14 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
                             onTap: () {
                               // do nothing for the moment
 
-                              // Navigator.push(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (_) => AddEditAccountsPage(
-                              //       account: widget.account,
-                              //     ),
-                              //   ),
-                              // );
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AddEditAccountsPage(
+                                    account: widget.account,
+                                  ),
+                                ),
+                              );
                             },
                             icon: Icons.edit,
                           ),

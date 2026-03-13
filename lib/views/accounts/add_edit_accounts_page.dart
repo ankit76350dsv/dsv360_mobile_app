@@ -12,7 +12,8 @@ class AddEditAccountsPage extends ConsumerStatefulWidget {
   const AddEditAccountsPage({super.key, required this.account});
 
   @override
-  ConsumerState<AddEditAccountsPage> createState() => _AddEditAccountsPageState();
+  ConsumerState<AddEditAccountsPage> createState() =>
+      _AddEditAccountsPageState();
 }
 
 class _AddEditAccountsPageState extends ConsumerState<AddEditAccountsPage> {
@@ -27,7 +28,7 @@ class _AddEditAccountsPageState extends ConsumerState<AddEditAccountsPage> {
   String? _orgType;
   String? _orgStatus;
 
-  String  bottomTwoButtonsLoadingKey = 'add_edit_account_key';
+  String bottomTwoButtonsLoadingKey = 'add_edit_account_key';
 
   @override
   void initState() {
@@ -48,12 +49,44 @@ class _AddEditAccountsPageState extends ConsumerState<AddEditAccountsPage> {
   Map<String, dynamic> _buildRequestBody() {
     return {
       "Email": _emailController.text.trim(),
-      "Org_Img" : "",
-      "Org_Name" : _accountNameController.text.toString(),
-      "Org_Type" : _orgType.toString(),
-      "Status" : _orgStatus,
-      "Website" : _websiteController.text.toString()
+      "Org_Img": "",
+      "Org_Name": _accountNameController.text.toString(),
+      "Org_Type": _orgType.toString(),
+      "Status": _orgStatus,
+      "Website": _websiteController.text.toString(),
     };
+  }
+
+  Future<void> _createAccount(Map<String, dynamic> body) async {
+    try {
+      await ApiClient.instance.post(
+        'time_entry_management_application_function/clientOrg',
+        data: body,
+      );
+    } catch (e) {
+      // Fallback kept for environments still wired to legacy route names.
+      if (!e.toString().contains('404')) rethrow;
+      await ApiClient.instance.post(
+        'time_entry_management_application_function/createClient',
+        data: body,
+      );
+    }
+  }
+
+  Future<void> _updateAccount(Map<String, dynamic> body) async {
+    try {
+      await ApiClient.instance.put(
+        'time_entry_management_application_function/clientOrg/${widget.account!.rowId}',
+        data: body,
+      );
+    } catch (e) {
+      // Fallback kept for environments still wired to legacy route names.
+      if (!e.toString().contains('404')) rethrow;
+      await ApiClient.instance.post(
+        'time_entry_management_application_function/updateClient/${widget.account!.rowId}',
+        data: body,
+      );
+    }
   }
 
   @override
@@ -153,7 +186,8 @@ class _AddEditAccountsPageState extends ConsumerState<AddEditAccountsPage> {
                             child: Text('Inactive'),
                           ),
                         ],
-                        onChanged: (value) => setState(() => _orgStatus = value),
+                        onChanged: (value) =>
+                            setState(() => _orgStatus = value),
                       ),
                       const SizedBox(height: 20),
 
@@ -223,9 +257,30 @@ class _AddEditAccountsPageState extends ConsumerState<AddEditAccountsPage> {
                         },
                         button2Function: () async {
                           if (!_formKey.currentState!.validate()) return;
-                          ref
-                                  .read(
-                                    submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier,
+                          if (_orgStatus == null || _orgStatus!.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Please select organization status',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          if (_orgType == null || _orgType!.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Please select organization type',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          ref.read(
+                                    submitLoadingProvider(
+                                      bottomTwoButtonsLoadingKey,
+                                    ).notifier,
                                   )
                                   .state =
                               true;
@@ -233,17 +288,9 @@ class _AddEditAccountsPageState extends ConsumerState<AddEditAccountsPage> {
                           final body = _buildRequestBody();
                           try {
                             if (isEditing) {
-                              // UPDATE ACCOUNTS (example)
-                              await ApiClient.instance.post(
-                                '/server/time_entry_management_application_function//updateClient/${widget.account!.rowId}',
-                                data: body,
-                              );
+                              await _updateAccount(body);
                             } else {
-                              // ADD ACCOUNTS
-                              await ApiClient.instance.post(
-                                '/server/time_entry_management_application_function/createClient',
-                                data: body,
-                              );
+                              await _createAccount(body);
                             }
 
                             Navigator.pop(context, true); // success
@@ -270,13 +317,13 @@ class _AddEditAccountsPageState extends ConsumerState<AddEditAccountsPage> {
                             );
                           } finally {
                             ref
-                                .read(
-                                  submitLoadingProvider(
-                                    bottomTwoButtonsLoadingKey,
-                                  ).notifier,
-                                )
-                                .state =
-                            false;
+                                    .read(
+                                      submitLoadingProvider(
+                                        bottomTwoButtonsLoadingKey,
+                                      ).notifier,
+                                    )
+                                    .state =
+                                false;
                           }
                         },
                       ),
