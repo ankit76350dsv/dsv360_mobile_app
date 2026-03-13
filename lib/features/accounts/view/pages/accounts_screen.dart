@@ -257,23 +257,12 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
           children: [
             Padding(
               padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 8),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          widget.account.orgName,
-                          style: theme.textTheme.bodyLarge,
-                          softWrap: true,
-                        ),
-                      ),
-
-                      
-                      
-                    ],
-                  ),
-                ],
+              child: Expanded(
+                child: Text(
+                  widget.account.orgName,
+                  style: theme.textTheme.bodyLarge,
+                  softWrap: true,
+                ),
               ),
             ),
 
@@ -303,11 +292,39 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
                               Icons.web_sharp,
                               widget.account.website,
                             ),
-                            _accountInfoRow(Icons.tag, widget.account.rowId),
+                              _accountInfoRow(
+                                Icons.tag,
+                                'C${widget.account.rowId.length > 4 ? widget.account.rowId.substring(widget.account.rowId.length - 4) : widget.account.rowId}',
+                              ),
                           ],
                         ),
                       ),
+                      
+                      
+                    ],
+                  ),
+                  
+                  Divider(color: Colors.grey.shade200,),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
                       Row(
+                            children: [
+                              CustomChip(
+                            label: widget.account.orgType,
+                            color: customColors.primary!,
+                            icon: null,
+                          ),
+                          const SizedBox(width: 6.0),
+                          CustomChip(
+                            label: widget.account.status,
+                            color: customColors.primary!,
+                            icon: Icons.add_comment_outlined,
+                          ),
+                            ],
+                          ),
+
+                          Row(
                         children: [
                           CustomCardButton(
                             onTap: () {
@@ -339,26 +356,8 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
                           ),
                         ],
                       ),
-                      
                     ],
-                  ),
-                  SizedBox(height: 10,),
-                  Divider(color: Colors.grey.shade200,),
-                  Row(
-                        children: [
-                          CustomChip(
-                        label: widget.account.orgType,
-                        color: customColors.primary!,
-                        icon: null,
-                      ),
-                      const SizedBox(width: 6.0),
-                      CustomChip(
-                        label: widget.account.status,
-                        color: customColors.primary!,
-                        icon: Icons.add_comment_outlined,
-                      ),
-                        ],
-                      )
+                  )
                 ],
               ),
             ),
