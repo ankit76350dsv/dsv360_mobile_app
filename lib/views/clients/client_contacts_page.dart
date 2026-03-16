@@ -239,7 +239,7 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
 
     final fullName =
         '${widget.clientContacts.firstName} ${widget.clientContacts.lastName}';
-    final action = newStatus ? 'set status to true' : 'set status to false';
+    final action = newStatus ? 'set status to Active' : 'set status to Inactive';
 
     final confirmed = await showWarningDialogueBox<bool>(
       context: context,
@@ -263,7 +263,7 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
       ref.invalidate(clientContactsListRepositoryProvider);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Client status updated to $newStatus successfully'),
+          content: Text('Client status updated to ${newStatus ? 'Active':'Inactive'} successfully'),
         ),
       );
     } catch (e) {

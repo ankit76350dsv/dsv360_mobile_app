@@ -7,6 +7,7 @@ import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dsv360/features/accounts/reposetories/accounts_list_repository.dart';
 
 class AddClientContactsPage extends ConsumerStatefulWidget {
   final ClientContacts? clientContacts;
@@ -152,6 +153,7 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final accountsListAsync = ref.watch(accountsListRepositoryProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -237,31 +239,60 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
 
 
                       // Organization
-                      CustomDropDownField(
-                        hintText: "Organization",
-                        labelText: "Organization",
-                        prefixIcon: Icons.business,
-                        selectedOption: _organization,
-                        options: [
-                          DropdownMenuItem(
-                            value: 'Wipro',
-                            child: Text('Wipro'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'TCS',
-                            child: Text('TCS'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Accenture',
-                            child: Text('Accenture'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Fristine',
-                            child: Text('Fristine'),
-                          ),
-                        ],
-                        onChanged: (value) =>
-                            setState(() => _organization = value),
+                      accountsListAsync.when(
+                        data: (accounts) {
+                          if (accounts.isEmpty) {
+                            return CustomDropDownField(
+                              hintText: "No accounts found",
+                              labelText: "Organization",
+                              prefixIcon: Icons.business,
+                              selectedOption: null,
+                              options: const [],
+                              onChanged: (val) {},
+                            );
+                          }
+
+                          final uniqueOrgNames = accounts.map((a) => a.orgName).toSet().toList();
+                          final options = uniqueOrgNames.map((orgName) {
+                            return DropdownMenuItem<String>(
+                              value: orgName,
+                              child: Text(orgName),
+                            );
+                          }).toList();
+
+                          if (_organization != null && !uniqueOrgNames.contains(_organization)) {
+                            options.add(DropdownMenuItem<String>(
+                              value: _organization,
+                              child: Text(_organization!),
+                            ));
+                          }
+
+                          return CustomDropDownField(
+                            hintText: "Organization",
+                            labelText: "Organization",
+                            prefixIcon: Icons.business,
+                            selectedOption: _organization,
+                            options: options,
+                            onChanged: (value) =>
+                                setState(() => _organization = value),
+                          );
+                        },
+                        loading: () => CustomDropDownField(
+                          hintText: "Loading organizations...",
+                          labelText: "Organization",
+                          prefixIcon: Icons.business,
+                          selectedOption: null,
+                          options: const [],
+                          onChanged: (val) {},
+                        ),
+                        error: (err, stack) => CustomDropDownField(
+                          hintText: "Failed to load organizations",
+                          labelText: "Organization",
+                          prefixIcon: Icons.business,
+                          selectedOption: null,
+                          options: const [],
+                          onChanged: (val) {},
+                        ),
                       ),
                       const SizedBox(height: 16),
 
