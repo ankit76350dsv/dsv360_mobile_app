@@ -163,7 +163,7 @@ class ApiClient {
         throw Exception('Unexpected status code: ${response.statusCode}');
       }
     } on DioException catch (e, trace) {
-      throw Exception('Dio POST request failed: ${e.message} $trace');
+      throw Exception('Dio POST request failed: ${e.message} \nResponse Data: ${e.response?.data} \n$trace');
     } catch (e) {
       throw Exception('Unexpected error in POST request: $e');
     }

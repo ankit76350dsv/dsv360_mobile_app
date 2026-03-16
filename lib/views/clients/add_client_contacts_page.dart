@@ -1,4 +1,8 @@
+import 'package:dio/dio.dart';
 import 'package:dsv360/core/network/dio_client.dart';
+import 'package:dsv360/features/accounts/reposetories/accounts_list_repository.dart';
+import 'package:dsv360/repositories/active_user_repository.dart';
+import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/models/client_contacts.dart';
 import 'package:dsv360/repositories/client_contacts_repository.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
@@ -7,7 +11,7 @@ import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dsv360/features/accounts/reposetories/accounts_list_repository.dart';
+
 
 class AddClientContactsPage extends ConsumerStatefulWidget {
   final ClientContacts? clientContacts;
@@ -15,8 +19,7 @@ class AddClientContactsPage extends ConsumerStatefulWidget {
   const AddClientContactsPage({super.key, this.clientContacts});
 
   @override
-  ConsumerState<AddClientContactsPage> createState() =>
-      _AddClientContactsPageState();
+  ConsumerState<AddClientContactsPage> createState() => _AddClientContactsPageState();
 }
 
 class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
@@ -27,11 +30,10 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _contactNumberController =
-      TextEditingController();
+  final TextEditingController _contactNumberController = TextEditingController();
 
   String? _organization;
-  String bottomTwoButtonsLoadingKey = 'add_client_key';
+  final String bottomTwoButtonsLoadingKey = 'add_client_key';
 
   @override
   void initState() {
@@ -48,51 +50,18 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
     }
   }
 
-  Map<String, dynamic> _buildRequestBody() {
-    return {
-      'First_Name': _firstNameController.text.trim(),
-      'Last_Name': _lastNameController.text.trim(),
-      'Email': _emailController.text.trim(),
-      'Org_Name': _organization.toString(),
-      'Phone': _contactNumberController.text.trim(),
-    };
-  }
-
   Future<void> _createClientContact(Map<String, dynamic> body) async {
-    final createBody = {
-      ...body,
-      'status': true,
-    };
-
-    try {
-      await ApiClient.instance.post(
-        'time_entry_management_application_function/addContact',
-        data: createBody,
-      );
-    } catch (e) {
-      // Fallback for environments where contact route is enabled.
-      if (!e.toString().contains('404')) rethrow;
-      await ApiClient.instance.post(
-        'time_entry_management_application_function/contact',
-        data: createBody,
-      );
-    }
+    await ApiClient.instance.post(
+      'time_entry_management_application_function/addContact',
+      data: body,
+    );
   }
 
   Future<void> _updateClientContact(Map<String, dynamic> body) async {
-    try {
-      await ApiClient.instance.put(
-        'time_entry_management_application_function/contact/${widget.clientContacts!.rowId}',
-        data: body,
-      );
-    } catch (e) {
-      // Fallback for environments still using legacy update route.
-      if (!e.toString().contains('404')) rethrow;
-      await ApiClient.instance.post(
-        'time_entry_management_application_function/updateContact/${widget.clientContacts!.rowId}',
-        data: body,
-      );
-    }
+    await ApiClient.instance.put(
+      'time_entry_management_application_function/contact/${widget.clientContacts!.rowId}',
+      data: body,
+    );
   }
 
   Future<void> _handleSubmit() async {
@@ -105,10 +74,57 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
       return;
     }
 
-    ref.read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier).state =
-        true;
+    ref.read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier).state = true;
 
-    final body = _buildRequestBody();
+    final accounts = ref.read(accountsListRepositoryProvider).value;
+    final activeUser = ref.read(activeUserRepositoryProvider);
+    final userProfile = UserManager.instance.userProfile;
+    String? orgId;
+    if (accounts != null) {
+      try {
+        final account = accounts.firstWhere((dynamic a) => a.orgName == _organization);
+        orgId = account.rowId;
+      } catch (_) {}
+    }
+
+    if (orgId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not determine OrgID for the selected organization.')),
+      );
+      ref.read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier).state = false;
+      return;
+    }
+
+   
+    
+    final creatorId =
+        activeUser?.creatorId?.toString() ?? userProfile?.creatorId ?? '';
+    final userId = activeUser?.userId?.toString() ?? userProfile?.userId ?? '';
+
+    if (creatorId.isEmpty || userId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Missing user session fields (CREATORID/UserID). Please re-login and try again.',
+          ),
+        ),
+      );
+      ref.read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier).state = false;
+      return;
+    }
+
+    // ✅ Keys updated to match API contract:
+    // first_name, last_name, email_id, org_name, org_id, phone
+    final body = {
+      'first_name': _firstNameController.text.trim(),
+      'last_name': _lastNameController.text.trim(),
+      'email_id': _emailController.text.trim(),
+      'org_name': _organization.toString(),
+      'org_id': orgId,
+      'phone': _contactNumberController.text.trim(),
+      'status': 'true',
+    };
+
     try {
       if (isEditing) {
         await _updateClientContact(body);
@@ -122,9 +138,7 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            isEditing
-                ? 'Client contact updated successfully'
-                : 'Client contact added successfully',
+            isEditing ? 'Client contact updated successfully' : 'Client contact added successfully',
           ),
         ),
       );
@@ -132,12 +146,19 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
       ref.invalidate(clientContactsListRepositoryProvider);
     } catch (e) {
       if (!mounted) return;
+
+      String errorMessage = 'Failed to save client contact';
+      if (e is DioException) {
+        errorMessage = 'Failed: ${e.response?.data ?? e.message}';
+      } else {
+        errorMessage = 'Failed: $e';
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to save client contact')),
+        SnackBar(content: Text(errorMessage)),
       );
     } finally {
-      ref.read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier).state =
-          false;
+      ref.read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier).state = false;
     }
   }
 
@@ -159,7 +180,7 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
       appBar: AppBar(
         title: Text(
           isEditing ? 'Edit Client Contact' : 'Add New Client Contact',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         backgroundColor: colors.surface,
       ),
@@ -168,16 +189,13 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(
-                left: 16.0,
-                top: 12.0,
-              ),
+              padding: const EdgeInsets.only(left: 16.0, top: 12.0),
               child: Text(
                 "Client Contact Information",
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: colors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
+                      color: colors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
             ),
             Expanded(
@@ -188,7 +206,6 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // First Name
                       CustomInputField(
                         controller: _firstNameController,
                         hintText: 'Enter First Name',
@@ -202,8 +219,6 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
                         },
                       ),
                       const SizedBox(height: 16),
-
-                      // Last Name
                       CustomInputField(
                         controller: _lastNameController,
                         hintText: 'Enter Last Name',
@@ -217,8 +232,6 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
                         },
                       ),
                       const SizedBox(height: 16),
-
-                      // Email
                       CustomInputField(
                         controller: _emailController,
                         hintText: 'Email Address',
@@ -236,9 +249,6 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
                         keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 16),
-
-
-                      // Organization
                       accountsListAsync.when(
                         data: (accounts) {
                           if (accounts.isEmpty) {
@@ -253,18 +263,22 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
                           }
 
                           final uniqueOrgNames = accounts.map((a) => a.orgName).toSet().toList();
-                          final options = uniqueOrgNames.map((orgName) {
-                            return DropdownMenuItem<String>(
-                              value: orgName,
-                              child: Text(orgName),
-                            );
-                          }).toList();
+                          final options = uniqueOrgNames
+                              .map(
+                                (orgName) => DropdownMenuItem<String>(
+                                  value: orgName,
+                                  child: Text(orgName),
+                                ),
+                              )
+                              .toList();
 
                           if (_organization != null && !uniqueOrgNames.contains(_organization)) {
-                            options.add(DropdownMenuItem<String>(
-                              value: _organization,
-                              child: Text(_organization!),
-                            ));
+                            options.add(
+                              DropdownMenuItem<String>(
+                                value: _organization,
+                                child: Text(_organization!),
+                              ),
+                            );
                           }
 
                           return CustomDropDownField(
@@ -272,9 +286,10 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
                             labelText: "Organization",
                             prefixIcon: Icons.business,
                             selectedOption: _organization,
+                            searchable: true,
+                            searchHintText: 'Search organization',
                             options: options,
-                            onChanged: (value) =>
-                                setState(() => _organization = value),
+                            onChanged: (value) => setState(() => _organization = value),
                           );
                         },
                         loading: () => CustomDropDownField(
@@ -295,30 +310,23 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
                         ),
                       ),
                       const SizedBox(height: 16),
-
-                      // Contact Number
                       CustomInputField(
                         controller: _contactNumberController,
                         hintText: 'Contact Number',
                         labelText: 'Contact Number',
-                        prefixIcon: Icons.contact_emergency_outlined,
+                        prefixIcon: Icons.phone,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Enter contact number';
                           }
 
                           final phone = value.trim();
-
-                          // Only digits
                           if (!RegExp(r'^[0-9]+$').hasMatch(phone)) {
                             return 'Only digits allowed';
                           }
-
-                          // Length check (India: 10 digits)
                           if (phone.length != 10) {
                             return 'Enter valid 10-digit contact number';
                           }
-
                           return null;
                         },
                         keyboardType: TextInputType.phone,
@@ -326,17 +334,12 @@ class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
                           FilteringTextInputFormatter.digitsOnly,
                         ],
                       ),
-
                       const SizedBox(height: 32),
-
-                      //buttons
                       BottomTwoButtons(
                         loadingKey: bottomTwoButtonsLoadingKey,
                         button1Text: "Cancel",
                         button2Text: isEditing ? "save changes" : "add client",
-                        button1Function: () {
-                          Navigator.pop(context);
-                        },
+                        button1Function: () => Navigator.pop(context),
                         button2Function: _handleSubmit,
                       ),
                     ],

@@ -425,10 +425,10 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
               child: Column(
                 children: [
                   /// Details
-                  _clientInfoRow(Icons.tag, widget.clientContacts.userId),
+                  _clientInfoRow(Icons.tag, 'C${widget.clientContacts.userId.length > 5 ? widget.clientContacts.userId.substring(widget.clientContacts.userId.length-5) : widget.clientContacts.userId}'),
                   _clientInfoRow(Icons.email, widget.clientContacts.email),
                   _clientInfoRow(
-                    Icons.contact_emergency_outlined,
+                    Icons.phone,
                     widget.clientContacts.phone,
                   ),
                 ],
