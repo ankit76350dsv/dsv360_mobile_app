@@ -246,10 +246,16 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
     return GestureDetector(
       onTap: () {},
       child: Card(
+        elevation: 4,
+        shadowColor: Colors.black26,
+        
+        
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
           side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
+          
         ),
+        
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -258,8 +264,10 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
               child: Expanded(
                 child: Text(
                   widget.account.orgName,
-                  style: theme.textTheme.bodyLarge,
+                  style: theme.textTheme.cardTitle, 
                   softWrap: true,
+                  
+                  
                 ),
               ),
             ),

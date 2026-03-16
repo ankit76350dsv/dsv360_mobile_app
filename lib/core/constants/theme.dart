@@ -234,6 +234,7 @@ ThemeData buildLightTheme(Color seedColor) {
       bodySmall: TextStyle(fontSize: 12, color: AppColorsLight.textSecondary),
       bodyMedium: TextStyle(fontSize: 14, color: AppColorsLight.textPrimary),
       bodyLarge: TextStyle(fontSize: 18, color: AppColorsLight.textSecondary),
+      cardTitle: TextStyle(fontSize: 16, color: AppColorsLight.textPrimary, fontWeight: FontWeight.bold)
     ),
 
     drawerTheme: DrawerThemeData(backgroundColor: AppColorsLight.background),
@@ -338,6 +339,7 @@ ThemeData buildDarkTheme(Color seedColor) {
       bodySmall: TextStyle(fontSize: 12, color: AppColorsDark.textSecondary),
       bodyMedium: TextStyle(fontSize: 14, color: AppColorsDark.textPrimary),
       bodyLarge: TextStyle(fontSize: 18, color: AppColorsDark.textPrimary),
+      cardTitle: TextStyle(fontSize: 16, color: AppColorsDark.textPrimary, fontWeight: FontWeight.bold)
     ),
 
     drawerTheme: const DrawerThemeData(backgroundColor: Color(0xFF0B0B0D)),
