@@ -1,22 +1,24 @@
+import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/models/client_contacts.dart';
-import 'package:dsv360/views/widgets/TopHeaderBar.dart';
+import 'package:dsv360/repositories/client_contacts_repository.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
-class AddClientContactsPage extends StatefulWidget {
+class AddClientContactsPage extends ConsumerStatefulWidget {
   final ClientContacts? clientContacts;
 
   const AddClientContactsPage({super.key, this.clientContacts});
 
   @override
-  State<AddClientContactsPage> createState() => _AddClientContactsPageState();
+  ConsumerState<AddClientContactsPage> createState() =>
+      _AddClientContactsPageState();
 }
 
-class _AddClientContactsPageState extends State<AddClientContactsPage> {
+class _AddClientContactsPageState extends ConsumerState<AddClientContactsPage> {
   final _formKey = GlobalKey<FormState>();
 
   late bool isEditing;
@@ -34,6 +36,117 @@ class _AddClientContactsPageState extends State<AddClientContactsPage> {
   void initState() {
     super.initState();
     isEditing = widget.clientContacts != null;
+
+    if (isEditing) {
+      final contact = widget.clientContacts!;
+      _firstNameController.text = contact.firstName;
+      _lastNameController.text = contact.lastName;
+      _emailController.text = contact.email;
+      _contactNumberController.text = contact.phone;
+      _organization = contact.orgName;
+    }
+  }
+
+  Map<String, dynamic> _buildRequestBody() {
+    return {
+      'First_Name': _firstNameController.text.trim(),
+      'Last_Name': _lastNameController.text.trim(),
+      'Email': _emailController.text.trim(),
+      'Org_Name': _organization.toString(),
+      'Phone': _contactNumberController.text.trim(),
+    };
+  }
+
+  Future<void> _createClientContact(Map<String, dynamic> body) async {
+    final createBody = {
+      ...body,
+      'status': true,
+    };
+
+    try {
+      await ApiClient.instance.post(
+        'time_entry_management_application_function/addContact',
+        data: createBody,
+      );
+    } catch (e) {
+      // Fallback for environments where contact route is enabled.
+      if (!e.toString().contains('404')) rethrow;
+      await ApiClient.instance.post(
+        'time_entry_management_application_function/contact',
+        data: createBody,
+      );
+    }
+  }
+
+  Future<void> _updateClientContact(Map<String, dynamic> body) async {
+    try {
+      await ApiClient.instance.put(
+        'time_entry_management_application_function/contact/${widget.clientContacts!.rowId}',
+        data: body,
+      );
+    } catch (e) {
+      // Fallback for environments still using legacy update route.
+      if (!e.toString().contains('404')) rethrow;
+      await ApiClient.instance.post(
+        'time_entry_management_application_function/updateContact/${widget.clientContacts!.rowId}',
+        data: body,
+      );
+    }
+  }
+
+  Future<void> _handleSubmit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_organization == null || _organization!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select organization')),
+      );
+      return;
+    }
+
+    ref.read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier).state =
+        true;
+
+    final body = _buildRequestBody();
+    try {
+      if (isEditing) {
+        await _updateClientContact(body);
+      } else {
+        await _createClientContact(body);
+      }
+
+      if (!mounted) return;
+
+      Navigator.pop(context, true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isEditing
+                ? 'Client contact updated successfully'
+                : 'Client contact added successfully',
+          ),
+        ),
+      );
+
+      ref.invalidate(clientContactsListRepositoryProvider);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to save client contact')),
+      );
+    } finally {
+      ref.read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier).state =
+          false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _contactNumberController.dispose();
+    super.dispose();
   }
 
   @override
@@ -193,11 +306,7 @@ class _AddClientContactsPageState extends State<AddClientContactsPage> {
                         button1Function: () {
                           Navigator.pop(context);
                         },
-                        button2Function: () {
-                          if (_formKey.currentState!.validate()) {
-                            // TODO: Add / Update user logic
-                          }
-                        },
+                        button2Function: _handleSubmit,
                       ),
                     ],
                   ),
@@ -206,25 +315,6 @@ class _AddClientContactsPageState extends State<AddClientContactsPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration(BuildContext context, String label) {
-    final colors = Theme.of(context).colorScheme;
-
-    return InputDecoration(
-      labelText: label,
-      filled: true,
-      fillColor: colors.surface,
-      labelStyle: TextStyle(color: colors.onSurfaceVariant),
-      enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: colors.outlineVariant),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: colors.primary, width: 1.5),
-        borderRadius: BorderRadius.circular(6),
       ),
     );
   }

@@ -4,14 +4,12 @@ import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
+import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/models/client_contacts.dart';
-import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/repositories/client_contacts_repository.dart';
 import 'package:dsv360/views/clients/add_client_contacts_page.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
-import 'package:dsv360/views/notifications/notification_page.dart';
-import 'package:dsv360/views/widgets/app_snackbar.dart';
 import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
@@ -74,12 +72,12 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
             onPressed: () {
               // do nothing for the moment
 
-              // Navigator.push(
-              //   context,
-              //   MaterialPageRoute(
-              //     builder: (_) => AddClientContactsPage(clientContacts: null),
-              //   ),
-              // );
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AddClientContactsPage(clientContacts: null),
+                ),
+              );
             },
             child: Icon(Icons.filter_alt, size: 22, color: Colors.white),
           );
@@ -143,7 +141,10 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
 
                         return RefreshIndicator(
                           onRefresh: () async {
-                            ref.refresh(clientContactsListRepositoryProvider);
+                            ref.invalidate(clientContactsListRepositoryProvider);
+                            await ref.read(
+                              clientContactsListRepositoryProvider.future,
+                            );
                           },
                           child: ListView.builder(
                             itemCount: filteredClientContacts.length,
@@ -183,6 +184,8 @@ class ClientContactsCard extends ConsumerStatefulWidget {
 
 class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
   late bool clientStatus;
+  bool _isUpdatingStatus = false;
+  bool _isDeleting = false;
 
   @override
   void initState() {
@@ -191,10 +194,154 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
   }
 
   @override
+  void didUpdateWidget(covariant ClientContactsCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!_isUpdatingStatus &&
+        oldWidget.clientContacts.status != widget.clientContacts.status) {
+      clientStatus = widget.clientContacts.status;
+    }
+  }
+
+  Future<void> _updateClientStatusWithFallback(bool newStatus) async {
+    final Map<String, dynamic> body = {
+      'status': newStatus,
+      'ROWID': widget.clientContacts.rowId,
+      'USERID': widget.clientContacts.userId,
+    };
+
+    try {
+      // Primary route requested by backend contract.
+      await ApiClient.instance.post(
+        'time_entry_management_application_function/updateClientContactStatus',
+        data: body,
+      );
+    } catch (e) {
+      // Fallbacks for environments wired to different route styles.
+      if (!e.toString().contains('404')) rethrow;
+
+      try {
+        await ApiClient.instance.put(
+          'time_entry_management_application_function/updateClientContactStatus/${widget.clientContacts.rowId}',
+          data: body,
+        );
+      } catch (e2) {
+        if (!e2.toString().contains('404')) rethrow;
+        await ApiClient.instance.put(
+          'time_entry_management_application_function/contact/${widget.clientContacts.rowId}',
+          data: body,
+        );
+      }
+    }
+  }
+
+  Future<void> _confirmAndUpdateStatus(bool newStatus) async {
+    if (_isUpdatingStatus) return;
+
+    final fullName =
+        '${widget.clientContacts.firstName} ${widget.clientContacts.lastName}';
+    final action = newStatus ? 'set status to true' : 'set status to false';
+
+    final confirmed = await showWarningDialogueBox<bool>(
+      context: context,
+      title: 'Change Client Status',
+      subtitle: 'Are you sure you want to $action "$fullName"?',
+      primaryText: 'CONFIRM',
+    );
+
+    if (confirmed != true) return;
+
+    final previous = clientStatus;
+    setState(() {
+      clientStatus = newStatus;
+      _isUpdatingStatus = true;
+    });
+
+    try {
+      await _updateClientStatusWithFallback(newStatus);
+      if (!mounted) return;
+
+      ref.invalidate(clientContactsListRepositoryProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Client status updated to $newStatus successfully'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        clientStatus = previous;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update client status')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUpdatingStatus = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _deleteClientContactWithFallback() async {
+    try {
+      await ApiClient.instance.delete(
+        'time_entry_management_application_function/contact/${widget.clientContacts.rowId}',
+      );
+    } catch (e) {
+      // Fallback for environments still wired to legacy route names.
+      if (!e.toString().contains('404')) rethrow;
+      await ApiClient.instance.post(
+        'time_entry_management_application_function/deleteContact/${widget.clientContacts.rowId}',
+      );
+    }
+  }
+
+  Future<void> _confirmAndDeleteClient() async {
+    if (_isDeleting) return;
+
+    final fullName =
+        '${widget.clientContacts.firstName} ${widget.clientContacts.lastName}';
+    final confirmed = await showWarningDialogueBox<bool>(
+      context: context,
+      title: 'Delete Client Contact',
+      subtitle: 'Are you sure you want to delete "$fullName"?',
+      primaryText: 'DELETE',
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isDeleting = true;
+    });
+
+    try {
+      await _deleteClientContactWithFallback();
+      if (!mounted) return;
+
+      ref.invalidate(clientContactsListRepositoryProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Client contact deleted successfully')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to delete client contact')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDeleting = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final customColors = theme.custom;
-    final activeUser = ref.watch(activeUserRepositoryProvider);
 
     return GestureDetector(
       onTap: () {},
@@ -249,23 +396,16 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
                         child: Transform.scale(
                           scale: 0.70,
                           child: Switch(
-                            value: widget.clientContacts.status,
-                            onChanged: (value) async {
-                              // do nothing for the moment
-                            },
+                            value: clientStatus,
+                            onChanged: _isUpdatingStatus
+                                ? null
+                                : (value) => _confirmAndUpdateStatus(value),
                           ),
                         ),
                       ),
-                      SizedBox(width: 12.0),
+                      const SizedBox(width: 12.0),
                       CustomCardButton(
-                        onTap: () {
-                          // do nothing for the moment
-
-                          // _showDeleteDialog(
-                          //   context,
-                          //   "${widget.clientContacts.firstName} ${widget.clientContacts.lastName}",
-                          // );
-                        },
+                        onTap: _isDeleting ? () {} : _confirmAndDeleteClient,
                         icon: Icons.delete,
                         color: customColors.error,
                       ),
@@ -316,49 +456,6 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
           ),
         ),
       ],
-    );
-  }
-
-  void _showDeleteDialog(BuildContext context, String clientContactName) {
-    final theme = Theme.of(context);
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          title: Text('Delete Staff', style: theme.textTheme.titleMedium),
-          content: Text(
-            'Are you sure you want to delete Staff  "$clientContactName" ?',
-          ),
-          actions: [
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: theme.colorScheme.primary,
-                side: BorderSide(color: theme.colorScheme.primary),
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-              ),
-              child: const Text('CANCEL'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                // TODO: call delete API here
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.error,
-                foregroundColor: theme.colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-              ),
-              child: Text('DELETE'),
-            ),
-          ],
-        );
-      },
     );
   }
 }

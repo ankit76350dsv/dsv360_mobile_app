@@ -242,8 +242,6 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final customColors = theme.custom;
-    //never used
-    //final activeUser = ref.watch(activeUserRepositoryProvider);
 
     return GestureDetector(
       onTap: () {},
