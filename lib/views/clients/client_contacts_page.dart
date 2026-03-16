@@ -79,7 +79,7 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
                 ),
               );
             },
-            child: Icon(Icons.filter_alt, size: 22, color: Colors.white),
+            child: Icon(Icons.add, size: 28, color: Colors.white),
           );
         },
         loading: () => null, // hide FAB while checking
@@ -285,17 +285,15 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard> {
   }
 
   Future<void> _deleteClientContactWithFallback() async {
-    try {
-      await ApiClient.instance.delete(
-        'time_entry_management_application_function/contact/${widget.clientContacts.rowId}',
-      );
-    } catch (e) {
-      // Fallback for environments still wired to legacy route names.
-      if (!e.toString().contains('404')) rethrow;
-      await ApiClient.instance.post(
-        'time_entry_management_application_function/deleteContact/${widget.clientContacts.rowId}',
-      );
-    }
+    final Map<String, dynamic> body = {
+      'ROWID': widget.clientContacts.rowId,
+      'USERID': widget.clientContacts.userId,
+    };
+
+    await ApiClient.instance.delete(
+      'time_entry_management_application_function/contact',
+      data: body,
+    );
   }
 
   Future<void> _confirmAndDeleteClient() async {
