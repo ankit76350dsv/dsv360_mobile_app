@@ -310,31 +310,39 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
                     ],
                   ),
                   
-                  Divider(color: Colors.grey.shade200,),
+                  Divider(color: customColors.surfaceBackground!),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
+                      Expanded(
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
                             children: [
                               CustomChip(
-                            label: widget.account.orgType,
-                            color: customColors.primary!,
-                            icon: null,
-                          ),
-                          const SizedBox(width: 6.0),
-                          CustomChip(
-                            label: widget.account.status,
-                            color: customColors.primary!,
-                            icon: Icons.add_comment_outlined,
-                          ),
+                                label: widget.account.orgType,
+                                color: customColors.primary!,
+                                icon: null,
+                              ),
+                              const SizedBox(width: 6.0),
+                              CustomChip(
+                                label: widget.account.status,
+                                color: customColors.primary!,
+                                icon: Icons.add_comment_outlined,
+                              ),
                             ],
                           ),
+                        ),
+                      ),
+
+                      SizedBox(width: 6,),
 
                           Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           CustomCardButton(
                             onTap: () {
-                              // do nothing for the moment
+                              // run function
 
                               Navigator.push(
                                 context,
@@ -419,7 +427,7 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
           child: Text(
             text,
             softWrap: true,
-            style: TextStyle(color: customColors.textSecondary),
+            style: TextStyle(color: customColors.textSecondary, fontWeight: FontWeight.bold),
           ),
         ),
       ],
