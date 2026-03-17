@@ -10,7 +10,7 @@ import 'package:dsv360/views/projects/projects_screen.dart';
 import 'package:dsv360/views/task/tasks_screen.dart';
 import 'package:dsv360/views/issues/issues_screen.dart';
 import 'package:dsv360/features/accounts/view/pages/accounts_screen.dart';
-import 'package:dsv360/views/clients/client_contacts_page.dart';
+import 'package:dsv360/features/client/view/pages/client_contacts_page.dart';
 import 'package:dsv360/views/badges/badges_page.dart';
 import 'package:dsv360/views/users/users_page.dart';
 import 'package:dsv360/views/people/people_page.dart';

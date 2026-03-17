@@ -1,20 +1,15 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
-import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
-import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
-import 'package:dsv360/features/accounts/model/accounts.dart';
 import 'package:dsv360/features/accounts/reposetories/accounts_list_repository.dart';
 import 'package:dsv360/features/accounts/view/pages/add_edit_accounts.dart';
+import 'package:dsv360/features/accounts/view/widgets/accounts_card.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
-import 'package:dsv360/views/widgets/custom_card_button.dart';
-import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class AccountsPage extends ConsumerStatefulWidget {
   const AccountsPage({super.key});
@@ -183,8 +178,13 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
                           child: ListView.builder(
                             itemCount: filteredAccounts.length,
                             itemBuilder: (context, index) {
-                              return AccountsCard(
-                                account: filteredAccounts[index],
+                              return Column(
+                                children: [
+                                  AccountsCard(
+                                    account: filteredAccounts[index],
+                                  ),
+                                  SizedBox(height: 10,),
+                                ],
                               );
                             },
                           ),
@@ -204,267 +204,5 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
         ),
       ),
     );
-  }
-}
-
-class AccountsCard extends ConsumerStatefulWidget {
-  final Account account;
-  const AccountsCard({super.key, required this.account});
-  @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _AccountsCardState();
-}
-
-class _AccountsCardState extends ConsumerState<AccountsCard> {
-  bool _is404Error(Object error) {
-    return error.toString().contains('404');
-  }
-
-  Future<void> _deleteAccountWithFallback(String rowId) async {
-    try {
-       await ApiClient.instance.delete(
-        'time_entry_management_application_function/org/$rowId',
-      );
-      
-      return;
-    } 
-      
-     
-    catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    }
-
-   
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final customColors = theme.custom;
-
-    return GestureDetector(
-      onTap: () {},
-      child: Card(
-        elevation: 4,
-        shadowColor: Colors.black26,
-        
-        
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-          side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
-          
-        ),
-        
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 8),
-              child: Expanded(
-                child: Text(
-                  widget.account.orgName,
-                  style: theme.textTheme.cardTitle, 
-                  softWrap: true,
-                  
-                  
-                ),
-              ),
-            ),
-
-            // Divider
-            Divider(
-              height: 1,
-              thickness: 1,
-              color: Colors.grey.withOpacity(0.2),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
-              child: _accountInfoRow(Icons.email, widget.account.email),
-            ),
-                          
-            
-            Padding(
-              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                              _websiteRow(
-                              Icons.web_sharp,
-                              widget.account.website,
-                            ),
-                              _accountInfoRow(
-                                Icons.tag,
-                                'C${widget.account.rowId.length > 4 ? widget.account.rowId.substring(widget.account.rowId.length - 4) : widget.account.rowId}',
-                              ),
-                          ],
-                        ),
-                      ),
-                      
-                      
-                    ],
-                  ),
-                  
-                  Divider(color: customColors.surfaceBackground!),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              CustomChip(
-                                label: widget.account.orgType,
-                                color: customColors.primary!,
-                                icon: null,
-                              ),
-                              const SizedBox(width: 6.0),
-                              CustomChip(
-                                label: widget.account.status,
-                                color: customColors.primary!,
-                                icon: Icons.add_comment_outlined,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(width: 6,),
-
-                          Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CustomCardButton(
-                            onTap: () {
-                              // run function
-
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => AddEditAccountsPage(
-                                    account: widget.account,
-                                  ),
-                                ),
-                              );
-                            },
-                            icon: Icons.edit,
-                          ),
-                          const SizedBox(width: 5.0),
-                          CustomCardButton(
-                            onTap: () {
-                              //do nothing for the moment
-
-                              _showDeleteDialog(
-                                context,
-                                widget.account.orgName,
-                              );
-                            },
-                            icon: Icons.delete,
-                            color: customColors.error,
-                          ),
-                        ],
-                      ),
-                    ],
-                  )
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Small helper for website-value row
-  Widget _websiteRow(IconData icon, String value) {
-    final customColors = Theme.of(context).custom;
-
-    final websiteUrl = value.startsWith('http') ? value : 'https://$value';
-
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: customColors.textSecondary),
-        const SizedBox(width: 8),
-        TextButton(
-          onPressed: () async {
-            final uri = Uri.parse(websiteUrl);
-            if (await canLaunchUrl(uri)) {
-              await launchUrl(uri, mode: LaunchMode.externalApplication);
-            }
-          },
-          style: TextButton.styleFrom(
-            padding: EdgeInsets.zero,
-            minimumSize: const Size(0, 0),
-            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          child: Text(
-            'Open website',
-            style: TextStyle(
-              fontSize: 14,
-              color: customColors.primary,
-              decoration: TextDecoration.underline,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _accountInfoRow(IconData icon, String text) {
-    final customColors = Theme.of(context).custom;
-
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: customColors.textSecondary),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            text,
-            softWrap: true,
-            style: TextStyle(color: customColors.textSecondary, fontWeight: FontWeight.bold),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showDeleteDialog(BuildContext context, String orgName) {
-    showWarningDialogueBox<bool>(
-      context: context,
-      title: 'Delete Account',
-      subtitle: 'Are you sure you want to delete Account "$orgName" ?',
-      primaryText: 'DELETE',
-      onPrimaryPressed: (dialogContext) async {
-        try {
-          await _deleteAccountWithFallback(widget.account.rowId);
-
-          if (!mounted) return;
-          Navigator.of(dialogContext).pop(true);
-          ref.invalidate(accountsListRepositoryProvider);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Account deleted successfully')),
-          );
-        } catch (e) {
-          if (!mounted) return;
-          Navigator.of(dialogContext).pop(false);
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete account: $e')),
-          );
-        }
-      },
-    ).then((confirmed) {
-      if (confirmed != true) {
-        try {
-          ref.invalidate(accountsListRepositoryProvider);
-        } catch (e) {}
-      }
-    });
   }
 }

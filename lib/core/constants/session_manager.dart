@@ -17,7 +17,7 @@ import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/repositories/holiday_repository.dart';
 import 'package:dsv360/repositories/user_check_in_status_repository.dart';
 import 'package:dsv360/repositories/all_badges_list.dart';
-import 'package:dsv360/repositories/client_contacts_repository.dart';
+import 'package:dsv360/features/client/reposetories/client_contacts_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

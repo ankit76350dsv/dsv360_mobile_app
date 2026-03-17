@@ -1,6 +1,5 @@
-import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/features/accounts/model/accounts.dart';
-import 'package:dsv360/features/accounts/reposetories/accounts_list_repository.dart';
+import 'package:dsv360/features/accounts/viewmodel/account_form_viewmodel.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';
@@ -43,49 +42,6 @@ class _AddEditAccountsPageState extends ConsumerState<AddEditAccountsPage> {
       _emailController.text = account.email;
       _orgType = account.orgType;
       _orgStatus = account.status;
-    }
-  }
-
-  Map<String, dynamic> _buildRequestBody() {
-    return {
-      "Email": _emailController.text.trim(),
-      "Org_Img": "",
-      "Org_Name": _accountNameController.text.toString(),
-      "Org_Type": _orgType.toString(),
-      "Status": _orgStatus,
-      "Website": _websiteController.text.toString(),
-    };
-  }
-
-  Future<void> _createAccount(Map<String, dynamic> body) async {
-    try {
-      await ApiClient.instance.post(
-        'time_entry_management_application_function/clientOrg',
-        data: body, 
-      );
-    } catch (e) {
-      // Fallback kept for environments still wired to legacy route names.
-      if (!e.toString().contains('404')) rethrow;
-      await ApiClient.instance.post(
-        'time_entry_management_application_function/createClient',
-        data: body,
-      );
-    }
-  }
-
-  Future<void> _updateAccount(Map<String, dynamic> body) async {
-    try {
-      await ApiClient.instance.put(
-        'time_entry_management_application_function/clientOrg/${widget.account!.rowId}',
-        data: body,
-      );
-    } catch (e) {
-      // Fallback kept for environments still wired to legacy route names.
-      if (!e.toString().contains('404')) rethrow;
-      await ApiClient.instance.post(
-        'time_entry_management_application_function/updateClient/${widget.account!.rowId}',
-        data: body,
-      );
     }
   }
 
@@ -257,74 +213,28 @@ class _AddEditAccountsPageState extends ConsumerState<AddEditAccountsPage> {
                         },
                         button2Function: () async {
                           if (!_formKey.currentState!.validate()) return;
-                          if (_orgStatus == null || _orgStatus!.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Please select organization status',
-                                ),
-                              ),
-                            );
-                            return;
-                          }
-                          if (_orgType == null || _orgType!.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Please select organization type',
-                                ),
-                              ),
-                            );
-                            return;
-                          }
-                          ref.read(
-                                    submitLoadingProvider(
-                                      bottomTwoButtonsLoadingKey,
-                                    ).notifier,
-                                  )
-                                  .state =
-                              true;
+                          final viewModel = ref.read(
+                            accountFormViewModelProvider,
+                          );
 
-                          final body = _buildRequestBody();
-                          try {
-                            if (isEditing) {
-                              await _updateAccount(body);
-                            } else {
-                              await _createAccount(body);
-                            }
+                          final body = viewModel.buildRequestBody(
+                            email: _emailController.text,
+                            accountName: _accountNameController.text.toString(),
+                            orgType: _orgType,
+                            orgStatus: _orgStatus,
+                            website: _websiteController.text.toString(),
+                          );
 
-                            Navigator.pop(context, true); // success
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  isEditing
-                                      ? 'Account updated successfully'
-                                      : 'Account added successfully',
-                                ),
-                              ),
-                            );
-
-                            // throw current state and rebuild it from scratch
-                            ref.invalidate(accountsListRepositoryProvider);
-                          } catch (e) {
-                            debugPrint('❌ Failed to submit user: $e');
-
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Failed to save account'),
-                              ),
-                            );
-                          } finally {
-                            ref
-                                    .read(
-                                      submitLoadingProvider(
-                                        bottomTwoButtonsLoadingKey,
-                                      ).notifier,
-                                    )
-                                    .state =
-                                false;
-                          }
+                          await viewModel.submitAccount(
+                            context: context,
+                            isEditing: isEditing,
+                            bottomTwoButtonsLoadingKey:
+                                bottomTwoButtonsLoadingKey,
+                            orgStatus: _orgStatus,
+                            orgType: _orgType,
+                            rowId: widget.account?.rowId,
+                            body: body,
+                          );
                         },
                       ),
                     ],
@@ -334,25 +244,6 @@ class _AddEditAccountsPageState extends ConsumerState<AddEditAccountsPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration(BuildContext context, String label) {
-    final colors = Theme.of(context).colorScheme;
-
-    return InputDecoration(
-      labelText: label,
-      filled: true,
-      fillColor: colors.surface,
-      labelStyle: TextStyle(color: colors.onSurfaceVariant),
-      enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: colors.outlineVariant),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: colors.primary, width: 1.5),
-        borderRadius: BorderRadius.circular(6),
       ),
     );
   }
