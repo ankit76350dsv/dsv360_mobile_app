@@ -32,9 +32,10 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
     final usersAsync = ref.watch(usersRepositoryProvider);
     final List<DropdownMenuItem<String>> userOptions = usersAsync.when(
       data: (users) => users.map((u) {
+        final fullName = "${u.firstName} ${u.lastName}".trim();
         return DropdownMenuItem<String>(
-          value: u.userId,
-          child: Text("${u.firstName} ${u.lastName}"),
+          value: fullName,
+          child: Text(fullName),
         );
       }).toList(),
 
@@ -147,6 +148,8 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
                             : "Select user",
                         labelText: "Username",
                         prefixIcon: Icons.person,
+                        searchable: true,
+                        searchHintText: 'Search user',
                         options: userOptions, // empty when loading/error
                         onChanged: userOptions.isEmpty
                             ? (value) {} // disables selection
@@ -160,6 +163,8 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
                         hintText: "Select badge",
                         labelText: "Badge Name",
                         prefixIcon: Icons.badge,
+                        searchable: true,
+                        searchHintText: 'Search badge name',
                         options: badgeNames
                             .map(
                               (name) => DropdownMenuItem<String>(
@@ -194,6 +199,8 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
                             : "Select badge level",
                         labelText: "Badge Level",
                         prefixIcon: Icons.layers,
+                        searchable: true,
+                        searchHintText: 'Search badge level',
                         options: levels
                             .map(
                               (l) => DropdownMenuItem(value: l, child: Text(l)),

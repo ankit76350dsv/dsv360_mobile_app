@@ -9,12 +9,12 @@ import 'package:dsv360/repositories/all_badges_list.dart';
 import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/views/badges/add_edit_badge_page.dart';
 import 'package:dsv360/views/badges/assign_badges_page.dart';
+import 'package:dsv360/views/badges/show_badges.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'dart:math' as Math;
 
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 
@@ -83,10 +83,10 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
                   // do nothing for the moment
 
                   // open create badge
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(builder: (_) => AddEditBadgePage()),
-                  // );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => AddEditBadgePage()),
+                  );
                 },
               ),
 
@@ -97,10 +97,10 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
                   // do nothing for the moment
 
                   // assign badges to user
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(builder: (_) => AssignBadgesPage()),
-                  // );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => AssignBadgesPage()),
+                  );
                 },
               ),
 
@@ -110,7 +110,7 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
                 onTap: () {
                   // do nothing for the moment
 
-                  // view all badges of user
+                  Navigator.push(context, MaterialPageRoute(builder: (_)=>ShowBadgesPage()),);
                 },
               ),
             ],
@@ -262,7 +262,9 @@ class _UserBadgeCardState extends ConsumerState<UserBadgeCard> {
                       InkWell(
                         // onTap: _openUserBadges,
                         onTap: () {
-                          // do nothing for the moment
+                          // add show badges function here
+                          _openUserBadges();
+                          
                         },
                         borderRadius: BorderRadius.circular(14),
                         child: Container(
