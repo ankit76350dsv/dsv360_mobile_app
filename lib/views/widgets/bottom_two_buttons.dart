@@ -29,7 +29,7 @@ class BottomTwoButtons extends ConsumerWidget {
       children: [
         Expanded(
           child: TextButton(
-            onPressed: button1Function,
+            onPressed: isLoading ? null : button1Function,
             style: TextButton.styleFrom(
               foregroundColor: customColors.error,
               side: BorderSide(
@@ -54,7 +54,7 @@ class BottomTwoButtons extends ConsumerWidget {
         const SizedBox(width: 12),
         Expanded(
           child: ElevatedButton(
-            onPressed: isLoading ? (){} : button2Function,
+            onPressed: isLoading ? null : button2Function,
             style: ElevatedButton.styleFrom(
               backgroundColor: customColors.primary,
               foregroundColor: Colors.white,

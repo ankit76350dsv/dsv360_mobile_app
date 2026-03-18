@@ -106,271 +106,282 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
           ),
         ),
         const SizedBox(height: 6),
-        Theme(
-          data: Theme.of(context).copyWith(
-            splashColor: Colors.transparent,
-            highlightColor: Colors.transparent,
-            hoverColor: Colors.transparent,
-          ),
-          // Changed dropdown implementation to PopupMenuButton for better menu styling and responsiveness.
-          child: PopupMenuButton<String>(
-            color: customColors.cardBackground,
-            elevation: 8,
-            shadowColor: Colors.black.withOpacity(0.10),
-            offset: const Offset(0, 40),
-            constraints: BoxConstraints(minWidth: listWidth -60),
-            onOpened: () {
-              if (widget.searchable) {
-                _searchController.clear();
-                _searchQuery = '';
-              }
-            },
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(
-                color: colorScheme.outline.withOpacity(0.15),
-                width: 1,
-              ),
-            ),
-            onSelected: (value) {
-              setState(() => _selectedOption = value);
-              widget.onChanged(value);
-            },
-            itemBuilder: (context) {
-              if (widget.searchable) {
-                return [
-                  PopupMenuItem<String>(
-                    enabled: false,
-                    padding: EdgeInsets.zero,
-                    child: StatefulBuilder(
-                      builder: (context, setMenuState) {
-                        final rankedItems = _rankedItems(widget.options, _searchQuery);
-                        final cs = Theme.of(context).colorScheme;
-                        
-                        // Calculate dynamic height based on number of items
-                        final searchHeight = 70.0;
-                        final itemHeight = 44.0;
-                        final calculatedHeight = searchHeight + (rankedItems.length * itemHeight);
-                        final dynamicHeight = calculatedHeight.clamp(100.0, 500.0);
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final popupWidth = constraints.maxWidth.isFinite
+                ? constraints.maxWidth
+                : listWidth - 60;
 
-                        return SizedBox(
-                          width: listWidth - 40,//change width here - for fields
-                          height: dynamicHeight,
-                          child: Column(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(12, 14, 12, 8),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: customColors.inputFill,
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: cs.outline.withOpacity(0.20),
-                                      width: 1.5,
+            return Theme(
+              data: Theme.of(context).copyWith(
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                hoverColor: Colors.transparent,
+              ),
+              // Changed dropdown implementation to PopupMenuButton for better menu styling and responsiveness.
+              child: PopupMenuButton<String>(
+                color: customColors.cardBackground,
+                elevation: 8,
+                shadowColor: Colors.black.withOpacity(0.10),
+                offset: const Offset(0, 40),
+                constraints: BoxConstraints(
+                  minWidth: popupWidth,
+                  maxWidth: popupWidth,
+                ),
+                onOpened: () {
+                  if (widget.searchable) {
+                    _searchController.clear();
+                    _searchQuery = '';
+                  }
+                },
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color: colorScheme.outline.withOpacity(0.15),
+                    width: 1,
+                  ),
+                ),
+                onSelected: (value) {
+                  setState(() => _selectedOption = value);
+                  widget.onChanged(value);
+                },
+                itemBuilder: (context) {
+                  if (widget.searchable) {
+                    return [
+                      PopupMenuItem<String>(
+                        enabled: false,
+                        padding: EdgeInsets.zero,
+                        child: StatefulBuilder(
+                          builder: (context, setMenuState) {
+                            final rankedItems = _rankedItems(widget.options, _searchQuery);
+                            final cs = Theme.of(context).colorScheme;
+
+                            // Calculate dynamic height based on number of items
+                            final searchHeight = 70.0;
+                            final itemHeight = 44.0;
+                            final calculatedHeight = searchHeight + (rankedItems.length * itemHeight);
+                            final dynamicHeight = calculatedHeight.clamp(100.0, 500.0);
+
+                            return SizedBox(
+                              width: popupWidth,
+                              height: dynamicHeight,
+                              child: Column(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(12, 14, 12, 8),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: customColors.inputFill,
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color: cs.outline.withOpacity(0.20),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const SizedBox(width: 8),
+                                          Icon(Icons.search,
+                                              size: 22,
+                                              ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: TextField(
+                                              controller: _searchController,
+                                              autofocus: true,
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w500,
+                                                color: customColors.textPrimary,
+                                              ),
+                                              decoration: InputDecoration(
+                                                hintText: widget.searchHintText,
+                                                border: InputBorder.none,
+                                                isDense: true,
+                                                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                                              ),
+                                              onChanged: (value) {
+                                                setMenuState(() {
+                                                  _searchQuery = value;
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                  child: Row(
-                                    children: [
-                                      const SizedBox(width: 8),
-                                      Icon(Icons.search,
-                                          size: 22,
-                                          ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: TextField(
-                                          controller: _searchController,
-                                          autofocus: true,
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500,
-                                            color: customColors.textPrimary,
-                                          ),
-                                          decoration: InputDecoration(
-                                            hintText: widget.searchHintText,
-                                            border: InputBorder.none,
-                                            isDense: true,
-                                            contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                                          ),
-                                          onChanged: (value) {
-                                            setMenuState(() {
-                                              _searchQuery = value;
-                                            });
-                                          },
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            
-                              Expanded(
-                                child: rankedItems.isEmpty
-                                    ? Center(
-                                        child: Text(
-                                          'No matching results',
-                                          style: TextStyle(color: cs.onSurfaceVariant),
-                                        ),
-                                      )
-                                    : ListView.builder(
-                                        padding: const EdgeInsets.symmetric(vertical: 6),
-                                        itemCount: rankedItems.length,
-                                        itemBuilder: (context, index) {
-                                          final item = rankedItems[index];
-                                          final value = item.value;
-                                          if (value == null) return const SizedBox.shrink();
-                                          final isSelected = value == _selectedOption;
 
-                                          return InkWell(
-                                            onTap: () {
-                                              setState(() => _selectedOption = value);
-                                              widget.onChanged(value);
-                                              Navigator.of(context).pop();
-                                            },
-                                            child: Container(
-                                              margin: const EdgeInsets.symmetric(
-                                                horizontal: 8,
-                                                vertical: 2,
-                                              ),
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 12,
-                                                vertical: 10,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(8),
-                                                color: isSelected
-                                                    ? Colors.blue.withOpacity(0.12)
-                                                    : Theme.of(context).custom.cardBackground!,
-                                              ),
-                                              child: Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: DefaultTextStyle.merge(
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                        fontWeight: isSelected
-                                                            ? FontWeight.w600
-                                                            : FontWeight.w500,
-                                                        color: isSelected
-                                                            ? Colors.blue.shade400
-                                                            : cs.onSurface,
-                                                      ),
-                                                      child: item.child,
-                                                    ),
-                                                  ),
-                                                  if (isSelected)
-                                                    Icon(
-                                                      Icons.check_rounded,
-                                                      size: 16,
-                                                      color: Colors.blue.shade400,
-                                                    ),
-                                                ],
-                                              ),
+                                  Expanded(
+                                    child: rankedItems.isEmpty
+                                        ? Center(
+                                            child: Text(
+                                              'No matching results',
+                                              style: TextStyle(color: cs.onSurfaceVariant),
                                             ),
-                                          );
-                                        },
-                                      ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ];
-              }
+                                          )
+                                        : ListView.builder(
+                                            padding: const EdgeInsets.symmetric(vertical: 6),
+                                            itemCount: rankedItems.length,
+                                            itemBuilder: (context, index) {
+                                              final item = rankedItems[index];
+                                              final value = item.value;
+                                              if (value == null) return const SizedBox.shrink();
+                                              final isSelected = value == _selectedOption;
 
-              return widget.options.map((item) {
-                final value = item.value;
-                if (value == null) return const PopupMenuItem<String>(child: SizedBox.shrink());
-                final isSelected = value == _selectedOption;
-                final cs = Theme.of(context).colorScheme;
-                return PopupMenuItem<String>(
-                  value: value,
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      color: isSelected
-                          ? Colors.blue.withOpacity(0.12)
-                          : Theme.of(context).custom.cardBackground!,
-                      border: Border.all(
-                        color: isSelected
-                            ? const Color.fromARGB(255, 181, 221, 254).withOpacity(0.45)
-                            : cs.outline.withOpacity(0.25),
-                        width: 0,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        DefaultTextStyle.merge(
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                            color: isSelected ? Colors.blue.shade400 : cs.onSurface,
-                            
-                          ),
-                          child: item.child,
+                                              return InkWell(
+                                                onTap: () {
+                                                  setState(() => _selectedOption = value);
+                                                  widget.onChanged(value);
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child: Container(
+                                                  margin: const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
+                                                  padding: const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 10,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    borderRadius: BorderRadius.circular(8),
+                                                    color: isSelected
+                                                        ? Colors.blue.withOpacity(0.12)
+                                                        : Theme.of(context).custom.cardBackground!,
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: DefaultTextStyle.merge(
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            fontWeight: isSelected
+                                                                ? FontWeight.w600
+                                                                : FontWeight.w500,
+                                                            color: isSelected
+                                                                ? Colors.blue.shade400
+                                                                : cs.onSurface,
+                                                          ),
+                                                          child: item.child,
+                                                        ),
+                                                      ),
+                                                      if (isSelected)
+                                                        Icon(
+                                                          Icons.check_rounded,
+                                                          size: 16,
+                                                          color: Colors.blue.shade400,
+                                                        ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
-                        const Spacer(),
-                        if (isSelected)
-                          Icon(
-                            Icons.check_rounded,
-                            size: 16,
-                            color: Colors.blue.shade400,
+                      ),
+                    ];
+                  }
+
+                  return widget.options.map((item) {
+                    final value = item.value;
+                    if (value == null) return const PopupMenuItem<String>(child: SizedBox.shrink());
+                    final isSelected = value == _selectedOption;
+                    final cs = Theme.of(context).colorScheme;
+                    return PopupMenuItem<String>(
+                      value: value,
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: isSelected
+                              ? Colors.blue.withOpacity(0.12)
+                              : Theme.of(context).custom.cardBackground!,
+                          border: Border.all(
+                            color: isSelected
+                                ? const Color.fromARGB(255, 181, 221, 254).withOpacity(0.45)
+                                : cs.outline.withOpacity(0.25),
+                            width: 0,
                           ),
-                      ],
+                        ),
+                        child: Row(
+                          children: [
+                            DefaultTextStyle.merge(
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                color: isSelected ? Colors.blue.shade400 : cs.onSurface,
+
+                              ),
+                              child: item.child,
+                            ),
+                            const Spacer(),
+                            if (isSelected)
+                              Icon(
+                                Icons.check_rounded,
+                                size: 16,
+                                color: Colors.blue.shade400,
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList();
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: customColors.inputFill,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: colorScheme.outline.withOpacity(0.2),
+                      width: 1.5,
                     ),
                   ),
-                );
-              }).toList();
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: customColors.inputFill,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: colorScheme.outline.withOpacity(0.2),
-                  width: 1.5,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Icon(
+                        widget.prefixIcon,
+                        size: 20,
+                        color: Colors.grey.withOpacity(0.85),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          _selectedOption ?? widget.hintText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: _selectedOption == null
+                                ? Colors.grey
+                                : customColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 18,
+                        color: customColors.textPrimary,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Icon(
-                    widget.prefixIcon,
-                    size: 20,
-                    color: Colors.grey.withOpacity(0.85),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      _selectedOption ?? widget.hintText,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: _selectedOption == null
-                            ? Colors.grey
-                            : customColors.textPrimary,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    size: 18,
-                    color: customColors.textPrimary,
-                  ),
-                ],
-              ),
-            ),
-          ),
+            );
+          },
         ),
       ],
     );

@@ -55,6 +55,10 @@ class _AddEditBadgePageState extends ConsumerState<AddEditBadgePage> {
   }
 
   Future<void> _submitBadge(BuildContext context) async {
+    if (_isLoading) return;
+
+    ref.read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier).state =
+        true;
     setState(() => _isLoading = true);
 
     try {
@@ -73,6 +77,8 @@ class _AddEditBadgePageState extends ConsumerState<AddEditBadgePage> {
         const SnackBar(content: Text('Failed to save badge')),
       );
     } finally {
+      ref.read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier).state =
+          false;
       if (mounted) {
         setState(() => _isLoading = false);
       }

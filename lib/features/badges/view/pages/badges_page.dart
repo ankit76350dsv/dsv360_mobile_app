@@ -155,6 +155,7 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
                             await ref.refresh(usersRepositoryProvider.future);
                           },
                           child: ListView.builder(
+                            
                             itemCount: filteredUsers.length,
                             itemBuilder: (context, index) {
                               return UserBadgeCard(user: filteredUsers[index]);

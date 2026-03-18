@@ -11,11 +11,13 @@ class UserBadgeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
 
     return GestureDetector(
       onTap: () {},
       child: Card(
+        elevation: 3,
+        shadowColor: Colors.black.withValues(alpha: 0.6),
+        
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
           side: BorderSide(
@@ -38,11 +40,12 @@ class UserBadgeCard extends StatelessWidget {
                           children: [
                             Text(
                               '${user.firstName} ${user.lastName}',
-                              style: theme.textTheme.bodyLarge,
+                              style: theme.textTheme.cardTitle,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 2.0),
+                           
+                            const SizedBox(height: 8.0),
                             _userInfoRow(context, Icons.email, user.emailAddress),
                             _userInfoRow(context, Icons.tag, user.userId),
                           ],
@@ -59,7 +62,7 @@ class UserBadgeCard extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: colors.tertiary.withOpacity(0.3),
+                              color: Theme.of(context).custom.logoColor!,
                               width: 1.5,
                             ),
                           ),
@@ -69,7 +72,7 @@ class UserBadgeCard extends StatelessWidget {
                               Icon(
                                 Icons.emoji_events_outlined,
                                 size: 18,
-                                color: colors.tertiary.withOpacity(0.3),
+                                color: Theme.of(context).custom.logoColor!,
                               ),
                               const SizedBox(width: 6),
                               Text(
@@ -78,7 +81,7 @@ class UserBadgeCard extends StatelessWidget {
                                   fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.4,
-                                  color: colors.tertiary.withOpacity(0.3),
+                                  color: Theme.of(context).custom.logoColor!,
                                 ),
                               ),
                             ],
