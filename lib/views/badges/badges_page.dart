@@ -1,11 +1,13 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/widgets/circular_loader.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
+import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/models/users.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
-import 'package:dsv360/repositories/all_badges_list.dart';
 import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/views/badges/add_edit_badge_page.dart';
 import 'package:dsv360/views/badges/assign_badges_page.dart';
@@ -341,16 +343,88 @@ class _UserBadgeCardState extends ConsumerState<UserBadgeCard> {
   }
 }
 
-class _UserBadgesSheet extends ConsumerWidget {
+class _UserBadgesSheet extends StatefulWidget {
   final UsersModel user;
   const _UserBadgesSheet({required this.user});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = Theme.of(context).colorScheme;
+  State<_UserBadgesSheet> createState() => _UserBadgesSheetState();
+}
 
-    // 🔥 TEMP: Replace later with real API badges for this user
-    final badgesAsync = ref.watch(allDSVBadgesListRepositoryProvider);
+class _UserBadgesSheetState extends State<_UserBadgesSheet> {
+  late Future<List<_AssignedBadgeItem>> _badgesFuture;
+  String? _deletingRowId;
+
+  @override
+  void initState() {
+    super.initState();
+    _badgesFuture = _fetchUserBadges();
+  }
+
+  Future<List<_AssignedBadgeItem>> _fetchUserBadges() async {
+    final response = await ApiClient.instance.get(
+      'time_entry_management_application_function/badge/${widget.user.userId}',
+    );
+
+    final data = response.data;
+    final rawList = (data is Map && data['data'] is List)
+        ? data['data'] as List
+        : <dynamic>[];
+
+    return rawList
+        .whereType<Map>()
+        .map((e) => _AssignedBadgeItem.fromJson(Map<String, dynamic>.from(e)))
+        .toList();
+  }
+
+  Future<void> _deleteAssignedBadge(_AssignedBadgeItem badge) async {
+    if (_deletingRowId != null) return;
+
+    final confirmed = await showWarningDialogueBox<bool>(
+      context: context,
+      title: 'Delete Badge',
+      subtitle: 'Are you sure you want to delete this badge?',
+      primaryText: 'Delete',
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _deletingRowId = badge.rowId;
+    });
+
+    try {
+      await ApiClient.instance.delete(
+        'time_entry_management_application_function/assignBadge',
+        data: {
+          'rowIDs': [badge.rowId],
+        },
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Badge deleted successfully')),
+      );
+
+      setState(() {
+        _badgesFuture = _fetchUserBadges();
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to delete badge')),
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _deletingRowId = null;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
 
     return DraggableScrollableSheet(
       expand: false,
@@ -380,7 +454,7 @@ class _UserBadgesSheet extends ConsumerWidget {
               ),
 
               Text(
-                "${user.firstName}'s Badges",
+                "${widget.user.firstName}'s Badges",
                 style: Theme.of(
                   context,
                 ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
@@ -390,114 +464,122 @@ class _UserBadgesSheet extends ConsumerWidget {
 
               //
               Expanded(
-                child: badgesAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-
-                  error: (err, _) => Center(
-                    child: Text(
-                      err.toString(),
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  ),
-
-                  data: (badges) {
-                    final assignedBadges = badges.take(6).toList();
-
-                    if (assignedBadges.isEmpty) {
-                      return const Center(child: Text("No badges assigned"));
+                child: FutureBuilder<List<_AssignedBadgeItem>>(
+                  future: _badgesFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularLoader());
                     }
 
-                    return GridView.builder(
-                      controller: scrollController,
-                      itemCount: assignedBadges.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 14,
-                            crossAxisSpacing: 14,
-                            childAspectRatio: 1,
-                          ),
-                      itemBuilder: (context, index) {
-                        final badge = assignedBadges[index];
+                    if (snapshot.hasError) {
+                      return Center(
+                        child: Text(
+                          snapshot.error.toString(),
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      );
+                    }
 
-                        return Column(
-                          children: [
-                            SizedBox(
-                              width: 120,
-                              height: 120,
-                              child: Stack(
-                                children: [
-                                  // Glass card
-                                  Card(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(200),
-                                      side: BorderSide(
-                                        color: Colors.grey.withOpacity(0.3),
-                                        width: 2.5,
-                                      ),
+                    final badges = snapshot.data ?? const <_AssignedBadgeItem>[];
+                    if (badges.isEmpty) {
+                      return const Center(child: Text('No badges assigned'));
+                    }
+
+                    return Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: GridView.builder(
+                        controller: scrollController,
+                        itemCount: badges.length,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 3,
+                              mainAxisSpacing: 14,
+                              crossAxisSpacing: 14,
+                              childAspectRatio: 0.65,
+                            ),
+                        itemBuilder: (context, index) {
+                          final badge = badges[index];
+                      
+                          return Column(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  width: double.infinity,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: Colors.grey.withOpacity(0.3),
+                                      width: 1.5,
                                     ),
-                                    child: Center(
-                                      child: Image.network(
-                                        badge.badgeLogo,
-                                        fit: BoxFit.contain,
-                                        errorBuilder: (_, __, ___) =>
-                                            const Icon(
-                                              Icons.verified,
-                                              color: Colors.greenAccent,
-                                              size: 36,
-                                            ),
-                                      ),
-                                    ),
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
-
-                                  // Remove button
-                                  Positioned(
-                                    top: 6,
-                                    right: 6,
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        // remove badge
-                                      },
-                                      child: Container(
-                                        width: 26,
-                                        height: 26,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: colors.error,
-                                            width: 1,
+                                  child: Stack(
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child: Image.network(
+                                          badge.badgeLogo,
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (_, __, ___) => const Icon(
+                                            Icons.verified,
+                                            color: Colors.greenAccent,
+                                            size: 36,
                                           ),
                                         ),
-                                        child: Icon(
-                                          Icons.close,
-                                          size: 14,
-                                          color: colors.error,
-                                        ),
                                       ),
-                                    ),
+                                      Positioned(
+                                        bottom: 0,
+                                        right: 0,
+                                        child: _deletingRowId == badge.rowId
+                                            ? const SizedBox(
+                                                height: 20,
+                                                width: 20,
+                                                child: CircularLoader(),
+                                              )
+                                            : PopupMenuButton<String>(
+                                                icon: const Icon(Icons.more_vert, size: 18),
+                                                color: colors.surfaceBright,
+                                                padding: EdgeInsets.zero,
+                                                onSelected: (value) {
+                                                  if (value == 'delete') {
+                                                    _deleteAssignedBadge(badge);
+                                                  }
+                                                },
+                                                itemBuilder: (context) => [
+                                                  PopupMenuItem<String>(
+                                                    value: 'delete',
+                                                    child: const Text(
+                                                        'Delete Badge',
+                                                        style: TextStyle(color: Colors.red),
+                                                      ),
+                                                    ),
+                                                  
+                                                ],
+                                              ),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
-
-                            const SizedBox(height: 6),
-                            Text(
-                              badge.badgeName,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.black),
-                            ),
-                            Text(
-                              badge.badgeLevel,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey,
+                              const SizedBox(height: 6),
+                              Text(
+                                badge.badgeName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(color: colors.onSurface),
                               ),
-                            ),
-                          ],
-                        );
-                      },
+                              Text(
+                                badge.badgeLevel,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
                     );
                   },
                 ),
@@ -512,7 +594,7 @@ class _UserBadgesSheet extends ConsumerWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: colors.primary,
+                        backgroundColor: Theme.of(context).custom.primary,
                         foregroundColor: colors.onPrimary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -540,11 +622,31 @@ class _UserBadgesSheet extends ConsumerWidget {
   }
 }
 
-Widget _LoadingView(ColorScheme colors) {
-  return SizedBox(
-    height: 200,
-    child: Center(child: CircularProgressIndicator(color: colors.primary)),
-  );
+
+class _AssignedBadgeItem {
+  final String badgeName;
+  final String badgeLevel;
+  final String badgeLogo;
+  final String badgeId;
+  final String rowId;
+
+  const _AssignedBadgeItem({
+    required this.badgeName,
+    required this.badgeLevel,
+    required this.badgeLogo,
+    required this.badgeId,
+    required this.rowId,
+  });
+
+  factory _AssignedBadgeItem.fromJson(Map<String, dynamic> json) {
+    return _AssignedBadgeItem(
+      badgeName: (json['Badge_Name'] ?? '').toString(),
+      badgeLevel: (json['Badge_Level'] ?? '').toString(),
+      badgeLogo: (json['Badge_Logo'] ?? '').toString(),
+      badgeId: (json['Badge_ID'] ?? '').toString(),
+      rowId: (json['ROWID'] ?? '').toString(),
+    );
+  }
 }
 
 Widget _ErrorView(String message, ColorScheme colors) {
