@@ -1,4 +1,6 @@
-import 'package:dsv360/core/network/dio_client.dart';
+import 'package:dsv360/features/badges/model/badge_user.dart';
+import 'package:dsv360/features/badges/model/dsvbadge.dart';
+import 'package:dsv360/features/badges/viewmodel/assign_badges_viewmodel.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';
@@ -30,8 +32,8 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
   bool _hasUsersError = false;
   bool _hasBadgesError = false;
 
-  List<Map<String, dynamic>> _users = [];
-  List<Map<String, dynamic>> _badges = [];
+  List<BadgeUser> _users = [];
+  List<DSVBadge> _badges = [];
 
   String bottomTwoButtonsLoadingKey = 'assign_badge_key';
 
@@ -39,6 +41,12 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
   void initState() {
     super.initState();
     _loadInitialData();
+  }
+
+  @override
+  void dispose() {
+    _badgeIdController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadInitialData() async {
@@ -55,19 +63,7 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
     });
 
     try {
-      final response = await ApiClient.instance.get(
-        'time_entry_management_application_function/employee',
-      );
-
-      final data = response.data;
-      final usersList = (data is Map && data['users'] is List)
-          ? data['users'] as List
-          : <dynamic>[];
-
-      _users = usersList
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      _users = await ref.read(assignBadgesViewModelProvider).fetchUsers();
     } catch (_) {
       _hasUsersError = true;
       _users = [];
@@ -87,19 +83,7 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
     });
 
     try {
-      final response = await ApiClient.instance.get(
-        'time_entry_management_application_function/badge',
-      );
-
-      final data = response.data;
-      final badgesList = (data is Map && data['data'] is List)
-          ? data['data'] as List
-          : (data is List ? data : <dynamic>[]);
-
-      _badges = badgesList
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      _badges = await ref.read(assignBadgesViewModelProvider).fetchBadges();
     } catch (_) {
       _hasBadgesError = true;
       _badges = [];
@@ -148,7 +132,8 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
       return;
     }
 
-    ref.read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier).state = true;
+    ref.read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier).state =
+        true;
 
     try {
       final payload = {
@@ -162,54 +147,48 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
         'Profile_Link': _selectedProfileLink,
       };
 
-      await ApiClient.instance.post(
-        'time_entry_management_application_function/assignBadge',
-        data: payload,
-      );
-
-      if (!mounted) return;
-      Navigator.pop(context, true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Badge assigned successfully')),
-      );
-    } catch (e) {
+      await ref
+          .read(assignBadgesViewModelProvider)
+          .assignBadge(context: context, payload: payload);
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to assign badge')),
       );
     } finally {
-      ref.read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier).state = false;
+      ref
+          .read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier)
+          .state = false;
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+
     final List<DropdownMenuItem<String>> userOptions = _users.map((u) {
-      final fullName =
-          '${(u['first_name'] ?? '').toString()} ${(u['last_name'] ?? '').toString()}'.trim();
       return DropdownMenuItem<String>(
-        value: fullName,
-        child: Text(fullName),
+        value: u.fullName,
+        child: Text(u.fullName),
       );
     }).toList();
 
     final badgeNames = _badges
-        .map((b) => (b['Badge_Name'] ?? '').toString())
+        .map((b) => b.badgeName)
         .where((name) => name.isNotEmpty)
         .toSet()
         .toList();
 
     final levels = _badges
-        .where((b) => (b['Badge_Name'] ?? '').toString() == _selectedBadgeName)
-        .map((b) => (b['Badge_Level'] ?? '').toString())
+        .where((b) => b.badgeName == _selectedBadgeName)
+        .map((b) => b.badgeLevel)
         .where((level) => level.isNotEmpty)
         .toSet()
         .toList();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Assign Badge',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
@@ -222,7 +201,7 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
             Padding(
               padding: const EdgeInsets.only(left: 16.0, top: 16.0),
               child: Text(
-                "Assign Badge Details",
+                'Assign Badge Details',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: colors.primary,
                   fontWeight: FontWeight.w600,
@@ -237,44 +216,41 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // dropdown of list of all users
                       CustomDropDownField(
                         hintText: _isUsersLoading
-                            ? "Loading users..."
-                          : _hasUsersError
-                            ? "Failed to load users"
-                            : "Select user",
-                        labelText: "Username",
+                            ? 'Loading users...'
+                            : _hasUsersError
+                            ? 'Failed to load users'
+                            : 'Select user',
+                        labelText: 'Username',
                         prefixIcon: Icons.person,
                         searchable: true,
                         searchHintText: 'Search user',
-                        options: userOptions, // empty when loading/error
+                        options: userOptions,
                         onChanged: userOptions.isEmpty
-                            ? (value) {} // disables selection
-                          : (value) => setState(() {
-                            _selectedUserName = value;
-                            final selectedUser = _users.firstWhere(
-                              (u) =>
-                                '${(u['first_name'] ?? '').toString()} ${(u['last_name'] ?? '').toString()}'.trim() ==
-                                value,
-                              orElse: () => <String, dynamic>{},
-                            );
-                            _selectedUserId =
-                              (selectedUser['user_id'] ?? '').toString();
-                            _selectedProfileLink =
-                              (selectedUser['profile_pic'] ?? '').toString();
-                            }),
+                            ? (value) {}
+                            : (value) => setState(() {
+                                _selectedUserName = value;
+                                final selectedUser = _users.firstWhere(
+                                  (u) => u.fullName == value,
+                                  orElse: () => const BadgeUser(
+                                    fullName: '',
+                                    userId: '',
+                                    profileLink: '',
+                                  ),
+                                );
+                                _selectedUserId = selectedUser.userId;
+                                _selectedProfileLink = selectedUser.profileLink;
+                              }),
                       ),
                       const SizedBox(height: 20),
-
-                      // dropdown of list of all badges
                       CustomDropDownField(
                         hintText: _isBadgesLoading
-                            ? "Loading badges..."
+                            ? 'Loading badges...'
                             : _hasBadgesError
-                            ? "Failed to load badges"
-                            : "Select badge",
-                        labelText: "Badge Name",
+                            ? 'Failed to load badges'
+                            : 'Select badge',
+                        labelText: 'Badge Name',
                         prefixIcon: Icons.badge,
                         searchable: true,
                         searchHintText: 'Search badge name',
@@ -287,7 +263,7 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
                             )
                             .toList(),
                         onChanged: badgeNames.isEmpty
-                            ? (value) {} // disables selection
+                            ? (value) {}
                             : (value) => setState(() {
                                 _selectedBadgeName = value;
                                 _selectedBadgeLevel = null;
@@ -297,45 +273,39 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
                               }),
                       ),
                       const SizedBox(height: 20),
-
-                      // dropdown of list of all badge levels
                       CustomDropDownField(
-                        hintText: levels.isEmpty
-                            ? "Select badge first"
-                            : "Select badge level",
-                        labelText: "Badge Level",
+                        hintText:
+                            levels.isEmpty ? 'Select badge first' : 'Select badge level',
+                        labelText: 'Badge Level',
                         prefixIcon: Icons.layers,
                         searchable: true,
                         searchHintText: 'Search badge level',
                         options: levels
-                            .map(
-                              (l) => DropdownMenuItem(value: l, child: Text(l)),
-                            )
+                            .map((l) => DropdownMenuItem(value: l, child: Text(l)))
                             .toList(),
                         onChanged: levels.isEmpty
                             ? (value) {}
-                          : (value) => setState(() {
-                            _selectedBadgeLevel = value;
-                            final selectedBadge = _badges.firstWhere(
-                              (b) =>
-                                (b['Badge_Name'] ?? '').toString() ==
-                                  _selectedBadgeName &&
-                                (b['Badge_Level'] ?? '').toString() == value,
-                              orElse: () => <String, dynamic>{},
-                            );
-                            _selectedBadgeRowId =
-                              (selectedBadge['ROWID'] ?? '').toString();
-                            _selectedBadgeLogo =
-                              (selectedBadge['Badge_Logo'] ?? '').toString();
-                            _badgeIdController.text =
-                              (selectedBadge['Badge_ID'] ?? '').toString();
-                            }),
+                            : (value) => setState(() {
+                                _selectedBadgeLevel = value;
+                                final selectedBadge = _badges.firstWhere(
+                                  (b) =>
+                                      b.badgeName == _selectedBadgeName &&
+                                      b.badgeLevel == value,
+                                  orElse: () => DSVBadge(
+                                    badgeLevel: '',
+                                    badgeName: '',
+                                    badgeLogo: '',
+                                    badgeId: '',
+                                    rowId: '',
+                                  ),
+                                );
+                                _selectedBadgeRowId = selectedBadge.rowId;
+                                _selectedBadgeLogo = selectedBadge.badgeLogo;
+                                _badgeIdController.text = selectedBadge.badgeId;
+                              }),
                       ),
                       const SizedBox(height: 20),
-
-                      // Badge image preview
-                      if (_selectedBadgeLogo != null &&
-                          _selectedBadgeLogo!.isNotEmpty)
+                      if (_selectedBadgeLogo != null && _selectedBadgeLogo!.isNotEmpty)
                         Container(
                           width: double.infinity,
                           padding: const EdgeInsets.all(16),
@@ -357,11 +327,8 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
                             ],
                           ),
                         ),
-                      if (_selectedBadgeLogo != null &&
-                          _selectedBadgeLogo!.isNotEmpty)
+                      if (_selectedBadgeLogo != null && _selectedBadgeLogo!.isNotEmpty)
                         const SizedBox(height: 20),
-
-                      // Badge Id
                       CustomInputField(
                         controller: _badgeIdController,
                         hintText: 'Badge Id',
@@ -375,13 +342,11 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
                           return null;
                         },
                       ),
-
                       const SizedBox(height: 32),
-                      // buttons
                       BottomTwoButtons(
                         loadingKey: bottomTwoButtonsLoadingKey,
-                        button1Text: "cancel",
-                        button2Text: "assign badge",
+                        button1Text: 'cancel',
+                        button2Text: 'assign badge',
                         button1Function: () {
                           Navigator.pop(context);
                         },

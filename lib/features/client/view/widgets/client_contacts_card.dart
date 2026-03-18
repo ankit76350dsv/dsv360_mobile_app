@@ -1,7 +1,7 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/client/model/client_contacts.dart';
-import 'package:dsv360/features/client/reposetories/client_contacts_repository.dart';
+import 'package:dsv360/features/client/repositories/client_contacts_repository.dart';
 import 'package:dsv360/features/client/view/widgets/client_contact_header.dart';
 import 'package:dsv360/features/client/view/widgets/client_info_row.dart';
 import 'package:dsv360/features/client/view/widgets/client_status_switch.dart';

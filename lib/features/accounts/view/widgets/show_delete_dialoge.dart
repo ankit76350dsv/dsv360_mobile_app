@@ -1,5 +1,5 @@
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
-import 'package:dsv360/features/accounts/reposetories/accounts_list_repository.dart';
+import 'package:dsv360/features/accounts/repositories/accounts_list_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

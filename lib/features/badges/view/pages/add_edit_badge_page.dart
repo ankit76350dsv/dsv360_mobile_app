@@ -1,19 +1,21 @@
-import 'package:dsv360/core/network/dio_client.dart';
-import 'package:dsv360/models/dsvbadge.dart';
+import 'package:dsv360/features/badges/model/dsvbadge.dart';
+import 'package:dsv360/features/badges/viewmodel/add_edit_badge_viewmodel.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AddEditBadgePage extends StatefulWidget {
-  final DSVBadge? badge;
+class AddEditBadgePage extends ConsumerStatefulWidget {
   const AddEditBadgePage({super.key, this.badge});
 
+  final DSVBadge? badge;
+
   @override
-  State<AddEditBadgePage> createState() => _AddEditBadgePageState();
+  ConsumerState<AddEditBadgePage> createState() => _AddEditBadgePageState();
 }
 
-class _AddEditBadgePageState extends State<AddEditBadgePage> {
+class _AddEditBadgePageState extends ConsumerState<AddEditBadgePage> {
   final _formKey = GlobalKey<FormState>();
 
   late bool isEditing;
@@ -27,90 +29,53 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
 
   String bottomTwoButtonsLoadingKey = 'add_edit_badge_key';
 
-  // Badge Level to Logo URL mapping
-  static const Map<String, String> badgeLevelLogoMap = {
-    'Bronze': 'https://dsv365-development.zohostratus.in/dsv365/Badges/Bronze-min.png',
-    'Silver': 'https://dsv365-development.zohostratus.in/dsv365/Badges/Silver-min.png',
-    'Gold': 'https://dsv365-development.zohostratus.in/dsv365/Badges/GOLD-min.png',
-    'Diamond': 'https://dsv365-development.zohostratus.in/dsv365/Badges/Diamond-min.png',
-    'Platinum': 'https://dsv365-development.zohostratus.in/dsv365/Badges/Platinium-min.png',
-    'Titanium': 'https://dsv365-development.zohostratus.in/dsv365/Badges/Titanium-min.png',
-  };
-
-  String? _normalizeBadgeLevel(String? rawLevel) {
-    if (rawLevel == null || rawLevel.trim().isEmpty) return null;
-
-    final value = rawLevel.toLowerCase().trim();
-
-    // Handle known backend spelling variants.
-    if (value.contains('platinium')) return 'Platinum';
-
-    for (final level in badgeLevelLogoMap.keys) {
-      if (value == level.toLowerCase() || value.contains(level.toLowerCase())) {
-        return level;
-      }
-    }
-    return null;
-  }
-
   @override
   void initState() {
     super.initState();
     isEditing = widget.badge != null;
 
     if (isEditing) {
+      final viewModel = ref.read(addEditBadgeViewModelProvider);
       final badge = widget.badge!;
 
       _badgeIdController.text = badge.badgeId;
       _badgeNameController.text = badge.badgeName;
-      _badgeLevel = _normalizeBadgeLevel(badge.badgeLevel);
-      _badgeLogo = badgeLevelLogoMap[_badgeLevel] ?? badge.badgeLogo;
+      _badgeLevel = viewModel.normalizeBadgeLevel(badge.badgeLevel);
+      _badgeLogo =
+          AddEditBadgeViewModel.badgeLevelLogoMap[_badgeLevel] ?? badge.badgeLogo;
     }
+  }
+
+  @override
+  void dispose() {
+    _badgeIdController.dispose();
+    _badgeNameController.dispose();
+    _badgeLogoController.dispose();
+    super.dispose();
   }
 
   Future<void> _submitBadge(BuildContext context) async {
     setState(() => _isLoading = true);
-    
+
     try {
-      final Map<String, dynamic> body = {
-        "Badge_ID": _badgeIdController.text.trim(),
-        "Badge_Name": _badgeNameController.text.trim(),
-        "Badge_Level": _badgeLevel,
-        "Badge_Logo": _badgeLogo,
-      };
-
-      if (isEditing) {
-        final rowId = widget.badge?.rowId ?? '';
-        await ApiClient.instance.put(
-          'time_entry_management_application_function/badge/$rowId',
-          data: body,
-        );
-      } else {
-        await ApiClient.instance.post(
-          'time_entry_management_application_function/badge',
-          data: body,
-        );
-      }
-
-      Navigator.pop(context, true);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isEditing ? 'Badge updated successfully' : 'Badge added successfully',
-          ),
-        ),
+      final viewModel = ref.read(addEditBadgeViewModelProvider);
+      final body = viewModel.buildRequestBody(
+        badgeId: _badgeIdController.text,
+        badgeName: _badgeNameController.text,
+        badgeLevel: _badgeLevel,
+        badgeLogo: _badgeLogo,
       );
-    } catch (e) {
-      debugPrint('❌ Failed to submit badge: $e');
 
+      await viewModel.submitBadge(context: context, badge: widget.badge, body: body);
+    } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to save badge'),
-        ),
+        const SnackBar(content: Text('Failed to save badge')),
       );
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -122,7 +87,7 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
       appBar: AppBar(
         title: Text(
           widget.badge == null ? 'Add New Badge' : 'Edit Badge',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         backgroundColor: colors.surface,
       ),
@@ -133,7 +98,7 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
             Padding(
               padding: const EdgeInsets.only(left: 16.0, top: 16.0),
               child: Text(
-                "Badge Details",
+                'Badge Details',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: colors.primary,
                   fontWeight: FontWeight.w600,
@@ -148,7 +113,6 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Badge Id
                       CustomInputField(
                         controller: _badgeIdController,
                         hintText: 'Badge Id',
@@ -162,8 +126,6 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
                         },
                       ),
                       const SizedBox(height: 20),
-
-                      // Badge Name
                       CustomInputField(
                         controller: _badgeNameController,
                         hintText: 'Badge Name',
@@ -177,26 +139,15 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
                         },
                       ),
                       const SizedBox(height: 20),
-
-                      // Badge Level
                       CustomDropDownField(
-                        hintText: "Badge Level", 
-                        labelText: "Badge Level", 
+                        hintText: 'Badge Level',
+                        labelText: 'Badge Level',
                         prefixIcon: Icons.badge,
                         selectedOption: _badgeLevel,
-                        options: [
-                          DropdownMenuItem(
-                            value: 'Bronze',
-                            child: Text('Bronze'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Silver',
-                            child: Text('Silver'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Gold',
-                            child: Text('Gold'),
-                          ),
+                        options: const [
+                          DropdownMenuItem(value: 'Bronze', child: Text('Bronze')),
+                          DropdownMenuItem(value: 'Silver', child: Text('Silver')),
+                          DropdownMenuItem(value: 'Gold', child: Text('Gold')),
                           DropdownMenuItem(
                             value: 'Diamond',
                             child: Text('Diamond'),
@@ -213,16 +164,19 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
                         onChanged: (value) {
                           setState(() {
                             _badgeLevel = value;
-                            if (value != null && badgeLevelLogoMap.containsKey(value)) {
-                              _badgeLogoController.text = badgeLevelLogoMap[value]!;
-                              _badgeLogo = badgeLevelLogoMap[value];
+                            if (value != null &&
+                                AddEditBadgeViewModel.badgeLevelLogoMap.containsKey(
+                                  value,
+                                )) {
+                              _badgeLogoController.text =
+                                  AddEditBadgeViewModel.badgeLevelLogoMap[value]!;
+                              _badgeLogo =
+                                  AddEditBadgeViewModel.badgeLevelLogoMap[value];
                             }
                           });
                         },
                       ),
                       const SizedBox(height: 20),
-
-                      // Display Badge Logo Image
                       if (_badgeLogo != null)
                         Container(
                           width: double.infinity,
@@ -245,13 +199,11 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
                             ],
                           ),
                         ),
-
                       const SizedBox(height: 32),
-                      // buttons
                       BottomTwoButtons(
                         loadingKey: bottomTwoButtonsLoadingKey,
-                        button1Text: "cancel", 
-                        button2Text: isEditing ? "save changes" : "add badge",
+                        button1Text: 'cancel',
+                        button2Text: isEditing ? 'save changes' : 'add badge',
                         button1Function: () {
                           if (!_isLoading) {
                             Navigator.pop(context);

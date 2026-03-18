@@ -10,14 +10,14 @@ import 'package:dsv360/providers/employee_provider.dart';
 import 'package:dsv360/providers/time_entry_provider.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/repositories/organization_repository.dart';
-import 'package:dsv360/features/accounts/reposetories/accounts_list_repository.dart';
+import 'package:dsv360/features/accounts/repositories/accounts_list_repository.dart';
 import 'package:dsv360/repositories/feedback_repository.dart';
 import 'package:dsv360/repositories/leaves_repository.dart';
 import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/repositories/holiday_repository.dart';
 import 'package:dsv360/repositories/user_check_in_status_repository.dart';
-import 'package:dsv360/repositories/all_badges_list.dart';
-import 'package:dsv360/features/client/reposetories/client_contacts_repository.dart';
+import 'package:dsv360/features/badges/repositories/all_badges_list.dart';
+import 'package:dsv360/features/client/repositories/client_contacts_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

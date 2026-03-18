@@ -3,7 +3,7 @@ import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
-import 'package:dsv360/features/client/reposetories/client_contacts_repository.dart';
+import 'package:dsv360/features/client/repositories/client_contacts_repository.dart';
 import 'package:dsv360/features/client/view/pages/add_client_contacts_page.dart';
 import 'package:dsv360/features/client/view/widgets/client_contacts_card.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';

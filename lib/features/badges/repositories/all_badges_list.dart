@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dsv360/models/dsvbadge.dart';
+import 'package:dsv360/features/badges/model/dsvbadge.dart';
 
 class AllDSVBadgesList extends AsyncNotifier<List<DSVBadge>> {
   @override
