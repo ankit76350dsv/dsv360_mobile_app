@@ -152,7 +152,7 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
 
                         return RefreshIndicator(
                           onRefresh: () async {
-                            ref.invalidate(usersRepositoryProvider);
+                            await ref.refresh(usersRepositoryProvider.future);
                           },
                           child: ListView.builder(
                             itemCount: filteredUsers.length,

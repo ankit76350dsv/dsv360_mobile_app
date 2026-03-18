@@ -74,194 +74,212 @@ class _UserBadgesSheetState extends ConsumerState<UserBadgesSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    return FutureBuilder<List<AssignedBadge>>(
+      future: _badgesFuture,
+      builder: (context, snapshot) {
+        // Calculate dynamic sheet height based on badge count
+        final badges = snapshot.data ?? const <AssignedBadge>[];
+        final badgeCount = badges.length;
+        
+        // Calculate initial fraction based on badge count
+        double initialFraction;
+        if (badgeCount == 0) {
+          initialFraction = 0.25;
+        } else if (badgeCount <= 3) {
+          initialFraction = 0.40;
+        } else if (badgeCount <= 6) {
+          initialFraction = 0.65;
+        } else {
+          initialFraction = 0.70;
+        }
 
-    return DraggableScrollableSheet(
-      expand: false,
-      initialChildSize: 0.7,
-      minChildSize: 0.4,
-      maxChildSize: 0.95,
-      builder: (context, scrollController) {
-        return Container(
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.only(top: 14, bottom: 12),
-                alignment: Alignment.center,
-                child: Container(
-                  width: 42,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: colors.tertiary,
-                    borderRadius: BorderRadius.circular(20),
+        final colors = Theme.of(context).colorScheme;
+
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: initialFraction,
+          minChildSize: 0.25,
+          maxChildSize: 1,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.only(top: 14, bottom: 12),
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: 42,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).custom.primary!.withValues(alpha: 0.7),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              Text(
-                "${widget.user.firstName}'s Badges",
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: FutureBuilder<List<AssignedBadge>>(
-                  future: _badgesFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularLoader());
-                    }
-
-                    if (snapshot.hasError) {
-                      return Center(
+                  Text(
+                    "${widget.user.firstName}'s Badges",
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 16),
+                  if (snapshot.connectionState == ConnectionState.waiting)
+                    const Expanded(child: Center(child: CircularLoader()))
+                  else if (snapshot.hasError)
+                    Expanded(
+                      child: Center(
                         child: Text(
                           snapshot.error.toString(),
                           style: const TextStyle(color: Colors.red),
                         ),
-                      );
-                    }
+                      ),
+                    )
+                  else if (badges.isEmpty)
+                    const Expanded(child: Center(child: Text('No badges assigned')))
+                  else
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: GridView.builder(
+                          controller: scrollController,
+                          itemCount: badges.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                mainAxisSpacing: 14,
+                                crossAxisSpacing: 14,
+                                childAspectRatio: 0.65,
+                              ),
+                          itemBuilder: (context, index) {
+                            final badge = badges[index];
 
-                    final badges = snapshot.data ?? const <AssignedBadge>[];
-                    if (badges.isEmpty) {
-                      return const Center(child: Text('No badges assigned'));
-                    }
-
-                    return Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: GridView.builder(
-                        controller: scrollController,
-                        itemCount: badges.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 3,
-                              mainAxisSpacing: 14,
-                              crossAxisSpacing: 14,
-                              childAspectRatio: 0.65,
-                            ),
-                        itemBuilder: (context, index) {
-                          final badge = badges[index];
-
-                          return Column(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: Colors.grey.withOpacity(0.3),
-                                      width: 1.5,
+                            return Column(
+                              children: [
+                                Expanded(
+                                  child: Container(
+                                    width: double.infinity,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: Colors.grey.withOpacity(0.3),
+                                        width: 1.5,
+                                      ),
+                                      borderRadius: BorderRadius.circular(16),
                                     ),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Stack(
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.all(10),
-                                        child: Image.network(
-                                          badge.badgeLogo,
-                                          fit: BoxFit.contain,
-                                          errorBuilder: (_, __, ___) => const Icon(
-                                            Icons.verified,
-                                            color: Colors.greenAccent,
-                                            size: 36,
+                                    child: Stack(
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(10),
+                                          child: Image.network(
+                                            badge.badgeLogo,
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (_, __, ___) => const Icon(
+                                              Icons.verified,
+                                              color: Colors.greenAccent,
+                                              size: 36,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                      Positioned(
-                                        bottom: 0,
-                                        right: 0,
-                                        child: _deletingRowId == badge.rowId
-                                            ? const SizedBox(
-                                                height: 20,
-                                                width: 20,
-                                                child: CircularLoader(),
-                                              )
-                                            : PopupMenuButton<String>(
-                                                icon: const Icon(Icons.more_vert, size: 18),
-                                                color: colors.surface,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(8),
-                                                ),
-                                                padding: EdgeInsets.zero,
-                                                onSelected: (value) {
-                                                  if (value == 'delete') {
-                                                    _deleteAssignedBadge(badge);
-                                                  }
-                                                },
-                                                itemBuilder: (context) => [
-                                                  const PopupMenuItem<String>(
-                                                    value: 'delete',
-                                                    child: Text(
-                                                      'Delete Badge',
-                                                      style: TextStyle(color: Colors.red),
+                                        Positioned(
+                                          bottom: 0,
+                                          right: 0,
+                                          child: _deletingRowId == badge.rowId
+                                              ? const SizedBox(
+                                                  height: 20,
+                                                  width: 20,
+                                                  child: CircularLoader(),
+                                                )
+                                              : PopupMenuButton<String>(
+                                                  icon: const Icon(Icons.more_vert, size: 18),
+                                                  color: colors.surface,
+                                                  elevation: 8,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(16),
+                                                    side: BorderSide(
+                                                      color: colors.outline.withValues(alpha: 0.3),
+                                                      width: 0.3,
                                                     ),
                                                   ),
-                                                ],
-                                              ),
-                                      ),
-                                    ],
+                                                  padding: EdgeInsets.zero,
+                                                  onSelected: (value) {
+                                                    if (value == 'delete') {
+                                                      _deleteAssignedBadge(badge);
+                                                    }
+                                                  },
+                                                  itemBuilder: (context) => [
+                                                    const PopupMenuItem<String>(
+                                                      value: 'delete',
+                                                      child: Text(
+                                                        'Delete Badge',
+                                                        style: TextStyle(color: Colors.red),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                badge.badgeName,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: colors.onSurface),
-                              ),
-                              Text(
-                                badge.badgeLevel,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
+                                const SizedBox(height: 6),
+                                Text(
+                                  badge.badgeName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: colors.onSurface),
                                 ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 12),
-              SafeArea(
-                top: false,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).custom.primary,
-                        foregroundColor: colors.onPrimary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                                Text(
+                                  badge.badgeLevel,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
-                      onPressed: () => Navigator.pop(context),
-                      child: Text(
-                        'CLOSE',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
+                    ),
+                  const SizedBox(height: 12),
+                  SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).custom.primary,
+                            foregroundColor: colors.onPrimary,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(
+                            'CLOSE',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                              color: Colors.white,
+                            ),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
