@@ -118,7 +118,7 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
             elevation: 8,
             shadowColor: Colors.black.withOpacity(0.10),
             offset: const Offset(0, 40),
-            constraints: BoxConstraints(minWidth: listWidth -40),
+            constraints: BoxConstraints(minWidth: listWidth -60),
             onOpened: () {
               if (widget.searchable) {
                 _searchController.clear();
@@ -146,10 +146,16 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
                       builder: (context, setMenuState) {
                         final rankedItems = _rankedItems(widget.options, _searchQuery);
                         final cs = Theme.of(context).colorScheme;
+                        
+                        // Calculate dynamic height based on number of items
+                        final searchHeight = 70.0;
+                        final itemHeight = 44.0;
+                        final calculatedHeight = searchHeight + (rankedItems.length * itemHeight);
+                        final dynamicHeight = calculatedHeight.clamp(100.0, 500.0);
 
                         return SizedBox(
-                          width: listWidth - 20,
-                          height: 320,
+                          width: listWidth - 40,//change width here - for fields
+                          height: dynamicHeight,
                           child: Column(
                             children: [
                               Padding(
