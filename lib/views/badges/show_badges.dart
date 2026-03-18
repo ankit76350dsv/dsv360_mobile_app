@@ -1,5 +1,7 @@
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
+import 'package:dsv360/models/dsvbadge.dart';
+import 'package:dsv360/views/badges/add_edit_badge_page.dart';
 import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
@@ -17,12 +19,17 @@ class ShowBadgesPage extends ConsumerStatefulWidget {
 class _ShowBadgesPageState extends ConsumerState<ShowBadgesPage> {
   late Future<List<_BadgeItem>> _badgesFuture;
 
-  
-
   @override
   void initState() {
     super.initState();
     _badgesFuture = _fetchBadges();
+  }
+
+  @override
+  void dispose() {
+    _badgesFuture = Future.value([]);
+    ref.read(showBadgesSearchQueryProvider.notifier).state = '';
+    super.dispose();
   }
 
   Future<List<_BadgeItem>> _fetchBadges() async {
@@ -33,18 +40,31 @@ class _ShowBadgesPageState extends ConsumerState<ShowBadgesPage> {
   }
 
   List<_BadgeItem> _parseBadges(dynamic data) {
-    final dynamic rawList;
+    List<dynamic> rawList = [];
+    
     if (data is List) {
       rawList = data;
-    } else if (data is Map && data['data'] is List) {
-      rawList = data['data'];
-    } else {
-      rawList = const [];
+    } else if (data is Map) {
+      if (data['data'] is List) {
+        rawList = data['data'];
+      } else if (data.containsKey('badges') && data['badges'] is List) {
+        rawList = data['badges'];
+      } else if (data.containsKey('response') && data['response'] is List) {
+        rawList = data['response'];
+      }
     }
 
-    return (rawList as List)
+    return rawList
         .whereType<Map>()
-        .map((e) => _BadgeItem.fromJson(Map<String, dynamic>.from(e)))
+        .map((e) {
+          try {
+            return _BadgeItem.fromJson(Map<String, dynamic>.from(e));
+          } catch (e) {
+            debugPrint('⚠️ Error parsing badge: $e');
+            return null;
+          }
+        })
+        .whereType<_BadgeItem>()
         .toList();
   }
 
@@ -57,7 +77,7 @@ class _ShowBadgesPageState extends ConsumerState<ShowBadgesPage> {
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).colorScheme;
-    final query = ref.watch(showBadgesSearchQueryProvider).toLowerCase();
+    final query = ref.watch(showBadgesSearchQueryProvider).toString().toLowerCase();
 
     return Scaffold(
       appBar: AppBar(
@@ -162,9 +182,25 @@ class _ShowBadgesPageState extends ConsumerState<ShowBadgesPage> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               CustomCardButton(
-                                onTap: () {
-                                  // update badge
-                                  
+                                onTap: () async {
+                                  final shouldRefresh = await Navigator.push<bool>(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => AddEditBadgePage(
+                                        badge: DSVBadge(
+                                          badgeLevel: badge.badgeLevel,
+                                          badgeName: badge.badgeName,
+                                          badgeLogo: badge.badgeLogo,
+                                          badgeId: badge.badgeId,
+                                          rowId: badge.rowId,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+
+                                  if (shouldRefresh == true) {
+                                    _retryFetch();
+                                  }
                                 },
                                 icon: Icons.edit,
                               ),
@@ -197,6 +233,7 @@ class _BadgeItem {
   final String badgeName;
   final String badgeLevel;
   final String badgeLogo;
+  final String rowId;
   final String username;
 
   const _BadgeItem({
@@ -204,16 +241,20 @@ class _BadgeItem {
     required this.badgeName,
     required this.badgeLevel,
     required this.badgeLogo,
+    required this.rowId,
     required this.username,
   });
 
   factory _BadgeItem.fromJson(Map<String, dynamic> json) {
+    String asString(dynamic value) => value?.toString() ?? '';
+
     return _BadgeItem(
-      badgeId: (json['Badge_ID'] ?? '').toString(),
-      badgeName: (json['Badge_Name'] ?? '').toString(),
-      badgeLevel: (json['Badge_Level'] ?? '').toString(),
-      badgeLogo: (json['Badge_Logo'] ?? '').toString(),
-      username: (json['Username'] ?? '').toString(),
+      badgeId: asString(json['Badge_ID']),
+      badgeName: asString(json['Badge_Name']),
+      badgeLevel: asString(json['Badge_Level']),
+      badgeLogo: asString(json['Badge_Logo']),
+      rowId: asString(json['ROWID'] ?? json['rowId']),
+      username: asString(json['Username']),
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/models/dsvbadge.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
@@ -16,6 +17,7 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
   final _formKey = GlobalKey<FormState>();
 
   late bool isEditing;
+  bool _isLoading = false;
 
   final TextEditingController _badgeIdController = TextEditingController();
   final TextEditingController _badgeNameController = TextEditingController();
@@ -35,6 +37,22 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
     'Titanium': 'https://dsv365-development.zohostratus.in/dsv365/Badges/Titanium-min.png',
   };
 
+  String? _normalizeBadgeLevel(String? rawLevel) {
+    if (rawLevel == null || rawLevel.trim().isEmpty) return null;
+
+    final value = rawLevel.toLowerCase().trim();
+
+    // Handle known backend spelling variants.
+    if (value.contains('platinium')) return 'Platinum';
+
+    for (final level in badgeLevelLogoMap.keys) {
+      if (value == level.toLowerCase() || value.contains(level.toLowerCase())) {
+        return level;
+      }
+    }
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -45,8 +63,54 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
 
       _badgeIdController.text = badge.badgeId;
       _badgeNameController.text = badge.badgeName;
-      _badgeLevel = badge.badgeLevel;
-      _badgeLogo = badge.badgeLogo;
+      _badgeLevel = _normalizeBadgeLevel(badge.badgeLevel);
+      _badgeLogo = badgeLevelLogoMap[_badgeLevel] ?? badge.badgeLogo;
+    }
+  }
+
+  Future<void> _submitBadge(BuildContext context) async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final Map<String, dynamic> body = {
+        "Badge_ID": _badgeIdController.text.trim(),
+        "Badge_Name": _badgeNameController.text.trim(),
+        "Badge_Level": _badgeLevel,
+        "Badge_Logo": _badgeLogo,
+      };
+
+      if (isEditing) {
+        final rowId = widget.badge?.rowId ?? '';
+        await ApiClient.instance.put(
+          'time_entry_management_application_function/badge/$rowId',
+          data: body,
+        );
+      } else {
+        await ApiClient.instance.post(
+          'time_entry_management_application_function/badge',
+          data: body,
+        );
+      }
+
+      Navigator.pop(context, true);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isEditing ? 'Badge updated successfully' : 'Badge added successfully',
+          ),
+        ),
+      );
+    } catch (e) {
+      debugPrint('❌ Failed to submit badge: $e');
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to save badge'),
+        ),
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -119,6 +183,7 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
                         hintText: "Badge Level", 
                         labelText: "Badge Level", 
                         prefixIcon: Icons.badge,
+                        selectedOption: _badgeLevel,
                         options: [
                           DropdownMenuItem(
                             value: 'Bronze',
@@ -188,11 +253,13 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
                         button1Text: "cancel", 
                         button2Text: isEditing ? "save changes" : "add badge",
                         button1Function: () {
-                          Navigator.pop(context);
+                          if (!_isLoading) {
+                            Navigator.pop(context);
+                          }
                         },
                         button2Function: () {
-                          if (_formKey.currentState!.validate()) {
-                            // TODO: Add / Update user logic
+                          if (!_isLoading && _formKey.currentState!.validate()) {
+                            _submitBadge(context);
                           }
                         },
                       ),

@@ -73,11 +73,11 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
           return SpeedDial(
             backgroundColor: customColors.primary,
             foregroundColor: Colors.white,
-            icon: Icons.add, // The icon for the main button
+            icon: Icons.more_horiz, // The icon for the main button
             activeIcon: Icons.close, // The icon when the menu is open
             children: [
               SpeedDialChild(
-                child: const Icon(Icons.person_add_alt_1),
+                child: const Icon(Icons.add_circle_outline_outlined),
                 label: 'Add Badge',
                 onTap: () {
                   // do nothing for the moment
