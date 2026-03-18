@@ -127,6 +127,8 @@ class _ShowBadgesPageState extends ConsumerState<ShowBadgesPage> {
                       final badge = filteredBadges[index];
 
                       return Card(
+                        elevation: 3,
+                        shadowColor: Colors.black.withValues(alpha: 0.2),
                         margin: const EdgeInsets.only(bottom: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -162,6 +164,7 @@ class _ShowBadgesPageState extends ConsumerState<ShowBadgesPage> {
                               CustomCardButton(
                                 onTap: () {
                                   // update badge
+                                  
                                 },
                                 icon: Icons.edit,
                               ),

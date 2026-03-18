@@ -25,6 +25,16 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
 
   String bottomTwoButtonsLoadingKey = 'add_edit_badge_key';
 
+  // Badge Level to Logo URL mapping
+  static const Map<String, String> badgeLevelLogoMap = {
+    'Bronze': 'https://dsv365-development.zohostratus.in/dsv365/Badges/Bronze-min.png',
+    'Silver': 'https://dsv365-development.zohostratus.in/dsv365/Badges/Silver-min.png',
+    'Gold': 'https://dsv365-development.zohostratus.in/dsv365/Badges/GOLD-min.png',
+    'Diamond': 'https://dsv365-development.zohostratus.in/dsv365/Badges/Diamond-min.png',
+    'Platinum': 'https://dsv365-development.zohostratus.in/dsv365/Badges/Platinium-min.png',
+    'Titanium': 'https://dsv365-development.zohostratus.in/dsv365/Badges/Titanium-min.png',
+  };
+
   @override
   void initState() {
     super.initState();
@@ -135,23 +145,41 @@ class _AddEditBadgePageState extends State<AddEditBadgePage> {
                             child: Text('Titanium'),
                           ),
                         ],
-                        onChanged: (value) => setState(() => _badgeLevel = value),
+                        onChanged: (value) {
+                          setState(() {
+                            _badgeLevel = value;
+                            if (value != null && badgeLevelLogoMap.containsKey(value)) {
+                              _badgeLogoController.text = badgeLevelLogoMap[value]!;
+                              _badgeLogo = badgeLevelLogoMap[value];
+                            }
+                          });
+                        },
                       ),
                       const SizedBox(height: 20),
 
-                      // Badge Logo
-                      CustomInputField(
-                        controller: _badgeLogoController,
-                        hintText: 'Badge Logo',
-                        labelText: 'Badge Logo',
-                        prefixIcon: Icons.badge,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter badge logo';
-                          }
-                          return null;
-                        },
-                      ),
+                      // Display Badge Logo Image
+                      if (_badgeLogo != null)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: colors.outlineVariant,
+                              width: 1,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            children: [
+                              Image.network(
+                                _badgeLogo!,
+                                height: 120,
+                                width: 120,
+                                fit: BoxFit.contain,
+                              ),
+                            ],
+                          ),
+                        ),
 
                       const SizedBox(height: 32),
                       // buttons
