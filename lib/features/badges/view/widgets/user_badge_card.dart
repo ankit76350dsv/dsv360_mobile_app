@@ -47,7 +47,7 @@ class UserBadgeCard extends StatelessWidget {
                            
                             const SizedBox(height: 8.0),
                             _userInfoRow(context, Icons.email, user.emailAddress),
-                            _userInfoRow(context, Icons.tag, user.userId),
+                            _userInfoRow(context, Icons.tag, 'U${user.userId.length >4 ? user.userId.substring(user.userId.length - 4) : user.userId }'),
                           ],
                         ),
                       ),
@@ -104,12 +104,12 @@ class UserBadgeCard extends StatelessWidget {
 
     return Row(
       children: [
-        Icon(icon, size: 18, color: customColors.textSecondary),
+        Icon(icon, size: 18, color: customColors.textSecondary, ),
         const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style: TextStyle(color: customColors.textSecondary),
+            style: TextStyle(color: customColors.textSecondary, fontWeight: FontWeight.bold,),
           ),
         ),
       ],

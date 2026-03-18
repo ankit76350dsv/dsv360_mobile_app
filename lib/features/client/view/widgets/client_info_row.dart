@@ -21,7 +21,7 @@ class ClientInfoRow extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: TextStyle(color: customColors.textSecondary),
+            style: TextStyle(color: customColors.textSecondary, fontWeight: FontWeight.bold),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),

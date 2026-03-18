@@ -38,8 +38,8 @@ class WebsiteRow extends StatelessWidget {
 						'Open website',
 						style: TextStyle(
 							fontSize: 14,
-							color: customColors.primary,
-							decoration: TextDecoration.underline,
+							color: customColors.primary!.withValues(alpha: 0.8),
+							fontWeight: FontWeight.bold
 						),
 					),
 				),
