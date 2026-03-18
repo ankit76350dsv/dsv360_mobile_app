@@ -1,5 +1,6 @@
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
+import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/models/dsvbadge.dart';
 import 'package:dsv360/views/badges/add_edit_badge_page.dart';
 import 'package:dsv360/views/widgets/custom_card_button.dart';
@@ -18,6 +19,7 @@ class ShowBadgesPage extends ConsumerStatefulWidget {
 
 class _ShowBadgesPageState extends ConsumerState<ShowBadgesPage> {
   late Future<List<_BadgeItem>> _badgesFuture;
+  String? _deletingBadgeKey;
 
   @override
   void initState() {
@@ -38,6 +40,41 @@ class _ShowBadgesPageState extends ConsumerState<ShowBadgesPage> {
     );
     return _parseBadges(response.data);
   }
+  Future<void> _deleteBadge(_BadgeItem badge) async {
+    if (_deletingBadgeKey != null) return;
+
+    setState(() {
+      _deletingBadgeKey = badge.rowId.isNotEmpty ? badge.rowId : badge.badgeId;
+    });
+
+    try {
+      final deleteId = badge.rowId.isNotEmpty ? badge.rowId : badge.badgeId;
+
+      await ApiClient.instance.delete(
+        'time_entry_management_application_function/badge/$deleteId',
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Badge deleted successfully')),
+      );
+
+      _retryFetch();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to delete badge')),
+      );
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        _deletingBadgeKey = null;
+      });
+    }
+  }
+
 
   List<_BadgeItem> _parseBadges(dynamic data) {
     List<dynamic> rawList = [];
@@ -205,13 +242,39 @@ class _ShowBadgesPageState extends ConsumerState<ShowBadgesPage> {
                                 icon: Icons.edit,
                               ),
                               const SizedBox(width: 5.0),
-                              CustomCardButton(
-                                onTap: () {
-                                  // delete badge
-                                },
-                                icon: Icons.delete,
-                                color: customColors.error,
-                              ),
+                              (_deletingBadgeKey ==
+                                      (badge.rowId.isNotEmpty ? badge.rowId : badge.badgeId))
+                                  ? SizedBox(
+                                      height: 36,
+                                      width: 36,
+                                      child: Center(
+                                        child: SizedBox(
+                                          height: 18,
+                                          width: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: customColors.error,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : CustomCardButton(
+                                      onTap: () {
+                                        showWarningDialogueBox<bool>(
+                                          context: context,
+                                          title: 'Delete Badge',
+                                          subtitle:
+                                              'Are you sure you want to delete this badge?',
+                                          primaryText: 'Delete',
+                                        ).then((confirmed) {
+                                          if (confirmed == true) {
+                                            _deleteBadge(badge);
+                                          }
+                                        });
+                                      },
+                                      icon: Icons.delete,
+                                      color: customColors.error,
+                                    ),
                             ],
                           ),
                         ),
