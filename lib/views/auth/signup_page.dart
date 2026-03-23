@@ -1,5 +1,5 @@
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
-import 'package:dsv360/views/welcome/welcome_page.dart';
+import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 
 class SignUpPage extends StatefulWidget {
@@ -43,26 +43,19 @@ class _SignUpPageState extends State<SignUpPage> {
       await AppInitManager.instance.catalystApp.signUp(userDelegate);
 
       if (mounted) {
-        // Show success snackbar
+        // Clear form fields after successful signup
+        _firstNameController.clear();
+        _lastNameController.clear();
+        _emailController.clear();
+        
+        // Show success snackbar - check email and login again
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Check your email for confirmation message, then login'),
+            content: Text('Check email and login again'),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
+            duration: Duration(days: 1),
           ),
         );
-        
-        // Wait for snackbar to show, then navigate
-        await Future.delayed(const Duration(seconds: 2));
-        
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const WelcomePage(),
-            ),
-          );
-        }
       }
     } catch (e) {
       debugPrint("Sign Up Failed: $e");
@@ -117,16 +110,11 @@ class _SignUpPageState extends State<SignUpPage> {
                 child: Column(
                   children: [
                     // First Name
-                    TextFormField(
+                    CustomInputField(
                       controller: _firstNameController,
-                      decoration: InputDecoration(
-                        labelText: 'First Name',
-                        hintText: 'Enter your first name',
-                        prefixIcon: const Icon(Icons.person),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                      hintText: 'Enter your first name',
+                      labelText: 'First Name',
+                      prefixIcon: Icons.person,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'First name is required';
@@ -136,16 +124,11 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 16),
                     // Last Name
-                    TextFormField(
+                    CustomInputField(
                       controller: _lastNameController,
-                      decoration: InputDecoration(
-                        labelText: 'Last Name',
-                        hintText: 'Enter your last name',
-                        prefixIcon: const Icon(Icons.person),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                      hintText: 'Enter your last name',
+                      labelText: 'Last Name',
+                      prefixIcon: Icons.person,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Last name is required';
@@ -155,16 +138,11 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     const SizedBox(height: 16),
                     // Email
-                    TextFormField(
+                    CustomInputField(
                       controller: _emailController,
-                      decoration: InputDecoration(
-                        labelText: 'Email Address',
-                        hintText: 'Enter your email',
-                        prefixIcon: const Icon(Icons.email),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                      hintText: 'Enter your email',
+                      labelText: 'Email Address',
+                      prefixIcon: Icons.email,
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
