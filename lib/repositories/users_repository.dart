@@ -8,36 +8,44 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class UsersRepository extends AsyncNotifier<List<UsersModel>> {
   @override
   FutureOr<List<UsersModel>> build() async {
-    return await fetchUsersBatchProfile();
+    return fetchUsers();
   }
 
-  Future<List<UsersModel>> fetchUsersBatchProfile() async {
+  Future<List<UsersModel>> fetchUsers() async {
     try {
-      // Send the list to batchProfile to get full details
-      final batchResponse = await ApiClient.instance.post(
-        'time_entry_management_application_function/batchProfile',
+      final response = await ApiClient.instance.get(
+        'time_entry_management_application_function/employee',
       );
-      debugPrint("Batch Response: $batchResponse");
+      debugPrint('Users response: ${response.data}');
 
-      final batchData = batchResponse.data;
-      final usersJsonList = batchData["data"];
+      final data = response.data;
+      List<dynamic> usersJsonList = const [];
 
-      if (usersJsonList is List) {
-        final usersList = usersJsonList
-            .map((e) => UsersModel.fromJson(e))
-            .toList();
+      if (data is List) {
+        usersJsonList = data;
+      } else if (data is Map) {
+        if (data['users'] is List) {
+          usersJsonList = data['users'] as List<dynamic>;
+        } else if (data['data'] is List) {
+          usersJsonList = data['data'] as List<dynamic>;
+        }
+      }
 
-        return usersList;
-      } else {
-        developer.log("batchData is not list", name: "UsersRepository");
+      if (usersJsonList.isEmpty) {
+        developer.log('Users payload is empty or not a list', name: 'UsersRepository');
         return [];
       }
-    } catch (e, st) {
+
+      return usersJsonList
+          .whereType<Map>()
+          .map((e) => UsersModel.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    } catch (e) {
       developer.log(
-        "Error fetching users batch profile: $e",
-        name: "UsersRepository",
+        'Error fetching users: $e',
+        name: 'UsersRepository',
       );
-      throw AsyncError(e, st);
+      throw Exception('Failed to fetch users: $e');
     }
   }
 }

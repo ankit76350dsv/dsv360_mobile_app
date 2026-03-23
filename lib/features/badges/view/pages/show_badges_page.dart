@@ -23,13 +23,12 @@ class _ShowBadgesPageState extends ConsumerState<ShowBadgesPage> {
   @override
   void initState() {
     super.initState();
+    ref.read(showBadgesSearchQueryProvider.notifier).state = '';
     _badgesFuture = _fetchBadges();
   }
 
   @override
   void dispose() {
-    _badgesFuture = Future.value([]);
-    ref.read(showBadgesSearchQueryProvider.notifier).state = '';
     super.dispose();
   }
 

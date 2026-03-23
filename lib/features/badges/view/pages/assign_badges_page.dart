@@ -132,8 +132,9 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
       return;
     }
 
-    ref.read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier).state =
-        true;
+    final submitLoadingNotifier =
+      ref.read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier);
+    submitLoadingNotifier.state = true;
 
     try {
       final payload = {
@@ -156,9 +157,7 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
         const SnackBar(content: Text('Failed to assign badge')),
       );
     } finally {
-      ref
-          .read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier)
-          .state = false;
+      submitLoadingNotifier.state = false;
     }
   }
 
