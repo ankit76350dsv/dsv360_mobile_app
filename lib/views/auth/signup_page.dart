@@ -76,12 +76,19 @@ class _SignUpPageState extends State<SignUpPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
             children: [
               const SizedBox(height: 40),
               // Logo
@@ -194,7 +201,10 @@ class _SignUpPageState extends State<SignUpPage> {
                       width: double.infinity,
                       height: 50,
                       child: OutlinedButton(
-                        onPressed: _isLoading ? null : () => Navigator.pop(context),
+                        onPressed: _isLoading ? null : () {
+                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          Navigator.pop(context);
+                        },
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(
                             color: Color(0xFF2857A4),
@@ -220,6 +230,7 @@ class _SignUpPageState extends State<SignUpPage> {
               const SizedBox(height: 40),
             ],
           ),
+        ),
         ),
       ),
     );
