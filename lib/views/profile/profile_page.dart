@@ -51,10 +51,10 @@ class ProfilePage extends StatelessWidget {
                           width: double.infinity,
                           decoration: BoxDecoration(
                             image: DecorationImage(
-                              image: NetworkImage(
-                                userProfile?.coverLink ??
-                                    'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?auto=format&fit=crop&w=1000&q=80', // City Skyline
-                              ),
+                              image: userProfile?.coverLink != null
+                                  ? NetworkImage(userProfile!.coverLink)
+                                  : const AssetImage('assets/images/banner.jpg')
+                                      as ImageProvider,
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -87,10 +87,10 @@ class ProfilePage extends StatelessWidget {
                                 ),
                                 child: CircleAvatar(
                                   radius: 50,
-                                  backgroundImage: NetworkImage(
-                                    userProfile?.profileLink ??
-                                        'https://wallpapers.com/images/high/anonymous-hacker-theme-full-hd-h1g36h1m0iet2dih.webp',
-                                  ),
+                                  backgroundImage: userProfile?.profileLink != null
+                                      ? NetworkImage(userProfile!.profileLink)
+                                      : const AssetImage('assets/images/profile.jpg')
+                                          as ImageProvider,
                                 ),
                               ),
                               Positioned(
