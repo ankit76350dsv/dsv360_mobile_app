@@ -1,15 +1,201 @@
 import 'package:dsv360/core/constants/session_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
+import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/views/profile/AboutMe.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import 'dart:io';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  ConsumerState<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends ConsumerState<ProfilePage> {
+  bool _isUploading = false;
+  bool _isBannerUploading = false;
+  String? _profileImageUrl;
+  String? _bannerImageUrl;
+
+  @override
+  void initState() {
+    super.initState();
+    final userProfile = UserManager.instance.userProfile;
+    _profileImageUrl = userProfile?.profileLink;
+    _bannerImageUrl = userProfile?.coverLink;
+  }
+
+  Future<String> _resolveUserId() async {
+    final user = AuthManager.instance.currentUser;
+    if (user == null || user.id.isEmpty) {
+      throw Exception('User not found. Please login again.');
+    }
+    return user.id;
+  }
+
+  Future<void> _refreshProfileAndSyncImages(String userId) async {
+    final refreshed = await UserManager.instance.fetchUserProfile(userId);
+    if (!mounted || refreshed == null) return;
+
+    setState(() {
+      if (refreshed.profileLink.isNotEmpty) {
+        _profileImageUrl = refreshed.profileLink;
+      }
+      if (refreshed.coverLink.isNotEmpty) {
+        _bannerImageUrl = refreshed.coverLink;
+      }
+    });
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+      if (image == null) {
+        debugPrint('📸 No image selected');
+        return;
+      }
+
+      debugPrint('📸 Image selected: ${image.name} (${image.path})');
+      setState(() => _isUploading = true);
+
+      final userId = await _resolveUserId();
+
+      debugPrint('👤 Uploading for user ID: $userId');
+
+      // Backend expects multipart field name `profile`.
+      final formData = FormData.fromMap({
+        'profile': await MultipartFile.fromFile(
+          image.path,
+          filename: image.name,
+        ),
+      });
+
+      debugPrint('📤 Sending FormData to server...');
+
+      // Upload to server
+      final response = await ApiClient.instance.post(
+        'time_entry_management_application_function/userprofile/$userId',
+        data: formData,
+      );
+
+      debugPrint('✅ Upload response: ${response.statusCode}');
+      debugPrint('Response data: ${response.data}');
+
+      if (mounted) {
+        final responseUrl = (response.data is Map)
+            ? (response.data['profileURL'] ?? '').toString()
+            : '';
+        setState(() {
+          _profileImageUrl = responseUrl.isNotEmpty ? responseUrl : image.path;
+        });
+
+        await _refreshProfileAndSyncImages(userId);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile image updated successfully!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Image upload error: $e');
+      debugPrint('Stack: ${StackTrace.current}');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Upload failed: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
+  }
+
+  Future<void> _pickAndUploadBannerImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+      if (image == null) {
+        debugPrint('📸 No banner selected');
+        return;
+      }
+
+      debugPrint('🖼️ Banner selected: ${image.name}');
+      setState(() => _isBannerUploading = true);
+      final userId = await _resolveUserId();
+
+      final endpoint =
+          'time_entry_management_application_function/usercover/$userId';
+
+      // Backend expects multipart field name `cover`.
+      final formData = FormData.fromMap({
+        'cover': await MultipartFile.fromFile(
+          image.path,
+          filename: image.name,
+        ),
+      });
+
+      final response = await ApiClient.instance.post(endpoint, data: formData);
+      debugPrint('Banner upload response: ${response.data}');
+
+      if (mounted) {
+        final responseCoverUrl = (response.data is Map)
+            ? (response.data['coverURL'] ?? '').toString()
+            : '';
+        setState(() {
+          _bannerImageUrl = responseCoverUrl.isNotEmpty
+              ? responseCoverUrl
+              : image.path;
+        });
+
+        await _refreshProfileAndSyncImages(userId);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Banner image updated successfully!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Banner upload error: $e');
+      debugPrint('Stack: ${StackTrace.current}');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Banner upload failed: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isBannerUploading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,14 +203,9 @@ class ProfilePage extends StatelessWidget {
     final userProfile = UserManager.instance.userProfile;
 
     final fullName = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
-    // final fullName = 'Ankit Kumar'.trim();
     final email = user?.emailId ?? 'No Email';
-    // final email = user?.emailId ?? 'No Email';
     final role = user?.role?.name ?? 'User';
 
-    // final fullName = 'Priya Malhotra';
-    // final email = 'priya.malhotra@dsv360app.com';
-    // final role = 'Operations Coordinator';
     debugPrint(
       '👤 👤 👤 👤 👤 👤 👤 👤 👤 👤 Building ProfilePage for user: ${userProfile?.skills}',
     );
@@ -41,82 +222,190 @@ class ProfilePage extends StatelessWidget {
                 child: Column(
                   children: [
                     // --- Header Section ---
-                    Stack(
-                      clipBehavior: Clip.none,
-                      alignment: Alignment.center,
-                      children: [
-                        // Background Image
-                        Container(
-                          height: 200,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: userProfile?.coverLink != null
-                                  ? NetworkImage(userProfile!.coverLink)
-                                  : const AssetImage('assets/images/banner.jpg')
-                                      as ImageProvider,
-                              fit: BoxFit.cover,
+                    SizedBox(
+                      height: 260,
+                      width: double.infinity,
+                      child: Stack(
+                        children: [
+                          // Background Image
+                          SizedBox(
+                            height: 200,
+                            width: double.infinity,
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                image: DecorationImage(
+                                  image: _bannerImageUrl != null
+                                      ? (_bannerImageUrl!.startsWith('http')
+                                          ? NetworkImage(_bannerImageUrl!)
+                                          : FileImage(File(_bannerImageUrl!)))
+                                          as ImageProvider
+                                      : (userProfile?.coverLink != null
+                                          ? NetworkImage(userProfile!.coverLink)
+                                          : const AssetImage('assets/images/banner.jpg')
+                                              as ImageProvider),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.transparent,
+                                      customColors.background!.withOpacity(0.8),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.transparent,
-                                  customColors.background!.withOpacity(0.8),
+
+                          Positioned(
+                            top: 12,
+                            right: 12,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: (_isUploading || _isBannerUploading)
+                                    ? null
+                                    : _pickAndUploadBannerImage,
+                                customBorder: const CircleBorder(),
+                                child: Container(
+                                  width: 38,
+                                  height: 38,
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.45),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.65),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: _isBannerUploading
+                                      ? const Padding(
+                                          padding: EdgeInsets.all(9),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.edit,
+                                          color: Colors.white,
+                                          size: 18,
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Profile Avatar with clickable image area
+                          Positioned(
+                            top: 145,
+                            left: 24,
+                            child: SizedBox(
+                              width: 116,
+                              height: 116,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: _isUploading ? null : _pickAndUploadImage,
+                                      customBorder: const CircleBorder(),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: customColors.background,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: CircleAvatar(
+                                          radius: 50,
+                                          backgroundImage: _profileImageUrl != null
+                                              ? (_profileImageUrl!.startsWith('http')
+                                                  ? NetworkImage(_profileImageUrl!)
+                                                  : FileImage(File(_profileImageUrl!)))
+                                                  as ImageProvider
+                                              : (userProfile?.profileLink != null
+                                                  ? NetworkImage(userProfile!.profileLink)
+                                                  : const AssetImage('assets/images/profile.jpg')
+                                                      as ImageProvider),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 10,
+                                    right: 10,
+                                    child: Container(
+                                      width: 20,
+                                      height: 20,
+                                      decoration: BoxDecoration(
+                                        color: customColors.statusCompleted,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: customColors.background!,
+                                          width: 3,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 4,
+                                    right: 4,
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: _isUploading ? null : _pickAndUploadImage,
+                                        customBorder: const CircleBorder(),
+                                        child: Container(
+                                          width: 36,
+                                          height: 36,
+                                          decoration: BoxDecoration(
+                                            color: customColors.primary,
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withOpacity(0.3),
+                                                blurRadius: 4,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          child: _isUploading
+                                              ? const Padding(
+                                                  padding: EdgeInsets.all(8),
+                                                  child: CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    valueColor:
+                                                        AlwaysStoppedAnimation<Color>(
+                                                      Colors.white,
+                                                    ),
+                                                  ),
+                                                )
+                                              : const Icon(
+                                                  Icons.edit,
+                                                  color: Colors.white,
+                                                  size: 18,
+                                                ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
                           ),
-                        ),
-
-                        // Profile Avatar with Status
-                        Positioned(
-                          bottom: -50,
-                          left:
-                              24, // Aligned left as per screenshot interpretation or design choice. Screenshot showed left alignment for info.
-                          child: Stack(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: BoxDecoration(
-                                  color: customColors.background,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: CircleAvatar(
-                                  radius: 50,
-                                  backgroundImage: userProfile?.profileLink != null
-                                      ? NetworkImage(userProfile!.profileLink)
-                                      : const AssetImage('assets/images/profile.jpg')
-                                          as ImageProvider,
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 8,
-                                right: 8,
-                                child: Container(
-                                  width: 20,
-                                  height: 20,
-                                  decoration: BoxDecoration(
-                                    color: customColors.statusCompleted,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: customColors.background!,
-                                      width: 3,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
 
-                    const SizedBox(height: 60), // Space for avatar
-                    // --- User Info & Actions ---
+                    const SizedBox(height: 60),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       child: Column(
@@ -162,19 +451,6 @@ class ProfilePage extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  //! Add them latter
-                                  // _buildCompactActionButton(
-                                  //   'Password',
-                                  //   Icons.lock_outline,
-                                  //   AppColors.statusCompleted,
-                                  // ),
-                                  // _buildCompactActionButton(
-                                  //   'Edit',
-                                  //   Icons.edit_outlined,
-                                  //   AppColors.statusCompleted,
-                                  // ),
-                                  // _buildCompactActionButton('Theme', Icons.palette_outlined, AppColors.statusCompleted),
-                                  //! Add them latter
                                 ],
                               ),
                             ],
@@ -182,14 +458,11 @@ class ProfilePage extends StatelessWidget {
 
                           const SizedBox(height: 24),
 
-                          // About Me Section
                           AboutMe(
                             title: 'About Me',
                             content:
                                 userProfile?.aboutMe ??
                                 'No description available.',
-                            // content:
-                            //     'No description available.',
                             backgroundColor: customColors.cardBackground!,
                             textColor: customColors.textPrimary!,
                             accentColor: customColors.statusCompleted!,
@@ -197,7 +470,6 @@ class ProfilePage extends StatelessWidget {
 
                           const SizedBox(height: 24),
 
-                          // Contact Information Section
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(20),
@@ -246,8 +518,6 @@ class ProfilePage extends StatelessWidget {
                                   'Phone',
                                   userProfile?.phone ??
                                       'No Phone details available.',
-
-                                  // '+91 91234 56789',
                                   customColors.textSecondary!,
                                   context,
                                 ),
@@ -260,8 +530,6 @@ class ProfilePage extends StatelessWidget {
                                   'Address',
                                   userProfile?.address ??
                                       'No Address available.',
-
-                                  // '3rd Floor, Orion Business Hub, Andheri East, Mumbai, Maharashtra',
                                   customColors.textSecondary!,
                                   context,
                                 ),
@@ -271,7 +539,6 @@ class ProfilePage extends StatelessWidget {
 
                           const SizedBox(height: 24),
 
-                          // Skills Section
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(20),
@@ -304,7 +571,6 @@ class ProfilePage extends StatelessWidget {
                                   ],
                                 ),
                                 const SizedBox(height: 16),
-                                // Dynamic Skills Parsing
                                 if (userProfile?.skills != null &&
                                     userProfile!.skills.isNotEmpty)
                                   Wrap(
@@ -338,51 +604,6 @@ class ProfilePage extends StatelessWidget {
 
                           const SizedBox(height: 32),
 
-                          // CV Actions
-                          // SizedBox(
-                          //   width: double.infinity,
-                          //   child: ElevatedButton.icon(
-                          //     onPressed: () {},
-                          //     icon: const Icon(Icons.cloud_upload_outlined),
-                          //     label: const Text('Update CV'),
-                          //     style: ElevatedButton.styleFrom(
-                          //       backgroundColor: customColors.statusCompleted,
-                          //       foregroundColor: Colors.black,
-                          //       padding: const EdgeInsets.symmetric(
-                          //         vertical: 16,
-                          //       ),
-                          //       shape: RoundedRectangleBorder(
-                          //         borderRadius: BorderRadius.circular(30),
-                          //       ),
-                          //       elevation: 0,
-                          //     ),
-                          //   ),
-                          // ),
-                          // const SizedBox(height: 16),
-                          // SizedBox(
-                          //   width: double.infinity,
-                          //   child: OutlinedButton.icon(
-                          //     onPressed: () {},
-                          //     icon: const Icon(Icons.visibility_outlined),
-                          //     label: const Text('View CV'),
-                          //     style: OutlinedButton.styleFrom(
-                          //       foregroundColor: customColors.statusCompleted,
-                          //       side: BorderSide(
-                          //         color: customColors.statusCompleted!,
-                          //       ),
-                          //       padding: const EdgeInsets.symmetric(
-                          //         vertical: 16,
-                          //       ),
-                          //       shape: RoundedRectangleBorder(
-                          //         borderRadius: BorderRadius.circular(30),
-                          //       ),
-                          //     ),
-                          //   ),
-                          // ),
-
-                          // const SizedBox(height: 24),
-
-                          // Logout Button
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton.icon(
@@ -436,32 +657,6 @@ class ProfilePage extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildCompactActionButton(String label, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-            ),
-          ),
-        ],
       ),
     );
   }

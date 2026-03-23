@@ -18,16 +18,31 @@ class UserManager {
 
       if (response.statusCode == 200 && response.data != null) {
         final data = response.data;
-        if (data['success'] == "true" && data['data'] != null) {
-          final profile = UserProfileModel.fromJson(data['data']);
+
+        final rawSuccess = data['success'];
+        final isSuccess = rawSuccess == true || rawSuccess == 'true';
+        if (!isSuccess) return null;
+
+        Map<String, dynamic>? profileJson;
+        if (data['data'] is Map<String, dynamic>) {
+          profileJson = data['data'] as Map<String, dynamic>;
+        } else if (data['result'] is List &&
+            (data['result'] as List).isNotEmpty &&
+            (data['result'][0] as Map?)?['Users'] is Map<String, dynamic>) {
+          profileJson =
+              (data['result'][0]['Users'] as Map<String, dynamic>);
+        }
+
+        if (profileJson != null) {
+          final profile = UserProfileModel.fromJson(profileJson);
           userProfile = profile;
-          debugPrint('✅ User Profile fetched: ${profile.userId} ✅');
+          debugPrint('User Profile fetched: ${profile.userId}');
           return profile;
         }
       }
       return null;
     } catch (e) {
-      debugPrint('❌ Failed to fetch user profile: $e');
+      debugPrint('Failed to fetch user profile: $e');
       return null;
     }
   }
