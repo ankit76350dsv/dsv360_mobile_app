@@ -340,7 +340,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                     ),
                                   ),
                                   Positioned(
-                                    bottom: 10,
+                                    bottom: 20,
                                     right: 10,
                                     child: Container(
                                       width: 20,
@@ -356,8 +356,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                     ),
                                   ),
                                   Positioned(
-                                    bottom: 4,
-                                    right: 4,
+                                    bottom: 12,
+                                    right: 12,
                                     child: Material(
                                       color: Colors.transparent,
                                       child: InkWell(
@@ -405,7 +405,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       ),
                     ),
 
-                    const SizedBox(height: 60),
+                    const SizedBox(height: 2),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       child: Column(
