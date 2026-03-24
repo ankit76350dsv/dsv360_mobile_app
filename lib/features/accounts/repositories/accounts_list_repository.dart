@@ -5,7 +5,7 @@ import 'package:dsv360/features/accounts/model/accounts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final accountsSearchQueryProvider = StateProvider<String>((ref) => '');
+final accountsSearchQueryProvider = StateProvider.autoDispose<String>((ref) => '');
 
 class AccountsListRepository extends AsyncNotifier<List<Account>> {
   @override
