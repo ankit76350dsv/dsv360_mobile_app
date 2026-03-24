@@ -1,18 +1,22 @@
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/constants/session_manager.dart';
 import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
+import 'package:dsv360/models/active_user.dart';
+import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class LoadingPage extends StatefulWidget {
+class LoadingPage extends ConsumerStatefulWidget {
   const LoadingPage({super.key});
 
   @override
-  State<LoadingPage> createState() => _LoadingPageState();
+  ConsumerState<LoadingPage> createState() => _LoadingPageState();
 }
 
-class _LoadingPageState extends State<LoadingPage> {
+class _LoadingPageState extends ConsumerState<LoadingPage> {
   @override
   void initState() {
     super.initState();
@@ -32,6 +36,21 @@ class _LoadingPageState extends State<LoadingPage> {
       await TokenManager.instance.getToken();
 
       if (mounted) {
+        // 1. Invalidate all stale providers from the previous user session
+        //    BEFORE setting the new user. This clears old data without
+        //    wiping the new user that is about to be set.
+        SessionManager.invalidateAllProviders(
+          ProviderScope.containerOf(context, listen: false),
+        );
+
+        // 2. Set the new active user AFTER invalidation so that when
+        //    DashboardPage's children (CheckIn tab, Leave tab, etc.) build,
+        //    they read the correct user from activeUserRepositoryProvider.
+        if (user != null) {
+          final activeUser = ActiveUserModel.fromCatalystUser(user);
+          ref.read(activeUserRepositoryProvider.notifier).setUser(activeUser);
+        }
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(

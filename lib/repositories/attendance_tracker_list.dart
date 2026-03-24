@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer' as developer;
 
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/models/attendance_detail.dart';
@@ -30,7 +29,7 @@ class AttendanceTrackerListRepository
     required String endDate,
   }) async {
     try {
-      final response = await DioClient.instance.post(
+      final response = await ApiClient.instance.post(
         'time_entry_management_application_function/attendance/dashboard?Start_date=$startDate&End_date=$endDate',
         data: {"UserID": userId},
       );

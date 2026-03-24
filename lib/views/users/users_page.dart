@@ -404,7 +404,7 @@ class _UserCardState extends ConsumerState<UserCard> {
                                           ? 'time_entry_management_application_function/employee/DISABLED/${widget.user.userId}'
                                           // to make it inactive (now value is false, previous was true)
                                           : 'time_entry_management_application_function/employee/ACTIVE/${widget.user.userId}';
-                                      await DioClient.instance.post(path);
+                                      await ApiClient.instance.post(path);
 
                                       AppSnackBar.show(
                                         context,
@@ -448,7 +448,7 @@ class _UserCardState extends ConsumerState<UserCard> {
                                     icon: Icons.account_circle,
                                     onTap: () async {
                                       try {
-                                        await DioClient.instance.post(
+                                        await ApiClient.instance.post(
                                           'time_entry_management_application_function/reInviteEmployees',
                                           data: {
                                             'email_id': widget.user.emailAddress
@@ -688,7 +688,7 @@ class _DeleteUserBottomSheetState
 
                         try {
                           // ALWAYS hit delete API
-                          await DioClient.instance.post(
+                          await ApiClient.instance.post(
                             'time_entry_management_application_function/employee/${widget.user.userId}',
                             data: reassignmentPayload,
                           );

@@ -7,6 +7,7 @@ class CustomPopupDropdown extends StatefulWidget {
   final List<String> items;
   final IconData icon;
   final ValueChanged<String?> onChanged;
+  final double iconSize; // optional icon size — defaults to 24 to match Flutter's Icon default
 
   const CustomPopupDropdown({
     super.key,
@@ -15,6 +16,7 @@ class CustomPopupDropdown extends StatefulWidget {
     required this.items,
     required this.icon,
     required this.onChanged,
+    this.iconSize = 24,
   });
 
   @override
@@ -60,18 +62,26 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
 
     _overlayEntry = OverlayEntry(
       builder: (context) => StatefulBuilder(
-        builder: (context, setOverlayState) => GestureDetector(
-          onTap: _removeOverlay,
-          behavior: HitTestBehavior.translucent,
-          child: Stack(
-            children: [
-              Positioned(
-                left: offset.dx,
-                top: offset.dy + size.height + 8,
-                width: size.width,
-                child: GestureDetector(
-                  onTap: () {},
-                  child: Material(
+        builder: (context, setOverlayState) => Stack(
+          children: [
+            // Full-screen barrier — onPanDown catches scrolls, onTap catches taps.
+            // Being first in the Stack means touches on the panel (last child) don't reach it.
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _removeOverlay,
+                onPanDown: (_) => _removeOverlay(),
+                behavior: HitTestBehavior.opaque,
+              ),
+            ),
+            Positioned(
+              left: offset.dx,
+              top: offset.dy + size.height + 8,
+              width: size.width,
+              // opaque so touches stay inside the panel and never reach the barrier above.
+              child: GestureDetector(
+                onTap: () {},
+                behavior: HitTestBehavior.opaque,
+                child: Material(
                     elevation: 8,
                     borderRadius: BorderRadius.circular(14),
                     color: customColors.cardBackground,
@@ -225,7 +235,6 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
                 ),
               ),
             ],
-          ),
         ),
       ),
     );
@@ -258,7 +267,7 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(widget.icon, color: customColors.textSecondary),
+            Icon(widget.icon, color: customColors.textSecondary, size: widget.iconSize),
             const SizedBox(width: 12),
             Expanded(
               child: Text(

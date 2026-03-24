@@ -12,7 +12,7 @@ class UserManager {
   /// Fetch the user profile details and store them
   Future<UserProfileModel?> fetchUserProfile(String userId) async {
     try {
-      final response = await DioClient.instance.get(
+      final response = await ApiClient.instance.get(
         'time_entry_management_application_function/userprofile/$userId',
       );
 

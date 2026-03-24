@@ -26,7 +26,7 @@ class LeaveDetailsListRepository extends AsyncNotifier<List<LeaveDetails>> {
           ? 'time_entry_management_application_function/leave/approval'
           : 'time_entry_management_application_function/leave/approval/$userId';
 
-      final response = await DioClient.instance.get(url);
+      final response = await ApiClient.instance.get(url);
 
       debugPrint("Response From fetchLeaveDetails: ${response.data}");
 
@@ -55,7 +55,7 @@ class LeaveDetailsListRepository extends AsyncNotifier<List<LeaveDetails>> {
     required String cancellationReason,
   }) async {
     try {
-      final response = await DioClient.instance.post(
+      final response = await ApiClient.instance.post(
         'time_entry_management_application_function/leave/approval/$rowId',
         data: {
           "Status": "Rejected",
@@ -84,7 +84,7 @@ class LeaveDetailsListRepository extends AsyncNotifier<List<LeaveDetails>> {
     required String actionBy,
   }) async {
     try {
-      final response = await DioClient.instance.post(
+      final response = await ApiClient.instance.post(
         'time_entry_management_application_function/leave/approval/$rowId',
         data: {
           "Status": "Approved",
@@ -117,7 +117,7 @@ class LeaveDetailsListRepository extends AsyncNotifier<List<LeaveDetails>> {
     required String leaveCnt,
   }) async {
     try {
-      final response = await DioClient.instance.post(
+      final response = await ApiClient.instance.post(
         'time_entry_management_application_function/leave/request',
         data: {
           "UserID": userId,
@@ -155,7 +155,7 @@ class LeaveDetailsListRepository extends AsyncNotifier<List<LeaveDetails>> {
     required String leaveCnt,
   }) async {
     try {
-      final response = await DioClient.instance.put(
+      final response = await ApiClient.instance.put(
         'time_entry_management_application_function/leave/approval/$rowId',
         data: {
           "UserID": userId,
@@ -195,7 +195,7 @@ class LeaveCalendarRepository extends AsyncNotifier<List<LeaveCalendarEvent>> {
 
   Future<List<LeaveCalendarEvent>> fetchCalendarData() async {
     try {
-      final response = await DioClient.instance.get(
+      final response = await ApiClient.instance.get(
         'time_entry_management_application_function/calendar',
       );
 

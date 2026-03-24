@@ -1,4 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/providers/task_provider.dart';
 import 'package:dsv360/repositories/task_repository.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
@@ -8,7 +9,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../models/task.dart';
 import '../../models/attachment.dart';
-import '../../core/constants/auth_manager.dart';
 import '../time_entry/add_time_entry_dialog.dart';
 import '../widgets/custom_search_bar.dart';
 import '../widgets/generic_card.dart';
@@ -500,7 +500,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                         ),
                       );
               },
-              loading: () => const Center(child: CircularProgressIndicator()),
+              loading: () => const Center(child: DsvLoader()),
               error: (err, stack) => Center(
                 child: SingleChildScrollView(
                   child: Column(

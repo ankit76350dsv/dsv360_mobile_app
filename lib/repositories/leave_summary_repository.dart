@@ -20,7 +20,7 @@ class LeaveSummaryRepository extends _$LeaveSummaryRepository {
     required String username,
   }) async {
     try {
-      final response = await DioClient.instance.get(
+      final response = await ApiClient.instance.get(
         'time_entry_management_application_function/leave/count',
         queryParameters: {'UserID': userId, 'Username': username},
       );

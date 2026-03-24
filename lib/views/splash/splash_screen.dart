@@ -3,7 +3,6 @@ import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
-import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/models/active_user.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
@@ -29,7 +28,7 @@ class _SplashScreenState extends ConsumerState<ConsumerStatefulWidget>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
 
@@ -103,31 +102,49 @@ class _SplashScreenState extends ConsumerState<ConsumerStatefulWidget>
     return Scaffold(
       body: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
+            SizedBox(width: 10,),
             FadeTransition(
               opacity: _fadeAnimation,
-              child: Image.asset(
-                'assets/images/FI_logo.png',
-                width: 150,
-                height: 150,
+              child: Column(
+                children: [
+                  Image.asset(
+                    'assets/images/FI_logo.png',
+                    width: 150,
+                    height: 150,
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                      'DSV360',
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: customColors.logoColor,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                ],
               ),
             ),
-            const SizedBox(height: 20),
+            
             SlideTransition(
               position: _slideAnimation,
               child: FadeTransition(
                 opacity: _fadeAnimation,
-                child: Text(
-                  'DSV360',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: customColors.logoColor,
-                    letterSpacing: 1.2,
-                  ),
+                child: Column(
+                  
+                  children: [
+                    Text("Powered by", style: TextStyle(color: Colors.grey.shade600, fontSize: 14),),
+                    SizedBox(height: 6,),
+                    Text("DSV Group", style: TextStyle(color: Color.fromARGB(255, 1, 76, 181),fontWeight: FontWeight.w800, fontSize: 20)),
+                    //Text("Digital Synergy Venture Group", style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.bold ),),
+                    
+                  ],
                 ),
               ),
             ),
+
+
           ],
         ),
       ),

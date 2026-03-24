@@ -11,10 +11,10 @@ import 'package:dsv360/views/dashboard/ProjectAnalyticsCard.dart';
 import 'package:dsv360/views/dashboard/StatGrid.dart';
 import 'package:dsv360/views/dashboard/TaskStatusCard.dart';
 import 'package:dsv360/views/dashboard/TopHeader.dart';
-import 'package:dsv360/views/notifications/notification_page.dart';
 import 'package:dsv360/views/profile/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -67,17 +67,20 @@ class _DashboardScaffold extends ConsumerWidget {
           },
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const NotificationPage()),
-              );
-            },
-            icon: Icon(
-              Icons.notifications_none,
-              color: customColors.textPrimary,
-            ),
-          ),
+
+          //Commented Icon Button, will be used in future (Uncommented)
+
+          // IconButton(
+          //   onPressed: () {
+          //     Navigator.of(context).push(
+          //       MaterialPageRoute(builder: (_) => const NotificationPage()),
+          //     );
+          //   },
+          //   icon: Icon(
+          //     Icons.notifications_none,
+          //     color: customColors.textPrimary,
+          //   ),
+          // ),
           IconButton(
             onPressed: () {
               Navigator.of(
@@ -114,10 +117,13 @@ class _DashboardScaffold extends ConsumerWidget {
             }
             // When connected, show dashboard data
             return dashboardAsyncValue.when(
+              skipLoadingOnRefresh: false,
               data: (dashboard) {
                 return RefreshIndicator(
                   onRefresh: () async {
-                    // Refetch data
+                    // Refresh page stats + both chart cards independently.
+                    ref.invalidate(taskStatusDataProvider);
+                    ref.invalidate(projectAnalyticsDataProvider);
                     return await ref.refresh(dashboardDataProvider.future);
                   },
                   child: Center(
@@ -175,31 +181,23 @@ class _DashboardScaffold extends ConsumerWidget {
                                           children: [
                                             Expanded(
                                               flex: 2,
-                                              child: ProjectAnalyticsCard(
-                                                monthData: dashboard
-                                                    .yearMonthwiseUserProjects,
-                                              ),
+                                              // No monthData param — card fetches its own data.
+                                              child: ProjectAnalyticsCard(),
                                             ),
                                             const SizedBox(width: 12),
                                             Expanded(
                                               flex: 1,
-                                              child: TaskStatusCard(
-                                                taskData:
-                                                    dashboard.yearTaskData,
-                                              ),
+                                              // No taskData param — card fetches its own data.
+                                              child: TaskStatusCard(),
                                             ),
                                           ],
                                         )
                                       : Column(
                                           children: [
-                                            ProjectAnalyticsCard(
-                                              monthData: dashboard
-                                                  .yearMonthwiseUserProjects,
-                                            ),
+                                            // No monthData/taskData params — cards self-fetch.
+                                            ProjectAnalyticsCard(),
                                             const SizedBox(height: 12),
-                                            TaskStatusCard(
-                                              taskData: dashboard.yearTaskData,
-                                            ),
+                                            TaskStatusCard(),
                                           ],
                                         ),
                                 ),

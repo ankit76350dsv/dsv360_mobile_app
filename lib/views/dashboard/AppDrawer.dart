@@ -1,19 +1,17 @@
 import 'package:dsv360/core/constants/auth_manager.dart';
-import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
+import 'package:dsv360/core/constants/session_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
-import 'package:dsv360/core/constants/token_manager.dart';
-import 'package:dsv360/core/services/auth_service.dart';
-
+import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/views/projects/projects_screen.dart';
 import 'package:dsv360/views/task/tasks_screen.dart';
 import 'package:dsv360/views/issues/issues_screen.dart';
-import 'package:dsv360/views/accounts/accounts_page.dart';
-import 'package:dsv360/views/clients/client_contacts_page.dart';
-import 'package:dsv360/views/badges/badges_page.dart';
+import 'package:dsv360/features/accounts/view/pages/accounts_screen.dart';
+import 'package:dsv360/features/client/view/pages/client_contacts_page.dart';
+import 'package:dsv360/features/badges/view/pages/badges_page.dart';
 import 'package:dsv360/views/users/users_page.dart';
 import 'package:dsv360/views/people/people_page.dart';
 import 'package:dsv360/views/teams/teams_page.dart';
@@ -266,14 +264,24 @@ class AppDrawer extends StatelessWidget {
                     label: 'Logout',
                     subLabel: 'Sign out of your account',
                     onTap: () async {
+                      final confirmed = await showWarningDialogueBox<bool>(
+                        context: context,
+                        title: 'You will be logged out',
+                        subtitle: 'Are you sure you want to logout?',
+                        primaryText: 'Logout',
+                        onPrimaryPressed: (dialogContext) =>
+                            Navigator.of(dialogContext).pop(true),
+                      );
+
+                      if (confirmed != true) return;
+
                       // Capture navigator before async operation prevents "context not mounted" issues
                       final navigator = Navigator.of(context);
 
                       // Close drawer first
                       navigator.pop();
 
-                      await AppInitManager.instance.catalystApp.logout();
-                      TokenManager.instance.clearToken();
+                      await SessionManager.logout(context);
 
                       navigator.pushAndRemoveUntil(
                         MaterialPageRoute(
@@ -297,14 +305,14 @@ class AppDrawer extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(
-                        'Made by DSV-360',
+                        'DSV360',
                         textAlign: TextAlign.center,
                         style: textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
-                      const SizedBox(height: 30.0),
+                      const SizedBox(height: 10.0),
                       Text(
                         'DSV-360 — A unified platform to manage people, projects, and performance.',
                         textAlign: TextAlign.center,

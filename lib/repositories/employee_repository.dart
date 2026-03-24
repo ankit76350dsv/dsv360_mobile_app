@@ -1,56 +1,38 @@
 import 'dart:developer' as developer;
-import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
+import 'package:dsv360/core/network/dio_client.dart';// single import — no raw http, TokenManager, or AppInitManager needed
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert' as convert;
-import 'package:dsv360/core/constants/server_constant.dart';
-import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/models/employee.dart';
 
+// ---------------------------------------------------------------------------
+// How this repository uses ApiClient:
+//   - ApiClient.instance is the shared singleton defined in api_client.dart.
+//   - The base URL and Authorization header are handled inside ApiClient,
+//     so this file only passes relative paths and query parameters.
+// ---------------------------------------------------------------------------
+
 class EmployeeRepository {
+
+  // Use the centralized client — no manual http, no manual token injection.
+  final _client = ApiClient.instance;
+
   /// Get all employees
   Future<List<Employee>> fetchAllEmployees() async {
     try {
       debugPrint('👥 Fetching all employees');
 
-      final app = AppInitManager.instance.catalystApp;
-      final token = await app.getAccessToken();
+      // Relative path — base URL and token handled by ApiClient.
+      const path = 'time_entry_management_application_function/employee';
+      debugPrint('🌐 path: $path');
 
-      debugPrint('🔑🔑🔑🔑🔑🔑🔑🔑🔑🔑 Access Token: $token');
-   
+      final response = await _client.get(path);
 
-      final url =
-          '${ServerConstant.serverURL}time_entry_management_application_function/employee';
-      debugPrint('🌐 URL: $url');
-
-      //this is the first method how i am calling the api but it is not working
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $token', 
-          'Content-Type': 'application/json',
-        },
-      );
-
-
-      // this is the second method how i am calling the api and it is also not woking working fine
-      // Step 2: Make API request
-      // final response = await http.get(
-      //   Uri.parse(url),
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': 'Zoho-oauthtoken $token',
-      //   },
-      // );
       debugPrint('📊 Response Status: ${response.statusCode}');
-      debugPrint('📄 Response Body: ${response.body}');
+      debugPrint('📄 Response Data: ${response.data}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final Map<String, dynamic> jsonResponse = convert.json.decode(
-          response.body,
-        );
+        final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>;
 
-        // API returns "users" array, not "success" and "data"
+        // API returns "users" array
         if (jsonResponse.containsKey('users')) {
           final List<dynamic> employeeList = jsonResponse['users'] ?? [];
           debugPrint('✅ Employees fetched: ${employeeList.length}');
@@ -79,29 +61,15 @@ class EmployeeRepository {
     try {
       debugPrint('👤 Fetching employee by ID: $userId');
 
-      // Get access token
-      final accessToken = await TokenManager.instance.getToken();
-      if (accessToken == null) {
-        debugPrint('❌ No access token available');
-        return null;
-      }
+      // Relative path — base URL and token handled by ApiClient.
+      final path = 'emp/$userId';
+      debugPrint('🌐 path: $path');
 
-      final url = '${ServerConstant.serverURL}emp/$userId';
-      debugPrint('🌐 URL: $url');
-
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Authorization': 'Bearer $accessToken',
-          'Content-Type': 'application/json',
-        },
-      );
+      final response = await _client.get(path);
       debugPrint('📊 Response Status: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final Map<String, dynamic> jsonResponse = convert.json.decode(
-          response.body,
-        );
+        final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>;
 
         if (jsonResponse['success'] == true) {
           final employeeData = jsonResponse['data'] as Map<String, dynamic>;
@@ -115,7 +83,7 @@ class EmployeeRepository {
         debugPrint('❌ HTTP Error ${response.statusCode}');
         return null;
       }
-    } catch (e, st) {
+    } catch (e) {
       debugPrint('❌ Error fetching employee: $e');
       developer.log('Error fetching employee: $e', name: 'EmployeeRepository');
       return null;
@@ -127,16 +95,15 @@ class EmployeeRepository {
     try {
       debugPrint('👥 Fetching unassigned employees');
 
-      final url = '${ServerConstant.serverURL}unassignedEmployees';
-      debugPrint('🌐 URL: $url');
+      // Relative path — base URL and token handled by ApiClient.
+      const path = 'unassignedEmployees';
+      debugPrint('🌐 path: $path');
 
-      final response = await http.get(Uri.parse(url));
+      final response = await _client.get(path);
       debugPrint('📊 Response Status: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final Map<String, dynamic> jsonResponse = convert.json.decode(
-          response.body,
-        );
+        final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>;
 
         if (jsonResponse['success'] == true) {
           final List<dynamic> employeeList = jsonResponse['data'] ?? [];
@@ -153,7 +120,7 @@ class EmployeeRepository {
         debugPrint('❌ HTTP Error ${response.statusCode}');
         return [];
       }
-    } catch (e, st) {
+    } catch (e) {
       debugPrint('❌ Error fetching unassigned employees: $e');
       developer.log(
         'Error fetching unassigned employees: $e',

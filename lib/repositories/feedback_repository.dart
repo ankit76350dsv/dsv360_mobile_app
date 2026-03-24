@@ -14,8 +14,8 @@ class FeedbackRepository extends AsyncNotifier<List<FeedbackModel>> {
 
   Future<List<FeedbackModel>> fetchFeedbacks({bool isInitial = false}) async {
     try {
-      // TODO: Confirm the endpoint URL
-      final response = await DioClient.instance.get(
+      // todo: Confirm the endpoint URL
+      final response = await ApiClient.instance.get(
         'time_entry_management_application_function/feedback',
       );
       debugPrint("Response From fetchFeedbacks: $response");
