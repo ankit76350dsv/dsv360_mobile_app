@@ -55,4 +55,4 @@ final usersRepositoryProvider =
       UsersRepository.new,
     );
 
-final usersSearchQueryProvider = StateProvider<String>((ref) => '');
+final usersSearchQueryProvider = StateProvider.autoDispose<String>((ref) => '');

@@ -17,7 +17,7 @@ final currentUserIdProvider = Provider<String>((ref) {
 // Generated from @riverpod class TasksListRepository
 
 // Tasks Search Query Provider
-final tasksSearchQueryProvider = StateProvider<String>((ref) => '');
+final tasksSearchQueryProvider = StateProvider.autoDispose<String>((ref) => '');
 
 // Filtered Tasks Provider - watches the repository provider directly
 final filteredTasksProvider =

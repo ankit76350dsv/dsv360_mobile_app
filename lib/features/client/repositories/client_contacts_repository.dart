@@ -42,4 +42,4 @@ final clientContactsListRepositoryProvider =
       ClientContactsRepository.new,
     );
 
-final clientContactsSearchQueryProvider = StateProvider<String>((ref) => '');
+final clientContactsSearchQueryProvider = StateProvider.autoDispose<String>((ref) => '');

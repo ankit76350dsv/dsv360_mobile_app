@@ -37,4 +37,4 @@ final feedbackRepositoryProvider =
       FeedbackRepository.new,
     );
 
-final feedbackSearchQueryProvider = StateProvider<String>((ref) => '');
+final feedbackSearchQueryProvider = StateProvider.autoDispose<String>((ref) => '');

@@ -57,4 +57,4 @@ final organizationListRepositoryProvider =
       OrganizationRepository.new,
     );
 
-final organizationSearchQueryProvider = StateProvider<String>((ref) => '');
+final organizationSearchQueryProvider = StateProvider.autoDispose<String>((ref) => '');

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class CustomInputSearch extends ConsumerStatefulWidget {
   final String hint;
-  final StateProvider<String>? searchProvider;
+  final AutoDisposeStateProvider<String>? searchProvider;
   final ValueChanged<String>? onChanged;
 
   const CustomInputSearch({

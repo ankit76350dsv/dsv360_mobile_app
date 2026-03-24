@@ -2,7 +2,7 @@ import 'package:dsv360/features/badges/model/badge_summary.dart';
 import 'package:dsv360/features/badges/repositories/badge_catalog_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final showBadgesSearchQueryProvider = StateProvider<String>((ref) => '');
+final showBadgesSearchQueryProvider = StateProvider.autoDispose<String>((ref) => '');
 
 final showBadgesViewModelProvider = Provider<ShowBadgesViewModel>((ref) {
   return ShowBadgesViewModel(ref.read(badgeCatalogRepositoryProvider));
