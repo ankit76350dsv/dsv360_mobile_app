@@ -41,6 +41,7 @@ class _DashboardScaffold extends ConsumerWidget {
         elevation: 0,
         backgroundColor: Colors.transparent,
         automaticallyImplyLeading: false, // Hide default hamburger
+        centerTitle: false,
         titleSpacing: 0,
         title: Text(
           'DSV360',
