@@ -9,9 +9,11 @@ import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'dart:io';
+import 'dart:typed_data';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -56,6 +58,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     });
   }
 
+  /// Crops the profile image
+  Future<File?> _cropImage(File imageFile) async {
+    return await Navigator.push<File?>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _CropImagePage(imageFile: imageFile),
+      ),
+    );
+  }
+
   Future<void> _pickAndUploadImage() async {
     try {
       final ImagePicker picker = ImagePicker();
@@ -66,17 +78,32 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         return;
       }
 
+      if (!mounted) return;
+
       debugPrint('📸 Image selected: ${image.name} (${image.path})');
+
+      // --- Crop the selected image before uploading ---
+      final croppedFile = await _cropImage(File(image.path));
+      if (croppedFile == null) {
+        debugPrint('✂️ Crop cancelled by user');
+        return;
+      }
+
+      if (!mounted) return;
+
+      debugPrint('✂️ Cropped image path: ${croppedFile.path}');
+      // -------------------------------------------------
+
       setState(() => _isUploading = true);
 
       final userId = await _resolveUserId();
 
       debugPrint('👤 Uploading for user ID: $userId');
 
-      // Backend expects multipart field name `profile`.
+      // Backend expects multipart field name `profile`. Use cropped image for upload.
       final formData = FormData.fromMap({
         'profile': await MultipartFile.fromFile(
-          image.path,
+          croppedFile.path,
           filename: image.name,
         ),
       });
@@ -97,7 +124,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             ? (response.data['profileURL'] ?? '').toString()
             : '';
         setState(() {
-          _profileImageUrl = responseUrl.isNotEmpty ? responseUrl : image.path;
+          _profileImageUrl = responseUrl.isNotEmpty ? responseUrl : croppedFile.path;
         });
 
         await _refreshProfileAndSyncImages(userId);
@@ -705,6 +732,89 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         border: Border.all(color: customColors.textWhite!.withOpacity(0.1)),
       ),
       child: Text(label, style: TextStyle(color: textColor, fontSize: 13)),
+    );
+  }
+}
+
+/// Crop Image Page using crop_your_image
+class _CropImagePage extends StatefulWidget {
+  final File imageFile;
+
+  const _CropImagePage({required this.imageFile});
+
+  @override
+  State<_CropImagePage> createState() => _CropImagePageState();
+}
+
+class _CropImagePageState extends State<_CropImagePage> {
+  final CropController _controller = CropController();
+  bool _isProcessing = false;
+
+  Future<void> _handleCrop(Uint8List croppedImage) async {
+    setState(() => _isProcessing = true);
+    try {
+      // Save cropped image to temporary file
+      final tempDir = Directory.systemTemp;
+      final croppedFile = File(
+        '${tempDir.path}/cropped_profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
+      await croppedFile.writeAsBytes(croppedImage);
+      if (mounted) {
+        Navigator.pop(context, croppedFile);
+      }
+    } catch (e) {
+      debugPrint('Crop error: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Crop failed: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Crop Profile Photo'),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.pop(context),
+        ),
+        actions: [
+          _isProcessing
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    ),
+                  ),
+                )
+              : IconButton(
+                  icon: const Icon(Icons.check),
+                  onPressed: () {
+                    _controller.crop();
+                  },
+                ),
+        ],
+      ),
+      body: Crop(
+        image: widget.imageFile.readAsBytesSync(),
+        controller: _controller,
+        onCropped: _handleCrop,
+        aspectRatio: 1.0,
+        initialSize: 0.5,
+        withCircleUi: true,
+      ),
     );
   }
 }
