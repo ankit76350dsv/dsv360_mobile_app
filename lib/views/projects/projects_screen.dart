@@ -88,7 +88,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
     // Refresh the list if operation was successful
     if (result != null && result['success'] == true && mounted) {
-      ref.refresh(projectListProvider);
+      ref.invalidate(projectListProvider);
       final action = result['action'] ?? 'saved';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -134,7 +134,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 await projectRepository.deleteProject(project.id);
 
                 if (mounted) {
-                  ref.refresh(projectListProvider);
+                  ref.invalidate(projectListProvider);
                   scaffoldMessenger.showSnackBar(
                     SnackBar(
                       content: Row(

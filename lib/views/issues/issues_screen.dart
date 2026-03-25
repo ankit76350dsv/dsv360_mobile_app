@@ -79,7 +79,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
     );
 
     if (result == true && mounted) {
-      ref.refresh(issueListProvider);
+      ref.invalidate(issueListProvider);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -124,7 +124,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
               try {
                 final repository = ref.read(issueRepositoryProvider);
                 await repository.deleteIssue(issue.id);
-                ref.refresh(issueListProvider);
+                ref.invalidate(issueListProvider);
                 if (mounted) {
                   scaffoldMessenger.showSnackBar(
                     SnackBar(
@@ -377,7 +377,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                         ),
                         const SizedBox(height: 16),
                         ElevatedButton(
-                          onPressed: () => ref.refresh(issueListProvider),
+                          onPressed: () => ref.invalidate(issueListProvider),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: customColors.primary,
                           ),

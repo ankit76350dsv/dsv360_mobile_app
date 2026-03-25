@@ -360,8 +360,8 @@ class AppDrawer extends StatelessWidget {
                 radius: 36,
                 backgroundImage:
                     (userProfile?.profileLink != null &&
-                        userProfile!.profileLink!.isNotEmpty)
-                    ? NetworkImage(userProfile.profileLink!)
+                        userProfile!.profileLink.isNotEmpty)
+                    ? NetworkImage(userProfile.profileLink)
                     : const AssetImage("assets/icons/profile.png")
                           as ImageProvider,
               ),
@@ -409,7 +409,6 @@ class _DrawerItem extends StatelessWidget {
   final VoidCallback onTap;
 
   const _DrawerItem({
-    super.key,
     required this.icon,
     required this.label,
     required this.subLabel,

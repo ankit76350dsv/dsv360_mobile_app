@@ -571,7 +571,7 @@ class _AddIssueFormScreenState extends State<AddIssueFormScreen> {
                         items: _employeeList.map((employee) {
                           return DropdownMenuItem(
                             value: employee,
-                            child: Text(employee.fullName ?? 'Unknown'),
+                            child: Text(employee.fullName),
                           );
                         }).toList(),
                         onChanged: (value) {

@@ -199,7 +199,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       debugPrint('🔄 Refreshing tasks for user: $userId');
 
       if (mounted) {
-        ref.refresh(tasksListRepositoryProvider(userId));
+        ref.invalidate(tasksListRepositoryProvider(userId));
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -254,7 +254,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 
                 // Refresh the tasks list
                 if (mounted) {
-                  ref.refresh(tasksListRepositoryProvider(userId));
+                  ref.invalidate(tasksListRepositoryProvider(userId));
                   scaffoldMessenger.showSnackBar(
                     SnackBar(
                       content: Row(
@@ -471,7 +471,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                             taskId: task.taskId,
                                             projectId: task.projectId,
                                             taskName: task.taskName,
-                                            projectName: task.projectName ?? 'Project',
+                                            projectName: task.projectName,
                                             currentUser: task.assignedTo,
                                           ),
                                         ),

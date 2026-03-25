@@ -21,7 +21,6 @@ class CustomSearchBar extends StatefulWidget {
 
 class _CustomSearchBarState extends State<CustomSearchBar> {
   late FocusNode _focusNode;
-  bool _isFocused = false;
 
   @override
   void initState() {
@@ -42,7 +41,6 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
 
   void _updateFocusState() {
     setState(() {
-      _isFocused = _focusNode.hasFocus;
     });
   }
 

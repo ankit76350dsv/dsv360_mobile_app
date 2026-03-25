@@ -25,7 +25,7 @@ class LeaveDetailsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final customColors = Theme.of(context).custom;
-    final activeUser = ref.watch(activeUserRepositoryProvider);
+    ref.watch(activeUserRepositoryProvider);
 
     final leaveSummaryAsync = ref.watch(
       leaveSummaryRepositoryProvider(
@@ -267,7 +267,7 @@ class _RejectLeaveBottomSheetState
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     String bottomTwoButtonsLoadingKey = 'add_edit_account_key';
-    final activeUser = ref.watch(activeUserRepositoryProvider);
+    ref.watch(activeUserRepositoryProvider);
 
     return SafeArea(
       bottom: false,

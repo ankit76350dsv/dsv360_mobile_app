@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/time_entry_model.dart';
 import '../../core/constants/theme.dart';
-
 import '../../core/constants/auth_manager.dart';
 import '../../repositories/time_entry_repository.dart';
 import '../widgets/custom_input_field.dart';

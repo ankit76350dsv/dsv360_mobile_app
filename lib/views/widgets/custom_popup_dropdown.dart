@@ -54,7 +54,7 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
       _searchController.clear();
     });
 
-    final colors = Theme.of(_buttonKey.currentContext!).colorScheme;
+   
     final RenderBox renderBox =
         _buttonKey.currentContext!.findRenderObject() as RenderBox;
     final offset = renderBox.localToGlobal(Offset.zero);
@@ -244,7 +244,7 @@ class _CustomPopupDropdownState extends State<CustomPopupDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
+    
     final customColors = Theme.of(context).custom;
     return GestureDetector(
       key: _buttonKey,

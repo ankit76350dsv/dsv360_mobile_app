@@ -116,7 +116,7 @@ class TaskDetailsDialog extends StatelessWidget {
                         child: _buildDetailCard(
                           icon: Icons.person,
                           label: 'Assigned To',
-                          value: task.assignedTo ?? 'Not assigned',
+                          value: task.assignedTo,
                           context: context
                         ),
                       ),
@@ -167,12 +167,12 @@ class TaskDetailsDialog extends StatelessWidget {
                   const SizedBox(height: 12),
                   
                   // Description if available
-                  if (task.description != null && task.description!.isNotEmpty)
+                  if (task.description.isNotEmpty)
                     ...[
                       _buildDetailCard(
                         icon: Icons.description,
                         label: 'Description',
-                        value: task.description!,
+                        value: task.description,
                         context: context
                       ),
                       const SizedBox(height: 12),
