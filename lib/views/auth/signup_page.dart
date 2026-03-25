@@ -51,7 +51,7 @@ class _SignUpPageState extends State<SignUpPage> {
         // Show success snackbar - check email and login again
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Check email and login again'),
+            content: Text('Check your Email for verification and login'),
             backgroundColor: Colors.green,
             duration: Duration(days: 1),
           ),
