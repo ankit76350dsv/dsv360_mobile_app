@@ -302,53 +302,53 @@ class TaskDetailsDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildTypeCard({
-    required String label,
-    required String value,
-    required BuildContext context
-  }) {
-    final customColors = Theme.of(context).custom;
+  // Widget _buildTypeCard({
+  //   required String label,
+  //   required String value,
+  //   required BuildContext context
+  // }) {
+  //   final customColors = Theme.of(context).custom;
     
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: customColors.cardBackground,
-        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.category, color: customColors.primary, size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: customColors.textSecondary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            value,
-            style: TextStyle(
-              color: customColors.textPrimary,
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  //   return Container(
+  //     width: double.infinity,
+  //     padding: const EdgeInsets.all(12),
+  //     decoration: BoxDecoration(
+  //       color: customColors.cardBackground,
+  //       border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
+  //       borderRadius: BorderRadius.circular(14),
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Colors.black.withOpacity(0.1),
+  //           blurRadius: 8,
+  //           offset: const Offset(0, 2),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         Icon(Icons.category, color: customColors.primary, size: 18),
+  //         const SizedBox(width: 8),
+  //         Expanded(
+  //           child: Text(
+  //             label,
+  //             style: TextStyle(
+  //               color: customColors.textSecondary,
+  //               fontSize: 12,
+  //               fontWeight: FontWeight.w600,
+  //             ),
+  //           ),
+  //         ),
+  //         const SizedBox(width: 8),
+  //         Text(
+  //           value,
+  //           style: TextStyle(
+  //             color: customColors.textPrimary,
+  //             fontSize: 13,
+  //             fontWeight: FontWeight.w600,
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 }

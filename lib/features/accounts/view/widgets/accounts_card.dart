@@ -18,9 +18,6 @@ class AccountsCard extends ConsumerStatefulWidget {
 }
 
 class _AccountsCardState extends ConsumerState<AccountsCard> {
-  bool _is404Error(Object error) {
-    return error.toString().contains('404');
-  }
 
   @override
   Widget build(BuildContext context) {

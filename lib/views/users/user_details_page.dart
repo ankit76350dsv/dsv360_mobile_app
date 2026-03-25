@@ -9,7 +9,6 @@ import 'package:dsv360/models/task.dart';
 import 'package:dsv360/models/users.dart';
 import 'package:dsv360/providers/project_provider.dart';
 import 'package:dsv360/repositories/task_repository.dart';
-import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
 import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
@@ -117,57 +116,47 @@ class _UserTabs extends StatelessWidget {
 class _InfoTab extends ConsumerWidget {
   final UsersModel user;
 
-  late String verificationStatusText;
-  late IconData verificationStatusIcon;
-  late Color verificationStatusColor;
-
-  late String workStatusText;
-  late Color workStatusColor;
-
-  _InfoTab({required this.user});
+  const _InfoTab({required this.user});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final customColors = Theme.of(context).custom;
     final verificationStatus = user.verificationStatus;
     final workStatus = user.workStatus;
-    final usersAsync = ref.watch(usersRepositoryProvider);
 
-    final List<DropdownMenuItem<String>> userOptions = usersAsync.when(
-      data: (users) => users.map((u) {
-        return DropdownMenuItem<String>(
-          value: u.userId,
-          child: Text("${u.firstName} ${u.lastName}"),
-        );
-      }).toList(),
 
-      loading: () => [],
-      error: (_, __) => [],
-    );
+    // final usersAsync = ref.watch(usersRepositoryProvider);
 
-    switch (verificationStatus) {
-      case VerificationStatus.verified:
-        verificationStatusText = "Verified";
-        verificationStatusIcon = Icons.verified;
-        verificationStatusColor = Colors.green;
-        break;
-      case VerificationStatus.pending:
-        verificationStatusText = "Pending";
-        verificationStatusIcon = Icons.hourglass_top;
-        verificationStatusColor = Colors.orange;
-        break;
-    }
+    // final List<DropdownMenuItem<String>> userOptions = usersAsync.when(
+    //   data: (users) => users.map((u) {
+    //     return DropdownMenuItem<String>(
+    //       value: u.userId,
+    //       child: Text("${u.firstName} ${u.lastName}"),
+    //     );
+    //   }).toList(),
 
-    switch (workStatus) {
-      case WorkStatus.active:
-        workStatusText = "Active";
-        workStatusColor = Colors.green;
-        break;
-      case WorkStatus.inactive:
-        workStatusText = "Inactive";
-        workStatusColor = Color.fromARGB(255, 255, 0, 0);
-        break;
-    }
+    //   loading: () => [],
+    //   error: (_, __) => [],
+    // );
+
+    final (verificationStatusText, verificationStatusIcon, verificationStatusColor) =
+        switch (verificationStatus) {
+          VerificationStatus.verified => (
+            'Verified',
+            Icons.verified,
+            Colors.green,
+          ),
+          VerificationStatus.pending => (
+            'Pending',
+            Icons.hourglass_top,
+            Colors.orange,
+          ),
+        };
+
+    final (workStatusText, workStatusColor) = switch (workStatus) {
+      WorkStatus.active => ('Active', Colors.green),
+      WorkStatus.inactive => ('Inactive', const Color.fromARGB(255, 255, 0, 0)),
+    };
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -263,7 +252,7 @@ class _InfoTab extends ConsumerWidget {
 class _WorkInfoTab extends ConsumerWidget {
   final UsersModel user;
 
-  _WorkInfoTab({required this.user});
+  const _WorkInfoTab({required this.user});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -326,15 +315,12 @@ class _InfoTile extends StatelessWidget {
   final String label;
   final String? value; // for normal text
   final Widget? child; // for chips, buttons, etc
-  final Widget? buttonWidget; // button widget
 
   const _InfoTile({
-    super.key,
     required this.icon,
     required this.label,
     this.value,
     this.child,
-    this.buttonWidget,
   }) : assert(
          value != null || child != null,
          'Either value or child must be provided',
@@ -353,7 +339,7 @@ class _InfoTile extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Row(
@@ -386,7 +372,6 @@ class _InfoTile extends StatelessWidget {
                 ),
               ],
             ),
-            if (buttonWidget != null) buttonWidget!,
           ],
         ),
       ),
@@ -484,9 +469,9 @@ class ReportingManagerBottomSheet extends ConsumerWidget {
                   ref
                       .read(reportingManagerProvider.notifier)
                       .setManager(
-                        id: selectedUser.userId!,
+                        id: selectedUser.userId,
                         name:
-                            '${selectedUser.firstName ?? ''} ${selectedUser.lastName ?? ''}'
+                            '${selectedUser.firstName} ${selectedUser.lastName}'
                                 .trim(),
                       );
                 });
@@ -558,7 +543,7 @@ class _ProjectsTab extends ConsumerWidget {
 
             return RefreshIndicator(
               onRefresh: () async {
-                ref.refresh(projectListProvider);
+                ref.invalidate(projectListProvider);
               },
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
@@ -726,7 +711,7 @@ class _TasksTab extends ConsumerWidget {
 
             return RefreshIndicator(
               onRefresh: () async {
-                ref.refresh(tasksListRepositoryProvider(user.userId));
+                ref.invalidate(tasksListRepositoryProvider(user.userId));
               },
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
@@ -756,7 +741,7 @@ class _TaskCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
-    final theme = Theme.of(context);
+    // final theme = Theme.of(context);
 
     return Card(
       shape: RoundedRectangleBorder(
@@ -835,7 +820,7 @@ class _TaskCard extends StatelessWidget {
                           ),
                           InfoRow(
                             icon: Icons.person,
-                            text: task.assignedTo ?? '',
+                            text: task.assignedTo,
                           ),
                         ],
                       ),

@@ -580,7 +580,6 @@ class _LeaveBalanceItem extends StatelessWidget {
   final String badge;
   final Color badgeColor;
   final bool showCheckmark;
-  final IconData? icon;
 
   const _LeaveBalanceItem({
     required this.title,
@@ -588,7 +587,6 @@ class _LeaveBalanceItem extends StatelessWidget {
     required this.badge,
     required this.badgeColor,
     this.showCheckmark = false,
-    this.icon = Icons.check_circle,
   });
 
   @override
@@ -619,7 +617,11 @@ class _LeaveBalanceItem extends StatelessWidget {
               ],
             ),
           ),
-          CustomChip(label: badge, color: badgeColor, icon: icon),
+          CustomChip(
+            label: badge,
+            color: badgeColor,
+            icon: Icons.check_circle,
+          ),
         ],
       ),
     );

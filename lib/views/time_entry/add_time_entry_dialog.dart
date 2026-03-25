@@ -41,8 +41,6 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
   final List<String> _typeOptions = ['Billable', 'Non-Billable'];
   
   DateTime? _selectedDate;
-  TimeOfDay? _startTime;
-  TimeOfDay? _endTime;
 
   final List<TimeEntry> _timeEntries = [];
   late TimeEntryRepository _repository;
@@ -196,10 +194,8 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
       final time = _timeOfDayToAMPM(pickedTime);
       setState(() {
         if (isStartTime) {
-          _startTime = pickedTime;
           _startTimeController.text = time;
         } else {
-          _endTime = pickedTime;
           _endTimeController.text = time;
         }
       });
@@ -331,8 +327,6 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
         _startTimeController.clear();
         _endTimeController.clear();
         _noteController.clear();
-        _startTime = null;
-        _endTime = null;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -360,80 +354,80 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
     });
   }
 
-  Future<void> _submitTimeEntries() async {
-       final customColors = Theme.of(context).custom;
-    if (_timeEntries.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please add at least one time entry'),
-          backgroundColor: customColors.error,
-        ),
-      );
-      return;
-    }
+  // Future<void> _submitTimeEntries() async {
+  //      final customColors = Theme.of(context).custom;
+  //   if (_timeEntries.isEmpty) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: const Text('Please add at least one time entry'),
+  //         backgroundColor: customColors.error,
+  //       ),
+  //     );
+  //     return;
+  //   }
 
-    try {
-      setState(() => _isLoading = true);
+  //   try {
+  //     setState(() => _isLoading = true);
       
-      final userId = AuthManager.instance.currentUser?.id ?? '';
-      if (userId.isEmpty) {
-        throw Exception('User ID not found');
-      }
+  //     final userId = AuthManager.instance.currentUser?.id ?? '';
+  //     if (userId.isEmpty) {
+  //       throw Exception('User ID not found');
+  //     }
 
-      debugPrint('📤 Submitting ${_timeEntries.length} time entries...');
+  //     debugPrint('📤 Submitting ${_timeEntries.length} time entries...');
 
-      // Submit each time entry to API
-      List<TimeEntry> submittedEntries = [];
-      for (final entry in _timeEntries) {
-        final createdEntry = await _repository.createTimeEntry(
-          taskId: widget.taskId,
-          projectId: widget.projectId,
-          userId: userId,
-          username: _userController.text,
-          taskName: widget.taskName,
-          projectName: widget.projectName,
-          date: entry.date,
-          startTime: entry.startTime,
-          endTime: entry.endTime,
-          description: entry.note,
-          type: entry.type,
-        );
-        submittedEntries.add(createdEntry);
-      }
+  //     // Submit each time entry to API
+  //     List<TimeEntry> submittedEntries = [];
+  //     for (final entry in _timeEntries) {
+  //       final createdEntry = await _repository.createTimeEntry(
+  //         taskId: widget.taskId,
+  //         projectId: widget.projectId,
+  //         userId: userId,
+  //         username: _userController.text,
+  //         taskName: widget.taskName,
+  //         projectName: widget.projectName,
+  //         date: entry.date,
+  //         startTime: entry.startTime,
+  //         endTime: entry.endTime,
+  //         description: entry.note,
+  //         type: entry.type,
+  //       );
+  //       submittedEntries.add(createdEntry);
+  //     }
 
-      debugPrint('✅ All time entries submitted successfully');
+  //     debugPrint('✅ All time entries submitted successfully');
       
-      // Refresh the list to show newly added entries
-      await _fetchExistingTimeEntries();
+  //     // Refresh the list to show newly added entries
+  //     await _fetchExistingTimeEntries();
       
-      // Clear the form
-      setState(() {
-        _timeEntries.clear();
-        _startTimeController.clear();
-        _endTimeController.clear();
-        _noteController.clear();
-      });
+  //     // Clear the form
+  //     setState(() {
+  //       _timeEntries.clear();
+  //       _startTimeController.clear();
+  //       _endTimeController.clear();
+  //       _noteController.clear();
+  //     });
       
-      Navigator.pop(context, submittedEntries);
+  //     Navigator.pop(context, submittedEntries);
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${submittedEntries.length} time entries submitted'),
-          backgroundColor: customColors.primary,
-        ),
-      );
-    } catch (e) {
-      debugPrint('❌ Error submitting entries: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to submit: $e'),
-          backgroundColor: customColors.error,
-        ),
-      );
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text('${submittedEntries.length} time entries submitted'),
+  //         backgroundColor: customColors.primary,
+  //       ),
+  //     );
+  //   } catch (e) {
+  //     debugPrint('❌ Error submitting entries: $e');
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text('Failed to submit: $e'),
+  //         backgroundColor: customColors.error,
+  //       ),
+  //     );
+  //   } finally {
+  //     setState(() => _isLoading = false);
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {

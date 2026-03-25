@@ -267,22 +267,22 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
     );
   }
 
-  InputDecoration _inputDecoration(BuildContext context, String label) {
-    final colors = Theme.of(context).colorScheme;
+  // InputDecoration _inputDecoration(BuildContext context, String label) {
+  //   final colors = Theme.of(context).colorScheme;
 
-    return InputDecoration(
-      labelText: label,
-      filled: true,
-      fillColor: colors.surface,
-      labelStyle: TextStyle(color: colors.onSurfaceVariant),
-      enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: colors.outlineVariant),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: colors.primary, width: 1.5),
-        borderRadius: BorderRadius.circular(6),
-      ),
-    );
-  }
+  //   return InputDecoration(
+  //     labelText: label,
+  //     filled: true,
+  //     fillColor: colors.surface,
+  //     labelStyle: TextStyle(color: colors.onSurfaceVariant),
+  //     enabledBorder: OutlineInputBorder(
+  //       borderSide: BorderSide(color: colors.outlineVariant),
+  //       borderRadius: BorderRadius.circular(6),
+  //     ),
+  //     focusedBorder: OutlineInputBorder(
+  //       borderSide: BorderSide(color: colors.primary, width: 1.5),
+  //       borderRadius: BorderRadius.circular(6),
+  //     ),
+  //   );
+  // }
 }

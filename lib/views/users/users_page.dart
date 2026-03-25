@@ -781,7 +781,6 @@ class _TaskAssignmentView extends StatelessWidget {
   final VoidCallback onChanged;
 
   const _TaskAssignmentView({
-    super.key,
     required this.tasks,
     required this.users,
     required this.currentUser,

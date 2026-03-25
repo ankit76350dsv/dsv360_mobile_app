@@ -667,13 +667,13 @@ class _LeaveTab extends ConsumerWidget {
 
             return RefreshIndicator(
               onRefresh: () async {
-                ref.refresh(
+                final _ = await ref.refresh(
                   leaveSummaryRepositoryProvider(
                     userId: userId,
                     username: username,
                   ).future,
                 );
-                ref.refresh(leaveDetailsListRepositoryProvider.future);
+                final _ = await ref.refresh(leaveDetailsListRepositoryProvider.future);
               },
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -931,14 +931,13 @@ class LeaveSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final customColors = Theme.of(context).custom;
 
     return SizedBox(
       height: 160,
       child: Card(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
+          side: BorderSide(color: Colors.grey.withValues(alpha: 0.2), width: 1.5),
         ),
         child: Container(
           padding: const EdgeInsets.only(left: 14.0, top: 14.0),
@@ -994,7 +993,7 @@ class LeaveTile extends StatelessWidget {
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(18),
-        side: BorderSide(color: Colors.grey.withOpacity(0.2), width: 1.5),
+        side: BorderSide(color: Colors.grey.withValues(alpha: 1.5), width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1079,7 +1078,7 @@ class LeaveTile extends StatelessWidget {
 }
 
 class _AttendanceTab extends ConsumerStatefulWidget {
-  const _AttendanceTab({super.key});
+  const _AttendanceTab();
 
   @override
   ConsumerState<_AttendanceTab> createState() => _AttendanceTabState();
@@ -1662,7 +1661,7 @@ class AttendanceTile extends StatelessWidget {
 }
 
 class _AttendanceTrackerTab extends ConsumerStatefulWidget {
-  const _AttendanceTrackerTab({super.key});
+  const _AttendanceTrackerTab();
 
   @override
   ConsumerState<_AttendanceTrackerTab> createState() =>
@@ -1846,7 +1845,7 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                                   }
                                   return RefreshIndicator(
                                     onRefresh: () async {
-                                      ref.refresh(
+                                      ref.invalidate(
                                         attendanceTrackerListRepositoryProvider(
                                           userId: _queryUserId!,
                                           startDate: _queryStartDate!,
@@ -1903,57 +1902,18 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
     );
   }
 
-  InputDecoration _inputDecoration(String label, ColorScheme colors) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: TextStyle(color: colors.onSurfaceVariant),
-      filled: true,
-      fillColor: colors.surfaceVariant,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-    );
-  }
-}
-
-/// Date field widget
-class _DateField extends StatelessWidget {
-  final String label;
-  final DateTime date;
-  final VoidCallback onTap;
-
-  const _DateField({
-    required this.label,
-    required this.date,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-
-    return InkWell(
-      onTap: onTap,
-      child: InputDecorator(
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(color: colors.onSurfaceVariant),
-          filled: true,
-          fillColor: colors.surfaceVariant,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          suffixIcon: const Icon(Icons.calendar_today),
-        ),
-        child: Text(
-          DateFormat('dd/MM/yyyy').format(date),
-          style: TextStyle(color: colors.onSurface),
-        ),
-      ),
-    );
-  }
+  // InputDecoration _inputDecoration(String label, ColorScheme colors) {
+  //   return InputDecoration(
+  //     labelText: label,
+  //     labelStyle: TextStyle(color: colors.onSurfaceVariant),
+  //     filled: true,
+  //     fillColor: colors.surfaceVariant,
+  //     border: OutlineInputBorder(
+  //       borderRadius: BorderRadius.circular(12),
+  //       borderSide: BorderSide.none,
+  //     ),
+  //   );
+  // }
 }
 
 class _LeaveCalendarTab extends ConsumerStatefulWidget {

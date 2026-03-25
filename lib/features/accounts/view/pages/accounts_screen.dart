@@ -75,7 +75,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
 
               // If the Add screen reports success, refresh the list.
               if (result == true && mounted) {
-                ref.refresh(accountsListRepositoryProvider);
+                ref.invalidate(accountsListRepositoryProvider);
               }
             },
             child: Icon(Icons.add, size: 28, color: Colors.white),
@@ -173,7 +173,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
 
                         return RefreshIndicator(
                           onRefresh: () async {
-                            ref.refresh(accountsListRepositoryProvider);
+                            ref.invalidate(accountsListRepositoryProvider);
                           },
                           child: ListView.builder(
                             itemCount: filteredAccounts.length,
