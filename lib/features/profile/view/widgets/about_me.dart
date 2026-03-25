@@ -6,13 +6,13 @@ class AboutMe extends StatelessWidget {
   final Color accentColor;
 
   const AboutMe({
-    Key? key,
+    super.key,
     required this.title,
     required this.content,
     this.accentColor = const Color(0xFF00C853),
     this.backgroundColor = Colors.white,
     this.textColor = Colors.black,
-  }) : super(key: key);
+  });
 
   final Color backgroundColor;
   final Color textColor;
@@ -25,7 +25,6 @@ class AboutMe extends StatelessWidget {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            // Card
             Container(
               decoration: BoxDecoration(
                 color: backgroundColor,
@@ -34,16 +33,13 @@ class AboutMe extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
               child: Row(
                 children: [
-                  // Left column: title + text
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Title row with small green vertical line
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // vertical accent bar
                             Container(
                               width: 4,
                               height: 20,
@@ -64,7 +60,6 @@ class AboutMe extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        // Body text
                         Text(
                           content,
                           style: TextStyle(
@@ -78,14 +73,10 @@ class AboutMe extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   const SizedBox(width: 12),
                 ],
               ),
             ),
-
-            // Thin green top border (rounded)
-           
           ],
         ),
       ),

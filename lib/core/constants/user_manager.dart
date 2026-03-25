@@ -1,5 +1,5 @@
 import 'package:dsv360/core/network/dio_client.dart';
-import 'package:dsv360/models/user_profile_model.dart';
+import 'package:dsv360/features/profile/model/user_profile_model.dart';
 import 'package:flutter/foundation.dart';
 
 class UserManager {

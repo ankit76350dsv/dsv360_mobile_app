@@ -11,7 +11,7 @@ import 'package:dsv360/views/dashboard/ProjectAnalyticsCard.dart';
 import 'package:dsv360/views/dashboard/StatGrid.dart';
 import 'package:dsv360/views/dashboard/TaskStatusCard.dart';
 import 'package:dsv360/views/dashboard/TopHeader.dart';
-import 'package:dsv360/views/profile/profile_page.dart';
+import 'package:dsv360/features/profile/view/pages/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

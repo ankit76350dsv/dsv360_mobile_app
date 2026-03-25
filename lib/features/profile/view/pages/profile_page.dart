@@ -1,19 +1,17 @@
 import 'package:dsv360/core/constants/session_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
-import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
+import 'package:dsv360/features/profile/view/widgets/profile_crop_image_page.dart';
+import 'package:dsv360/features/profile/viewmodel/profile_viewmodel.dart';
 import 'package:flutter/material.dart';
-import 'package:dsv360/views/profile/AboutMe.dart';
+import 'package:dsv360/features/profile/view/widgets/about_me.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
 import 'dart:io';
-import 'dart:typed_data';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -28,6 +26,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   String? _profileImageUrl;
   String? _bannerImageUrl;
 
+  ProfileViewModel get _viewModel => ref.read(profileViewModelProvider);
+
   @override
   void initState() {
     super.initState();
@@ -37,15 +37,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   Future<String> _resolveUserId() async {
-    final user = AuthManager.instance.currentUser;
-    if (user == null || user.id.isEmpty) {
-      throw Exception('User not found. Please login again.');
-    }
-    return user.id;
+    return _viewModel.resolveUserId();
   }
 
   Future<void> _refreshProfileAndSyncImages(String userId) async {
-    final refreshed = await UserManager.instance.fetchUserProfile(userId);
+    final refreshed = await _viewModel.fetchUserProfile(userId);
     if (!mounted || refreshed == null) return;
 
     setState(() {
@@ -63,7 +59,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     return await Navigator.push<File?>(
       context,
       MaterialPageRoute(
-        builder: (context) => _CropImagePage(imageFile: imageFile),
+        builder: (context) => CropImagePage(imageFile: imageFile),
       ),
     );
   }
@@ -100,20 +96,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
       debugPrint('👤 Uploading for user ID: $userId');
 
-      // Backend expects multipart field name `profile`. Use cropped image for upload.
-      final formData = FormData.fromMap({
-        'profile': await MultipartFile.fromFile(
-          croppedFile.path,
-          filename: image.name,
-        ),
-      });
-
       debugPrint('📤 Sending FormData to server...');
 
       // Upload to server
-      final response = await ApiClient.instance.post(
-        'time_entry_management_application_function/userprofile/$userId',
-        data: formData,
+      final response = await _viewModel.uploadProfileImage(
+        userId: userId,
+        croppedFile: croppedFile,
+        filename: image.name,
       );
 
       debugPrint('✅ Upload response: ${response.statusCode}');
@@ -171,18 +160,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       setState(() => _isBannerUploading = true);
       final userId = await _resolveUserId();
 
-      final endpoint =
-          'time_entry_management_application_function/usercover/$userId';
-
-      // Backend expects multipart field name `cover`.
-      final formData = FormData.fromMap({
-        'cover': await MultipartFile.fromFile(
-          image.path,
-          filename: image.name,
-        ),
-      });
-
-      final response = await ApiClient.instance.post(endpoint, data: formData);
+      final response = await _viewModel.uploadBannerImage(
+        userId: userId,
+        imagePath: image.path,
+        filename: image.name,
+      );
       debugPrint('Banner upload response: ${response.data}');
 
       if (mounted) {
@@ -280,7 +262,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                     end: Alignment.bottomCenter,
                                     colors: [
                                       Colors.transparent,
-                                      customColors.background!.withOpacity(0.8),
+                                      customColors.background!.withValues(alpha: 0.8),
                                     ],
                                   ),
                                 ),
@@ -302,10 +284,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                   width: 38,
                                   height: 38,
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.45),
+                                    color: Colors.black.withValues(alpha: 0.45),
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: Colors.white.withOpacity(0.65),
+                                      color: Colors.white.withValues(alpha: 0.65),
                                       width: 1,
                                     ),
                                   ),
@@ -398,7 +380,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                             shape: BoxShape.circle,
                                             boxShadow: [
                                               BoxShadow(
-                                                color: Colors.black.withOpacity(0.3),
+                                                color: Colors.black.withValues(alpha: 0.3),
                                                 blurRadius: 4,
                                                 offset: const Offset(0, 2),
                                               ),
@@ -462,11 +444,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                     ),
                                     decoration: BoxDecoration(
                                       color: customColors.statusCompleted!
-                                          .withOpacity(0.2),
+                                          .withValues(alpha: 0.2),
                                       borderRadius: BorderRadius.circular(20),
                                       border: Border.all(
                                         color: customColors.statusCompleted!
-                                            .withOpacity(0.5),
+                                            .withValues(alpha: 0.5),
                                       ),
                                     ),
                                     child: Text(
@@ -727,94 +709,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: customColors.textWhite!.withOpacity(0.05),
+        color: customColors.textWhite!.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: customColors.textWhite!.withOpacity(0.1)),
+        border: Border.all(color: customColors.textWhite!.withValues(alpha: 0.01)),
       ),
       child: Text(label, style: TextStyle(color: textColor, fontSize: 13)),
-    );
-  }
-}
-
-/// Crop Image Page using crop_your_image
-class _CropImagePage extends StatefulWidget {
-  final File imageFile;
-
-  const _CropImagePage({required this.imageFile});
-
-  @override
-  State<_CropImagePage> createState() => _CropImagePageState();
-}
-
-class _CropImagePageState extends State<_CropImagePage> {
-  final CropController _controller = CropController();
-  bool _isProcessing = false;
-
-  Future<void> _handleCrop(Uint8List croppedImage) async {
-    setState(() => _isProcessing = true);
-    try {
-      // Save cropped image to temporary file
-      final tempDir = Directory.systemTemp;
-      final croppedFile = File(
-        '${tempDir.path}/cropped_profile_${DateTime.now().millisecondsSinceEpoch}.jpg',
-      );
-      await croppedFile.writeAsBytes(croppedImage);
-      if (mounted) {
-        Navigator.pop(context, croppedFile);
-      }
-    } catch (e) {
-      debugPrint('Crop error: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Crop failed: $e')),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isProcessing = false);
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Crop Profile Photo'),
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          _isProcessing
-              ? const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    ),
-                  ),
-                )
-              : IconButton(
-                  icon: const Icon(Icons.check),
-                  onPressed: () {
-                    _controller.crop();
-                  },
-                ),
-        ],
-      ),
-      body: Crop(
-        image: widget.imageFile.readAsBytesSync(),
-        controller: _controller,
-        onCropped: _handleCrop,
-        aspectRatio: 1.0,
-        initialSize: 0.5,
-        withCircleUi: true,
-      ),
     );
   }
 }

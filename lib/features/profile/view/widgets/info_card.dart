@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Info card used in grid
 class InfoCard extends StatelessWidget {
   final IconData leadingIcon;
   final String title;
@@ -27,7 +26,7 @@ class InfoCard extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade100),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -62,7 +61,7 @@ class InfoCard extends StatelessWidget {
                 Text(
                   subtitle,
                   style: TextStyle(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),

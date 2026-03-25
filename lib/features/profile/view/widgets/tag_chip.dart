@@ -1,4 +1,3 @@
-// lib/widgets/tag_chip.dart
 import 'package:flutter/material.dart';
 
 class TagChip extends StatelessWidget {
@@ -12,7 +11,7 @@ class TagChip extends StatelessWidget {
   final Widget? leading;
 
   const TagChip({
-    Key? key,
+    super.key,
     required this.label,
     this.gradientColors = const [Color(0xFF6EE7B7), Color(0xFF3B82F6)],
     this.textStyle,
@@ -21,11 +20,11 @@ class TagChip extends StatelessWidget {
     this.elevation = 6.0,
     this.onTap,
     this.leading,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    final defaultStyle = TextStyle(
+    final defaultStyle = const TextStyle(
       color: Colors.white,
       fontWeight: FontWeight.w700,
       fontSize: 13,
@@ -65,7 +64,7 @@ class TagChip extends StatelessWidget {
             children: [
               if (leading != null) ...[
                 leading!,
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
               ],
               Text(
                 label,
