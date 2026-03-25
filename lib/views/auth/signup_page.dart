@@ -83,154 +83,160 @@ class _SignUpPageState extends State<SignUpPage> {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
         }
       },
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-            children: [
-              const SizedBox(height: 40),
-              // Logo
-              Image.asset('assets/images/FI_logo.png', width: 120, height: 120),
-              const SizedBox(height: 24),
-              // Title
-              const Text(
-                'Join DSV360',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF2857A4),
+      child: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          FocusManager.instance.primaryFocus?.unfocus();
+        },
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+              children: [
+                const SizedBox(height: 40),
+                // Logo
+                Image.asset('assets/images/FI_logo.png', width: 120, height: 120),
+                const SizedBox(height: 24),
+                // Title
+                const Text(
+                  'Join DSV360',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2857A4),
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'Create an account to get started.',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-              const SizedBox(height: 32),
-              // Form
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    // First Name
-                    CustomInputField(
-                      controller: _firstNameController,
-                      hintText: 'Enter your first name',
-                      labelText: 'First Name',
-                      prefixIcon: Icons.person,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'First name is required';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    // Last Name
-                    CustomInputField(
-                      controller: _lastNameController,
-                      hintText: 'Enter your last name',
-                      labelText: 'Last Name',
-                      prefixIcon: Icons.person,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Last name is required';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    // Email
-                    CustomInputField(
-                      controller: _emailController,
-                      hintText: 'Enter your email',
-                      labelText: 'Email Address',
-                      prefixIcon: Icons.email,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Email is required';
-                        }
-                        if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
-                            .hasMatch(value)) {
-                          return 'Please enter a valid email';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 32),
-                    // Sign Up Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleSignUp,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2857A4),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 2,
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 24,
-                                width: 24,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text(
-                                'Sign Up',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Back to Login Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: OutlinedButton(
-                        onPressed: _isLoading ? null : () {
-                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                          Navigator.pop(context);
+                const SizedBox(height: 12),
+                const Text(
+                  'Create an account to get started.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                const SizedBox(height: 32),
+                // Form
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      // First Name
+                      CustomInputField(
+                        controller: _firstNameController,
+                        hintText: 'Enter your first name',
+                        labelText: 'First Name',
+                        prefixIcon: Icons.person,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'First name is required';
+                          }
+                          return null;
                         },
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(
-                            color: Color(0xFF2857A4),
-                            width: 2,
+                      ),
+                      const SizedBox(height: 16),
+                      // Last Name
+                      CustomInputField(
+                        controller: _lastNameController,
+                        hintText: 'Enter your last name',
+                        labelText: 'Last Name',
+                        prefixIcon: Icons.person,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Last name is required';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      // Email
+                      CustomInputField(
+                        controller: _emailController,
+                        hintText: 'Enter your email',
+                        labelText: 'Email Address',
+                        prefixIcon: Icons.email,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Email is required';
+                          }
+                          if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
+                              .hasMatch(value)) {
+                            return 'Please enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 32),
+                      // Sign Up Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _handleSignUp,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF2857A4),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 2,
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : const Text(
+                                  'Sign Up',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
-                        child: const Text(
-                          'Back to Login',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2857A4),
+                      ),
+                      const SizedBox(height: 16),
+                      // Back to Login Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: OutlinedButton(
+                          onPressed: _isLoading ? null : () {
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                            Navigator.pop(context);
+                          },
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                              color: Color(0xFF2857A4),
+                              width: 2,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: const Text(
+                            'Back to Login',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2857A4),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 40),
-            ],
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
-        ),
+          ),
         ),
       ),
     );
