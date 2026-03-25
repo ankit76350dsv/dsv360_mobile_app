@@ -4,6 +4,7 @@ import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/teams/view/pages/add_edit_team.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 
@@ -316,10 +317,29 @@ class EmployeeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool didPulseDuringDrag = false;
+
     return LongPressDraggable<Employee>(
       data: employee,
       delay: const Duration(milliseconds: 300),
       hapticFeedbackOnStart: true,
+      onDragStarted: () {
+        didPulseDuringDrag = false;
+        HapticFeedback.heavyImpact();
+        HapticFeedback.vibrate();
+      },
+      onDragUpdate: (_) {
+        if (!didPulseDuringDrag) {
+          didPulseDuringDrag = true;
+          HapticFeedback.mediumImpact();
+        }
+      },
+      onDragEnd: (_) {
+        HapticFeedback.lightImpact();
+      },
+      onDraggableCanceled: (_, __) {
+        HapticFeedback.mediumImpact();
+      },
       feedback: Material(
         color: Colors.transparent,
         child: _cardContent(context, width: rs.s(250), elevated: true),
@@ -338,7 +358,7 @@ class EmployeeCard extends StatelessWidget {
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
-// ║               TEAM BOARD COMPONENT                          ║
+// ║               TEAM BOARD COMPONENT                           ║
 // ╚══════════════════════════════════════════════════════════════╝
 
 class TeamBoard extends StatefulWidget {
@@ -391,11 +411,13 @@ class _TeamBoardState extends State<TeamBoard> {
     return DragTarget<Employee>(
       onWillAccept: (data) {
         if (data == null || data.teamId == widget.team.id) return false;
+        HapticFeedback.selectionClick();
         setState(() => _isDragOver = true);
         return true;
       },
       onLeave: (_) => setState(() => _isDragOver = false),
       onAccept: (employee) {
+        HapticFeedback.mediumImpact();
         setState(() => _isDragOver = false);
         widget.onEmployeeDropped(employee, widget.team.id);
       },
@@ -462,7 +484,7 @@ class _TeamBoardState extends State<TeamBoard> {
                     ),
                     SizedBox(width: rs.s(6)),
                     _IconBtn(
-                      icon: Icons.edit_outlined,
+                      icon: Icons.edit,
                       iconColor: customColors.primary ?? const Color(0xFF2563EB),
                       bgColor: (customColors.primary ?? const Color(0xFF2563EB)).withValues(alpha: 0.14),
                       onTap: widget.onEdit,
@@ -470,7 +492,7 @@ class _TeamBoardState extends State<TeamBoard> {
                     ),
                     SizedBox(width: rs.s(6)),
                     _IconBtn(
-                      icon: Icons.delete_outline_rounded,
+                      icon: Icons.delete,
                       iconColor: customColors.error ?? const Color(0xFFDC2626),
                       bgColor: (customColors.error ?? const Color(0xFFDC2626)).withValues(alpha: 0.16),
                       onTap: widget.onDelete,
@@ -841,10 +863,18 @@ class _TeamsPageState extends State<TeamsPage> {
                       // ════════════════════════════════════════
                       Container(
                         height: lowerH,
+                        
                         decoration: BoxDecoration(
+                          border: Border(
+                            top: BorderSide(
+                              width: 0.8,
+                              color: customColors.greyBorder ??
+                                  (isDark ? AppColorsDark.greyBorder : AppColorsLight.greyBorder),
+                            ),
+                          ),
                           color: cardBackground,
-                          borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(22)),
+                          // borderRadius: BorderRadius.vertical(
+                          //     top: Radius.circular(22)),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.09),
@@ -878,7 +908,7 @@ class _TeamsPageState extends State<TeamsPage> {
                                       borderRadius: rs.radius(11),
                                     ),
                                     child: Icon(
-                                      Icons.person_outline_rounded,
+                                      Icons.person,
                                       color: customColors.statusInProgress ?? customColors.primary ?? const Color(0xFFE07820),
                                       size: rs.s(21),
                                     ),
@@ -965,6 +995,7 @@ class _TeamsPageState extends State<TeamsPage> {
                                   if (data == null ||
                                       data.teamId == null)
                                     return false;
+                                  HapticFeedback.selectionClick();
                                   setState(() =>
                                       _isUnassignedDragOver = true);
                                   return true;
@@ -972,6 +1003,7 @@ class _TeamsPageState extends State<TeamsPage> {
                                 onLeave: (_) => setState(() =>
                                     _isUnassignedDragOver = false),
                                 onAccept: (emp) {
+                                  HapticFeedback.mediumImpact();
                                   setState(() =>
                                       _isUnassignedDragOver = false);
                                   _moveEmployee(emp, null);
