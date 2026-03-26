@@ -3,8 +3,10 @@ import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/teams/view/pages/add_edit_team.dart';
+import 'package:dsv360/features/teams/providers/teams_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 
@@ -70,8 +72,15 @@ class Employee {
 class Team {
   final String id;
   String name;
+  final String? reportingManagerId;
+  final String? reportingManager;
 
-  Team({required this.id, required this.name});
+  Team({
+    required this.id,
+    required this.name,
+    this.reportingManagerId,
+    this.reportingManager,
+  });
 }
 
 // ╔══════════════════════════════════════════════════════════════╗
@@ -642,23 +651,48 @@ class _SearchField extends StatelessWidget {
 // ║                    TEAMS PAGE (MAIN)                        ║
 // ╚══════════════════════════════════════════════════════════════╝
 
-class TeamsPage extends StatefulWidget {
+class TeamsPage extends ConsumerStatefulWidget {
   const TeamsPage({super.key});
 
   @override
-  State<TeamsPage> createState() => _TeamsPageState();
+  ConsumerState<TeamsPage> createState() => _TeamsPageState();
 }
 
-class _TeamsPageState extends State<TeamsPage> {
+class _TeamsPageState extends ConsumerState<TeamsPage> {
   String _unassignedSearch = '';
   bool _isUnassignedDragOver = false;
+  late List<Team> _teams;
+  bool _isLoadingTeams = true;
 
-  // ── Sample data ──
-  final List<Team> _teams = [
-    Team(id: 'team1', name: 'Product Team'),
-    Team(id: 'team2', name: 'Operations Team'),
-    Team(id: 'team3', name: 'Design Team'),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _teams = [];
+    _loadTeams();
+  }
+
+  Future<void> _loadTeams() async {
+    try {
+      final teamModels = await ref.read(teamsProvider.future);
+      // Convert API Team models to local Team class with manager info
+      setState(() {
+        _teams = teamModels
+            .map((t) => Team(
+              id: t.rowId,
+              name: t.teamName,
+              reportingManagerId: t.teamReportingManagerId,
+              reportingManager: t.teamReportingManager,
+            ))
+            .toList();
+        _isLoadingTeams = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading teams: $e');
+      setState(() {
+        _isLoadingTeams = false;
+      });
+    }
+  }
 
   final List<Employee> _employees = [
     Employee(id: 'e1',  name: 'Mohammed Meraj', phone: '4556674556', teamId: 'team1'),
@@ -712,21 +746,20 @@ class _TeamsPageState extends State<TeamsPage> {
     final teamName = (result['teamName'] ?? '').toString().trim();
     if (teamName.isEmpty) return;
 
-    setState(() {
-      _teams.add(
-        Team(
-          id: 'team_${DateTime.now().millisecondsSinceEpoch}',
-          name: teamName,
-        ),
-      );
-    });
+    // Refresh teams list from API after successful creation
+    _loadTeams();
   }
 
   Future<void> _showEditTeamDialog(Team team) async {
     final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
-        builder: (_) => AddEditTeamPage(teamName: team.name),
+        builder: (_) => AddEditTeamPage(
+          teamId: team.id,
+          teamName: team.name,
+          reportingManager: team.reportingManager,
+          reportingManagerId: team.reportingManagerId,
+        ),
       ),
     );
 
@@ -735,9 +768,8 @@ class _TeamsPageState extends State<TeamsPage> {
     final updatedName = (result['teamName'] ?? '').toString().trim();
     if (updatedName.isEmpty) return;
 
-    setState(() {
-      team.name = updatedName;
-    });
+    // Refresh teams list from API after successful update
+    _loadTeams();
   }
 
   void _confirmDeleteTeam(Team team) {
@@ -755,6 +787,8 @@ class _TeamsPageState extends State<TeamsPage> {
           _teams.removeWhere((t) => t.id == team.id);
         });
         Navigator.of(dialogContext).pop(true);
+        // Refresh teams list from API after deletion
+        _loadTeams();
       },
     );
   }
@@ -815,7 +849,16 @@ class _TeamsPageState extends State<TeamsPage> {
                       // ════════════════════════════════════════
                       SizedBox(
                         height: upperH,
-                        child: _teams.isEmpty
+                        child: _isLoadingTeams
+                            ? Center(
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.5,
+                                  valueColor: AlwaysStoppedAnimation(
+                                    Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                              )
+                            : _teams.isEmpty
                             ? Center(
                                 child: Column(
                                   mainAxisSize: MainAxisSize.min,

@@ -7,6 +7,7 @@ class Employee {
   final bool isConfirmed;
   final String roleId;
   final String roleName;
+  final String profilePic;
 
   Employee({
     required this.userId,
@@ -17,6 +18,7 @@ class Employee {
     required this.isConfirmed,
     required this.roleId,
     required this.roleName,
+    this.profilePic = '',
   });
 
   factory Employee.fromJson(Map<String, dynamic> json) {
@@ -29,6 +31,7 @@ class Employee {
       isConfirmed: json['is_confirmed'] ?? false,
       roleId: (json['role_details'] as Map<String, dynamic>?)?['role_id']?.toString() ?? '',
       roleName: (json['role_details'] as Map<String, dynamic>?)?['role_name']?.toString() ?? '',
+      profilePic: json['profile_pic']?.toString() ?? '',
     );
   }
 
@@ -46,6 +49,7 @@ class Employee {
         'role_id': roleId,
         'role_name': roleName,
       },
+      'profile_pic': profilePic,
     };
   }
 }
