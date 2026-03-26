@@ -3,6 +3,7 @@ import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dsv360/features/teams/providers/teams_provider.dart';
 
 class AddEditTeamPage extends ConsumerStatefulWidget {
 	final String? teamName;
@@ -27,14 +28,6 @@ class _AddEditTeamPageState extends ConsumerState<AddEditTeamPage> {
 
 	final String bottomTwoButtonsLoadingKey = 'add_edit_team_key';
 
-	static const List<String> _reportingManagers = [
-		'Mohammed Meraj',
-		'Ankit Kumar',
-		'Abhay Singh',
-		'Rohan Shinde',
-		'Sneha Patil',
-	];
-
 	@override
 	void initState() {
 		super.initState();
@@ -50,6 +43,85 @@ class _AddEditTeamPageState extends ConsumerState<AddEditTeamPage> {
 	void dispose() {
 		_teamNameController.dispose();
 		super.dispose();
+	}
+
+	/// Build reporting manager dropdown with API fetched data
+	Widget _buildReportingManagerDropdown(BuildContext context, ColorScheme colors) {
+		return Consumer(
+			builder: (context, ref, child) {
+				final reportingManagersAsync = ref.watch(reportingManagersProvider);
+
+				return reportingManagersAsync.when(
+					data: (managers) {
+						// Create dropdown menu items from employees
+						final menuItems = managers
+							.map(
+								(employee) => DropdownMenuItem<String>(
+									value: employee.fullName,
+									child: Text(employee.fullName),
+								),
+							)
+							.toList();
+
+						return CustomDropDownField(
+							hintText: 'Reporting Manager',
+							labelText: 'Reporting Manager',
+							prefixIcon: Icons.person_search,
+							selectedOption: _selectedReportingManager,
+							searchable: true,
+							searchHintText: 'Search reporting manager',
+							options: menuItems,
+							onChanged: (value) {
+								setState(() => _selectedReportingManager = value);
+							},
+						);
+					},
+					loading: () {
+						return CustomDropDownField(
+							hintText: 'Reporting Manager',
+							labelText: 'Reporting Manager',
+							prefixIcon: Icons.person_search,
+							selectedOption: null,
+							searchable: false,
+							options: [
+								const DropdownMenuItem<String>(
+									value: null,
+									child: Text('Loading managers...'),
+								),
+							],
+							onChanged: (_) {},
+						);
+					},
+					error: (error, stackTrace) {
+						debugPrint('❌ Error loading reporting managers: $error');
+						return Column(
+							crossAxisAlignment: CrossAxisAlignment.start,
+							children: [
+								const Text(
+									'Error loading reporting managers',
+									style: TextStyle(color: Colors.red, fontSize: 12),
+								),
+								const SizedBox(height: 8),
+								CustomDropDownField(
+									hintText: 'Reporting Manager',
+									labelText: 'Reporting Manager',
+									prefixIcon: Icons.person_search,
+									selectedOption: null,
+									searchable: false,
+									options: const [
+										DropdownMenuItem<String>(
+											value: null,
+											child: Text('Failed to load'),
+										),
+									],
+									onChanged: (_) {},
+								),
+							],
+						);
+					},
+				);
+			},
+		);
 	}
 
 	@override
@@ -109,25 +181,8 @@ class _AddEditTeamPageState extends ConsumerState<AddEditTeamPage> {
 												},
 											),
 											const SizedBox(height: 20),
-											CustomDropDownField(
-												hintText: 'Reporting Manager',
-												labelText: 'Reporting Manager',
-												prefixIcon: Icons.person_search,
-												selectedOption: _selectedReportingManager,
-												searchable: true,
-												searchHintText: 'Search reporting manager',
-												options: _reportingManagers
-														.map(
-															(name) => DropdownMenuItem<String>(
-																value: name,
-																child: Text(name),
-															),
-														)
-														.toList(),
-												onChanged: (value) {
-													setState(() => _selectedReportingManager = value);
-												},
-											),
+											// Reporting Manager Dropdown with API data
+											_buildReportingManagerDropdown(context, colors),
 											const SizedBox(height: 32),
 											BottomTwoButtons(
 												loadingKey: bottomTwoButtonsLoadingKey,
