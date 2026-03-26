@@ -8,6 +8,8 @@ class Employee {
   final String roleId;
   final String roleName;
   final String profilePic;
+  final String? phone;
+  final String? teamId;
 
   Employee({
     required this.userId,
@@ -19,6 +21,8 @@ class Employee {
     required this.roleId,
     required this.roleName,
     this.profilePic = '',
+    this.phone,
+    this.teamId,
   });
 
   factory Employee.fromJson(Map<String, dynamic> json) {
@@ -32,6 +36,8 @@ class Employee {
       roleId: (json['role_details'] as Map<String, dynamic>?)?['role_id']?.toString() ?? '',
       roleName: (json['role_details'] as Map<String, dynamic>?)?['role_name']?.toString() ?? '',
       profilePic: json['profile_pic']?.toString() ?? '',
+      phone: json['phone']?.toString(),
+      teamId: json['team_id']?.toString(),
     );
   }
 
@@ -50,6 +56,8 @@ class Employee {
         'role_name': roleName,
       },
       'profile_pic': profilePic,
+      'phone': phone,
+      'team_id': teamId,
     };
   }
 }

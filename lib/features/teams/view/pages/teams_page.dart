@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/features/teams/providers/batch_profile_provider.dart';
 
 // ╔══════════════════════════════════════════════════════════════╗
 // ║              RESPONSIVE SCALE HELPER                        ║
@@ -377,6 +378,7 @@ class TeamBoard extends StatefulWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final _RS rs;
+  final bool isDeleting;
 
   const TeamBoard({
     super.key,
@@ -386,6 +388,7 @@ class TeamBoard extends StatefulWidget {
     required this.onEdit,
     required this.onDelete,
     required this.rs,
+    this.isDeleting = false,
   });
 
   @override
@@ -506,6 +509,7 @@ class _TeamBoardState extends State<TeamBoard> {
                       bgColor: (customColors.error ?? const Color(0xFFDC2626)).withValues(alpha: 0.16),
                       onTap: widget.onDelete,
                       rs: rs,
+                      isLoading: widget.isDeleting,
                     ),
                   ],
                 ),
@@ -559,6 +563,7 @@ class _IconBtn extends StatelessWidget {
   final Color bgColor;
   final VoidCallback onTap;
   final _RS rs;
+  final bool isLoading;
 
   const _IconBtn({
     required this.icon,
@@ -566,12 +571,13 @@ class _IconBtn extends StatelessWidget {
     required this.bgColor,
     required this.onTap,
     required this.rs,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       child: Container(
         width: rs.s(32),
         height: rs.s(32),
@@ -579,7 +585,20 @@ class _IconBtn extends StatelessWidget {
           color: bgColor,
           borderRadius: rs.radius(8),
         ),
-        child: Icon(icon, size: rs.s(16), color: iconColor),
+        child: isLoading
+            ? SizedBox(
+                width: rs.s(12),
+                height: rs.s(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(6.0),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.4,
+                    valueColor: AlwaysStoppedAnimation(iconColor),
+                    
+                  ),
+                ),
+              )
+            : Icon(icon, size: rs.s(16), color: iconColor),
       ),
     );
   }
@@ -662,13 +681,18 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
   String _unassignedSearch = '';
   bool _isUnassignedDragOver = false;
   late List<Team> _teams;
+  late List<Employee> _employees;
   bool _isLoadingTeams = true;
+  bool _isLoadingEmployees = true;
+  String? _deletingTeamId;
 
   @override
   void initState() {
     super.initState();
     _teams = [];
+    _employees = [];
     _loadTeams();
+    _loadEmployees();
   }
 
   Future<void> _loadTeams() async {
@@ -694,21 +718,41 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
     }
   }
 
-  final List<Employee> _employees = [
-    Employee(id: 'e1',  name: 'Mohammed Meraj', phone: '4556674556', teamId: 'team1'),
-    Employee(id: 'e2',  name: 'Ankit Kumar',    phone: '4556674556', teamId: 'team1'),
-    Employee(id: 'e3',  name: 'Abhay Singh',    phone: '4556674556', teamId: 'team1'),
-    Employee(id: 'e4',  name: 'Rohan Shinde',   phone: '4556674556', teamId: 'team1'),
-    Employee(id: 'e5',  name: 'Kedar Kambhar',  phone: '4556674556', teamId: 'team1'),
-    Employee(id: 'e6',  name: 'UnKnown One',    phone: '4556674556', teamId: 'team1'),
-    Employee(id: 'e7',  name: 'Sneha Patil',    phone: '4556674556', teamId: 'team2'),
-    Employee(id: 'e8',  name: 'Raj Deshmukh',   phone: '4556674556', teamId: 'team2'),
-    Employee(id: 'e9',  name: 'Vaibhav Pawar',  phone: '4556674556'),
-    Employee(id: 'e10', name: 'Pawan DK',        phone: '4556674556'),
-    Employee(id: 'e11', name: 'Meraj Mohammed',  phone: '4556674556'),
-    Employee(id: 'e12', name: 'Riya Sharma',     phone: '4556674556'),
-    Employee(id: 'e13', name: 'Priya Nair',      phone: '4556674556'),
-  ];
+  Future<void> _loadEmployees() async {
+    try {
+      final batchProfiles = await ref.read(batchProfilesProvider.future);
+      // Convert batch profile response to local Employee class used in teams page
+      setState(() {
+        _employees = batchProfiles
+            .map((profile) => Employee(
+              id: profile.userId,
+              name: profile.fullName,
+              phone: profile.phone ?? '',
+              profileImageUrl:
+                  profile.profilePic.isNotEmpty ? profile.profilePic : null,
+              teamId: profile.teamId,
+            ))
+            .toList();
+        _isLoadingEmployees = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading batch profiles: $e');
+      setState(() {
+        _isLoadingEmployees = false;
+      });
+      
+      // Show error message in snackbar
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading employees: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
 
   // ── Helpers ──
   List<Employee> _employeesInTeam(String teamId) =>
@@ -778,17 +822,53 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
       title: 'Delete Team',
       subtitle: 'Are you sure you want to delete "${team.name}"?',
       primaryText: 'Delete',
-      onPrimaryPressed: (dialogContext) {
-        setState(() {
-          // todo: Add delete-team backend call handling here later.
-          for (final e in _employees) {
-            if (e.teamId == team.id) e.teamId = null;
-          }
-          _teams.removeWhere((t) => t.id == team.id);
-        });
+      onPrimaryPressed: (dialogContext) async {
         Navigator.of(dialogContext).pop(true);
-        // Refresh teams list from API after deletion
-        _loadTeams();
+        
+        // Set loading state for this team
+        setState(() => _deletingTeamId = team.id);
+
+        try {
+          // Call delete API
+          final teamNotifier = ref.read(teamNotifierProvider.notifier);
+          await teamNotifier.deleteTeam(team.id);
+
+          // Remove from local state
+          setState(() {
+            for (final e in _employees) {
+              if (e.teamId == team.id) e.teamId = null;
+            }
+            _teams.removeWhere((t) => t.id == team.id);
+            _deletingTeamId = null;
+          });
+
+          // Show success snackbar
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Team "${team.name}" deleted successfully'),
+                backgroundColor: Colors.green,
+                duration: const Duration(seconds: 2),
+              ),
+            );
+          }
+
+          // Refresh teams list from API
+          _loadTeams();
+        } catch (e) {
+          setState(() => _deletingTeamId = null);
+
+          // Show error snackbar
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error deleting team: $e'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+        }
       },
     );
   }
@@ -896,6 +976,7 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
                                     onDelete: () =>
                                         _confirmDeleteTeam(team),
                                     rs: rs,
+                                    isDeleting: _deletingTeamId == team.id,
                                   );
                                 },
                               ),
@@ -1033,73 +1114,82 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
 
                             // ── Unassigned drag-target 2-col grid ──
                             Expanded(
-                              child: DragTarget<Employee>(
-                                onWillAccept: (data) {
-                                  if (data == null ||
-                                      data.teamId == null)
-                                    return false;
-                                  HapticFeedback.selectionClick();
-                                  setState(() =>
-                                      _isUnassignedDragOver = true);
-                                  return true;
-                                },
-                                onLeave: (_) => setState(() =>
-                                    _isUnassignedDragOver = false),
-                                onAccept: (emp) {
-                                  HapticFeedback.mediumImpact();
-                                  setState(() =>
-                                      _isUnassignedDragOver = false);
-                                  _moveEmployee(emp, null);
-                                },
-                                builder: (ctx, candidate, rejected) {
-                                  return AnimatedContainer(
-                                    duration: const Duration(
-                                        milliseconds: 180),
-                                    curve: Curves.easeOut,
-                                    margin: rs.sym(h: 16),
-                                    decoration: _isUnassignedDragOver
-                                        ? BoxDecoration(
-                                            color: (customColors.statusInProgress ?? customColors.primary ?? const Color(0xFFE07820)).withValues(alpha: 0.12),
-                                            borderRadius:
-                                                rs.radius(14),
-                                            border: Border.all(
-                                                color: customColors.statusInProgress ?? customColors.primary ?? const Color(0xFFE07820),
-                                                width: 2),
-                                          )
-                                        : null,
-                                    child: _unassigned.isEmpty
-                                        ? EmptyDropZone(rs: rs)
-                                        : GridView.builder(
-                                            padding: EdgeInsets.only(
-                                              top: rs.s(4),
-                                              bottom: rs.s(12),
-                                            ),
-                                            gridDelegate:
-                                                SliverGridDelegateWithFixedCrossAxisCount(
-                                              crossAxisCount: 2,
-                                              crossAxisSpacing:
-                                                  rs.s(8),
-                                              mainAxisSpacing:
-                                                  rs.s(3),
-                                              // aspect ratio shrinks on
-                                              // small screens to prevent
-                                              // vertical overflow
-                                              childAspectRatio:
-                                                  gridAspect,
-                                            ),
-                                            itemCount:
-                                                _unassigned.length,
-                                            itemBuilder: (_, i) =>
-                                                EmployeeCard(
-                                              employee:
-                                                  _unassigned[i],
-                                              rs: rs,
-                                              isGrid: true,
-                                            ),
-                                          ),
-                                  );
-                                },
-                              ),
+                              child: _isLoadingEmployees
+                                  ? Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        valueColor: AlwaysStoppedAnimation(
+                                          Theme.of(context).colorScheme.primary,
+                                        ),
+                                      ),
+                                    )
+                                  : DragTarget<Employee>(
+                                      onWillAccept: (data) {
+                                        if (data == null ||
+                                            data.teamId == null)
+                                          return false;
+                                        HapticFeedback.selectionClick();
+                                        setState(() =>
+                                            _isUnassignedDragOver = true);
+                                        return true;
+                                      },
+                                      onLeave: (_) => setState(() =>
+                                          _isUnassignedDragOver = false),
+                                      onAccept: (emp) {
+                                        HapticFeedback.mediumImpact();
+                                        setState(() =>
+                                            _isUnassignedDragOver = false);
+                                        _moveEmployee(emp, null);
+                                      },
+                                      builder: (ctx, candidate, rejected) {
+                                        return AnimatedContainer(
+                                          duration: const Duration(
+                                              milliseconds: 180),
+                                          curve: Curves.easeOut,
+                                          margin: rs.sym(h: 16),
+                                          decoration: _isUnassignedDragOver
+                                              ? BoxDecoration(
+                                                  color: (customColors.statusInProgress ?? customColors.primary ?? const Color(0xFFE07820)).withValues(alpha: 0.12),
+                                                  borderRadius:
+                                                      rs.radius(14),
+                                                  border: Border.all(
+                                                      color: customColors.statusInProgress ?? customColors.primary ?? const Color(0xFFE07820),
+                                                      width: 2),
+                                                )
+                                              : null,
+                                          child: _unassigned.isEmpty
+                                              ? EmptyDropZone(rs: rs)
+                                              : GridView.builder(
+                                                  padding: EdgeInsets.only(
+                                                    top: rs.s(4),
+                                                    bottom: rs.s(12),
+                                                  ),
+                                                  gridDelegate:
+                                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                                    crossAxisCount: 2,
+                                                    crossAxisSpacing:
+                                                        rs.s(8),
+                                                    mainAxisSpacing:
+                                                        rs.s(3),
+                                                    // aspect ratio shrinks on
+                                                    // small screens to prevent
+                                                    // vertical overflow
+                                                    childAspectRatio:
+                                                        gridAspect,
+                                                  ),
+                                                  itemCount:
+                                                      _unassigned.length,
+                                                  itemBuilder: (_, i) =>
+                                                      EmployeeCard(
+                                                    employee:
+                                                        _unassigned[i],
+                                                    rs: rs,
+                                                    isGrid: true,
+                                                  ),
+                                                ),
+                                        );
+                                      },
+                                    ),
                             ),
                           ],
                         ),

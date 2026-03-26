@@ -13,6 +13,12 @@ final employeeListProvider = FutureProvider.autoDispose<List<Employee>>((ref) as
   return repository.fetchAllEmployees();
 });
 
+// Batch Profile Provider (includes team assignments)
+final batchProfileProvider = FutureProvider.autoDispose<List<Employee>>((ref) async {
+  final repository = ref.watch(employeeRepositoryProvider);
+  return repository.fetchBatchProfiles();
+});
+
 // Unassigned Employees Provider
 final unassignedEmployeeListProvider = FutureProvider.autoDispose<List<Employee>>((ref) async {
   final repository = ref.watch(employeeRepositoryProvider);

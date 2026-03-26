@@ -75,4 +75,21 @@ class TeamRepository {
     final teamData = jsonResponse['data'] as Map<String, dynamic>;
     return Team.fromJson(teamData);
   }
+
+  /// Delete a team via API
+  /// Throws exception if deletion fails
+  Future<void> deleteTeam({required String teamId}) async {
+    const path = 'time_entry_management_application_function/team';
+
+    final response = await _client.delete(
+      path,
+      queryParameters: {'ROWID': teamId},
+    );
+
+    final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>;
+    
+    if (jsonResponse['success'] != true) {
+      throw Exception(jsonResponse['message'] ?? 'Failed to delete team');
+    }
+  }
 }

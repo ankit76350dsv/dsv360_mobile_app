@@ -129,4 +129,42 @@ class EmployeeRepository {
       return [];
     }
   }
+
+  /// Fetch batch profile data including team assignments
+  /// Maps API response to Employee objects with teamId from response
+  Future<List<Employee>> fetchBatchProfiles() async {
+    try {
+      debugPrint('👥 Fetching batch profiles');
+
+      const path = 'time_entry_management_application_function/batchProfile';
+      debugPrint('🌐 path: $path');
+
+      final response = await _client.post(path, data: {});
+      debugPrint('📊 Response Status: ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final Map<String, dynamic> jsonResponse = response.data as Map<String, dynamic>;
+
+        if (jsonResponse['success'] == true) {
+          final List<dynamic> profileList = jsonResponse['data'] ?? [];
+          debugPrint('✅ Batch profiles fetched: ${profileList.length}');
+
+          return profileList
+              .map((profile) => Employee.fromJson(profile as Map<String, dynamic>))
+              .toList();
+        } else {
+          debugPrint('❌ API returned success: false');
+          return [];
+        }
+      } else {
+        debugPrint('❌ HTTP Error ${response.statusCode}');
+        return [];
+      }
+    } catch (e, st) {
+      debugPrint('❌ Error fetching batch profiles: $e');
+      debugPrint('📍 Stack: $st');
+      developer.log('Error fetching batch profiles: $e', name: 'EmployeeRepository');
+      return [];
+    }
+  }
 }

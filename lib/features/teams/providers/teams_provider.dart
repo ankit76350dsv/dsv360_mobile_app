@@ -76,6 +76,12 @@ class TeamNotifier extends StateNotifier<AsyncValue<Team?>> {
       orgId: orgId,
     );
   }
+
+  /// Delete a team - throws exception on error
+  Future<void> deleteTeam(String teamId) async {
+    final repository = _ref.read(teamRepositoryProvider);
+    return await repository.deleteTeam(teamId: teamId);
+  }
 }
 
 /// State notifier provider for team operations
