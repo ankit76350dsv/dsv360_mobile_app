@@ -1,7 +1,7 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../models/employee.dart';
+import '../../features/teams/model/employee_model.dart';
 import '../../providers/employee_provider.dart';
 
 class MultiSelectAssigneeWidget extends ConsumerStatefulWidget {

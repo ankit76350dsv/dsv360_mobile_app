@@ -1,7 +1,7 @@
 import 'dart:developer' as developer;
 import 'package:dsv360/core/network/dio_client.dart';// single import — no raw http, TokenManager, or AppInitManager needed
 import 'package:flutter/material.dart';
-import 'package:dsv360/models/employee.dart';
+import 'package:dsv360/features/teams/model/employee_model.dart';
 
 // ---------------------------------------------------------------------------
 // How this repository uses ApiClient:

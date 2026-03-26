@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dsv360/models/employee.dart';
+import 'package:dsv360/features/teams/model/employee_model.dart';
 import 'package:dsv360/providers/employee_provider.dart';
 
 /// Provider that returns a list of reporting managers

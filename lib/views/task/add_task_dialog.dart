@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../models/task.dart';
-import '../../models/employee.dart';
+import '../../features/teams/model/employee_model.dart';
 import '../../models/attachment.dart';
 import '../../providers/project_provider.dart';
 import '../../providers/employee_provider.dart';

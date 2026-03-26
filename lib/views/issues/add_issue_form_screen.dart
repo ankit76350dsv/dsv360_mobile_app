@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/issue_model.dart';
 import '../../models/project_model.dart';
-import '../../models/employee.dart';
+import '../../features/teams/model/employee_model.dart';
 import '../../repositories/issue_repository.dart';
 import '../../repositories/project_repository.dart';
-import '../../repositories/employee_repository.dart';
+import '../../features/teams/repositories/employee_repository.dart';
 import '../widgets/custom_input_field.dart';
 import '../widgets/TopBar.dart';
 
