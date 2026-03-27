@@ -374,7 +374,11 @@ class EmployeeCard extends StatelessWidget {
 class TeamBoard extends StatefulWidget {
   final Team team;
   final List<Employee> employees;
-  final void Function(Employee employee, String targetTeamId) onEmployeeDropped;
+  final void Function(
+    Employee employee,
+    String? targetTeamId,
+    String? targetTeamName,
+  ) onEmployeeDropped;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final _RS rs;
@@ -431,7 +435,7 @@ class _TeamBoardState extends State<TeamBoard> {
       onAccept: (employee) {
         HapticFeedback.mediumImpact();
         setState(() => _isDragOver = false);
-        widget.onEmployeeDropped(employee, widget.team.id);
+        widget.onEmployeeDropped(employee, widget.team.id, widget.team.name);
       },
       builder: (context, candidateData, rejectedData) {
         return AnimatedContainer(
@@ -771,11 +775,33 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
   int get _totalUnassigned =>
       _employees.where((e) => e.teamId == null).length;
 
-  void _moveEmployee(Employee employee, String? targetTeamId) {
-    setState(() {
-      final idx = _employees.indexWhere((e) => e.id == employee.id);
-      if (idx != -1) _employees[idx].teamId = targetTeamId;
-    });
+  Future<void> _moveEmployee(
+    Employee employee,
+    String? targetTeamId,
+    String? targetTeamName,
+  ) async {
+    if (employee.teamId == targetTeamId) return;
+
+    try {
+      final teamNotifier = ref.read(teamNotifierProvider.notifier);
+      await teamNotifier.assignUserToTeam(
+        userId: employee.id,
+        teamId: targetTeamId,
+        teamName: targetTeamName,
+      );
+
+      await _loadTeams();
+      await _loadEmployees();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error saving team assignment: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   // ── Dialogs ──
@@ -985,8 +1011,8 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
                                     team: team,
                                     employees:
                                         _employeesInTeam(team.id),
-                                    onEmployeeDropped: (emp, tid) =>
-                                        _moveEmployee(emp, tid),
+                                    onEmployeeDropped: (emp, tid, tname) =>
+                                      _moveEmployee(emp, tid, tname),
                                     onEdit: () =>
                                         _showEditTeamDialog(team),
                                     onDelete: () =>
@@ -1155,7 +1181,7 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
                                         HapticFeedback.mediumImpact();
                                         setState(() =>
                                             _isUnassignedDragOver = false);
-                                        _moveEmployee(emp, null);
+                                        _moveEmployee(emp, null, null);
                                       },
                                       builder: (ctx, candidate, rejected) {
                                         return AnimatedContainer(

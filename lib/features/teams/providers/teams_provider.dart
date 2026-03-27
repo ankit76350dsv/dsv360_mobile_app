@@ -82,6 +82,20 @@ class TeamNotifier extends StateNotifier<AsyncValue<Team?>> {
     final repository = _ref.read(teamRepositoryProvider);
     return await repository.deleteTeam(teamId: teamId);
   }
+
+  /// Assign user to a team, or unassign when teamId/teamName are null
+  Future<void> assignUserToTeam({
+    required String userId,
+    String? teamId,
+    String? teamName,
+  }) async {
+    final repository = _ref.read(teamRepositoryProvider);
+    return await repository.assignUserToTeam(
+      userId: userId,
+      teamId: teamId,
+      teamName: teamName,
+    );
+  }
 }
 
 /// State notifier provider for team operations

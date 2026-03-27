@@ -92,4 +92,28 @@ class TeamRepository {
       throw Exception(jsonResponse['message'] ?? 'Failed to delete team');
     }
   }
+
+  /// Assign a user to a team (or unassign by sending empty strings for team details)
+  /// Throws exception if assignment fails
+  Future<void> assignUserToTeam({
+    required String userId,
+    String? teamId,
+    String? teamName,
+  }) async {
+    const path = 'time_entry_management_application_function/team/assign';
+
+    final payload = <String, dynamic>{
+      'TeamID': teamId ?? '',
+      'TeamName': teamName ?? '',
+      'User_Id': [userId],
+    };
+
+    final response = await _client.post(path, data: payload);
+    final Map<String, dynamic> jsonResponse =
+        response.data as Map<String, dynamic>;
+
+    if (jsonResponse['success'] != true) {
+      throw Exception(jsonResponse['message'] ?? 'Failed to assign user to team');
+    }
+  }
 }
