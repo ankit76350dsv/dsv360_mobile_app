@@ -817,6 +817,22 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
   }
 
   void _confirmDeleteTeam(Team team) {
+    // Check if team has members
+    final teamMembers = _employeesInTeam(team.id);
+    if (teamMembers.isNotEmpty) {
+      // Show error if team has members
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Cannot delete team with members. Please unassign all members first.'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+      return;
+    }
+
     showWarningDialogueBox<bool>(
       context: context,
       title: 'Delete Team',

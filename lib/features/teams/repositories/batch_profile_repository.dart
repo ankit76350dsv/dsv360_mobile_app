@@ -33,19 +33,15 @@ class BatchProfileRepository {
         return [];
       }
 
-
-      // Print the actual payload to the terminal for debugging
-      debugPrint('═══════════════════════════════════════════════════');
-      debugPrint('BATCH PROFILE POST PAYLOAD:');
-      print(usersList);
-      debugPrint('═══════════════════════════════════════════════════');
-      debugPrint('👥 Posting users list to batchProfile: ${usersList.length} users');
+      // Transform to send only user_id in the required format
+      final payload = usersList
+          .map((user) => {'user_id': user['user_id']?.toString() ?? ''})
+          .toList();
 
       const path = 'time_entry_management_application_function/batchProfile';
       debugPrint('🌐 path: $path');
 
-      // Backend expects the full raw users array as request body.
-      final response = await _client.post(path, data: usersList);
+      final response = await _client.post(path, data: payload);
       debugPrint('📊 Response Status: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
