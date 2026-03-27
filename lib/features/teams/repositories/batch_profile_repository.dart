@@ -33,6 +33,15 @@ class BatchProfileRepository {
         return [];
       }
 
+      // Create a map of user_id -> employee data for easy lookup
+      final employeeMap = <String, dynamic>{};
+      for (final user in usersList) {
+        final userId = user['user_id']?.toString() ?? '';
+        if (userId.isNotEmpty) {
+          employeeMap[userId] = user;
+        }
+      }
+
       // Transform to send only user_id in the required format
       final payload = usersList
           .map((user) => {'user_id': user['user_id']?.toString() ?? ''})
@@ -53,7 +62,17 @@ class BatchProfileRepository {
           debugPrint('✅ Batch profiles fetched: ${profileList.length}');
 
           return profileList
-              .map((item) => BatchProfile.fromJson(item as Map<String, dynamic>))
+              .map((item) {
+                final profile = item as Map<String, dynamic>;
+                final userId = profile['user_id']?.toString() ?? '';
+                // Merge with employee data to get name if not in profile
+                if (employeeMap.containsKey(userId)) {
+                  final employeeData = employeeMap[userId] as Map<String, dynamic>;
+                  profile['first_name'] = profile['first_name'] ?? employeeData['first_name'];
+                  profile['last_name'] = profile['last_name'] ?? employeeData['last_name'];
+                }
+                return BatchProfile.fromJson(profile);
+              })
               .toList();
         } else {
           final msg = jsonResponse['message']?.toString() ?? 'Unknown server error';

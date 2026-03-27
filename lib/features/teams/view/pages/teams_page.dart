@@ -296,7 +296,7 @@ class EmployeeCard extends StatelessWidget {
                 ),
                 SizedBox(height: rs.s(1)),
                 Text(
-                  employee.phone,
+                  employee.phone.isNotEmpty ? employee.phone : "No Phone ",
                   style: TextStyle(
                     fontSize: rs.f(isGrid ? 9.5 : 11.0),
                     color: customColors.textSecondary ??
