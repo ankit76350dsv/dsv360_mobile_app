@@ -331,12 +331,12 @@ class EmployeeCard extends StatelessWidget {
 
     return LongPressDraggable<Employee>(
       data: employee,
-      delay: const Duration(milliseconds: 300),
+      delay: const Duration(milliseconds: 200),
       hapticFeedbackOnStart: true,
       onDragStarted: () {
         didPulseDuringDrag = false;
         HapticFeedback.heavyImpact();
-        HapticFeedback.vibrate();
+     
       },
       onDragUpdate: (_) {
         if (!didPulseDuringDrag) {
