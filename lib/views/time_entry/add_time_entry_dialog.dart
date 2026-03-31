@@ -7,6 +7,8 @@ import '../../repositories/time_entry_repository.dart';
 import '../widgets/custom_input_field.dart';
 import '../widgets/TopBar.dart';
 import 'time_entries_screen.dart';
+import 'timer_service.dart';
+import 'running_timer_screen.dart';
 
 class AddTimeEntryDialog extends StatefulWidget {
   final String taskId;
@@ -43,6 +45,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
   DateTime? _selectedDate;
 
   final List<TimeEntry> _timeEntries = [];
+  List<TimeEntry> _existingEntries = [];
   late TimeEntryRepository _repository;
   bool _isLoading = false;
 
@@ -110,10 +113,96 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
   Future<void> _fetchExistingTimeEntries() async {
     try {
       debugPrint('🔍 Fetching existing time entries for project: ${widget.projectId}');
-      await _repository.getTimeEntriesByProject(widget.projectId);
+      final entries = await _repository.getTimeEntriesByProject(widget.projectId);
+      setState(() {
+        _existingEntries = entries;
+      });
     } catch (e) {
       debugPrint('❌ Error fetching time entries (this is just for debugging): $e');
     }
+  }
+
+  bool _hasTimeOverlap(String newStart, String newEnd, DateTime newDate, {String? excludeEntryId}) {
+    try {
+      final format = DateFormat('h:mm a');
+      final newStartTime = format.parse(newStart);
+      final newEndTime = format.parse(newEnd);
+
+      final allEntries = [..._existingEntries, ..._timeEntries]
+          .where((e) => e.id != excludeEntryId)
+          .toList();
+
+      for (final entry in allEntries) {
+        if (entry.date.year == newDate.year &&
+            entry.date.month == newDate.month &&
+            entry.date.day == newDate.day) {
+          final entryStart = format.parse(entry.startTime);
+          final entryEnd = format.parse(entry.endTime);
+          if (newStartTime.isBefore(entryEnd) && newEndTime.isAfter(entryStart)) {
+            return true;
+          }
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  void _showOverlapSnackbar() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'Overlapping Time Entry',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'This entry overlaps with one already added. Tap "View All" to review your entries.',
+                    style: TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.orange[800],
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 5),
+        action: SnackBarAction(
+          label: 'View All',
+          textColor: Colors.white,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TimeEntriesScreen(
+                  taskId: widget.taskId,
+                  projectId: widget.projectId,
+                  taskName: widget.taskName,
+                  projectName: widget.projectName,
+                  timeEntries: _timeEntries,
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -240,6 +329,14 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
       return;
     }
 
+    // Check for overlapping entries
+    final checkDate = _selectedDate ?? DateTime.now();
+    final excludeId = widget.editingEntry?.id;
+    if (_hasTimeOverlap(_startTimeController.text, _endTimeController.text, checkDate, excludeEntryId: excludeId)) {
+      _showOverlapSnackbar();
+      return;
+    }
+
     // If editing, update via API and close dialog
     if (widget.editingEntry != null) {
       try {
@@ -274,7 +371,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
         debugPrint('❌ Error updating entry: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update: $e'),
+            content: const Text('Time Entry is Already Added!'),
             backgroundColor: customColors.error,
           ),
         );
@@ -339,7 +436,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
       debugPrint('❌ Error creating entry: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to create: $e'),
+          content: const Text('Time Entry is Already Added!'),
           backgroundColor: customColors.error,
         ),
       );
@@ -441,7 +538,21 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
           child: TopBar(
             title: '${widget.taskName} - Time Entries',
             onBack: () => Navigator.of(context).pop(),
-            onInfoTap: () {},
+            actionIcon: Icons.timer,
+              onInfoTap: () {
+                 Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TimeEntriesScreen(
+                            taskId: widget.taskId,
+                            projectId: widget.projectId,
+                            taskName: widget.taskName,
+                            projectName: widget.projectName,
+                            timeEntries: _timeEntries,
+                          ),
+                        ),
+                      );
+              },
           ),
         ),
       ),
@@ -778,6 +889,95 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+
+              // Timer + Request row
+              Row(
+                children: [
+                  Expanded(
+                    child: ListenableBuilder(
+                      listenable: TimerService.instance,
+                      builder: (context, _) {
+                        final timer = TimerService.instance;
+                        final isRunning = timer.isRunning;
+                        return ElevatedButton.icon(
+                          onPressed: () {
+                            if (isRunning) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => RunningTimerScreen(
+                                    taskId: widget.taskId,
+                                    projectId: widget.projectId,
+                                    taskName: widget.taskName,
+                                    projectName: widget.projectName,
+                                  ),
+                                ),
+                              );
+                            } else {
+                              timer.start();
+                            }
+                          },
+                          icon: Icon(
+                            isRunning ? Icons.stop : Icons.play_arrow,
+                            size: 18,
+                          ),
+                          label: Text(
+                            isRunning ? timer.elapsedFormatted : '00:00:00',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isRunning ? Colors.red : Colors.green[700],
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            elevation: 0,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Request Time Entry — Coming soon'),
+                            backgroundColor: Theme.of(context).custom.primary,
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.send_outlined, size: 18),
+                      label: const Text(
+                        'REQUEST',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Theme.of(context).custom.textSecondary,
+                        side: BorderSide(
+                          color: Theme.of(context).custom.inputBorder!,
+                          width: 1.5,
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
                         ),
                       ),
                     ),
