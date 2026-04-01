@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:dsv360/core/network/dio_client.dart'; // single import — no raw http or TokenManager needed
-import '../models/time_entry_model.dart';
+import '../model/time_entry_model.dart';
+import 'check_timer_status_repository.dart';
 
 // ---------------------------------------------------------------------------
 // How this repository uses ApiClient:
@@ -16,91 +19,11 @@ class TimeEntryRepository {
 
   // ============ Timer Management ============
 
-  /// Check if timer is running for user
-  Future<Map<String, dynamic>> checkTimerStatus(String userId) async {
-    try {
-      debugPrint('⏱️ Checking timer status for userId: $userId');
-      // Relative path — base URL and token handled by ApiClient.
-      const path = 'time_entry_management_application_function/timeentry/timer';
-      final response = await _client.get(path, queryParameters: {'userId': userId});
+  
 
-      debugPrint('⏱️ Timer Status Response: ${response.statusCode}');
-      debugPrint('⏱️ Timer Status Data: ${response.data}');
-
-      if (response.statusCode == 200) {
-        return response.data as Map<String, dynamic>;
-      } else {
-        throw Exception('Failed to check timer status: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint('❌ Error checking timer status: $e');
-      rethrow;
-    }
-  }
-
-  /// Start timer for a task
-  Future<Map<String, dynamic>> startTimer({
-    required String userId,
-    required String taskId,
-    required String projectId,
-    String? description,
-  }) async {
-    try {
-      debugPrint('⏱️ Starting timer - userId: $userId, taskId: $taskId');
-      final body = {
-        'userId': userId,
-        'taskId': taskId,
-        'projectId': projectId,
-        if (description != null) 'description': description,
-      };
-
-      // Relative path — base URL and token handled by ApiClient.
-      const path = 'time_entry_management_application_function/timeentry/timer/start';
-      final response = await _client.post(path, data: body);
-
-      debugPrint('⏱️ Start Timer Response: ${response.statusCode}');
-      debugPrint('⏱️ Start Timer Data: ${response.data}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return response.data as Map<String, dynamic>;
-      } else {
-        throw Exception('Failed to start timer: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint('❌ Error starting timer: $e');
-      rethrow;
-    }
-  }
-
-  /// End/Stop timer
-  Future<Map<String, dynamic>> endTimer({
-    required String userId,
-    required String timerId,
-  }) async {
-    try {
-      debugPrint('⏱️ Stopping timer - timerId: $timerId');
-      final body = {
-        'userId': userId,
-        'timerId': timerId,
-      };
-
-      // Relative path — base URL and token handled by ApiClient.
-      const path = 'time_entry_management_application_function/timeentry/timer/end';
-      final response = await _client.post(path, data: body);
-
-      debugPrint('⏱️ End Timer Response: ${response.statusCode}');
-      debugPrint('⏱️ End Timer Data: ${response.data}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return response.data as Map<String, dynamic>;
-      } else {
-        throw Exception('Failed to end timer: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint('❌ Error ending timer: $e');
-      rethrow;
-    }
-  }
+ 
+ 
+  
 
   // ============ Time Entry CRUD ============
 
@@ -537,4 +460,7 @@ class TimeEntryRepository {
       rethrow;
     }
   }
+
+  Future<Map<String, dynamic>> checkTimerStatus(String userId) =>
+      CheckTimerStatusRepository().checkTimerStatus(userId);
 }

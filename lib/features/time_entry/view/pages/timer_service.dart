@@ -43,7 +43,7 @@ class TimerService extends ChangeNotifier {
     return '$hour:$minute:$second $period';
   }
 
-  void start() {
+  void startLocal() {
     if (_isRunning) return;
     _startTime = DateTime.now();
     _isRunning = true;

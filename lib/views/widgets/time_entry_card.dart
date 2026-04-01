@@ -1,7 +1,7 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../models/time_entry_model.dart';
+import '../../features/time_entry/model/time_entry_model.dart';
 
 
 class TimeEntryCard extends StatefulWidget {

@@ -1,11 +1,13 @@
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../models/time_entry_model.dart';
-import '../../core/constants/theme.dart';
-import '../../core/constants/auth_manager.dart';
+import '../../model/time_entry_model.dart';
+import '../../../../core/constants/theme.dart';
+import '../../../../core/constants/auth_manager.dart';
 import '../../repositories/time_entry_repository.dart';
-import '../widgets/custom_input_field.dart';
-import '../widgets/TopBar.dart';
+import '../../repositories/start_timer_repository.dart';
+import '../../../../views/widgets/custom_input_field.dart';
+import '../../../../views/widgets/TopBar.dart';
 import 'time_entries_screen.dart';
 import 'timer_service.dart';
 import 'running_timer_screen.dart';
@@ -442,6 +444,72 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
       );
     } finally {
       setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _startServerTimer() async {
+    final customColors = Theme.of(context).custom;
+    final timer = TimerService.instance;
+
+    if (timer.isRunning) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => RunningTimerScreen(
+            taskId: widget.taskId,
+            projectId: widget.projectId,
+            taskName: widget.taskName,
+            projectName: widget.projectName,
+          ),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final userId = AuthManager.instance.currentUser?.id ?? '';
+      final firstName = AuthManager.instance.currentUser?.firstName ?? '';
+      final lastName = AuthManager.instance.currentUser?.lastName ?? '';
+      final username = '$firstName $lastName'.trim();
+
+      await StartTimerRepository().startTimer(
+        userId: userId,
+        username: username,
+        taskId: widget.taskId,
+        taskName: widget.taskName,
+        projectId: widget.projectId,
+        projectName: widget.projectName,
+        entryDate: DateTime.now(),
+      );
+
+      timer.startLocal();
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RunningTimerScreen(
+              taskId: widget.taskId,
+              projectId: widget.projectId,
+              taskName: widget.taskName,
+              projectName: widget.projectName,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ Error starting server timer: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Failed to start timer. Please try again.'),
+            backgroundColor: customColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -907,23 +975,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                         final timer = TimerService.instance;
                         final isRunning = timer.isRunning;
                         return ElevatedButton.icon(
-                          onPressed: () {
-                            if (isRunning) {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => RunningTimerScreen(
-                                    taskId: widget.taskId,
-                                    projectId: widget.projectId,
-                                    taskName: widget.taskName,
-                                    projectName: widget.projectName,
-                                  ),
-                                ),
-                              );
-                            } else {
-                              timer.start();
-                            }
-                          },
+                          onPressed: _isLoading ? null : _startServerTimer,
                           icon: Icon(
                             isRunning ? Icons.stop : Icons.play_arrow,
                             size: 18,
@@ -959,6 +1011,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                             backgroundColor: Theme.of(context).custom.primary,
                           ),
                         );
+                        
                       },
                       icon: const Icon(Icons.send_outlined, size: 18),
                       label: const Text(
@@ -1001,31 +1054,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                     )
                   else
                     const Spacer(),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => TimeEntriesScreen(
-                            taskId: widget.taskId,
-                            projectId: widget.projectId,
-                            taskName: widget.taskName,
-                            projectName: widget.projectName,
-                            timeEntries: _timeEntries,
-                          ),
-                        ),
-                      );
-                    },
-                    label: const Text('View All'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: customColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                  ),
+                  
                 ],
               ),
               const SizedBox(height: 12),

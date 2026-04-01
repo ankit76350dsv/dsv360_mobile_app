@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../models/task.dart';
 import '../../models/attachment.dart';
-import '../time_entry/add_time_entry_dialog.dart';
+import '../../features/time_entry/view/pages/add_time_entry_dialog.dart';
 import '../widgets/custom_search_bar.dart';
 import '../widgets/generic_card.dart';
 import '../attachments/attachment_list_modal.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../repositories/time_entry_repository.dart';
-import '../models/time_entry_model.dart';
+import '../features/time_entry/repositories/time_entry_repository.dart';
+import '../features/time_entry/model/time_entry_model.dart';
 import '../core/constants/auth_manager.dart';
 
 final timeEntryRepositoryProvider = Provider((ref) {

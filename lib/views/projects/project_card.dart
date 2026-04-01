@@ -6,7 +6,7 @@ import '../attachments/attachment_list_modal.dart';
 // import '../../screens/tasks_screen.dart';
 import '../task/tasks_screen.dart';
 import '../issues/issues_screen.dart';
-import '../time_entry/time_entries_screen.dart';
+import '../../features/time_entry/view/pages/time_entries_screen.dart';
 import '../widgets/generic_card.dart';
 
 class ProjectCard extends StatelessWidget {

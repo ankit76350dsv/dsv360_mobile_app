@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../core/constants/theme.dart';
-import '../../core/constants/auth_manager.dart';
-import '../../repositories/time_entry_repository.dart';
-import '../widgets/custom_input_field.dart';
-import '../widgets/TopBar.dart';
+import '../../../../core/constants/theme.dart';
+import '../../../../core/constants/auth_manager.dart';
+import '../../repositories/check_timer_status_repository.dart';
+import '../../repositories/end_timer_repository.dart';
+import '../../../../views/widgets/custom_input_field.dart';
+import '../../../../views/widgets/TopBar.dart';
 import 'timer_service.dart';
 
 class RunningTimerScreen extends StatefulWidget {
@@ -62,31 +63,22 @@ class _RunningTimerScreenState extends State<RunningTimerScreen> {
   Future<void> _stopTimer() async {
     final customColors = Theme.of(context).custom;
     final timer = TimerService.instance;
-    final startTime = timer.startTimeFormatted;
-    final endTime = timer.currentClockTime;
-    final totalMinutes = timer.elapsed.inMinutes;
 
     setState(() => _isLoading = true);
     try {
-      final repository = TimeEntryRepository();
       final userId = AuthManager.instance.currentUser?.id ?? '';
-      final firstName = AuthManager.instance.currentUser?.firstName ?? '';
-      final lastName = AuthManager.instance.currentUser?.lastName ?? '';
-      final username = '$firstName $lastName'.trim();
 
-      await repository.createTimeEntry(
-        taskId: widget.taskId,
-        projectId: widget.projectId,
-        userId: userId,
-        username: username,
-        taskName: widget.taskName,
-        projectName: widget.projectName,
-        date: DateTime.now(),
-        startTime: startTime,
-        endTime: endTime,
-        description: _noteController.text,
+      // Fetch the server-side timer row ID
+      final statusResponse = await CheckTimerStatusRepository().checkTimerStatus(userId);
+      debugPrint('⏱️ Full status response: $statusResponse');
+      final timerId = (statusResponse['ROWID'] ?? statusResponse['TimerId'] ?? statusResponse['data']?['ROWID'] ?? '').toString();
+      debugPrint('⏱️ Timer ID: $timerId');
+      if (timerId.isEmpty) throw Exception('Timer ID not found');
+
+      await EndTimerRepository().endTimer(
+        rowId: timerId,
+        note: _noteController.text,
         type: _selectedType,
-        totalMinutes: totalMinutes,
       );
 
       timer.stop();
@@ -95,7 +87,7 @@ class _RunningTimerScreenState extends State<RunningTimerScreen> {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Time entry saved successfully'),
+            content: const Text('Timer stopped successfully'),
             backgroundColor: customColors.primary,
           ),
         );
@@ -105,7 +97,7 @@ class _RunningTimerScreenState extends State<RunningTimerScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Failed to save time entry. Please try again.'),
+            content: const Text('Failed to stop timer. Please try again.'),
             backgroundColor: customColors.error,
           ),
         );
@@ -288,12 +280,16 @@ class _RunningTimerScreenState extends State<RunningTimerScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                Text(
-                                  timer.elapsedFormatted,
-                                  style: TextStyle(
-                                    color: customColors.primary,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    timer.currentClockTime,
+                                    style: TextStyle(
+                                      color: customColors.primary,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
                                 ),
                               ],
