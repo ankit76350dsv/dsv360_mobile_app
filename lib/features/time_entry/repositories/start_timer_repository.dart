@@ -27,6 +27,8 @@ class StartTimerRepository {
         'Entry_Date': entryDateStr,
       };
       const path = 'time_entry_management_application_function/timeentry/timer/start';
+      debugPrint("Start timer api hit here : ");
+      debugPrint(body.toString());
       final response = await _client.post(path, data: body);
       debugPrint('⏱️ Start Timer Response: ${response.statusCode}');
       debugPrint('⏱️ Start Timer Data: ${response.data}');

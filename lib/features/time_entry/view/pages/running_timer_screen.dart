@@ -71,10 +71,10 @@ class _RunningTimerScreenState extends State<RunningTimerScreen> {
       // Fetch the server-side timer row ID
       final statusResponse = await CheckTimerStatusRepository().checkTimerStatus(userId);
       debugPrint('⏱️ Full status response: $statusResponse');
-      final timerId = (statusResponse['ROWID'] ?? statusResponse['TimerId'] ?? statusResponse['data']?['ROWID'] ?? '').toString();
+
+      final timerId = (statusResponse['TimerId'] ?? '').toString();
       debugPrint('⏱️ Timer ID: $timerId');
       if (timerId.isEmpty) throw Exception('Timer ID not found');
-
       await EndTimerRepository().endTimer(
         rowId: timerId,
         note: _noteController.text,
@@ -97,7 +97,7 @@ class _RunningTimerScreenState extends State<RunningTimerScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Failed to stop timer. Please try again.'),
+            content: const Text('Note field cannot be empty!'),
             backgroundColor: customColors.error,
           ),
         );

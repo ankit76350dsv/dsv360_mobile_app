@@ -9,6 +9,7 @@ class GenericCard extends StatelessWidget {
   final String? subtitleText;
   final String dateRange;
   final String? dueDate;
+  final bool? isTimerRunning;
   final List<CardChip> chips;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
@@ -21,6 +22,7 @@ class GenericCard extends StatelessWidget {
     required this.status,
     this.subtitleIcon,
     this.subtitleText,
+    this.isTimerRunning,
     required this.dateRange,
     this.dueDate,
     required this.chips,
@@ -56,7 +58,7 @@ class GenericCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: customColors.cardBackground,
+           color: (isTimerRunning ?? false) ? Colors.yellow.shade50 : customColors.cardBackground,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
           boxShadow: [

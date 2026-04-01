@@ -11,6 +11,7 @@ import '../../../../views/widgets/TopBar.dart';
 import 'time_entries_screen.dart';
 import 'timer_service.dart';
 import 'running_timer_screen.dart';
+import '../../repositories/check_timer_status_repository.dart';
 
 class AddTimeEntryDialog extends StatefulWidget {
   final String taskId;
@@ -83,6 +84,29 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
     
     // Fetch existing time entries to see the structure
     _fetchExistingTimeEntries();
+    // Sync timer state from server in case app was restarted while timer was running
+    _syncTimerFromServer();
+  }
+
+  Future<void> _syncTimerFromServer() async {
+    // Only sync if TimerService thinks it's not running — avoids duplicate tickers
+    if (TimerService.instance.isRunning) return;
+    try {
+      final userId = AuthManager.instance.currentUser?.id ?? '';
+      if (userId.isEmpty) return;
+      final status = await CheckTimerStatusRepository().checkTimerStatus(userId);
+      final message = (status['message'] ?? '').toString().toLowerCase();
+      final isRunning = message.contains('running') && !message.contains('not');
+      if (isRunning) {
+        final startTimeStr = (status['startTime'] ?? '').toString();
+        final serverStart = DateTime.tryParse(startTimeStr.replaceFirst(' ', 'T'));
+        if (serverStart != null) {
+          TimerService.instance.restoreFromServer(serverStart);
+        }
+      }
+    } catch (e) {
+      debugPrint('⏱️ Could not sync timer from server: $e');
+    }
   }
 
   /// Convert TimeOfDay to 12-hour AM/PM format (e.g., "3:35 PM")

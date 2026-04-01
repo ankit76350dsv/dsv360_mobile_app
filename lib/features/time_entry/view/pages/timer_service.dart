@@ -53,6 +53,18 @@ class TimerService extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Restores timer state from server — used when app restarts while timer is running.
+  /// [serverStartTime] is the DateTime the server recorded as the timer start.
+  void restoreFromServer(DateTime serverStartTime) {
+    _ticker?.cancel();
+    _startTime = serverStartTime;
+    _isRunning = true;
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      notifyListeners();
+    });
+    notifyListeners();
+  }
+
   void stop() {
     _ticker?.cancel();
     _ticker = null;

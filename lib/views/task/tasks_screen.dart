@@ -1,5 +1,7 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
+import 'package:dsv360/features/time_entry/repositories/check_timer_status_repository.dart';
+import 'package:dsv360/features/time_entry/view/pages/timer_service.dart';
 import 'package:dsv360/providers/task_provider.dart';
 import 'package:dsv360/repositories/task_repository.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
@@ -29,17 +31,64 @@ class TasksScreen extends ConsumerStatefulWidget {
 
 class _TasksScreenState extends ConsumerState<TasksScreen> {
   late TextEditingController _searchController;
+  // taskId of the task that currently has a running timer (null = no timer running)
+  String? _runningTaskId;
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _fetchTimerStatus();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+//refresh page on every visit
+  bool _firstBuild = true;
+  @override
+void didChangeDependencies() {
+  super.didChangeDependencies();
+  if (!_firstBuild) {
+    // Refresh both tasks and timer status when returning to this page
+    final userId = ref.read(currentUserIdProvider);
+    ref.read(tasksListRepositoryProvider(userId).notifier).refresh(userId);
+    _fetchTimerStatus();
+  }
+  _firstBuild = false;
+}
+
+  Future<void> _fetchTimerStatus() async {
+    final userId = ref.read(currentUserIdProvider);
+    try {
+      final status = await CheckTimerStatusRepository().checkTimerStatus(userId);
+      debugPrint('⏱️ Timer status response: $status');
+
+      final message = (status['message'] ?? '').toString().toLowerCase();
+      final isRunning = message.contains('running') && !message.contains('not');
+
+      if (isRunning) {
+        final taskId = (status['Task_ID'] ?? '').toString();
+        // startTime from server: "2026-04-01 17:20:32"
+        final startTimeStr = (status['startTime'] ?? '').toString();
+        final serverStart = DateTime.tryParse(startTimeStr.replaceFirst(' ', 'T'));
+        debugPrint('⏱️ Running taskId=$taskId  serverStart=$serverStart');
+        if (serverStart != null) {
+          TimerService.instance.restoreFromServer(serverStart);
+        }
+        if (mounted) setState(() => _runningTaskId = taskId);
+      } else {
+        if (TimerService.instance.isRunning) TimerService.instance.stop();
+        if (mounted) setState(() => _runningTaskId = null);
+      }
+    } catch (e) {
+      debugPrint('❌ Error fetching timer status: $e');
+      if (TimerService.instance.isRunning) TimerService.instance.stop();
+      if (mounted) setState(() => _runningTaskId = null);
+    }
   }
 
   Future<void> _showAddTaskDialog({
@@ -417,6 +466,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                 tasksListRepositoryProvider(userId).notifier,
                               )
                               .refresh(userId);
+                              await _fetchTimerStatus();
                         },
                         child: ListView.builder(
                           padding: const EdgeInsets.symmetric(
@@ -438,6 +488,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                     : 'T${task.taskId}',
                                 name: task.taskName,
                                 status: task.status,
+                                isTimerRunning: _runningTaskId != null && _runningTaskId == task.taskId,
                                 subtitleIcon: 'person',
                                 subtitleText: task.assignedTo,
                                 dateRange: dateRange,
