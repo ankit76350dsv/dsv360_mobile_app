@@ -47,6 +47,8 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
   
   DateTime? _selectedDate;
 
+  final isRunning = TimerService.instance.isRunning;
+
   final List<TimeEntry> _timeEntries = [];
   List<TimeEntry> _existingEntries = [];
   late TimeEntryRepository _repository;
@@ -509,19 +511,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
 
       timer.startLocal();
 
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => RunningTimerScreen(
-              taskId: widget.taskId,
-              projectId: widget.projectId,
-              taskName: widget.taskName,
-              projectName: widget.projectName,
-            ),
-          ),
-        );
-      }
+
     } catch (e) {
       debugPrint('❌ Error starting server timer: $e');
       if (mounted) {
@@ -932,34 +922,41 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                           ),
                         ],
                       ),
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _addTimeEntry,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: customColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
+                      child: ListenableBuilder(
+                        listenable: TimerService.instance,
+                        builder: (context, _){
+                          final isRunning = TimerService.instance.isRunning;
+                          return ElevatedButton(
+                          onPressed: (_isLoading || isRunning) ? null : _addTimeEntry,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: customColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            elevation: 0,
                           ),
-                          elevation: 0,
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : Text(
+                                  widget.editingEntry != null ? 'SAVE' : 'ADD',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
                                 ),
-                              )
-                            : Text(
-                                widget.editingEntry != null ? 'SAVE' : 'ADD',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
+                        );
+                        },
+                       
                       ),
                     ),
                   ),
