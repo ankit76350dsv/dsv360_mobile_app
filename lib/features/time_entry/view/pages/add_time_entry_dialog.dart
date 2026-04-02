@@ -488,7 +488,13 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
             projectName: widget.projectName,
           ),
         ),
-      );
+      ).then((_) {
+  // This runs when you pop back to the parent page
+  // Call your data reload methods here
+  _fetchExistingTimeEntries(); // or whatever method reloads your data
+  _syncTimerFromServer();
+  
+});
       return;
     }
 
@@ -510,6 +516,10 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
       );
 
       timer.startLocal();
+       await _fetchExistingTimeEntries();
+        await _syncTimerFromServer();
+
+
 
 
     } catch (e) {
@@ -876,7 +886,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                     
                     );
                 }).toList(),
-                onChanged: isRunning ? null : (value) {
+                onChanged: TimerService.instance.isRunning ? null : (value) {
                   setState(() => _selectedType = value);
                 },
               ),
@@ -892,7 +902,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                 minLines: 4,
                 maxLength: 700,
                 prefixIcon: Icons.description_outlined,
-                enabled: isRunning ? false : true,
+                enabled: TimerService.instance.isRunning ?false : true,
               ),
               const SizedBox(height: 8),
               
@@ -936,9 +946,9 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                       child: ListenableBuilder(
                         listenable: TimerService.instance,
                         builder: (context, _){
-                          final isRunning = TimerService.instance.isRunning;
+                          
                           return ElevatedButton(
-                          onPressed: (_isLoading || isRunning) ? null : _addTimeEntry,
+                          onPressed: (_isLoading || TimerService.instance.isRunning) ? null : _addTimeEntry,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: customColors.primary,
                             foregroundColor: Colors.white,

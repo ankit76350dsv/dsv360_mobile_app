@@ -526,7 +526,12 @@ void didChangeDependencies() {
                                             currentUser: task.assignedTo,
                                           ),
                                         ),
-                                      );
+                                      ).then((_) {
+                                  // This runs when you return to TasksScreen
+                                  final userId = ref.read(currentUserIdProvider);
+                                  ref.read(tasksListRepositoryProvider(userId).notifier).refresh(userId);
+                                  _fetchTimerStatus();
+                                });
                                     },
                                   ),
                                 ],
