@@ -1046,13 +1046,16 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () {
+                      onPressed: (_isLoading || TimerService.instance.isRunning) ? null : () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: const Text('Request Time Entry — Coming soon'),
                             backgroundColor: Theme.of(context).custom.primary,
                           ),
                         );
+                        
+
+                       
                         
                       },
                       icon: const Icon(Icons.send_outlined, size: 18),
