@@ -1,4 +1,4 @@
-
+import 'package:dsv360/features/time_entry/view/pages/request_time_entries_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../model/time_entry_model.dart';
@@ -671,9 +671,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                   decoration: BoxDecoration(
-                    color: TimerService.instance.isRunning
-    ? customColors.cardBackground!.withOpacity(0.5)
-    : customColors.cardBackground,
+                    color: TimerService.instance.isRunning ? customColors.cardBackground!.withOpacity(0.5) : customColors.cardBackground,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: customColors.inputBorder!, width: 1.5),
                     boxShadow: [
@@ -1053,6 +1051,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                             backgroundColor: Theme.of(context).custom.primary,
                           ),
                         );
+                        Navigator.push(context, MaterialPageRoute(builder: (context)=>RequestTimeEntriesScreen()));
                         
 
                        
