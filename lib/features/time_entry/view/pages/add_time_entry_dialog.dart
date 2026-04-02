@@ -657,7 +657,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
 
               // Date field
               InkWell(
-                onTap: () => _selectDate(context),
+                onTap: TimerService.instance.isRunning ? null : () => _selectDate(context),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                   decoration: BoxDecoration(
@@ -715,7 +715,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                 children: [
                   Expanded(
                     child: InkWell(
-                      onTap: () => _selectTime(context, true),
+                      onTap: TimerService.instance.isRunning ? null : () => _selectTime(context, true),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                         decoration: BoxDecoration(
@@ -770,7 +770,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: InkWell(
-                      onTap: () => _selectTime(context, false),
+                      onTap: TimerService.instance.isRunning ? null : () => _selectTime(context, false),
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                         decoration: BoxDecoration(
