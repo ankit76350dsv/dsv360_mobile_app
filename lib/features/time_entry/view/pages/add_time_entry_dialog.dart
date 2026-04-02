@@ -829,6 +829,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
               // Type field
               DropdownButtonFormField<String>(
                 value: _selectedType,
+               
                 hint: Text(
                   'Type',
                   style: TextStyle(color: customColors.textHint),
@@ -864,9 +865,13 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 ),
                 items: _typeOptions.map((type) {
-                  return DropdownMenuItem(value: type, child: Text(type));
+                  return DropdownMenuItem(
+                    value: type,                    
+                    child: Text(type),
+                    
+                    );
                 }).toList(),
-                onChanged: (value) {
+                onChanged: isRunning ? null : (value) {
                   setState(() => _selectedType = value);
                 },
               ),
@@ -882,6 +887,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                 minLines: 4,
                 maxLength: 700,
                 prefixIcon: Icons.description_outlined,
+                enabled: isRunning ? false : true,
               ),
               const SizedBox(height: 8),
               
