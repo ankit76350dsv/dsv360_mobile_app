@@ -661,7 +661,9 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                   decoration: BoxDecoration(
-                    color: customColors.cardBackground,
+                    color: TimerService.instance.isRunning
+    ? customColors.cardBackground!.withOpacity(0.5)
+    : customColors.cardBackground,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: customColors.inputBorder!, width: 1.5),
                     boxShadow: [
@@ -719,7 +721,9 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                         decoration: BoxDecoration(
-                          color: customColors.cardBackground,
+                          color: TimerService.instance.isRunning
+    ? customColors.cardBackground!.withOpacity(0.5)
+    : customColors.cardBackground,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: customColors.inputBorder!, width: 1.5),
                           boxShadow: [
@@ -774,7 +778,8 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
                         decoration: BoxDecoration(
-                          color: customColors.cardBackground,
+                          color: TimerService.instance.isRunning ? customColors.cardBackground!.withOpacity(0.5)
+    : customColors.cardBackground,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(color: customColors.inputBorder!, width: 1.5),
                           boxShadow: [
@@ -835,7 +840,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                   style: TextStyle(color: customColors.textHint),
                 ),
                 style: TextStyle(
-                  color: customColors.textPrimary,
+                  color: TimerService.instance.isRunning ? customColors.textPrimary!.withValues(alpha: 0.5) : customColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
