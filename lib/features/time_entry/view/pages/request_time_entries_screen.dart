@@ -37,6 +37,8 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
   late TextEditingController _endTimeController;
   late TextEditingController _noteController;
   String? _selectedType;
+  bool _isLoading = false;
+  
   final List<String> _typeOptions = ['Billable', 'Non-Billable'];
 
   DateTime? _selectedDate;
@@ -94,24 +96,6 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
     return '$hour:$minute $period';
   }
 
-  /// Calculate total time in minutes from AM/PM format times
-  // int _calculateTotalMinutes(String startTimeAMPM, String endTimeAMPM) {
-  //   try {
-  //     final format = DateFormat('h:mm a');
-  //     final startTime = format.parse(startTimeAMPM);
-  //     final endTime = format.parse(endTimeAMPM);
-      
-  //     Duration duration = endTime.difference(startTime);
-  //     if (duration.isNegative) {
-  //       // If end time is before start time, assume next day
-  //       duration = Duration(hours: 24) + duration;
-  //     }
-  //     return duration.inMinutes;
-  //   } catch (e) {
-  //     debugPrint('❌ Error calculating total minutes: $e');
-  //     return 0;
-  //   }
-  // }
 
   Future<void> _selectTime(BuildContext context, bool isStartTime) async {
     final customColors = Theme.of(context).custom;
@@ -144,6 +128,10 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
       });
     }
   }
+
+  void _sampleSaveDeleteIt() {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("add /save clicked")));
+  } //delete this after test
 
 
 
@@ -467,6 +455,85 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
                 enabled: TimerService.instance.isRunning ?false : true,
               ),
               const SizedBox(height: 8),
+
+               // Action Buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: customColors.primary!.withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: ListenableBuilder(
+                        listenable: TimerService.instance,
+                        builder: (context, _){
+                          
+                          return ElevatedButton(
+                          onPressed: (TimerService.instance.isRunning) ? null : _sampleSaveDeleteIt, //add time entries save funciton here as _addTimeEntry or with any other name
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: customColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : Text(
+                                  widget.editingEntry != null ? 'SAVE' : 'ADD',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                        );
+                        },
+                       
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed:() => Navigator.of(context).pop(), // onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: customColors.error,
+                        side: BorderSide(color: customColors.error!, width: 2),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                      child: const Text(
+                        'CANCEL',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
 
 
 
