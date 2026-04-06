@@ -1,4 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/features/time_entry/model/time_entry_model.dart';
 import 'package:dsv360/features/time_entry/view/pages/timer_service.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';
@@ -7,7 +8,13 @@ import 'package:intl/intl.dart';
 
 
 class RequestTimeEntriesScreen extends StatefulWidget {
-  const RequestTimeEntriesScreen({super.key});
+
+
+  final TimeEntry? editingEntry; // For editing existing entry
+
+  const RequestTimeEntriesScreen({super.key, this.editingEntry,});
+
+  
 
   @override
   State<RequestTimeEntriesScreen> createState() => _RequestTimeEntriesScreenState();
@@ -79,6 +86,18 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
     super.initState();
      _userController = TextEditingController(text: "ZMeraj"); //replace it with dynamic value later
      _dateController = TextEditingController();
+
+     _selectedDate = DateTime.now();
+
+     _dateController.text = DateFormat('dd-MM-yyyy').format(_selectedDate!);
+
+     if(widget.editingEntry != null){
+
+      final entry = widget.editingEntry!;
+      _selectedDate = entry.date;
+      _dateController.text = DateFormat('dd-MM-yyyy').format(entry.date);
+
+     }
 
      
    
