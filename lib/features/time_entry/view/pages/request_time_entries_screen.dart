@@ -35,7 +35,7 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
   late TextEditingController _projectNameController;
   late TextEditingController _taskIdController;
   late TextEditingController _taskNameController;
-  String? _selectedType;
+  String _selectedType = 'Non-Billable';
   bool _isLoading = false;
 
   final List<String> _typeOptions = ['Billable', 'Non-Billable'];
@@ -122,7 +122,7 @@ bool _isAddDisabled() {
     date: _selectedDate!,
     startTime: _startTimeController.text,
     endTime: _endTimeController.text,
-    type: _selectedType ?? 'Non-Billable',
+    type: _selectedType,
     note: _noteController.text,
   );
 
@@ -156,20 +156,50 @@ bool _isAddDisabled() {
         ? '$firstName $lastName'.trim()
         : widget.currentUser;
 
-    // Convert entries to JSON array string
-    final List<Map<String, dynamic>> jsonEntries = _entries
-        .map((entry) => entry.toJson())
-        .toList();
-    final String timeentryDataString = jsonEncode(jsonEntries);
+    final List<Map<String, dynamic>> jsonEntries = _entries.map((entry) {
+  int _convertToMinutes(String time) {
+    final parts = time.split(' ');
+    final timePart = parts[0];
+    final period = parts[1];
+
+    final hourMinute = timePart.split(':');
+    int hour = int.parse(hourMinute[0]);
+    int minute = int.parse(hourMinute[1]);
+
+    if (period == 'PM' && hour != 12) hour += 12;
+    if (period == 'AM' && hour == 12) hour = 0;
+
+    return hour * 60 + minute;
+  }
+
+  final start = _convertToMinutes(entry.startTime);
+  final end = _convertToMinutes(entry.endTime);
+
+  return {
+    "Username": username,
+    "User_ID": userId,
+    "Entry_Date": DateFormat('yyyy-MM-dd').format(entry.date),
+    "Note": entry.note,
+    "Type": entry.type,
+    "Start_time": entry.startTime,
+    "End_time": entry.endTime,
+    "Total_time": end - start,
+    "Task_ID": _taskIdController.text,
+    "Task_Name": _taskNameController.text,
+    "Project_ID": _projectIdController.text,
+    "Project_Name": _projectNameController.text,
+  };
+}).toList();
+final String timeentryDataString = jsonEncode(jsonEntries);
 
     // Create complete request object
     final Map<String, dynamic> requestData = {
-      'ApproveByID': null,
-      'ApproveDate': null,
-      'ApprovedBy': null,
+      'ApproveByID': '',
+      'ApproveDate': '',
+      'ApprovedBy': '',
       'Project_ID': _projectIdController.text, // Get from form or state
       'Project_Name': _projectNameController.text, // Get from form or state
-      'Reason': null,
+      'Reason': '',
       'Rejected': false,
       'Status': 'Pending',
       'Task_Id': _taskIdController.text, // Get from form or state
@@ -578,7 +608,7 @@ bool _isAddDisabled() {
 
               // Type field
               DropdownButtonFormField<String>(
-               initialValue: _selectedType ?? 'Non-Billable',
+                value: _selectedType,
 
                 hint: Text(
                   'Type',
@@ -634,7 +664,7 @@ bool _isAddDisabled() {
                 onChanged: TimerService.instance.isRunning
                     ? null
                     : (value) {
-                        setState(() => _selectedType = value);
+                        setState(() => _selectedType = value!);
                       },
               ),
               const SizedBox(height: 20),
