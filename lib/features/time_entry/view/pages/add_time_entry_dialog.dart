@@ -1048,7 +1048,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                             backgroundColor: Theme.of(context).custom.primary,
                           ),
                         );
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>RequestTimeEntriesScreen()));
+                        Navigator.push(context, MaterialPageRoute(builder: (context)=>RequestTimeEntriesScreen(currentUser: '',)));
                         
 
                        

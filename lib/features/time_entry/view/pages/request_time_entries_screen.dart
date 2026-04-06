@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/features/time_entry/model/time_entry_model.dart';
 import 'package:dsv360/features/time_entry/view/pages/timer_service.dart';
@@ -9,10 +10,15 @@ import 'package:intl/intl.dart';
 
 class RequestTimeEntriesScreen extends StatefulWidget {
 
-
+  final String currentUser;
   final TimeEntry? editingEntry; // For editing existing entry
 
-  const RequestTimeEntriesScreen({super.key, this.editingEntry,});
+  const RequestTimeEntriesScreen({
+    super.key,
+    this.editingEntry,
+    required this.currentUser,
+
+    });
 
   
 
@@ -29,6 +35,9 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
   late TextEditingController _dateController;
   late TextEditingController _startTimeController;
   late TextEditingController _endTimeController;
+  late TextEditingController _noteController;
+  String? _selectedType;
+  final List<String> _typeOptions = ['Billable', 'Non-Billable'];
 
   DateTime? _selectedDate;
 
@@ -86,23 +95,23 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
   }
 
   /// Calculate total time in minutes from AM/PM format times
-  int _calculateTotalMinutes(String startTimeAMPM, String endTimeAMPM) {
-    try {
-      final format = DateFormat('h:mm a');
-      final startTime = format.parse(startTimeAMPM);
-      final endTime = format.parse(endTimeAMPM);
+  // int _calculateTotalMinutes(String startTimeAMPM, String endTimeAMPM) {
+  //   try {
+  //     final format = DateFormat('h:mm a');
+  //     final startTime = format.parse(startTimeAMPM);
+  //     final endTime = format.parse(endTimeAMPM);
       
-      Duration duration = endTime.difference(startTime);
-      if (duration.isNegative) {
-        // If end time is before start time, assume next day
-        duration = Duration(hours: 24) + duration;
-      }
-      return duration.inMinutes;
-    } catch (e) {
-      debugPrint('❌ Error calculating total minutes: $e');
-      return 0;
-    }
-  }
+  //     Duration duration = endTime.difference(startTime);
+  //     if (duration.isNegative) {
+  //       // If end time is before start time, assume next day
+  //       duration = Duration(hours: 24) + duration;
+  //     }
+  //     return duration.inMinutes;
+  //   } catch (e) {
+  //     debugPrint('❌ Error calculating total minutes: $e');
+  //     return 0;
+  //   }
+  // }
 
   Future<void> _selectTime(BuildContext context, bool isStartTime) async {
     final customColors = Theme.of(context).custom;
@@ -149,12 +158,18 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
   void initState() {
     // Todo: implement initState
     super.initState();
-     _userController = TextEditingController(text: "ZMeraj"); //replace it with dynamic value later
+
+     final firstName = AuthManager.instance.currentUser?.firstName ?? '';
+    final lastName = AuthManager.instance.currentUser?.lastName ?? '';
+    final loggedInUser = '$firstName $lastName'.trim().isNotEmpty ? '$firstName $lastName'.trim() : widget.currentUser;
+     _userController = TextEditingController(text: loggedInUser ); //replace it with dynamic value later
      _dateController = TextEditingController();
      _startTimeController = TextEditingController();
     _endTimeController = TextEditingController();
+    _noteController = TextEditingController();
 
      _selectedDate = DateTime.now();
+     _selectedType = 'Non-Billable';
 
      _dateController.text = DateFormat('dd-MM-yyyy').format(_selectedDate!);
 
@@ -165,6 +180,10 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
       _dateController.text = DateFormat('dd-MM-yyyy').format(entry.date);
       _startTimeController.text = entry.startTime;
       _endTimeController.text = entry.endTime;
+      _selectedType = entry.type;
+      _noteController.text = entry.note;
+      _userController.text = loggedInUser;
+
 
      }
 
@@ -383,6 +402,71 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
                 ],
               ),
               const SizedBox(height: 20),
+
+
+               // Type field
+              DropdownButtonFormField<String>(
+                value: _selectedType,
+               
+                hint: Text(
+                  'Type',
+                  style: TextStyle(color: customColors.textHint),
+                ),
+                style: TextStyle(
+                  color: TimerService.instance.isRunning ? customColors.textPrimary!.withValues(alpha: 0.5) : customColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+                dropdownColor: customColors.cardBackground,
+                decoration: InputDecoration(
+                  labelText: 'Type',
+                  labelStyle: TextStyle(
+                    color: customColors.textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  filled: true,
+                  fillColor: customColors.cardBackground,
+                  prefixIcon: Icon(Icons.category_outlined, color: customColors.textSecondary),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: customColors.inputBorder!, width: 1.5),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: customColors.inputBorder!, width: 1.5),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                ),
+                items: _typeOptions.map((type) {
+                  return DropdownMenuItem(
+                    value: type,                    
+                    child: Text(type),
+                    
+                    );
+                }).toList(),
+                onChanged: TimerService.instance.isRunning ? null : (value) {
+                  setState(() => _selectedType = value);
+                },
+              ),
+              const SizedBox(height: 20),
+              // Note field
+              CustomInputField(
+                controller: _noteController,
+                labelText: 'Note',
+                hintText: 'Add notes...',
+                isMultiline: true,
+                maxLines: 4,
+                minLines: 4,
+                maxLength: 700,
+                prefixIcon: Icons.description_outlined,
+                enabled: TimerService.instance.isRunning ?false : true,
+              ),
+              const SizedBox(height: 8),
 
 
 
