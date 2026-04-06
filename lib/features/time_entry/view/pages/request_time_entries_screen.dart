@@ -12,11 +12,19 @@ import 'package:intl/intl.dart';
 class RequestTimeEntriesScreen extends StatefulWidget {
   final String currentUser;
   final TimeEntry? editingEntry; // For editing existing entry
+  final String projectId;
+final String projectName;
+final String taskId;
+final String taskName;
 
   const RequestTimeEntriesScreen({
     super.key,
     this.editingEntry,
     required this.currentUser,
+    required this.projectId,
+  required this.projectName,
+  required this.taskId,
+  required this.taskName,
   });
 
   @override
@@ -118,7 +126,7 @@ bool _isAddDisabled() {
 
   final newEntry = TimeEntry(
     id: "fwef",
-    user: "zmeraj",
+    user: _userController.text,
     date: _selectedDate!,
     startTime: _startTimeController.text,
     endTime: _endTimeController.text,
@@ -208,6 +216,8 @@ final String timeentryDataString = jsonEncode(jsonEntries);
       'User_Id': userId,
       'Username': username,
     };
+
+    debugPrint(_taskIdController.text);
 
     final String finalJsonString = jsonEncode(requestData);
 
@@ -327,15 +337,16 @@ final String timeentryDataString = jsonEncode(jsonEntries);
     _endTimeController = TextEditingController();
     _noteController = TextEditingController();
 
-    _projectIdController = TextEditingController();
-    _projectNameController = TextEditingController();
-    _taskIdController = TextEditingController();
-    _taskNameController = TextEditingController();
+    _projectIdController = TextEditingController(text: widget.projectId);
+    _projectNameController = TextEditingController(text: widget.projectName);
+    _taskIdController = TextEditingController(text: widget.taskId);
+    _taskNameController = TextEditingController(text: widget.taskName);
 
-    _selectedDate = DateTime.now();
+  
+    
     _selectedType = 'Non-Billable';
 
-    _dateController.text = DateFormat('dd-MM-yyyy').format(_selectedDate!);
+    
 
     if (widget.editingEntry != null) {
       final entry = widget.editingEntry!;
@@ -361,7 +372,7 @@ final String timeentryDataString = jsonEncode(jsonEntries);
         child: Padding(
           padding: const EdgeInsets.only(top: 48),
           child: TopBar(
-            title: ' add dynamic widget code here - Time Entries',
+            title: widget.taskName,
             onBack: () => Navigator.of(context).pop(),
           ),
         ),
@@ -813,7 +824,7 @@ final String timeentryDataString = jsonEncode(jsonEntries);
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "${DateFormat('dd-MM-yyyy').format(entry.date)}",
+                                DateFormat('dd-MM-yyyy').format(entry.date),
                                 style: TextStyle(
                                   color: customColors.textPrimary,
                                   fontWeight: FontWeight.w600,
