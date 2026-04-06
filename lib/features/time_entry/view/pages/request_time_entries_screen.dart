@@ -45,11 +45,24 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
   // ADD THIS LIST
   final List<TimeEntry> _entries = [];
 
+
+bool _isSubmitDisabled() {
+  final isFormDirty =
+      _startTimeController.text.isNotEmpty ||
+      _endTimeController.text.isNotEmpty ||
+      _noteController.text.isNotEmpty;
+
+  return isFormDirty || _entries.isEmpty;
+}
+bool _isAddDisabled() {
+  return _startTimeController.text.isEmpty || _noteController.text.isEmpty||
+      _endTimeController.text.isEmpty;
+}
+
   void _addTimeEntry() {
   if (_selectedDate == null ||
       _startTimeController.text.isEmpty ||
-      _endTimeController.text.isEmpty ||
-      _selectedType == null) {
+      _endTimeController.text.isEmpty) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text("Please fill all required fields")),
     );
@@ -109,7 +122,7 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
     date: _selectedDate!,
     startTime: _startTimeController.text,
     endTime: _endTimeController.text,
-    type: _selectedType!,
+    type: _selectedType ?? 'Non-Billable',
     note: _noteController.text,
   );
 
@@ -179,32 +192,35 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
 
   Future<void> _selectDate(BuildContext context) async {
     final customColors = Theme.of(context).custom;
-    final DateTime today = DateTime.now();
-    final DateTime sevenDaysAgo = today.subtract(const Duration(days: 6));
+    final DateTime now = DateTime.now();
+    final DateTime today = DateTime(now.year, now.month, now.day);
+
+    // cutoff = today - 6 days
+    final DateTime cutoffDate = today.subtract(const Duration(days: 6));
 
     final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: sevenDaysAgo,
-      lastDate: today,
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: customColors.primary!,
-              onPrimary: Colors.white,
-              surface: customColors.cardBackground!,
-              onSurface: customColors.textPrimary!,
-            ),
-            dialogBackgroundColor: customColors.cardBackground!,
-          ),
-          child: child!,
-        );
-      },
+  context: context,
+  initialDate: cutoffDate.subtract(const Duration(days: 1)), // valid default
+  firstDate: DateTime(2000), // or any old date
+  lastDate: cutoffDate.subtract(const Duration(days: 1)), // 🔴 KEY CHANGE
+  builder: (context, child) {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        colorScheme: ColorScheme.dark(
+          primary: customColors.primary!,
+          onPrimary: Colors.white,
+          surface: customColors.cardBackground!,
+          onSurface: customColors.textPrimary!,
+        ),
+        dialogBackgroundColor: customColors.cardBackground!,
+      ),
+      child: child!,
     );
+  },
+);
     if (pickedDate != null) {
       // Validate that the selected date is within the last 7 days
-      if (pickedDate.isBefore(sevenDaysAgo) || pickedDate.isAfter(today)) {
+      if (pickedDate.isAfter(today)) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('You can only add time entries for the last 7 days'),
@@ -562,7 +578,7 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
 
               // Type field
               DropdownButtonFormField<String>(
-                value: _selectedType,
+               initialValue: _selectedType ?? 'Non-Billable',
 
                 hint: Text(
                   'Type',
@@ -643,34 +659,28 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: customColors.primary!.withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
                       ),
                       child: ListenableBuilder(
                         listenable: TimerService.instance,
                         builder: (context, _) {
-                          return OutlinedButton(
-  onPressed: (TimerService.instance.isRunning)
+                          return ElevatedButton(
+  onPressed: (TimerService.instance.isRunning || _isAddDisabled())
       ? null
       : (widget.editingEntry != null
             ? _saveAllEntries
             : _addTimeEntry),
-  style: OutlinedButton.styleFrom(
-    side: BorderSide(color: customColors.primary!, width: 2),
+  style: ElevatedButton.styleFrom(
+    backgroundColor: customColors.primary,
+    foregroundColor: Colors.white,
     padding: const EdgeInsets.symmetric(vertical: 12),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(24),
     ),
+    elevation: 0,
   ),
   child: Text(
     widget.editingEntry != null ? 'SAVE' : 'ADD',
-    style: TextStyle(
-      color: customColors.primary,
+    style: const TextStyle(
       fontSize: 14,
       fontWeight: FontWeight.w600,
       letterSpacing: 0.5,
@@ -712,7 +722,7 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
               SizedBox(
                 width: MediaQuery.of(context).size.width,
                 child: ElevatedButton(
-                  onPressed: (TimerService.instance.isRunning)
+                  onPressed: (TimerService.instance.isRunning || _isSubmitDisabled())
                       ? null
                       : (widget.editingEntry != null
                             ? _saveAllEntries
