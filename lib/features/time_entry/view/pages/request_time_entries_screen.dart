@@ -4,6 +4,7 @@ import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/features/time_entry/model/time_entry_model.dart';
 import 'package:dsv360/features/time_entry/repositories/request_entry_repository.dart';
+import 'package:dsv360/features/time_entry/view/pages/time_entry_history.dart';
 import 'package:dsv360/features/time_entry/view/pages/timer_service.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';
@@ -239,7 +240,7 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
     final customColors = Theme.of(context).custom;
     final DateTime now = DateTime.now();
     final DateTime today = DateTime(now.year, now.month, now.day);
-    final DateTime cutoffDate = today.subtract(const Duration(days: 6));
+    final DateTime cutoffDate = today.subtract(const Duration(days: 7));
 
     final DateTime? pickedDate = await showDatePicker(
       context: context,
@@ -378,8 +379,20 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
         child: Padding(
           padding: const EdgeInsets.only(top: 48),
           child: TopBar(
-            title: widget.taskName,
+            title: "${widget.taskName} - Request Entries",
             onBack: () => Navigator.of(context).pop(),
+            actionIcon: Icons.history,
+
+            onInfoTap: () {
+                 Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TimeEntryHistory(),
+                        ),
+                      );
+              },
+
+            
           ),
         ),
       ),
