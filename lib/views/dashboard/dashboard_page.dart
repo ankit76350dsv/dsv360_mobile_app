@@ -67,17 +67,21 @@ class _DashboardScaffold extends ConsumerWidget {
           },
         ),
         actions: [
-          IconButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const NotificationPage()),
-              );
-            },
-            icon: Icon(
-              Icons.notifications_none,
-              color: customColors.textPrimary,
+          Visibility(
+            visible: false,
+            child: IconButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NotificationPage()),
+                );
+              },
+              icon: Icon(
+                Icons.notifications_none,
+                color: customColors.textPrimary,
+              ),
             ),
           ),
+      
           IconButton(
             onPressed: () {
               Navigator.of(
