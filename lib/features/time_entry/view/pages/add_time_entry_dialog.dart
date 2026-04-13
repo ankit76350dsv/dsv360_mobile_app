@@ -1042,12 +1042,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: (_isLoading || TimerService.instance.isRunning) ? null : () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Request Time Entry — Coming soon'),
-                            backgroundColor: Theme.of(context).custom.primary,
-                          ),
-                        );
+                        
                         Navigator.push(context, MaterialPageRoute(builder: (context)=>RequestTimeEntriesScreen(currentUser: widget.currentUser, projectId: widget.projectId, projectName: widget.projectName, taskId: widget.taskId, taskName: widget.taskName,)));
                         
 

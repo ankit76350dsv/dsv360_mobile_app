@@ -46,7 +46,7 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
   late TextEditingController _taskIdController;
   late TextEditingController _taskNameController;
 
-  String _selectedType = 'Non-Billable';
+  late String _selectedType;
   bool _isLoading = false;
 
   final List<String> _typeOptions = ['Billable', 'Non-Billable'];
@@ -57,9 +57,12 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
 
   final RequestEntryRepository _repository = RequestEntryRepository();
 
+  // FIX: single listener attached to all controllers so _isAddDisabled() re-evaluates on every change
+  void _onFieldChanged() => setState(() {});
+
   bool _isSubmitDisabled() {
     final isFormDirty = _startTimeController.text.isNotEmpty ||
-        _endTimeController.text.isNotEmpty || 
+        _endTimeController.text.isNotEmpty ||
         _noteController.text.isNotEmpty;
     if (isFormDirty) return true;
     if (_entries.isEmpty) return true;
@@ -68,7 +71,8 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
 
   bool _isAddDisabled() {
     return _startTimeController.text.isEmpty ||
-        _noteController.text.isEmpty || _dateController.text.isEmpty ||
+        _noteController.text.isEmpty ||
+        _dateController.text.isEmpty ||
         _endTimeController.text.isEmpty;
   }
 
@@ -238,9 +242,7 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
           );
         }
 
-      Future.delayed(const Duration(milliseconds: 800), () {
-        if (mounted) Navigator.of(context).pop();
-      });
+      
     } catch (e) {
       debugPrint('❌ Submission failed: $e');
       if (!mounted) return;
@@ -361,6 +363,12 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
 
     _selectedType = 'Non-Billable';
 
+    // FIX: attach listeners so every field change triggers setState and _isAddDisabled() re-evaluates immediately
+    _startTimeController.addListener(_onFieldChanged);
+    _endTimeController.addListener(_onFieldChanged);
+    _noteController.addListener(_onFieldChanged);
+    _dateController.addListener(_onFieldChanged);
+
     if (widget.editingEntry != null) {
       final entry = widget.editingEntry!;
       _selectedDate = entry.date;
@@ -375,6 +383,12 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
 
   @override
   void dispose() {
+    // FIX: remove listeners before disposing to avoid memory leaks
+    _startTimeController.removeListener(_onFieldChanged);
+    _endTimeController.removeListener(_onFieldChanged);
+    _noteController.removeListener(_onFieldChanged);
+    _dateController.removeListener(_onFieldChanged);
+
     _userController.dispose();
     _dateController.dispose();
     _startTimeController.dispose();
@@ -647,7 +661,7 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
 
               // Type dropdown
               DropdownButtonFormField<String>(
-                value: _selectedType.isEmpty ? 'Non-Billable' : _selectedType,
+                value: _selectedType,
                 hint: Text(
                   'Type',
                   style: TextStyle(color: customColors.textHint),
