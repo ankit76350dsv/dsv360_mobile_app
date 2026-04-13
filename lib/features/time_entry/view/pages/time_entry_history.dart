@@ -1,57 +1,59 @@
 import 'dart:convert';
 
+import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/features/time_entry/repositories/time_entry_history_repository.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 // ─── Sample data matching the real API response shape ────────────────────────
-final List<Map<String, dynamic>> _sampleRequests = [
-  {
-    'ROWID': '17682000001210764',
-    'Status': 'Pending',
-    'Username': 'Abhay Singh Patel',
-    'Project_Name': 'Test',
-    'Task_Name': 'dsgfsdg',
-    'Reason': null,
-    'CREATEDTIME': '2026-04-06 17:00:08:924',
-    'Timeentry_Data':
-        '[{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-03-11","Note":"Working on backend API integration","Type":"Billable","Start_time":"9:00 AM","End_time":"1:00 PM","Total_time":240,"Task_ID":"17682000000889013","Task_Name":"dsgfsdg","Project_ID":"17682000000780256","Project_Name":"Test"},{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-03-11","Note":"Code review and documentation","Type":"Non-Billable","Start_time":"2:00 PM","End_time":"5:00 PM","Total_time":180,"Task_ID":"17682000000889013","Task_Name":"dsgfsdg","Project_ID":"17682000000780256","Project_Name":"Test"}]',
-  },
-  {
-    'ROWID': '17682000001198532',
-    'Status': 'Approved',
-    'Username': 'Abhay Singh Patel',
-    'Project_Name': 'Alpha Dashboard',
-    'Task_Name': 'UI Revamp',
-    'Reason': null,
-    'CREATEDTIME': '2026-04-05 10:22:14:500',
-    'Timeentry_Data':
-        '[{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-04-04","Note":"Redesigned sidebar and navbar components","Type":"Billable","Start_time":"10:00 AM","End_time":"6:30 PM","Total_time":510,"Task_ID":"17682000000889101","Task_Name":"UI Revamp","Project_ID":"17682000000780300","Project_Name":"Alpha Dashboard"}]',
-  },
-  {
-    'ROWID': '17682000001185001',
-    'Status': 'Rejected',
-    'Username': 'Abhay Singh Patel',
-    'Project_Name': 'Mobile App',
-    'Task_Name': 'Sprint 4 Dev',
-    'Reason': 'Time entries exceed the allowed limit for this task. Please split into smaller requests.',
-    'CREATEDTIME': '2026-04-03 09:10:44:200',
-    'Timeentry_Data':
-        '[{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-04-01","Note":"Flutter screen development","Type":"Billable","Start_time":"8:30 AM","End_time":"12:30 PM","Total_time":240,"Task_ID":"17682000000889202","Task_Name":"Sprint 4 Dev","Project_ID":"17682000000780400","Project_Name":"Mobile App"},{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-04-01","Note":"Testing and bug fixes","Type":"Non-Billable","Start_time":"1:30 PM","End_time":"4:30 PM","Total_time":180,"Task_ID":"17682000000889202","Task_Name":"Sprint 4 Dev","Project_ID":"17682000000780400","Project_Name":"Mobile App"},{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-04-02","Note":"Client demo preparation","Type":"Billable","Start_time":"9:00 AM","End_time":"11:00 AM","Total_time":120,"Task_ID":"17682000000889202","Task_Name":"Sprint 4 Dev","Project_ID":"17682000000780400","Project_Name":"Mobile App"}]',
-  },
-  {
-    'ROWID': '17682000001170099',
-    'Status': 'Pending',
-    'Username': 'Abhay Singh Patel',
-    'Project_Name': 'Internal Tools',
-    'Task_Name': 'Automation Scripts',
-    'Reason': null,
-    'CREATEDTIME': '2026-04-01 15:45:30:100',
-    'Timeentry_Data':
-        '[{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-03-31","Note":"Python script for data export","Type":"Non-Billable","Start_time":"11:00 AM","End_time":"3:00 PM","Total_time":240,"Task_ID":"17682000000889303","Task_Name":"Automation Scripts","Project_ID":"17682000000780500","Project_Name":"Internal Tools"}]',
-  },
-];
+// final List<Map<String, dynamic>> _sampleRequests = [
+//   {
+//     'ROWID': '17682000001210764',
+//     'Status': 'Pending',
+//     'Username': 'Abhay Singh Patel',
+//     'Project_Name': 'Test',
+//     'Task_Name': 'dsgfsdg',
+//     'Reason': null,
+//     'CREATEDTIME': '2026-04-06 17:00:08:924',
+//     'Timeentry_Data':
+//         '[{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-03-11","Note":"Working on backend API integration","Type":"Billable","Start_time":"9:00 AM","End_time":"1:00 PM","Total_time":240,"Task_ID":"17682000000889013","Task_Name":"dsgfsdg","Project_ID":"17682000000780256","Project_Name":"Test"},{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-03-11","Note":"Code review and documentation","Type":"Non-Billable","Start_time":"2:00 PM","End_time":"5:00 PM","Total_time":180,"Task_ID":"17682000000889013","Task_Name":"dsgfsdg","Project_ID":"17682000000780256","Project_Name":"Test"}]',
+//   },
+//   {
+//     'ROWID': '17682000001198532',
+//     'Status': 'Approved',
+//     'Username': 'Abhay Singh Patel',
+//     'Project_Name': 'Alpha Dashboard',
+//     'Task_Name': 'UI Revamp',
+//     'Reason': null,
+//     'CREATEDTIME': '2026-04-05 10:22:14:500',
+//     'Timeentry_Data':
+//         '[{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-04-04","Note":"Redesigned sidebar and navbar components","Type":"Billable","Start_time":"10:00 AM","End_time":"6:30 PM","Total_time":510,"Task_ID":"17682000000889101","Task_Name":"UI Revamp","Project_ID":"17682000000780300","Project_Name":"Alpha Dashboard"}]',
+//   },
+//   {
+//     'ROWID': '17682000001185001',
+//     'Status': 'Rejected',
+//     'Username': 'Abhay Singh Patel',
+//     'Project_Name': 'Mobile App',
+//     'Task_Name': 'Sprint 4 Dev',
+//     'Reason': 'Time entries exceed the allowed limit for this task. Please split into smaller requests.',
+//     'CREATEDTIME': '2026-04-03 09:10:44:200',
+//     'Timeentry_Data':
+//         '[{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-04-01","Note":"Flutter screen development","Type":"Billable","Start_time":"8:30 AM","End_time":"12:30 PM","Total_time":240,"Task_ID":"17682000000889202","Task_Name":"Sprint 4 Dev","Project_ID":"17682000000780400","Project_Name":"Mobile App"},{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-04-01","Note":"Testing and bug fixes","Type":"Non-Billable","Start_time":"1:30 PM","End_time":"4:30 PM","Total_time":180,"Task_ID":"17682000000889202","Task_Name":"Sprint 4 Dev","Project_ID":"17682000000780400","Project_Name":"Mobile App"},{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-04-02","Note":"Client demo preparation","Type":"Billable","Start_time":"9:00 AM","End_time":"11:00 AM","Total_time":120,"Task_ID":"17682000000889202","Task_Name":"Sprint 4 Dev","Project_ID":"17682000000780400","Project_Name":"Mobile App"}]',
+//   },
+//   {
+//     'ROWID': '17682000001170099',
+//     'Status': 'Pending',
+//     'Username': 'Abhay Singh Patel',
+//     'Project_Name': 'Internal Tools',
+//     'Task_Name': 'Automation Scripts',
+//     'Reason': null,
+//     'CREATEDTIME': '2026-04-01 15:45:30:100',
+//     'Timeentry_Data':
+//         '[{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-03-31","Note":"Python script for data export","Type":"Non-Billable","Start_time":"11:00 AM","End_time":"3:00 PM","Total_time":240,"Task_ID":"17682000000889303","Task_Name":"Automation Scripts","Project_ID":"17682000000780500","Project_Name":"Internal Tools"}]',
+//   },
+// ];
 
 // ─── Model ────────────────────────────────────────────────────────────────────
 class _RequestEntry {
@@ -120,15 +122,40 @@ class TimeEntryHistory extends StatefulWidget {
 }
 
 class _TimeEntryHistoryState extends State<TimeEntryHistory> {
-  late final List<_RequestEntry> _requests;
+  final TimeEntryHistoryRepository _repository = TimeEntryHistoryRepository();
+
+List<_RequestEntry> _requests = [];
+bool isLoading = true;
   final Set<int> _expanded = {};
 
   @override
-  void initState() {
-    super.initState();
-    _requests =
-        _sampleRequests.map(_RequestEntry.fromMap).toList();
+void initState() {
+  super.initState();
+  fetchHistory();
+}
+final userId = AuthManager.instance.currentUser?.id ?? '';
+
+Future<void> fetchHistory() async {
+  try {
+    final response = await _repository.timeEntryHistory(userId); // your userId
+
+    // 🔴 IMPORTANT: print once to check structure
+    debugPrint("API RESPONSE: $response",wrapWidth: 2000);
+
+    final List list = response['data']; // adjust if key is different
+
+    setState(() {
+      _requests = list.map((e) => _RequestEntry.fromMap(e)).toList();
+      isLoading = false;
+    });
+
+  } catch (e) {
+    debugPrint("Error: $e");
+    setState(() {
+      isLoading = false;
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -149,7 +176,9 @@ class _TimeEntryHistoryState extends State<TimeEntryHistory> {
           ),
         ),
       ),
-      body: _requests.isEmpty
+      body: isLoading
+    ? const Center(child: CircularProgressIndicator())
+    : _requests.isEmpty
           ? _EmptyState(c: c)
           : ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -346,7 +375,7 @@ class _RequestCard extends StatelessWidget {
                   ),
 
                   // Reason (only if rejected and has reason)
-                  if (request.reason != null &&
+                  if ( request.status != "Accepted" && request.reason != null &&
                       request.reason!.trim().isNotEmpty) ...[
                     const SizedBox(height: 10),
                     Container(

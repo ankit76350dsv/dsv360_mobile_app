@@ -630,7 +630,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
           child: TopBar(
             title: '${widget.taskName} - Time Entries',
             onBack: () => Navigator.of(context).pop(),
-            actionIcon: Icons.timer,
+            actionIcon: Icons.timer_outlined,
               onInfoTap: () {
                  Navigator.push(
                         context,
