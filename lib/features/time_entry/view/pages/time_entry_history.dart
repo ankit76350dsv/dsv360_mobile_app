@@ -62,7 +62,7 @@ class _RequestEntry {
   final String username;
   final String projectName;
   final String taskName;
-  final String? reason;
+  final List<Map<String, dynamic>> reasons;
   final DateTime createdTime;
   final List<Map<String, dynamic>> entries;
 
@@ -72,7 +72,7 @@ class _RequestEntry {
     required this.username,
     required this.projectName,
     required this.taskName,
-    this.reason,
+    required this.reasons,
     required this.createdTime,
     required this.entries,
   });
@@ -91,6 +91,38 @@ class _RequestEntry {
       }
     }
 
+    List<Map<String, dynamic>> parseReasons(dynamic raw) {
+  if (raw == null) return [];
+
+  final str = raw.toString().trim();
+  if (str.isEmpty) return [];
+
+  try {
+    if (str.startsWith('[') || str.startsWith('{')) {
+      final decoded = jsonDecode(str);
+
+      if (decoded is List) {
+        return decoded
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+
+      if (decoded is Map) {
+        return [Map<String, dynamic>.from(decoded)];
+      }
+    }
+
+    // fallback → plain string (no structured data)
+    return [
+      {'reason': str}
+    ];
+  } catch (e) {
+    return [
+      {'reason': str}
+    ];
+  }
+}
+
     List<Map<String, dynamic>> parseEntries(String raw) {
       try {
         final decoded = jsonDecode(raw) as List;
@@ -106,7 +138,7 @@ class _RequestEntry {
       username: map['Username']?.toString() ?? '',
       projectName: map['Project_Name']?.toString() ?? '',
       taskName: map['Task_Name']?.toString() ?? '',
-      reason: map['Reason']?.toString(),
+      reasons: parseReasons(map['Reason']),
       createdTime: parseCreated(map['CREATEDTIME']?.toString() ?? ''),
       entries: parseEntries(map['Timeentry_Data']?.toString() ?? '[]'),
     );
@@ -142,7 +174,7 @@ Future<void> fetchHistory() async {
     // 🔴 IMPORTANT: print once to check structure
     debugPrint("API RESPONSE: $response",wrapWidth: 2000);
 
-    final List list = response['data']; // adjust if key is different
+    final List list = response['data'] is List ? response['data'] : [];// adjust if key is different
 
     setState(() {
       _requests = list.map((e) => _RequestEntry.fromMap(e)).toList();
@@ -375,38 +407,76 @@ class _RequestCard extends StatelessWidget {
                   ),
 
                   // Reason (only if rejected and has reason)
-                  if ( request.status != "Accepted" && request.reason != null &&
-                      request.reason!.trim().isNotEmpty) ...[
+                  if (request.status.toLowerCase() == "rejected" && request.reasons.isNotEmpty) ...[
                     const SizedBox(height: 10),
-                    Container(
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                      
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                       decoration: BoxDecoration(
                         color: Colors.red.withOpacity(0.07),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                            color: Colors.red.withOpacity(0.25), width: 1),
+                        border: Border.all(color: Colors.red.withOpacity(0.25), width: 1),
                       ),
-                      child: Row(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Icon(Icons.info_outline_rounded,
-                              size: 14, color: Colors.red),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              request.reason!,
-                              style: const TextStyle(
-                                color: Colors.red,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                height: 1.4,
-                              ),
+                        children: request.reasons.map((r) {
+                          final reasonText = r['reason']?.toString() ?? '';
+                          final start = r['Start_time'] ?? '';
+                          final end = r['End_time'] ?? '';
+                          final date = r['Entry_Date'] ?? '';
+                    
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Reason text
+                                Row(
+                                  children: [
+                                    const Icon(Icons.info_outline_rounded,
+                                        size: 14, color: Colors.red),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        "Rejected Reason: $reasonText",
+                                        style: const TextStyle(
+                    color: Colors.red,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                    
+                                // 👇 Overlap time info
+                                if (start != '' && end != '') ...[
+                                  const SizedBox(height: 4),
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 20),
+                                    child: Text(
+                                      "Overlap: $date | $start → $end",
+                                      style: const TextStyle(
+                                        color: Colors.redAccent,
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
-                          ),
-                        ],
+                          );
+                        }).toList(),
                       ),
+                    )
+                        ),
+                      ],
                     ),
                   ],
                 ],
