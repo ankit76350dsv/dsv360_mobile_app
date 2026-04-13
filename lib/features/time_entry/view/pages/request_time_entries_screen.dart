@@ -204,21 +204,39 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
         username: username,
       );
 
-      debugPrint('✅ Submission success: $response');
+      final bool isSuccess = response['success'] == true;
+        final String message = response['message']?.toString() ?? 'Something went wrong';
 
-      if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+        });
 
-      setState(() {
-        _isLoading = false;
-        _entries.clear();
-      });
+        if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Entries submitted successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+        if (isSuccess) {
+          setState(() {
+            _entries.clear();
+          });
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: Colors.green,
+            ),
+          );
+
+          Future.delayed(const Duration(milliseconds: 800), () {
+            if (mounted) Navigator.of(context).pop();
+          });
+
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message), // backend message shown
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
 
       Future.delayed(const Duration(milliseconds: 800), () {
         if (mounted) Navigator.of(context).pop();
