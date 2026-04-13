@@ -130,7 +130,15 @@ Future<void> fetchHistory() async {
     final List list = response['data'] is List ? response['data'] : [];// adjust if key is different
 
     setState(() {
-      _requests = list.map((e) => _RequestEntry.fromMap(e)).toList();
+      final parsed = list.map((e) => _RequestEntry.fromMap(e)).toList();
+
+// 🔥 Sort by newest first
+parsed.sort((a, b) => b.createdTime.compareTo(a.createdTime));
+
+setState(() {
+  _requests = parsed;
+  isLoading = false;
+});
       isLoading = false;
     });
 
@@ -164,8 +172,22 @@ Future<void> fetchHistory() async {
       body: isLoading
     ? const Center(child: CircularProgressIndicator())
     : _requests.isEmpty
-          ? _EmptyState(c: c)
-          : ListView.builder(
+        ? RefreshIndicator(
+            onRefresh: fetchHistory,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: _EmptyState(c: c),
+                ),
+              ],
+            ),
+          )
+        : RefreshIndicator(
+            onRefresh: fetchHistory,
+            child: ListView.builder(
+              physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(16),
               itemCount: _requests.length,
               itemBuilder: (ctx, i) => _RequestCard(
@@ -181,6 +203,7 @@ Future<void> fetchHistory() async {
                 c: c,
               ),
             ),
+          ),
     );
   }
 }
