@@ -7,53 +7,6 @@ import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-// ─── Sample data matching the real API response shape ────────────────────────
-// final List<Map<String, dynamic>> _sampleRequests = [
-//   {
-//     'ROWID': '17682000001210764',
-//     'Status': 'Pending',
-//     'Username': 'Abhay Singh Patel',
-//     'Project_Name': 'Test',
-//     'Task_Name': 'dsgfsdg',
-//     'Reason': null,
-//     'CREATEDTIME': '2026-04-06 17:00:08:924',
-//     'Timeentry_Data':
-//         '[{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-03-11","Note":"Working on backend API integration","Type":"Billable","Start_time":"9:00 AM","End_time":"1:00 PM","Total_time":240,"Task_ID":"17682000000889013","Task_Name":"dsgfsdg","Project_ID":"17682000000780256","Project_Name":"Test"},{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-03-11","Note":"Code review and documentation","Type":"Non-Billable","Start_time":"2:00 PM","End_time":"5:00 PM","Total_time":180,"Task_ID":"17682000000889013","Task_Name":"dsgfsdg","Project_ID":"17682000000780256","Project_Name":"Test"}]',
-//   },
-//   {
-//     'ROWID': '17682000001198532',
-//     'Status': 'Approved',
-//     'Username': 'Abhay Singh Patel',
-//     'Project_Name': 'Alpha Dashboard',
-//     'Task_Name': 'UI Revamp',
-//     'Reason': null,
-//     'CREATEDTIME': '2026-04-05 10:22:14:500',
-//     'Timeentry_Data':
-//         '[{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-04-04","Note":"Redesigned sidebar and navbar components","Type":"Billable","Start_time":"10:00 AM","End_time":"6:30 PM","Total_time":510,"Task_ID":"17682000000889101","Task_Name":"UI Revamp","Project_ID":"17682000000780300","Project_Name":"Alpha Dashboard"}]',
-//   },
-//   {
-//     'ROWID': '17682000001185001',
-//     'Status': 'Rejected',
-//     'Username': 'Abhay Singh Patel',
-//     'Project_Name': 'Mobile App',
-//     'Task_Name': 'Sprint 4 Dev',
-//     'Reason': 'Time entries exceed the allowed limit for this task. Please split into smaller requests.',
-//     'CREATEDTIME': '2026-04-03 09:10:44:200',
-//     'Timeentry_Data':
-//         '[{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-04-01","Note":"Flutter screen development","Type":"Billable","Start_time":"8:30 AM","End_time":"12:30 PM","Total_time":240,"Task_ID":"17682000000889202","Task_Name":"Sprint 4 Dev","Project_ID":"17682000000780400","Project_Name":"Mobile App"},{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-04-01","Note":"Testing and bug fixes","Type":"Non-Billable","Start_time":"1:30 PM","End_time":"4:30 PM","Total_time":180,"Task_ID":"17682000000889202","Task_Name":"Sprint 4 Dev","Project_ID":"17682000000780400","Project_Name":"Mobile App"},{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-04-02","Note":"Client demo preparation","Type":"Billable","Start_time":"9:00 AM","End_time":"11:00 AM","Total_time":120,"Task_ID":"17682000000889202","Task_Name":"Sprint 4 Dev","Project_ID":"17682000000780400","Project_Name":"Mobile App"}]',
-//   },
-//   {
-//     'ROWID': '17682000001170099',
-//     'Status': 'Pending',
-//     'Username': 'Abhay Singh Patel',
-//     'Project_Name': 'Internal Tools',
-//     'Task_Name': 'Automation Scripts',
-//     'Reason': null,
-//     'CREATEDTIME': '2026-04-01 15:45:30:100',
-//     'Timeentry_Data':
-//         '[{"Username":"Abhay Singh Patel","User_ID":"17682000000114004","Entry_Date":"2026-03-31","Note":"Python script for data export","Type":"Non-Billable","Start_time":"11:00 AM","End_time":"3:00 PM","Total_time":240,"Task_ID":"17682000000889303","Task_Name":"Automation Scripts","Project_ID":"17682000000780500","Project_Name":"Internal Tools"}]',
-//   },
-// ];
 
 // ─── Model ────────────────────────────────────────────────────────────────────
 class _RequestEntry {
@@ -213,7 +166,7 @@ Future<void> fetchHistory() async {
     : _requests.isEmpty
           ? _EmptyState(c: c)
           : ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              padding: const EdgeInsets.all(16),
               itemCount: _requests.length,
               itemBuilder: (ctx, i) => _RequestCard(
                 request: _requests[i],
@@ -251,22 +204,23 @@ class _RequestCard extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeInOut,
-      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: c.cardBackground,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: c.inputBorder!,
-          width: 1.5,
+          color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.05),
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
+      margin: const EdgeInsets.only(bottom: 26),
+      padding: const EdgeInsets.all(8),
       child: Column(
         children: [
           // ── Header ──────────────────────────────────────────────────────
@@ -274,7 +228,7 @@ class _RequestCard extends StatelessWidget {
             onTap: onToggle,
             borderRadius: BorderRadius.circular(16),
             child: Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -287,28 +241,28 @@ class _RequestCard extends StatelessWidget {
                         request.shortId,
                         style: TextStyle(
                           color: c.textPrimary,
-                          fontSize: 15,
+                          fontSize: 16,
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.2,
                         ),
                       ),
                       const SizedBox(width: 10),
                       // Status tag
-                      _StatusTag(status: request.status),
+                      _StatusTag(status: request.status), //bookmark tag
                       const Spacer(),
                       // Entries count badge
                       Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 9, vertical: 3),
                         decoration: BoxDecoration(
-                          color: c.primary!.withOpacity(0.1),
+                          color: c.textPrimary!.withOpacity(0.08), 
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           'Entries: ${request.entries.length}',
                           style: TextStyle(
-                            color: c.primary,
-                            fontSize: 11,
+                            color: c.textPrimary,
+                            fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -322,7 +276,7 @@ class _RequestCard extends StatelessWidget {
                         child: Icon(
                           Icons.keyboard_arrow_down_rounded,
                           color: c.textSecondary,
-                          size: 22,
+                          size: 24,
                         ),
                       ),
                     ],
@@ -341,14 +295,14 @@ class _RequestCard extends StatelessWidget {
                             Row(
                               children: [
                                 Icon(Icons.folder_outlined,
-                                    size: 13, color: c.textSecondary),
+                                    size: 16, color: c.textSecondary),
                                 const SizedBox(width: 4),
                                 Flexible(
                                   child: Text(
-                                    request.projectName,
+                                    "Project: ${request.projectName}",
                                     style: TextStyle(
                                       color: c.textSecondary,
-                                      fontSize: 12,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                     ),
                                     overflow: TextOverflow.ellipsis,
@@ -356,18 +310,18 @@ class _RequestCard extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 3),
+                            const SizedBox(height: 6),
                             Row(
                               children: [
                                 Icon(Icons.task_alt_outlined,
-                                    size: 13, color: c.textSecondary),
+                                    size: 16, color: c.textSecondary),
                                 const SizedBox(width: 4),
                                 Flexible(
                                   child: Text(
                                     request.taskName,
                                     style: TextStyle(
                                       color: c.textSecondary,
-                                      fontSize: 12,
+                                      fontSize: 14,
                                       fontWeight: FontWeight.w500,
                                     ),
                                     overflow: TextOverflow.ellipsis,
@@ -388,16 +342,16 @@ class _RequestCard extends StatelessWidget {
                                 .format(request.createdTime),
                             style: TextStyle(
                               color: c.textPrimary,
-                              fontSize: 12,
+                              fontSize: 14,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 6),
                           Text(
                             DateFormat('hh:mm a').format(request.createdTime),
                             style: TextStyle(
                               color: c.textSecondary,
-                              fontSize: 11,
+                              fontSize: 14,
                               fontWeight: FontWeight.w400,
                             ),
                           ),
@@ -437,35 +391,24 @@ class _RequestCard extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 // Reason text
-                                Row(
-                                  children: [
-                                    const Icon(Icons.info_outline_rounded,
-                                        size: 14, color: Colors.red),
-                                    const SizedBox(width: 6),
-                                    Expanded(
-                                      child: Text(
-                                        "Rejected Reason: $reasonText",
-                                        style: const TextStyle(
-                    color: Colors.red,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                
+                                Text(
+                                  "Rejected Reason: $reasonText",
+                                  style: const TextStyle(
+                                                  color: Colors.red,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                  ),
                                 ),
                     
                                 // 👇 Overlap time info
                                 if (start != '' && end != '') ...[
                                   const SizedBox(height: 4),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 20),
-                                    child: Text(
-                                      "Overlap: $date | $start → $end",
-                                      style: const TextStyle(
-                                        color: Colors.redAccent,
-                                        fontSize: 11,
-                                      ),
+                                  Text(
+                                    "Overlap: $date | $start → $end",
+                                    style: const TextStyle(
+                                      color: Colors.redAccent,
+                                      fontSize: 14,
                                     ),
                                   ),
                                 ],
@@ -493,7 +436,7 @@ class _RequestCard extends StatelessWidget {
                     child: Text(
                       'No entry data available.',
                       style: TextStyle(
-                          color: c.textSecondary, fontSize: 13),
+                          color: c.textSecondary, fontSize: 14),
                     ),
                   )
                 : Column(
@@ -553,149 +496,125 @@ class _EntryRow extends StatelessWidget {
         border: isLast
             ? null
             : Border(
-                bottom: BorderSide(color: c.inputBorder!, width: 1),
+                bottom: BorderSide(color: c.inputBorder!, width: 1.2),
               ),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Index circle
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: c.primary!.withOpacity(0.12),
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '$index',
-              style: TextStyle(
-                color: c.primary,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Date + Type tag row
+            Row(
               children: [
-                // Date + Type tag row
-                Row(
-                  children: [
-                    Icon(Icons.calendar_today_outlined,
-                        size: 12, color: c.textSecondary),
-                    const SizedBox(width: 4),
-                    Text(
-                      _formatEntryDate(entry['Entry_Date']?.toString() ?? ''),
-                      style: TextStyle(
-                        color: c.textPrimary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isBillable
-                            ? Colors.green.withOpacity(0.12)
-                            : Colors.orange.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        entry['Type']?.toString() ?? '',
-                        style: TextStyle(
-                          color: isBillable
-                              ? Colors.green[700]
-                              : Colors.orange[700],
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-
-                // Start → End time
-                Row(
-                  children: [
-                    Icon(Icons.access_time_outlined,
-                        size: 12, color: c.textSecondary),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${entry['Start_time'] ?? ''} → ${entry['End_time'] ?? ''}',
-                      style: TextStyle(
-                        color: c.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _formatDuration(entry['Total_time']),
-                      style: TextStyle(
-                        color: c.primary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 5),
-
-                // Task + Project
-                Row(
-                  children: [
-                    Expanded(
-                      child: _InfoChip(
-                        icon: Icons.task_alt_outlined,
-                        label: entry['Task_Name']?.toString() ?? '',
-                        c: c,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: _InfoChip(
-                        icon: Icons.folder_outlined,
-                        label: entry['Project_Name']?.toString() ?? '',
-                        c: c,
-                      ),
-                    ),
-                  ],
-                ),
-
-                // Note
-                if ((entry['Note']?.toString() ?? '').isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.description_outlined,
-                          size: 12, color: c.textSecondary),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          entry['Note']?.toString() ?? '',
-                          style: TextStyle(
-                            color: c.textSecondary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            height: 1.4,
-                          ),
-                        ),
-                      ),
-                    ],
+                Icon(Icons.calendar_today_outlined,
+                    size: 13, color: c.textSecondary),
+                const SizedBox(width: 4),
+                Text(
+                  _formatEntryDate(entry['Entry_Date']?.toString() ?? ''),
+                  style: TextStyle(
+                    color: c.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
-                ],
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: isBillable
+                        ? Colors.green.withOpacity(0.1)
+                        : Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    entry['Type']?.toString() ?? '',
+                    style: TextStyle(
+                      color: c.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(height: 5),
+      
+            // Start → End time
+            Row(
+              children: [
+                Icon(Icons.access_time_outlined,
+                    size: 13, color: c.textSecondary),
+                const SizedBox(width: 4),
+                Text(
+                  '${entry['Start_time'] ?? ''} → ${entry['End_time'] ?? ''}',
+                  style: TextStyle(
+                    color: c.textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _formatDuration(entry['Total_time']),
+                  style: TextStyle(
+                    color: c.primary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 5),
+      
+            // Task + Project
+            Row(
+              children: [
+                Expanded(
+                  child: _InfoChip(
+                    icon: Icons.task_alt_outlined,
+                    label: entry['Task_Name']?.toString() ?? '',
+                    c: c,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: _InfoChip(
+                    icon: Icons.folder_outlined,
+                    label: entry['Project_Name']?.toString() ?? '',
+                    c: c,
+                  ),
+                ),
+              ],
+            ),
+      
+            // Note
+            if ((entry['Note']?.toString() ?? '').isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.description_outlined,
+                      size: 13, color: c.textSecondary),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                     entry['Note'] != null && entry['Note'].toString().isNotEmpty
+            ? "Note: ${entry['Note']}"
+            : '',
+                      style: TextStyle(
+                        color: c.textSecondary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -740,14 +659,14 @@ class _InfoChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 11, color: c.textSecondary),
+          Icon(icon, size: 13, color: c.textSecondary),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
               label,
               style: TextStyle(
                 color: c.textSecondary,
-                fontSize: 11,
+                fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
               overflow: TextOverflow.ellipsis,
@@ -772,7 +691,7 @@ class _StatusTag extends StatelessWidget {
     IconData icon;
 
     switch (status.toLowerCase()) {
-      case 'approved':
+      case 'accepted':
         bg = Colors.green.withOpacity(0.12);
         fg = Colors.green[700]!;
         icon = Icons.check_circle_outline_rounded;
@@ -797,13 +716,13 @@ class _StatusTag extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 11, color: fg),
+          Icon(icon, size: 13, color: fg),
           const SizedBox(width: 4),
           Text(
             status,
             style: TextStyle(
               color: fg,
-              fontSize: 11,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -838,7 +757,7 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Your submitted requests will appear here.',
-            style: TextStyle(color: c.textSecondary, fontSize: 13),
+            style: TextStyle(color: c.textSecondary, fontSize: 14),
           ),
         ],
       ),

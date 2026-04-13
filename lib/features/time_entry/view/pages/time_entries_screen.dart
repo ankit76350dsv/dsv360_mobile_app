@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../model/time_entry_model.dart';
 import '../../repositories/time_entry_repository.dart';
-import '../../../../views/widgets/time_entry_card.dart';
+import '../widgets/time_entry_card.dart';
 import '../../../../views/widgets/TopBar.dart';
 import 'add_time_entry_dialog.dart';
 
