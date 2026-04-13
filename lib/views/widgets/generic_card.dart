@@ -31,8 +31,10 @@ class GenericCard extends StatelessWidget {
     this.onTap,
   });
 
+
   Color _getStatusColor(String status, BuildContext context) {
     final customColors = Theme.of(context).extension<CustomColors>()!;
+   
     switch (status) {
       case 'Open':
       case 'Pending':
@@ -50,6 +52,7 @@ class GenericCard extends StatelessWidget {
     }
   }
 
+ 
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
@@ -58,7 +61,7 @@ class GenericCard extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-           color: (isTimerRunning ?? false) ? Colors.yellow.shade50 : customColors.cardBackground,
+          color: (isTimerRunning ?? false) ? customColors.timerTaskColor : customColors.cardBackground,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white.withOpacity(0.2), width: 1.5),
           boxShadow: [

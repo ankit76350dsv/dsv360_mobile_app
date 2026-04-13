@@ -43,6 +43,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
   final Color? tabbarBackground;
   final Color? tabbarIndicator;
   final Color? chatBubbleBot;
+  final Color? timerTaskColor;
 
   const CustomColors({
     required this.primary,
@@ -70,6 +71,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
     required this.tabbarBackground,
     required this.tabbarIndicator,
     required this.chatBubbleBot,
+    required this.timerTaskColor,
   });
 
   @override
@@ -99,6 +101,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
     Color? tabbarBackground,
     Color? tabbarIndicator,
     Color? chatBubbleBot,
+    Color? timerTaskColor,
   }) {
     return CustomColors(
       primary: primary ?? this.primary,
@@ -126,6 +129,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
       tabbarBackground: tabbarBackground ?? this.tabbarBackground,
       tabbarIndicator: tabbarIndicator ?? this.tabbarIndicator,
       chatBubbleBot: chatBubbleBot ?? this.chatBubbleBot,
+      timerTaskColor: timerTaskColor ?? this.timerTaskColor,
     );
   }
 
@@ -162,6 +166,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
       tabbarBackground: Color.lerp(tabbarBackground, other.tabbarBackground, t),
       tabbarIndicator: Color.lerp(tabbarIndicator, other.tabbarIndicator, t),
       chatBubbleBot: Color.lerp(chatBubbleBot, other.chatBubbleBot, t),
+      timerTaskColor: Color.lerp(timerTaskColor, other.timerTaskColor, t),
     );
   }
 }
@@ -197,6 +202,7 @@ ThemeData buildLightTheme(Color seedColor) {
         tabbarBackground: AppColorsLight.tabbarBackground,
         tabbarIndicator: AppColorsLight.tabbarIndicator,
         chatBubbleBot: AppColorsLight.chatBubbleBot,
+        timerTaskColor: const Color.fromARGB(255, 252, 255, 215),
       ),
     ],
 
@@ -303,6 +309,7 @@ ThemeData buildDarkTheme(Color seedColor) {
         tabbarBackground: AppColorsDark.tabbarBackground,
         tabbarIndicator: AppColorsDark.tabbarIndicator,
         chatBubbleBot: AppColorsDark.chatBubbleBot,
+        timerTaskColor: const Color.fromARGB(45, 255, 243, 68),
       ),
     ],
 
