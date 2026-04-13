@@ -647,7 +647,7 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
 
               // Type dropdown
               DropdownButtonFormField<String>(
-                value: _selectedType,
+                value: _selectedType.isEmpty ? 'Non-Billable' : _selectedType,
                 hint: Text(
                   'Type',
                   style: TextStyle(color: customColors.textHint),
