@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -263,6 +264,10 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
 
+    final user = AuthManager.instance.currentUser;
+    final role = user?.role?.name ?? 'User';
+    final isAdmin = role == 'Admin';
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(120),
@@ -507,123 +512,121 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
 
                 // Assignee Multi-Select Dropdown
                 Consumer(
-                  builder: (context, ref, child) {
-                    final employeesAsync = ref.watch(employeeListProvider);
+  builder: (context, ref, child) {
+    final employeesAsync = ref.watch(employeeListProvider);
 
-                    return employeesAsync.when(
-                      loading: () => Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 16,
-                        ),
-                        decoration: BoxDecoration(
-                          color: customColors.inputFill,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: customColors.inputBorder!,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.person_outline,
-                              color: customColors.textSecondary,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Loading assignees...',
-                              style: TextStyle(
-                                color: customColors.textHint,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      error: (error, st) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Text('Error loading employees: $error'),
-                      ),
-                      data: (employees) {
-                        // Filter only active employees
-                        final activeEmployees = employees
-                            .where((e) => e.status == 'ACTIVE')
-                            .toList();
+    return employeesAsync.when(
+      loading: () => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        decoration: BoxDecoration(
+          color: customColors.inputFill,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: customColors.inputBorder!, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.person_outline, color: customColors.textSecondary, size: 20),
+            const SizedBox(width: 12),
+            Text(
+              'Loading assignees...',
+              style: TextStyle(color: customColors.textHint, fontSize: 16),
+            ),
+          ],
+        ),
+      ),
+      error: (error, st) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Text('Error loading employees: $error'),
+      ),
+      data: (employees) {
+        final activeEmployees = employees.where((e) => e.status == 'ACTIVE').toList();
+        final employeeMap = {for (var e in activeEmployees) e.fullName: e};
+        final employeeNameList = activeEmployees.map((e) => e.fullName).toList();
 
-                        final employeeMap = {
-                          for (var e in activeEmployees) e.fullName: e,
-                        };
-                        final employeeNameList = activeEmployees
-                            .map((e) => e.fullName)
-                            .toList();
+        if (!isAdmin && user != null) {
+          Employee? currentEmployee;
+          for (final e in activeEmployees) {
+            if (e.userId == user.id) {
+              currentEmployee = e;
+              break;
+            }
+          }
 
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Dropdown field
-                            CustomPopupDropdown(
-                              value: null, // Always null to act as a selector
-                              hint: 'Select Assignees',
-                              items: employeeNameList,
-                              icon: Icons.person_outline,
-                              onChanged: (value) {
-                                if (value != null) {
-                                  final employee = employeeMap[value];
-                                  if (employee != null) {
-                                    setState(() {
-                                      if (!_selectedAssignees.any(
-                                        (e) => e.userId == employee.userId,
-                                      )) {
-                                        _selectedAssignees.add(employee);
-                                      }
-                                    });
-                                    debugPrint(
-                                      '✅ Assignee added: ${employee.fullName}',
-                                    );
-                                    debugPrint(
-                                      '👥 Total selected: ${_selectedAssignees.length}',
-                                    );
-                                  }
-                                }
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            // Chips below the dropdown
-                            if (_selectedAssignees.isNotEmpty)
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: _selectedAssignees.map((employee) {
-                                  return Chip(
-                                    label: Text(employee.fullName),
-                                    onDeleted: () {
-                                      setState(() {
-                                        _selectedAssignees.removeWhere(
-                                          (e) => e.userId == employee.userId,
-                                        );
-                                      });
-                                      debugPrint(
-                                        '❌ Assignee removed: ${employee.fullName}',
-                                      );
-                                    },
-                                    backgroundColor: customColors.primary!
-                                        .withOpacity(0.2),
-                                    labelStyle: TextStyle(
-                                      color: customColors.textPrimary,
-                                      fontSize: 13,
-                                    ),
-                                    deleteIconColor: customColors.primary,
-                                  );
-                                }).toList(),
-                              ),
-                          ],
-                        );
-                      },
-                    );
+          if (currentEmployee != null) {
+            final alreadyOnlyCurrent = _selectedAssignees.length == 1 &&
+                _selectedAssignees.first.userId == currentEmployee.userId;
+
+            if (!alreadyOnlyCurrent) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (!mounted) return;
+                setState(() {
+                  _selectedAssignees = [currentEmployee!];
+                });
+              });
+            }
+          }
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AbsorbPointer(
+              absorbing: !isAdmin,
+              child: Opacity(
+                opacity: isAdmin ? 1 : 0.6,
+                child: CustomPopupDropdown(
+                  value: null,
+                  hint: 'Select Assignees',
+                  items: employeeNameList,
+                  icon: Icons.person_outline,
+                  onChanged: (value) {
+                    if (!isAdmin || value == null) return;
+                    final employee = employeeMap[value];
+                    if (employee != null) {
+                      setState(() {
+                        if (!_selectedAssignees.any((e) => e.userId == employee.userId)) {
+                          _selectedAssignees.add(employee);
+                        }
+                      });
+                    }
                   },
                 ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (_selectedAssignees.isNotEmpty)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _selectedAssignees.map((employee) {
+                  return Chip(
+                    label: Text(employee.fullName),
+                    onDeleted: isAdmin
+                        ? () {
+                            setState(() {
+                              _selectedAssignees.removeWhere(
+                                (e) => e.userId == employee.userId,
+                              );
+                            });
+                          }
+                        : null,
+                    backgroundColor: customColors.primary!.withOpacity(0.2),
+                    labelStyle: TextStyle(
+                      color: customColors.textPrimary,
+                      fontSize: 13,
+                    ),
+                    deleteIconColor: customColors.primary,
+                  );
+                }).toList(),
+              ),
+           
+             
+          ],
+        );
+      },
+    );
+  },
+),
                 const SizedBox(height: 20),
 
                 // Description
