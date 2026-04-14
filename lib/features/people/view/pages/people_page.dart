@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/views/widgets/custom_input_search.dart';
@@ -636,12 +637,10 @@ class _HeaderCell extends StatelessWidget {
 }
 
 class _LeaveTab extends ConsumerStatefulWidget {
-  
   const _LeaveTab();
 
   @override
   ConsumerState<_LeaveTab> createState() => _LeaveTabState();
-  
 }
 
 class _LeaveTabState extends ConsumerState<_LeaveTab> {
@@ -662,7 +661,6 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -715,7 +713,8 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
                         message: 'Loading leave summary...',
                       ),
                       error: (error, stack) => GlobalError(
-                        message: 'Failed to load leave summary: Try Again later',
+                        message:
+                            'Failed to load leave summary: Try Again later',
                         onRetry: () => ref.refresh(
                           leaveSummaryRepositoryProvider(
                             userId: userId,
@@ -775,7 +774,8 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
                       ),
                     ),
 
-                  if (!IsHaveAccess.instance.isAdmin) const SizedBox(height: 24),
+                  if (!IsHaveAccess.instance.isAdmin)
+                    const SizedBox(height: 24),
 
                   // Header
                   Row(
@@ -840,43 +840,45 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                     Container(
-  height: 52,
-  width: 52,
-  decoration: BoxDecoration(
-    color: customColors.surfaceBackground,
-    borderRadius: BorderRadius.circular(14),
-    border: Border.all(
-      color: Colors.grey.withOpacity(0.2),
-      width: 1.5,
-    ),
-  ),
-  child: PopupMenuButton<String?>(
-    initialValue: _selectedLeaveType,
-    tooltip: _selectedLeaveType == null
-        ? 'Filter by leave type'
-        : 'Filter: $_selectedLeaveType',
-    onSelected: (value) {
-      setState(() => _selectedLeaveType = value);
-    },
-    itemBuilder: (context) => [
-      const PopupMenuItem<String?>(
-        value: null,
-        child: Text('All Leave Types'),
-      ),
-      ..._leaveTypeOptions.map(
-        (type) => PopupMenuItem<String?>(
-          value: type,
-          child: Text(type),
-        ),
-      ),
-    ],
-    icon: Icon(
-      Icons.filter_list,
-      color: _selectedLeaveType == null ? Colors.grey : customColors.primary, //here color for item
-    ),
-  ),
-),
+                      Container(
+                        height: 52,
+                        width: 52,
+                        decoration: BoxDecoration(
+                          color: customColors.surfaceBackground,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: Colors.grey.withOpacity(0.2),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: PopupMenuButton<String?>(
+                          initialValue: _selectedLeaveType,
+                          tooltip: _selectedLeaveType == null
+                              ? 'Filter by leave type'
+                              : 'Filter: $_selectedLeaveType',
+                          onSelected: (value) {
+                            setState(() => _selectedLeaveType = value);
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem<String?>(
+                              value: null,
+                              child: Text('All Leave Types'),
+                            ),
+                            ..._leaveTypeOptions.map(
+                              (type) => PopupMenuItem<String?>(
+                                value: type,
+                                child: Text(type),
+                              ),
+                            ),
+                          ],
+                          icon: Icon(
+                            Icons.filter_list,
+                            color: _selectedLeaveType == null
+                                ? Colors.grey
+                                : customColors.primary, //here color for item
+                          ),
+                        ),
+                      ),
                     ],
                   ),
 
@@ -910,11 +912,13 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
                           : _normalize(_selectedLeaveType!);
 
                       final filteredLeaveList = leaveList.where((leave) {
-                        final nameMatch = q.isEmpty ||
-                            _normalize(leave.username).contains(q);
+                        final nameMatch =
+                            q.isEmpty || _normalize(leave.username).contains(q);
 
-                        final leaveTypeMatch = selectedType == null ||
-                            _normalize(leave.formattedLeaveType) == selectedType;
+                        final leaveTypeMatch =
+                            selectedType == null ||
+                            _normalize(leave.formattedLeaveType) ==
+                                selectedType;
 
                         return nameMatch && leaveTypeMatch;
                       }).toList();
@@ -949,7 +953,8 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => LeaveDetailsPage(leave: leave),
+                                  builder: (_) =>
+                                      LeaveDetailsPage(leave: leave),
                                 ),
                               );
                             },
@@ -957,7 +962,8 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => ApplyEditLeavePage(leave: leave),
+                                  builder: (_) =>
+                                      ApplyEditLeavePage(leave: leave),
                                 ),
                               );
                             },
@@ -1475,6 +1481,12 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
 
     final reporterName = userProfile?.reporterName ?? ''; //reporter nmae
     final reporterImage = userProfile?.reporterImage ?? ''; //reporter image
+
+    final user = AuthManager.instance.currentUser;
+    final role = user?.role?.name; // user role here
+
+    
+ 
     // Show loader while activeUser is still being fetched instead of throwing.
     if (userId.isEmpty) {
       return const GlobalLoader(message: 'Loading user info...');
@@ -1688,146 +1700,162 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                   ),
 
                   //Resporting manager here : reporitng to...
-                  if(reporterName != '' &&
-    reporterName.isNotEmpty)Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                  if (role != 'Admin')
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
 
-                      child: Container(
-                        margin: EdgeInsets.only(top: 20),
-                        width: double.infinity,
-                        constraints: const BoxConstraints(
-                          maxWidth: 500,
-                        ), // ✅ keeps it centered on large screens
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-  color: Theme.of(context).brightness == Brightness.dark 
-    ? Colors.grey.shade900 
-    : Colors.grey.shade50,
-  border: Border.all(
-    color: customColors.greyBorder ?? Colors.grey.shade300,
-    width: 1,
-  ),
-  /// ✅ Rounded corners
-  borderRadius: BorderRadius.circular(14),
-
-  /// ✅ Shadow respecting theme
-  boxShadow: [
-    BoxShadow(
-      color: Colors.black.withOpacity(
-        Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.04
-      ),
-      blurRadius: 6,
-      offset: const Offset(0, 2),
-    ),
-  ],
-),
-
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            /// Avatar
-                           CircleAvatar(
-  radius: 22,
-  backgroundColor: Theme.of(context).brightness == Brightness.dark
-    ? Colors.grey.shade700
-    : Colors.grey.shade200,
-  child: ClipOval(
-    child: (reporterImage != '' && reporterImage.trim().isNotEmpty)
-        ? Image.network(
-            reporterImage,
-            width: 44,
-            height: 44,
-            fit: BoxFit.cover,
-            loadingBuilder: (context, child, progress) {
-              if (progress == null) return child;
-              return Center(
-                child: SizedBox(
-                  width: 14,
-                  height: 14,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              );
-            },
-            errorBuilder: (context, error, stackTrace) {
-              return Icon(
-                Icons.person,
-                color: customColors.textSecondary,
-                size: 20,
-              );
-            },
-          )
-        : Icon(
-            Icons.person,
-            color: customColors.textSecondary,
-            size: 20,
-          ),
-  ),
-),
-
-                            const SizedBox(width: 12),
-
-                            /// Text Section
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Reporting To",
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 4),
-
-                                  Text(
-                                    reporterName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-
-                                  const SizedBox(height: 4),
-
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 6,
-                                        height: 6,
-                                        decoration: const BoxDecoration(
-                                          color: Colors.green,
-                                          shape: BoxShape.circle,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        "In",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.green.shade700,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
+                        child: Container(
+                          margin: EdgeInsets.only(top: 20),
+                          width: double.infinity,
+                          constraints: const BoxConstraints(
+                            maxWidth: 500,
+                          ), // ✅ keeps it centered on large screens
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
+                                ? Colors.grey.shade900
+                                : Colors.grey.shade50,
+                            border: Border.all(
+                              color:
+                                  customColors.greyBorder ??
+                                  Colors.grey.shade300,
+                              width: 1,
                             ),
-                          ],
+
+                            /// ✅ Rounded corners
+                            borderRadius: BorderRadius.circular(14),
+
+                            /// ✅ Shadow respecting theme
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(
+                                  Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? 0.3
+                                      : 0.04,
+                                ),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              /// Avatar
+                              CircleAvatar(
+                                radius: 22,
+                                backgroundColor:
+                                    Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.grey.shade700
+                                    : Colors.grey.shade200,
+                                child: ClipOval(
+                                  child:
+                                      (reporterImage != '' &&
+                                          reporterImage.trim().isNotEmpty)
+                                      ? Image.network(
+                                          reporterImage,
+                                          width: 44,
+                                          height: 44,
+                                          fit: BoxFit.cover,
+                                          loadingBuilder:
+                                              (context, child, progress) {
+                                                if (progress == null)
+                                                  return child;
+                                                return Center(
+                                                  child: SizedBox(
+                                                    width: 14,
+                                                    height: 14,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                        ),
+                                                  ),
+                                                );
+                                              },
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                                return Icon(
+                                                  Icons.person,
+                                                  color: customColors
+                                                      .textSecondary,
+                                                  size: 20,
+                                                );
+                                              },
+                                        )
+                                      : Icon(
+                                          Icons.person,
+                                          color: customColors.textSecondary,
+                                          size: 20,
+                                        ),
+                                ),
+                              ),
+
+                              const SizedBox(width: 12),
+
+                              /// Text Section
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Reporting To",
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 4),
+
+                                    Text(
+                                      reporterName,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+
+                                    const SizedBox(height: 4),
+
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 6,
+                                          height: 6,
+                                          decoration: const BoxDecoration(
+                                            color: Colors.green,
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          "In",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.green.shade700,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-
-                  
                 ],
               ),
             ),
@@ -2031,7 +2059,7 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                   CustomDropDownField(
                     options: users.map((u) {
                       return DropdownMenuItem<String>(
-                        value: u.userId,
+                        value: u.firstName + " " + u.lastName,
                         child: Text('${u.firstName} ${u.lastName}'.trim()),
                       );
                     }).toList(),
