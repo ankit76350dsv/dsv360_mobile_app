@@ -46,7 +46,6 @@ class PeoplePage extends ConsumerStatefulWidget {
 class _PeoplePageState extends ConsumerState<PeoplePage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-  
 
   @override
   void initState() {
@@ -66,7 +65,6 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
-    
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -224,7 +222,6 @@ class _ActivitiesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeUser = ref.watch(activeUserRepositoryProvider);
-    
 
     // final theme = Theme.of(context);
     final customColors = Theme.of(context).custom;
@@ -260,7 +257,6 @@ class _WorkScheduleCard extends StatelessWidget {
     final customColors = Theme.of(context).custom;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    
 
     // Calculate start of week (Sunday)
     final startOfWeek = today.subtract(Duration(days: today.weekday % 7));
@@ -443,7 +439,6 @@ class _TimeLogsCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final userId = activeUser?.userId ?? '';
-   
 
     // If userId is not available, show empty card or loader
     if (userId.isEmpty) {
@@ -679,7 +674,9 @@ class _LeaveTab extends ConsumerWidget {
                     username: username,
                   ).future,
                 );
-                final _ = await ref.refresh(leaveDetailsListRepositoryProvider.future);
+                final _ = await ref.refresh(
+                  leaveDetailsListRepositoryProvider.future,
+                );
               },
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -937,13 +934,15 @@ class LeaveSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     return SizedBox(
       height: 160,
       child: Card(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
-          side: BorderSide(color: Colors.grey.withValues(alpha: 0.2), width: 1.5),
+          side: BorderSide(
+            color: Colors.grey.withValues(alpha: 0.2),
+            width: 1.5,
+          ),
         ),
         child: Container(
           padding: const EdgeInsets.only(left: 14.0, top: 14.0),
@@ -1137,7 +1136,6 @@ class _AttendanceTabState extends ConsumerState<_AttendanceTab> {
     final customColors = Theme.of(context).custom;
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final userId = activeUser?.userId ?? '';
-     
 
     if (userId.isEmpty) {
       return const Center(child: GlobalLoader(message: 'Loading user info...'));
@@ -1294,10 +1292,8 @@ class _CheckInTab extends ConsumerStatefulWidget {
 }
 
 class _CheckInTabState extends ConsumerState<_CheckInTab> {
-  
   Timer? _timer;
   Duration _elapsed = Duration.zero;
- 
 
   @override
   void initState() {
@@ -1408,11 +1404,11 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final userId = activeUser?.userId ?? '';
 
-     final userProfile = UserManager.instance.userProfile;
+    final userProfile = UserManager.instance.userProfile;
     final empId = userProfile?.empId ?? ''; //emp id here
 
     final reporterName = userProfile?.reporterName ?? ''; //reporter nmae
-    final reporterImage = userProfile?.reporterImage ?? '';//reporter image
+    final reporterImage = userProfile?.reporterImage ?? ''; //reporter image
     // Show loader while activeUser is still being fetched instead of throwing.
     if (userId.isEmpty) {
       return const GlobalLoader(message: 'Loading user info...');
@@ -1444,63 +1440,78 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Padding(
-  padding: const EdgeInsets.all(16.0),
-  child: Column(
-    children: [
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(
-              "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}".trim(),
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: customColors.primary,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Text(
-            empId.isNotEmpty ? "EMP-ID: $empId" : "EMP-ID: --",
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: customColors.textSecondary,
-            ),
-          ),
-        ],
-      ),
-      if (!isCheckedIn)
-  Container(
-    margin: const EdgeInsets.only(top: 12),
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-    
-    decoration: BoxDecoration(
-      color: const Color.fromARGB(57, 255, 105, 59).withOpacity(0.15),
-      borderRadius: BorderRadius.circular(40),
-      border: Border.all(color: Colors.red.shade700),
-    ),
-    child: Row(
-     mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.access_time, color: Colors.red.shade800, size: 18,),
-        const SizedBox(width: 6),
-        Text(
-          "Yet to check-in",
-          style: TextStyle(
-            color: Colors.red.shade900,
-            fontWeight: FontWeight.w600,
-            fontSize: 11,
-          ),
-        ),
-      ],
-    ),
-  ),
-    ],
-  ),
-),
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}"
+                                    .trim(),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: customColors.primary,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              empId.isNotEmpty
+                                  ? "EMP-ID: $empId"
+                                  : "EMP-ID: --",
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: customColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (!isCheckedIn)
+                          Container(
+                            margin: const EdgeInsets.only(top: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(
+                                57,
+                                255,
+                                105,
+                                59,
+                              ).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(40),
+                              border: Border.all(color: Colors.red.shade700),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.access_time,
+                                  color: Colors.red.shade800,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  "Yet to check-in",
+                                  style: TextStyle(
+                                    color: Colors.red.shade900,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
 
                   /// TIME ELAPSED
                   Padding(
@@ -1593,9 +1604,6 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                     ),
                   ),
 
-                  
-
-
                   const SizedBox(height: 16.0),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1604,122 +1612,156 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                       text: isCheckedIn ? 'CHECK OUT' : 'CHECK IN NOW',
                       onPressed: () => _handleAction(
                         userId: userId,
-                        username: "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}".trim(),
+                        username:
+                            "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}"
+                                .trim(),
                         activeStatus: status,
                       ),
                       icon: isCheckedIn ? Icons.logout : Icons.login,
                     ),
                   ),
 
-                  //add resporting manager here : reporitng to...
-                  Center(
-  child: Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16),
-    
-    child: Container(
-      margin: EdgeInsets.only(top: 20),
-      width: double.infinity,
-      constraints: const BoxConstraints(maxWidth: 500), // ✅ keeps it centered on large screens
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+                  //Resporting manager here : reporitng to...
+                  if(reporterName != '' &&
+    reporterName.isNotEmpty)Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
 
-        /// ✅ Nice subtle border
-        border: Border.all(
-          color: Colors.grey.shade300,
-          width: 1,
-        ),
+                      child: Container(
+                        margin: EdgeInsets.only(top: 20),
+                        width: double.infinity,
+                        constraints: const BoxConstraints(
+                          maxWidth: 500,
+                        ), // ✅ keeps it centered on large screens
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+  color: Theme.of(context).brightness == Brightness.dark 
+    ? Colors.grey.shade900 
+    : Colors.grey.shade50,
+  border: Border.all(
+    color: customColors.greyBorder ?? Colors.grey.shade300,
+    width: 1,
+  ),
+  /// ✅ Rounded corners
+  borderRadius: BorderRadius.circular(14),
 
-        /// ✅ Rounded corners
-        borderRadius: BorderRadius.circular(14),
-
-        /// ✅ Optional shadow (makes it pop)
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
+  /// ✅ Shadow respecting theme
+  boxShadow: [
+    BoxShadow(
+      color: Colors.black.withOpacity(
+        Theme.of(context).brightness == Brightness.dark ? 0.3 : 0.04
       ),
-
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          /// Avatar
-          CircleAvatar(
-          radius: 22,
-          backgroundColor: Colors.grey.shade200,
-
-          /// ✅ Network image
-          backgroundImage: NetworkImage(
-            reporterImage, // 🔁 replace with API URL
-          ),
-
-          /// ✅ Fallback if image fails
-          onBackgroundImageError: (_, __) {},
-
-          child: null, // remove icon
-        ),
-
-          const SizedBox(width: 12),
-
-          /// Text Section
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Reporting To",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-
-                const SizedBox(height: 4),
-
-                Text(
-                  reporterName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-
-                const SizedBox(height: 4),
-
-                Row(
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      "In",
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.green.shade700,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      blurRadius: 6,
+      offset: const Offset(0, 2),
     ),
+  ],
+),
+
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            /// Avatar
+                           CircleAvatar(
+  radius: 22,
+  backgroundColor: Theme.of(context).brightness == Brightness.dark
+    ? Colors.grey.shade700
+    : Colors.grey.shade200,
+  child: ClipOval(
+    child: (reporterImage != '' && reporterImage.trim().isNotEmpty)
+        ? Image.network(
+            reporterImage,
+            width: 44,
+            height: 44,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, progress) {
+              if (progress == null) return child;
+              return Center(
+                child: SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return Icon(
+                Icons.person,
+                color: customColors.textSecondary,
+                size: 20,
+              );
+            },
+          )
+        : Icon(
+            Icons.person,
+            color: customColors.textSecondary,
+            size: 20,
+          ),
   ),
 ),
+
+                            const SizedBox(width: 12),
+
+                            /// Text Section
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Reporting To",
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 4),
+
+                                  Text(
+                                    reporterName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 4),
+
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.green,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        "In",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.green.shade700,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  
                 ],
               ),
             ),
@@ -1740,7 +1782,6 @@ class _TimeBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
     final theme = Theme.of(context);
-    
 
     return Column(
       children: [
@@ -1784,7 +1825,6 @@ class AttendanceTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
 
     return Card(
       child: Container(
@@ -1879,7 +1919,6 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
     final customColors = Theme.of(context).custom;
     final usersAsync = ref.watch(usersRepositoryProvider);
     final connectivityStatus = ref.watch(connectivityStatusProvider);
-    
 
     return connectivityStatus.when(
       loading: () => const GlobalLoader(message: 'Checking connection...'),
@@ -2114,7 +2153,6 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
     final lastDayOfMonth = DateTime(year, month + 1, 0);
     final daysInMonth = lastDayOfMonth.day;
     final leadDays = firstDayOfMonth.weekday % 7; // Sunday start logic
-    
 
     final connectivityStatus = ref.watch(connectivityStatusProvider);
     final calendarAsync = ref.watch(leaveCalendarRepositoryProvider);
@@ -2589,7 +2627,6 @@ class _LegendChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
