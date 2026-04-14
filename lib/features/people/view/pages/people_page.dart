@@ -1887,7 +1887,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
       final totalPresent = (summary['total_present'] as num?)?.toInt() ?? 0;
       final unpaid = (summary['unpaid'] as num?)?.toInt() ?? 0;
       final employees = totalLeave + totalPresent;
-      //final progress = employees == 0 ? 0.0 : (totalLeave / employees);
+      final progress = unpaid == 0 ? 0.0 : (unpaid / totalLeave);
 
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1935,10 +1935,10 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                         height: 60,
                         width: 60,
                         child: CircularProgressIndicator(
-                          value: (totalLeave/unpaid),
+                          value: progress,
                           strokeWidth: 6,
                           backgroundColor: customColors.greyBorder,
-                          valueColor: AlwaysStoppedAnimation(customColors.textSecondary),
+                          valueColor: AlwaysStoppedAnimation(customColors.primary),
                         ),
                       ),
                       Column(
