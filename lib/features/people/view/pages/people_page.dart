@@ -3,6 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
+import 'package:dsv360/features/people/repositories/people_summary_repository.dart';
 import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dsv360/core/constants/theme.dart';
@@ -23,7 +24,6 @@ import 'package:dsv360/repositories/check_in_repository.dart';
 import 'package:dsv360/repositories/users_repository.dart';
 import 'package:dsv360/repositories/user_check_in_status_repository.dart';
 import 'package:dsv360/models/user_check_in_status.dart';
-
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
 import 'package:dsv360/features/people/view/pages/apply_edit_leave_page.dart';
@@ -67,6 +67,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
+    
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -1367,6 +1368,8 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
   Timer? _timer;
   Duration _elapsed = Duration.zero;
 
+  
+
   @override
   void initState() {
     super.initState();
@@ -1473,6 +1476,8 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
+
+    final summaryAsync = ref.watch(peopleSummaryProvider);
     
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final userId = activeUser?.userId ?? '';
@@ -1864,110 +1869,131 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                     // ── SUMMARY SECTION ──────────────────────────────────────
                     // Only the layout + progress-bar logic below was changed.
                     // All colours, text, borders, shadows stay exactly as before.
-                    if(role == 'Admin')Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    if (role == 'Admin')
+  summaryAsync.when(
+    loading: () => const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      child: GlobalLoader(message: 'Loading summary...'),
+    ),
+    error: (_, __) => Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: GlobalError(
+        message: 'Failed to load summary: Try Again',
+        onRetry: () => ref.invalidate(peopleSummaryProvider),
+      ),
+    ),
+    data: (summary) {
+      final totalLeave = (summary['total_leave'] as num?)?.toInt() ?? 0;
+      final totalPresent = (summary['total_present'] as num?)?.toInt() ?? 0;
+      final unpaid = (summary['unpaid'] as num?)?.toInt() ?? 0;
+      final employees = totalLeave + totalPresent;
+      //final progress = employees == 0 ? 0.0 : (totalLeave / employees);
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 12),
+            Column(
+              children: [
+                Text(
+                  "Summary",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: customColors.textPrimary,
+                    fontSize: 17,
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _summaryStatItem(
+                    context: context,
+                    title: "Total Leaves",
+                    value: "$totalLeave",
+                    employees: "$employees Employees",
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  height: 90,
+                  width: 90,
+                  decoration: BoxDecoration(
+                    color: customColors.surfaceBackground,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: customColors.greyBorder!),
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      SizedBox(
+                        height: 60,
+                        width: 60,
+                        child: CircularProgressIndicator(
+                          value: (totalLeave/unpaid),
+                          strokeWidth: 6,
+                          backgroundColor: customColors.greyBorder,
+                          valueColor: AlwaysStoppedAnimation(customColors.textSecondary),
+                        ),
+                      ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                           // Show employee count once only
-                          
-                          const SizedBox(height: 12),
-                         Column(children: [
-                            Text("Summary", style: TextStyle(fontWeight: FontWeight.w600, color: customColors.textPrimary, fontSize: 17),),
-                            SizedBox(height: 12,)
-                          ]),
-                          // Row 1: Total Leaves (left) + circular indicator (right)
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: _summaryStatItem(
-                                  context: context,
-                                  title: "Total Leaves",
-                                  value: "20",
-                                  employees: "16 Employees",
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Container(
-                                height: 90,
-                                width: 90,
-                                decoration: BoxDecoration(
-                                  color: customColors.surfaceBackground,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: customColors.greyBorder!),
-                                ),
-                                child: Stack(
-                                  alignment: Alignment.center,
-                                  children: [
-                                    SizedBox(
-                                      height: 60,
-                                      width: 60,
-                                      child: CircularProgressIndicator(
-                                        value: (20 / 100).clamp(0.0, 1.0),
-                                        strokeWidth: 6,
-                                        backgroundColor: customColors.greyBorder,
-                                        valueColor: AlwaysStoppedAnimation(customColors.textSecondary),
-                                      ),
-                                    ),
-                                    Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Text(
-                                          "20",
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
-                                            color: customColors.textPrimary,
-                                          ),
-                                        ),
-                                        Text(
-                                          "Total",
-                                          style: TextStyle(
-                                            fontSize: 10,
-                                            color: customColors.textSecondary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                          Text(
+                            "$totalLeave",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: customColors.textPrimary,
+                            ),
                           ),
-                      
-                          
-                      
-                         
-                      
-                          const SizedBox(height: 16),
-                      
-                          // Row 2: Total CheckIn (left) + Leave Without Pay (right)
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _summaryStatItem(
-                                  context: context,
-                                  title: "Total CheckIn",
-                                  value: "0",
-                                  employees: "16 Employees",
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: _summaryStatItem(
-                                  context: context,
-                                  title: "Leave Without Pay",
-                                  value: "0",
-                                  employees: "16 Employees",
-                                ),
-                              ),
-                            ],
+                          Text(
+                            "Total",
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: customColors.textSecondary,
+                            ),
                           ),
-                          SizedBox(height: 40,)
                         ],
                       ),
-                    ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _summaryStatItem(
+                    context: context,
+                    title: "Total CheckIn",
+                    value: "$totalPresent",
+                    employees: "$employees Employees",
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _summaryStatItem(
+                    context: context,
+                    title: "Leave Without Pay",
+                    value: "$unpaid",
+                    employees: "$employees Employees",
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 40),
+          ],
+        ),
+      );
+    },
+  ),
                     // ── END SUMMARY SECTION ───────────────────────────────────
                   ],
                 ),
