@@ -1410,6 +1410,9 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
 
      final userProfile = UserManager.instance.userProfile;
     final empId = userProfile?.empId ?? ''; //emp id here
+
+    final reporterName = userProfile?.reporterName ?? ''; //reporter nmae
+    final reporterImage = userProfile?.reporterImage ?? '';//reporter image
     // Show loader while activeUser is still being fetched instead of throwing.
     if (userId.isEmpty) {
       return const GlobalLoader(message: 'Loading user info...');
@@ -1590,6 +1593,9 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                     ),
                   ),
 
+                  
+
+
                   const SizedBox(height: 16.0),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1604,6 +1610,116 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                       icon: isCheckedIn ? Icons.logout : Icons.login,
                     ),
                   ),
+
+                  //add resporting manager here : reporitng to...
+                  Center(
+  child: Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    
+    child: Container(
+      margin: EdgeInsets.only(top: 20),
+      width: double.infinity,
+      constraints: const BoxConstraints(maxWidth: 500), // ✅ keeps it centered on large screens
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+
+        /// ✅ Nice subtle border
+        border: Border.all(
+          color: Colors.grey.shade300,
+          width: 1,
+        ),
+
+        /// ✅ Rounded corners
+        borderRadius: BorderRadius.circular(14),
+
+        /// ✅ Optional shadow (makes it pop)
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          /// Avatar
+          CircleAvatar(
+          radius: 22,
+          backgroundColor: Colors.grey.shade200,
+
+          /// ✅ Network image
+          backgroundImage: NetworkImage(
+            reporterImage, // 🔁 replace with API URL
+          ),
+
+          /// ✅ Fallback if image fails
+          onBackgroundImageError: (_, __) {},
+
+          child: null, // remove icon
+        ),
+
+          const SizedBox(width: 12),
+
+          /// Text Section
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Reporting To",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+
+                const SizedBox(height: 4),
+
+                Text(
+                  reporterName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+
+                const SizedBox(height: 4),
+
+                Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      "In",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.green.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
+),
                 ],
               ),
             ),
