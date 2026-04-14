@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
+import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
@@ -634,11 +635,37 @@ class _HeaderCell extends StatelessWidget {
   }
 }
 
-class _LeaveTab extends ConsumerWidget {
+class _LeaveTab extends ConsumerStatefulWidget {
+  
   const _LeaveTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_LeaveTab> createState() => _LeaveTabState();
+  
+}
+
+class _LeaveTabState extends ConsumerState<_LeaveTab> {
+  late final customColors = Theme.of(context).custom;
+  String _searchQuery = '';
+  String? _selectedLeaveType;
+
+  static const List<String> _leaveTypeOptions = [
+    'Paid Leave',
+    'Sick Leave',
+    'Unpaid Leave',
+  ];
+
+  String _normalize(String value) {
+    return value
+        .toLowerCase()
+        .replaceAll('_', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final userId = activeUser?.userId ?? '';
     final username =
@@ -682,15 +709,13 @@ class _LeaveTab extends ConsumerWidget {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 children: [
-                  // Summary cards
                   if (!IsHaveAccess.instance.isAdmin)
                     leaveSummaryAsync.when(
                       loading: () => const GlobalLoader(
                         message: 'Loading leave summary...',
                       ),
                       error: (error, stack) => GlobalError(
-                        message:
-                            'Failed to load leave summary: Try Again later',
+                        message: 'Failed to load leave summary: Try Again later',
                         onRetry: () => ref.refresh(
                           leaveSummaryRepositoryProvider(
                             userId: userId,
@@ -750,10 +775,9 @@ class _LeaveTab extends ConsumerWidget {
                       ),
                     ),
 
-                  if (!IsHaveAccess.instance.isAdmin)
-                    const SizedBox(height: 24),
+                  if (!IsHaveAccess.instance.isAdmin) const SizedBox(height: 24),
 
-                  // Header row
+                  // Header
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -765,7 +789,6 @@ class _LeaveTab extends ConsumerWidget {
                         ),
                       ),
                       if (IsHaveAccess.instance.isAdmin) const Spacer(),
-
                       if (!IsHaveAccess.instance.isAdmin)
                         ElevatedButton(
                           onPressed: () {
@@ -805,6 +828,73 @@ class _LeaveTab extends ConsumerWidget {
 
                   const SizedBox(height: 12),
 
+                  // Search + filter row
+                  Row(
+                    children: [
+                      Expanded(
+                        child: CustomInputSearch(
+                          hint: 'Search by name',
+                          onChanged: (value) {
+                            setState(() => _searchQuery = value);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                     Container(
+  height: 52,
+  width: 52,
+  decoration: BoxDecoration(
+    color: customColors.surfaceBackground,
+    borderRadius: BorderRadius.circular(14),
+    border: Border.all(
+      color: Colors.grey.withOpacity(0.2),
+      width: 1.5,
+    ),
+  ),
+  child: PopupMenuButton<String?>(
+    initialValue: _selectedLeaveType,
+    tooltip: _selectedLeaveType == null
+        ? 'Filter by leave type'
+        : 'Filter: $_selectedLeaveType',
+    onSelected: (value) {
+      setState(() => _selectedLeaveType = value);
+    },
+    itemBuilder: (context) => [
+      const PopupMenuItem<String?>(
+        value: null,
+        child: Text('All Leave Types'),
+      ),
+      ..._leaveTypeOptions.map(
+        (type) => PopupMenuItem<String?>(
+          value: type,
+          child: Text(type),
+        ),
+      ),
+    ],
+    icon: Icon(
+      Icons.filter_list,
+      color: _selectedLeaveType == null ? Colors.grey : customColors.primary, //here color for item
+    ),
+  ),
+),
+                    ],
+                  ),
+
+                  if (_selectedLeaveType != null) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Chip(
+                        label: Text(_selectedLeaveType!),
+                        onDeleted: () {
+                          setState(() => _selectedLeaveType = null);
+                        },
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 12),
+
                   leaveDetailsListAsync.when(
                     loading: () =>
                         const GlobalLoader(message: 'Loading leave details...'),
@@ -814,51 +904,29 @@ class _LeaveTab extends ConsumerWidget {
                           ref.invalidate(leaveDetailsListRepositoryProvider),
                     ),
                     data: (leaveList) {
-                      if (leaveList.isEmpty) {
+                      final q = _normalize(_searchQuery);
+                      final selectedType = _selectedLeaveType == null
+                          ? null
+                          : _normalize(_selectedLeaveType!);
+
+                      final filteredLeaveList = leaveList.where((leave) {
+                        final nameMatch = q.isEmpty ||
+                            _normalize(leave.username).contains(q);
+
+                        final leaveTypeMatch = selectedType == null ||
+                            _normalize(leave.formattedLeaveType) == selectedType;
+
+                        return nameMatch && leaveTypeMatch;
+                      }).toList();
+
+                      if (filteredLeaveList.isEmpty) {
                         return Padding(
                           padding: const EdgeInsets.symmetric(vertical: 40.0),
                           child: Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(20),
-                                  decoration: BoxDecoration(
-                                    color: (customColors.primary ?? Colors.blue)
-                                        .withOpacity(0.1),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Icon(
-                                    Icons.event_busy_outlined,
-                                    size: 48,
-                                    color: customColors.primary ?? Colors.blue,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No Leave Records Found',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                    color: customColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 32.0,
-                                  ),
-                                  child: Text(
-                                    'You have no leave history or pending requests at the moment.',
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: customColors.textSecondary,
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            child: Text(
+                              (q.isNotEmpty || selectedType != null)
+                                  ? 'No leave records match your search/filter.'
+                                  : 'No Leave Records Found',
                             ),
                           ),
                         );
@@ -867,9 +935,9 @@ class _LeaveTab extends ConsumerWidget {
                       return ListView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        itemCount: leaveList.length,
+                        itemCount: filteredLeaveList.length,
                         itemBuilder: (context, index) {
-                          final leave = leaveList[index];
+                          final leave = filteredLeaveList[index];
 
                           return LeaveTile(
                             type: leave.formattedLeaveType,
@@ -881,8 +949,7 @@ class _LeaveTab extends ConsumerWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) =>
-                                      LeaveDetailsPage(leave: leave),
+                                  builder: (_) => LeaveDetailsPage(leave: leave),
                                 ),
                               );
                             },
@@ -890,8 +957,7 @@ class _LeaveTab extends ConsumerWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) =>
-                                      ApplyEditLeavePage(leave: leave),
+                                  builder: (_) => ApplyEditLeavePage(leave: leave),
                                 ),
                               );
                             },
