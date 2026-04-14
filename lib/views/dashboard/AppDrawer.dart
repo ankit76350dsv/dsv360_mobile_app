@@ -13,7 +13,7 @@ import 'package:dsv360/features/accounts/view/pages/accounts_screen.dart';
 import 'package:dsv360/features/client/view/pages/client_contacts_page.dart';
 import 'package:dsv360/features/badges/view/pages/badges_page.dart';
 import 'package:dsv360/views/users/users_page.dart';
-import 'package:dsv360/views/people/people_page.dart';
+import 'package:dsv360/features/people/view/pages/people_page.dart';
 import 'package:dsv360/features/teams/view/pages/teams_page.dart';
 import 'package:dsv360/views/ai/dsv_ai_page.dart';
 import 'package:dsv360/views/feedback/feedbacks_screen.dart';

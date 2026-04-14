@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
+import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
@@ -23,9 +24,9 @@ import 'package:dsv360/models/user_check_in_status.dart';
 
 import 'package:dsv360/views/dashboard/AppDrawer.dart';
 import 'package:dsv360/views/dashboard/dashboard_page.dart';
-import 'package:dsv360/views/people/apply_edit_leave_page.dart';
-import 'package:dsv360/views/people/holiday_calendar_page.dart';
-import 'package:dsv360/views/people/leave_details_page.dart';
+import 'package:dsv360/features/people/view/pages/apply_edit_leave_page.dart';
+import 'package:dsv360/features/people/view/pages/holiday_calendar_page.dart';
+import 'package:dsv360/features/people/view/pages/leave_details_page.dart';
 import 'package:dsv360/views/widgets/single_button.dart';
 import 'package:dsv360/views/widgets/custom_card_button.dart';
 import 'package:dsv360/views/widgets/custom_chip.dart';
@@ -45,6 +46,7 @@ class PeoplePage extends ConsumerStatefulWidget {
 class _PeoplePageState extends ConsumerState<PeoplePage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
+  
 
   @override
   void initState() {
@@ -64,6 +66,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
+    
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -221,6 +224,7 @@ class _ActivitiesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final activeUser = ref.watch(activeUserRepositoryProvider);
+    
 
     // final theme = Theme.of(context);
     final customColors = Theme.of(context).custom;
@@ -256,6 +260,7 @@ class _WorkScheduleCard extends StatelessWidget {
     final customColors = Theme.of(context).custom;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
+    
 
     // Calculate start of week (Sunday)
     final startOfWeek = today.subtract(Duration(days: today.weekday % 7));
@@ -438,6 +443,7 @@ class _TimeLogsCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final userId = activeUser?.userId ?? '';
+   
 
     // If userId is not available, show empty card or loader
     if (userId.isEmpty) {
@@ -1131,6 +1137,7 @@ class _AttendanceTabState extends ConsumerState<_AttendanceTab> {
     final customColors = Theme.of(context).custom;
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final userId = activeUser?.userId ?? '';
+     
 
     if (userId.isEmpty) {
       return const Center(child: GlobalLoader(message: 'Loading user info...'));
@@ -1287,8 +1294,10 @@ class _CheckInTab extends ConsumerStatefulWidget {
 }
 
 class _CheckInTabState extends ConsumerState<_CheckInTab> {
+  
   Timer? _timer;
   Duration _elapsed = Duration.zero;
+ 
 
   @override
   void initState() {
@@ -1398,6 +1407,9 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
     final customColors = Theme.of(context).custom;
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final userId = activeUser?.userId ?? '';
+
+     final userProfile = UserManager.instance.userProfile;
+    final empId = userProfile?.empId ?? ''; //emp id here
     // Show loader while activeUser is still being fetched instead of throwing.
     if (userId.isEmpty) {
       return const GlobalLoader(message: 'Loading user info...');
@@ -1429,16 +1441,63 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Text(
-                      "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}".trim(),
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: customColors.primary,
-                      ),
-                    ),
-                  ),
+  padding: const EdgeInsets.all(16.0),
+  child: Column(
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}".trim(),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: customColors.primary,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            empId.isNotEmpty ? "EMP-ID: $empId" : "EMP-ID: --",
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: customColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+      if (!isCheckedIn)
+  Container(
+    margin: const EdgeInsets.only(top: 12),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    
+    decoration: BoxDecoration(
+      color: const Color.fromARGB(57, 255, 105, 59).withOpacity(0.15),
+      borderRadius: BorderRadius.circular(40),
+      border: Border.all(color: Colors.red.shade700),
+    ),
+    child: Row(
+     mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.access_time, color: Colors.red.shade800, size: 18,),
+        const SizedBox(width: 6),
+        Text(
+          "Yet to check-in",
+          style: TextStyle(
+            color: Colors.red.shade900,
+            fontWeight: FontWeight.w600,
+            fontSize: 11,
+          ),
+        ),
+      ],
+    ),
+  ),
+    ],
+  ),
+),
 
                   /// TIME ELAPSED
                   Padding(
@@ -1565,6 +1624,7 @@ class _TimeBox extends StatelessWidget {
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
     final theme = Theme.of(context);
+    
 
     return Column(
       children: [
@@ -1608,6 +1668,7 @@ class AttendanceTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    
 
     return Card(
       child: Container(
@@ -1702,6 +1763,7 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
     final customColors = Theme.of(context).custom;
     final usersAsync = ref.watch(usersRepositoryProvider);
     final connectivityStatus = ref.watch(connectivityStatusProvider);
+    
 
     return connectivityStatus.when(
       loading: () => const GlobalLoader(message: 'Checking connection...'),
@@ -1936,6 +1998,7 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
     final lastDayOfMonth = DateTime(year, month + 1, 0);
     final daysInMonth = lastDayOfMonth.day;
     final leadDays = firstDayOfMonth.weekday % 7; // Sunday start logic
+    
 
     final connectivityStatus = ref.watch(connectivityStatusProvider);
     final calendarAsync = ref.watch(leaveCalendarRepositoryProvider);
@@ -2410,6 +2473,7 @@ class _LegendChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
