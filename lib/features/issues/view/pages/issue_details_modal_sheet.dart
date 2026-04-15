@@ -1,7 +1,7 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../models/issue_model.dart';
+import '../../../../models/issue_model.dart';
 
 class IssueDetailsModalSheet extends StatefulWidget {
   final IssueModel issue;

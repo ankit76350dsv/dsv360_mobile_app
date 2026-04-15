@@ -5,7 +5,7 @@ import '../../core/constants/auth_manager.dart';
 import '../attachments/attachment_list_modal.dart';
 // import '../../screens/tasks_screen.dart';
 import '../task/tasks_screen.dart';
-import '../issues/issues_screen.dart';
+import '../../features/issues/view/pages/issues_screen.dart';
 import '../../features/time_entry/view/pages/time_entries_screen.dart';
 import '../widgets/generic_card.dart';
 

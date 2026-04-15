@@ -3,13 +3,13 @@ import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../core/constants/auth_manager.dart';
-import '../../models/issue_model.dart';
-import '../../providers/issue_provider.dart';
-import '../widgets/custom_search_bar.dart';
-import '../widgets/generic_card.dart';
-import '../widgets/TopBar.dart';
-import '../attachments/attachment_list_modal.dart';
+import '../../../../core/constants/auth_manager.dart';
+import '../../../../models/issue_model.dart';
+import '../../../../providers/issue_provider.dart';
+import '../../../../views/widgets/custom_search_bar.dart';
+import '../../../../views/widgets/generic_card.dart';
+import '../../../../views/widgets/TopBar.dart';
+import '../../../../views/attachments/attachment_list_modal.dart';
 import 'assignee_modal.dart';
 import 'add_issue_form_screen.dart';
 import 'issue_details_modal_sheet.dart';
@@ -70,11 +70,15 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
 
   Future<void> _showAddIssueDialog({IssueModel? issue}) async {
     final customColors = Theme.of(context).custom;
-    final issueRepository = ref.read(issueRepositoryProvider);
+    final createIssueRepository = ref.read(createIssueRepositoryProvider);
+    final updateIssueRepository = ref.read(updateIssueRepositoryProvider);
     final result = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (context) =>
-            AddIssueFormScreen(issue: issue, issueRepository: issueRepository),
+        builder: (context) => AddIssueFormScreen(
+          issue: issue,
+          createIssueRepository: createIssueRepository,
+          updateIssueRepository: updateIssueRepository,
+        ),
       ),
     );
 
@@ -122,7 +126,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
               final scaffoldMessenger = ScaffoldMessenger.of(context);
               Navigator.pop(context);
               try {
-                final repository = ref.read(issueRepositoryProvider);
+                final repository = ref.read(deleteIssueRepositoryProvider);
                 await repository.deleteIssue(issue.id);
                 ref.invalidate(issueListProvider);
                 if (mounted) {
@@ -393,14 +397,12 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
           ),
         ],
       ),
-      floatingActionButton: _isAdminUser()
-          ? FloatingActionButton(
-              onPressed: () => _showAddIssueDialog(),
-              backgroundColor: customColors.primary,
-              shape: const CircleBorder(),
-              child: const Icon(Icons.add, color: Colors.white, size: 28),
-            )
-          : null,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddIssueDialog(),
+        backgroundColor: customColors.primary,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, color: Colors.white, size: 28),
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
