@@ -87,7 +87,8 @@ class _IssueDetailsModalSheetState extends State<IssueDetailsModalSheet> {
                           child: _buildDetailCard(
                             icon: Icons.info_outline,
                             label: 'Issue ID',
-                            value: widget.issue.id,
+                            value:
+                                "I${widget.issue.id.length <= 4 ? widget.issue.id : widget.issue.id.substring(widget.issue.id.length -4 , widget.issue.id.length)}",
                             context: context,
                           ),
                         ),
