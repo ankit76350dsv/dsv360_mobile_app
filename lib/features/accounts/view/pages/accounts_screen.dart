@@ -6,8 +6,8 @@ import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/features/accounts/repositories/accounts_list_repository.dart';
 import 'package:dsv360/features/accounts/view/pages/add_edit_accounts.dart';
 import 'package:dsv360/features/accounts/view/widgets/accounts_card.dart';
-import 'package:dsv360/views/dashboard/AppDrawer.dart';
-import 'package:dsv360/views/dashboard/dashboard_page.dart';
+import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
+import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

@@ -1,30 +1,30 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/widgets/circular_loader.dart';
-import 'package:dsv360/models/dashboard_model.dart';
-import 'package:dsv360/providers/dashboard_provider.dart'; // for selectedProjectYearProvider
+import 'package:dsv360/features/dashboard/model/dashboard_model.dart';
+import 'package:dsv360/providers/dashboard_provider.dart'; // for selectedYearProvider
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // ConsumerWidget + WidgetRef
 
-// Changed StatelessWidget → ConsumerWidget to support its own year picker.
-// No monthData param — the card fetches its own data via projectAnalyticsDataProvider.
-class ProjectAnalyticsCard extends ConsumerWidget {
-  const ProjectAnalyticsCard({super.key});
+// Changed StatelessWidget → ConsumerWidget so we can read/write selectedYearProvider.
+class TaskStatusCard extends ConsumerWidget {
+  // No taskData param — the card fetches its own data via taskStatusDataProvider.
+  const TaskStatusCard({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // constrain chart height so it doesn't overflow on small devices
-    final chartHeight = MediaQuery.of(context).size.height * 0.35;
+    final height = MediaQuery.of(context).size.height * 0.28;
     final customColors = Theme.of(context).custom;
 
-    // Read the analytics card's own selected year.
-    final selectedYear = ref.watch(selectedProjectYearProvider);
+    // Read the currently selected year.
+    final selectedYear = ref.watch(selectedYearProvider);
 
-    // Same year list as TaskStatusCard.
+    // Build selectable year list: current year + 2 years back (e.g. 2026, 2025 … 2022).
     final currentYear = DateTime.now().year;
     final years = List.generate(2, (i) => currentYear - i);
 
-    // Watch analytics-specific provider — only this card rebuilds when year changes.
-    final analyticsAsync = ref.watch(projectAnalyticsDataProvider);
+    // Watch the task-specific provider — only this card rebuilds when year changes.
+    final taskAsync = ref.watch(taskStatusDataProvider);
 
     return Card(
       elevation: 0,
@@ -32,35 +32,32 @@ class ProjectAnalyticsCard extends ConsumerWidget {
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(
                 backgroundColor: customColors.inputFill,
-                child: Icon(Icons.bar_chart, color: customColors.textPrimary),
+                child: Icon(Icons.schedule, color: customColors.textPrimary),
               ),
               title: Text(
-                'Project Analytics',
+                'Task Status',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: customColors.textPrimary,
                 ),
               ),
-              // Premium year picker — same pattern as TaskStatusCard, dark-mode aware.
+             
+
+              // Premium year picker: trigger shows selected year, only the inner
+              // container highlights on hover/tap — not the whole menu row.
               trailing: Theme(
                 data: Theme.of(context).copyWith(
-                  splashColor: const Color.fromARGB(0, 255, 119, 119),
+                  splashColor: Colors.transparent,
                   highlightColor: Colors.transparent,
                   hoverColor: Colors.transparent,
                 ),
                 child: PopupMenuButton<String>(
-                  // ─── POPUP MENU BACKGROUND COLOR ───────────────────────────────
-                  // This uses the same color as the Card widget (cardBackground).
-                  // To change it, edit the values in lib/core/constants/app_colors.dart:
-                  //   • Light mode: AppColorsLight.cardBackground  (default: 0xFFFFFFFF)
-                  //   • Dark mode:  AppColorsDark.cardBackground   (default: 0xFF1E1E1E)
-                  // ───────────────────────────────────────────────────────────────
+                  
                   color: customColors.cardBackground,
                   elevation: 8,
                   shadowColor: Colors.black.withValues(alpha: 0.10),
@@ -73,11 +70,13 @@ class ProjectAnalyticsCard extends ConsumerWidget {
                       width: 1,
                     ),
                   ),
+                  // onSelected updates the provider — drives taskStatusDataProvider rebuild.
                   onSelected: (v) {
-                    ref.read(selectedProjectYearProvider.notifier).state = int.parse(v);
+                    ref.read(selectedYearProvider.notifier).state = int.parse(v);
                   },
                   itemBuilder: (context) => years.map((year) {
                     final isSelected = year == selectedYear;
+                    // cs from itemBuilder context so dark/light is respected inside the menu.
                     final cs = Theme.of(context).colorScheme;
                     return PopupMenuItem<String>(
                       value: year.toString(),
@@ -85,6 +84,8 @@ class ProjectAnalyticsCard extends ConsumerWidget {
                         horizontal: 8,
                         vertical: 4,
                       ),
+                      // AnimatedContainer handles the selected-state highlight;
+                      // outer row ripple is suppressed via Theme above.
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
                         width: double.infinity,
@@ -113,6 +114,7 @@ class ProjectAnalyticsCard extends ConsumerWidget {
                                 fontWeight: isSelected
                                     ? FontWeight.w600
                                     : FontWeight.w500,
+                                // onSurface works in both light and dark
                                 color: isSelected
                                     ? Colors.blue.shade400
                                     : cs.onSurface,
@@ -130,6 +132,7 @@ class ProjectAnalyticsCard extends ConsumerWidget {
                       ),
                     );
                   }).toList(),
+                  // Custom trigger: pill showing filter icon + selected year + chevron.
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -172,44 +175,15 @@ class ProjectAnalyticsCard extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            // when() renders loader/error/data inline — page is never touched.
-            analyticsAsync.when(
-              skipLoadingOnRefresh: false,
-              data: (monthData) => SizedBox(
-                height: chartHeight,
-                child: ListView.separated(
-                  itemCount: monthData.length,
-                  separatorBuilder: (ctx, i) =>
-                      Divider(color: customColors.divider),
-                  itemBuilder: (context, index) {
-                    if (index >= monthData.length) return const SizedBox.shrink();
-                    return _MonthAnalyticsRow(
-                      monthIndex: index,
-                      data: monthData[index],
-                    );
-                  },
-                ),
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: height, minHeight: 140),
+              // when() renders loader/error/data inline — page is never touched.
+              child: taskAsync.when(
+                skipLoadingOnRefresh: false,
+                data: (taskData) => TaskStatusContent(taskData: taskData),
+                loading: () => const Center(child: CircularLoader()),
+                error: (e, _) => const Center(child: Text('Failed to load')),
               ),
-              loading: () => SizedBox(
-                height: chartHeight,
-                child: const Center(child: CircularLoader()),
-              ),
-              error: (e, _) => const SizedBox(
-                height: 80,
-                child: Center(child: Text('Failed to load')),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _LegendDot(color: customColors.statusCompleted!, label: 'Open'),
-                const SizedBox(width: 8),
-                _LegendDot(color: customColors.statusInProgress!, label: 'Working'),
-                const SizedBox(width: 8),
-                _LegendDot(color: customColors.error!, label: 'Closed'),
-              ],
             ),
           ],
         ),
@@ -218,119 +192,99 @@ class ProjectAnalyticsCard extends ConsumerWidget {
   }
 }
 
-class _MonthAnalyticsRow extends StatelessWidget {
-  final int monthIndex;
-  final YearMonthProjectData data;
+class TaskStatusContent extends StatelessWidget {
+  final YearTaskData taskData;
 
-  const _MonthAnalyticsRow({required this.monthIndex, required this.data});
+  const TaskStatusContent({super.key, required this.taskData});
 
   @override
   Widget build(BuildContext context) {
-    final open = data.open.toDouble();
-    final working = data.inProgress.toDouble();
-    final closed = data.closed.toDouble();
+    final custom = Theme.of(context).custom;
 
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    // Safe lookup
-    final monthName = (monthIndex >= 0 && monthIndex < months.length)
-        ? months[monthIndex]
-        : '';
+    // taskData is YearTaskData, passed from dashboard_page.dart via:
+    //   TaskStatusCard(taskData: dashboard.yearTaskData)
+    // where `dashboard` is a DashboardModel fetched by DashboardRepository
+    //   → API: GET .../time_entry_management_application_function/mobile/dashboard
+    //   → parsed in DashboardModel.fromJson → json['yearTaskData']
+    //   → then YearTaskData.fromJson → keys: 'open', 'in_progress', 'closed'
+    final total = taskData.open + taskData.inProgress + taskData.closed;
 
-    final customColors = Theme.of(context).custom;
+    debugPrint(
+      '📊 TaskStatusCard — open: ${taskData.open}, inProgress: ${taskData.inProgress}, closed: ${taskData.closed}, total: $total',
+    );
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 40,
-            child: Text(
-              monthName,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: customColors.textSecondary,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _HorizontalBar(
-                  label: 'Open',
-                  value: open,
-                  color: customColors.statusCompleted!,
+    // Avoid division by zero
+    final openPct = total == 0 ? 0.0 : (taskData.open / total) * 100;
+    final inProgressPct = total == 0
+        ? 0.0
+        : (taskData.inProgress / total) * 100;
+    final closedPct = total == 0 ? 0.0 : (taskData.closed / total) * 100;
+
+    return Row(
+      children: [
+        Expanded(
+          child: PieChart(
+            PieChartData(
+              sectionsSpace: 0,
+              centerSpaceRadius: 30,
+              sections: [
+                PieChartSectionData(
+                  color: custom.statusCompleted,
+                  value: closedPct,
+                  title: '${closedPct.toStringAsFixed(0)}%',
+                  radius: 40,
+                  titleStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-                const SizedBox(height: 4),
-                _HorizontalBar(
-                  label: 'Working',
-                  value: working,
-                  color: customColors.statusInProgress!,
+                PieChartSectionData(
+                  color: custom.statusInProgress,
+                  value: openPct,
+                  title: '${openPct.toStringAsFixed(0)}%',
+                  radius: 40,
+                  titleStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-                const SizedBox(height: 4),
-                _HorizontalBar(
-                  label: 'Closed',
-                  value: closed,
-                  color: customColors.error!,
+                PieChartSectionData(
+                  color: custom.error,
+                  value: inProgressPct,
+                  title: '${inProgressPct.toStringAsFixed(0)}%',
+                  radius: 40,
+                  titleStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _HorizontalBar extends StatelessWidget {
-  final String label;
-  final double value;
-  final Color color;
-
-  const _HorizontalBar({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // scale factor to fit bars nicely (max val is around 9-10)
-    final barWidth = (value / 12) * 200.0;
-    final theme = Theme.of(context);
-
-    return Row(
-      children: [
-        Container(
-          width: barWidth,
-          height: 8,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(4),
-          ),
         ),
-        const SizedBox(width: 8),
-        Text(
-          '${value.toInt()}',
-          style: TextStyle(
-            fontSize: 10,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-          ),
+        const SizedBox(width: 16),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _LegendDot(
+              color: custom.statusCompleted!,
+              label: 'Completed (${taskData.closed})',
+            ),
+            const SizedBox(height: 8),
+            _LegendDot(
+              color: custom.statusInProgress!,
+              label: 'Open (${taskData.open})',
+            ),
+            const SizedBox(height: 8),
+            _LegendDot(
+              color: custom.error!,
+              label: 'In Progress (${taskData.inProgress})',
+            ),
+          ],
         ),
       ],
     );
@@ -344,8 +298,7 @@ class _LegendDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final customColors = Theme.of(context).custom;
-
+    final theme = Theme.of(context);
     return Row(
       children: [
         Container(
@@ -359,7 +312,10 @@ class _LegendDot extends StatelessWidget {
         const SizedBox(width: 6),
         Text(
           label,
-          style: TextStyle(fontSize: 12, color: customColors.textSecondary),
+          style: TextStyle(
+            fontSize: 12,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+          ),
         ),
       ],
     );

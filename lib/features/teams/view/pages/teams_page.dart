@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
-import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
 import 'package:dsv360/features/teams/providers/batch_profile_provider.dart';
 
 // ── Alias for responsive scale class ──

@@ -13,7 +13,7 @@ import '../attachments/attachment_list_modal.dart';
 import 'assignee_modal.dart';
 import 'add_issue_form_screen.dart';
 import 'issue_details_modal_sheet.dart';
-import 'package:dsv360/views/dashboard/dashboard_page.dart';
+import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 
 class IssuesScreen extends ConsumerStatefulWidget {
   const IssuesScreen({super.key});

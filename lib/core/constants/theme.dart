@@ -191,7 +191,7 @@ ThemeData buildLightTheme(Color seedColor) {
         inputFocused: AppColorsLight.inputFocused,
         greyBorder: AppColorsLight.greyBorder,
         divider: AppColorsLight.divider,
-        avatarBackground: AppColorsLight.avatarBackground,
+        avatarBackground: const Color.fromARGB(255, 147, 147, 147),
         statusInProgress: AppColorsLight.statusInProgress,
         statusCompleted: AppColorsLight.statusCompleted,
         statusPending: AppColorsLight.statusPending,

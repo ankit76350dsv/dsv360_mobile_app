@@ -4,7 +4,7 @@ import 'package:dsv360/features/time_entry/repositories/check_timer_status_repos
 import 'package:dsv360/features/time_entry/view/pages/timer_service.dart';
 import 'package:dsv360/providers/task_provider.dart';
 import 'package:dsv360/repositories/task_repository.dart';
-import 'package:dsv360/views/dashboard/dashboard_page.dart';
+import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +17,7 @@ import '../widgets/generic_card.dart';
 import '../attachments/attachment_list_modal.dart';
 import 'add_task_dialog.dart';
 import 'task_details_dialog.dart';
-import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
   final String? projectId;

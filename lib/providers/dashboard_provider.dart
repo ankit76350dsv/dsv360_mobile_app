@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dsv360/models/dashboard_model.dart';
-import 'package:dsv360/repositories/dashboard_repository.dart';
+import 'package:dsv360/features/dashboard/model/dashboard_model.dart';
+import 'package:dsv360/features/dashboard/repositories/dashboard_repository.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 
 final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {

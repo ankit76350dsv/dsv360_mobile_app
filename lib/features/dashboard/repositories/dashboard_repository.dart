@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:dsv360/core/network/dio_client.dart';// single import — no raw Dio needed
-import 'package:dsv360/models/dashboard_model.dart';
+import 'package:dsv360/features/dashboard/model/dashboard_model.dart';
 
 // ---------------------------------------------------------------------------
 // How this repository uses ApiClient:

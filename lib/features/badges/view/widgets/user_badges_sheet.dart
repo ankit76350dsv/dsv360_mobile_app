@@ -253,23 +253,26 @@ class _UserBadgesSheetState extends ConsumerState<UserBadgesSheet> {
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: SizedBox(
                         width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).custom.primary,
-                            foregroundColor: colors.onPrimary,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).custom.primary,
+                              foregroundColor: colors.onPrimary,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
                             ),
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                          child: Text(
-                            'CLOSE',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
-                              color: Colors.white,
+                            onPressed: () => Navigator.pop(context),
+                            child: Text(
+                              'CLOSE',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ),
