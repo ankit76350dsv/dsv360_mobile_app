@@ -63,10 +63,17 @@ class IssueModel {
   static List<String> _parseAttachments(dynamic attachments) {
     if (attachments == null) return [];
     if (attachments is List) {
-      return attachments.map((e) => e.toString()).toList();
+      return attachments
+          .map((e) {
+            if (e is Map) return e['file_url']?.toString() ?? e['url']?.toString() ?? e.toString();
+            return e.toString();
+          })
+          .where((e) => e.isNotEmpty)
+          .toList();
     }
     if (attachments is String && attachments.isNotEmpty) {
-      return [attachments];
+      // Handle comma-separated URLs
+      return attachments.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
     }
     return [];
   }

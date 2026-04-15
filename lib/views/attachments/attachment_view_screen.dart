@@ -50,7 +50,7 @@ class _AttachmentViewScreenState extends State<AttachmentViewScreen> {
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
-            widget.attachment,
+            widget.attachment.split('/').last.split('?').first,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
@@ -69,30 +69,41 @@ class _AttachmentViewScreenState extends State<AttachmentViewScreen> {
   Widget _buildImageViewer() {
     debugPrint('=== BUILDING IMAGE VIEWER ===');
     return InteractiveViewer(
-      child: Image.asset(
-        'assets/images/feedback.png',
-        fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) {
-          debugPrint('Image Error: $error');
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.broken_image,
-                size: 80,
-                color: Colors.white,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Image not found',
-                style: TextStyle(
-                  fontSize: 16,
+      minScale: 0.5,
+      maxScale: 5.0,
+      boundaryMargin: const EdgeInsets.all(double.infinity),
+      child: Center(
+        child: Image.network(
+          widget.attachment,
+          fit: BoxFit.contain,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            debugPrint('Image Error: $error');
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.broken_image,
+                  size: 80,
                   color: Colors.white,
                 ),
-              ),
-            ],
-          );
-        },
+                const SizedBox(height: 16),
+                const Text(
+                  'Failed to load image',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

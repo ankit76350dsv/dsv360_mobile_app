@@ -10,8 +10,12 @@ class AttachmentListModal extends StatelessWidget {
     required this.attachments,
   });
 
+  String _getFileName(String url) {
+    return url.split('/').last.split('?').first;
+  }
+
   String _getAttachmentType(String filename) {
-    final extension = filename.split('.').last.toLowerCase();
+    final extension = filename.split('.').last.split('?').first.toLowerCase();
     if (['jpg', 'jpeg', 'png', 'gif', 'webp'].contains(extension)) {
       return 'image';
     } else if (extension == 'pdf') {
@@ -131,6 +135,7 @@ class AttachmentListModal extends StatelessWidget {
                             final icon = _getAttachmentIcon(type);
                             final color = _getAttachmentColor(type);
 
+                            final fileName = _getFileName(attachment);
                             return GestureDetector(
                               onTap: () {
                                 showDialog(
@@ -178,7 +183,7 @@ class AttachmentListModal extends StatelessWidget {
                                               CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              attachment,
+                                              fileName,
                                               style: TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w600,

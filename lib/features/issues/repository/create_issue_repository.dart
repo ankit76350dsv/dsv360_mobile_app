@@ -44,11 +44,17 @@ class CreateIssueRepository {
     });
 
     if (files != null && files.isNotEmpty) {
-      for (final file in files) {
+      final limitedFiles = files.take(3).toList(growable: false);
+      final now = DateTime.now().millisecondsSinceEpoch;
+
+      for (var i = 0; i < limitedFiles.length; i++) {
+        final file = limitedFiles[i];
+        // Keep each multipart filename unique so backend storage does not overwrite.
+        final uniqueFileName = '${now}_${i}_${file.name}';
         formData.files.add(
           MapEntry(
             'files',
-            await MultipartFile.fromFile(file.path, filename: file.name),
+            MultipartFile.fromFileSync(file.path, filename: uniqueFileName),
           ),
         );
       }
