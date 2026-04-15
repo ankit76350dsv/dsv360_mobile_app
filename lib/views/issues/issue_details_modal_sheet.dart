@@ -88,7 +88,7 @@ class _IssueDetailsModalSheetState extends State<IssueDetailsModalSheet> {
                             icon: Icons.info_outline,
                             label: 'Issue ID',
                             value:
-                                "I${widget.issue.id.length <= 4 ? widget.issue.id : widget.issue.id.substring(widget.issue.id.length -4 , widget.issue.id.length)}",
+                                "I${widget.issue.id.length <= 4 ? widget.issue.id : widget.issue.id.substring(widget.issue.id.length - 4, widget.issue.id.length)}",
                             context: context,
                           ),
                         ),
@@ -244,14 +244,18 @@ class _IssueDetailsModalSheetState extends State<IssueDetailsModalSheet> {
           ),
           const SizedBox(height: 6),
           Text(
-            value,
+            label == "Assignee"
+                ? value.split(',').map((e) => e.trim()).join('\n')
+                : value,
             style: TextStyle(
               color: customColors.textPrimary,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            maxLines: label == "Assignee" ? null : 1,
+            overflow: label == "Assignee"
+                ? TextOverflow.visible
+                : TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -280,22 +284,28 @@ class _IssueDetailsModalSheetState extends State<IssueDetailsModalSheet> {
           ),
         ],
       ),
-      child: Row(
+      child: Wrap(
         children: [
           Icon(Icons.check_circle, color: customColors.primary, size: 18),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: customColors.textSecondary,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+          Column(
+            children: [
+              Text(
+                label,
+                maxLines: 1,
+                style: TextStyle(
+                  color: customColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
+              SizedBox(height: 5),
+            ],
           ),
+          SizedBox(width: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+
             decoration: BoxDecoration(
               color: color.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),

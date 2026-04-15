@@ -289,7 +289,12 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                             chips: [
                               CardChip(
                                 icon: Icons.person_outline,
-                                count: '1',
+                                count:
+                                    (issue.assignedTo == null ||
+                                        issue.assignedTo!.trim().isEmpty)
+                                    ? "0"
+                                    : (issue.assignedTo!.split(',').length)
+                                          .toString(),
                                 isActive: true,
                                 onTap: () {
                                   showModalBottomSheet(
@@ -344,9 +349,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                       },
                     );
                   },
-                  loading: () => Center(
-                    child: DsvLoader(),
-                  ),
+                  loading: () => Center(child: DsvLoader()),
                   error: (error, stack) => Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
