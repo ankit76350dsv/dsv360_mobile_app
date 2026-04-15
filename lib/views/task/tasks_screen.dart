@@ -1,5 +1,6 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
+import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/time_entry/repositories/check_timer_status_repository.dart';
 import 'package:dsv360/features/time_entry/view/pages/timer_service.dart';
 import 'package:dsv360/providers/task_provider.dart';
@@ -268,91 +269,68 @@ void didChangeDependencies() {
   void _deleteTask(Task task, BuildContext context) {
     final customColors = Theme.of(context).custom;
 
-    showDialog(
+    showWarningDialogueBox(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: customColors.surfaceBackground,
-        title: Text(
-          'Delete Task',
-          style: TextStyle(color: customColors.textPrimary),
-        ),
-        content: Text(
-          'Are you sure you want to delete "${task.taskName}"?',
-          style: TextStyle(color: customColors.textPrimary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: customColors.primary),
-            ),
-          ),
-          TextButton(
-            onPressed: () async {
-              // Capture the scaffold messenger before popping dialog
-              final scaffoldMessenger = ScaffoldMessenger.of(context);
-              Navigator.pop(context);
-              
-              try {
-                // Delete task using repository
-                final userId = ref.read(currentUserIdProvider);
-                await ref
-                    .read(tasksListRepositoryProvider(userId).notifier)
-                    .deleteTask(task.taskId);
+      title: 'Delete Task',
+      subtitle: 'Are you sure you want to delete "${task.taskName}"? This action cannot be undone.',
+      primaryText: 'Delete',
+      onPrimaryPressed: (dialogContext) async {
+        Navigator.pop(dialogContext);
+        
+        try {
+          // Delete task using repository
+          final userId = ref.read(currentUserIdProvider);
+          await ref
+              .read(tasksListRepositoryProvider(userId).notifier)
+              .deleteTask(task.taskId);
 
-                // Refresh the tasks list
-                if (mounted) {
-                  ref.invalidate(tasksListRepositoryProvider(userId));
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          Icon(Icons.check_circle, color: Colors.white),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Task "${task.taskName}" deleted successfully',
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ],
+          // Refresh the tasks list
+          if (mounted) {
+            ref.invalidate(tasksListRepositoryProvider(userId));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Task "${task.taskName}" deleted successfully',
+                        style: const TextStyle(color: Colors.white),
                       ),
-                      backgroundColor: customColors.primary,
-                      behavior: SnackBarBehavior.floating,
-                      duration: const Duration(seconds: 3),
                     ),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          Icon(Icons.error_outline, color: Colors.white),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Error deleting task: $e',
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ],
+                  ],
+                ),
+                backgroundColor: customColors.primary,
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Error deleting task: $e',
+                        style: const TextStyle(color: Colors.white),
                       ),
-                      backgroundColor: customColors.error,
-                      behavior: SnackBarBehavior.floating,
-                      duration: const Duration(seconds: 3),
                     ),
-                  );
-                }
-              }
-            },
-            style: TextButton.styleFrom(foregroundColor: customColors.error),
-            child: Text('Delete'),
-          ),
-        ],
-      ),
+                  ],
+                ),
+                backgroundColor: customColors.error,
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        }
+      },
     );
   }
 
