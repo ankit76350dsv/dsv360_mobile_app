@@ -141,35 +141,35 @@ class _AddIssueFormScreenState extends ConsumerState<AddIssueFormScreen> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    final customColors = Theme.of(context).custom;
+  final customColors = Theme.of(context).custom;
 
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _dueDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2030),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: customColors.primary!,
-              onPrimary: Colors.white,
-              surface: customColors.cardBackground!,
-              onSurface: customColors.textPrimary!,
-            ),
-            dialogBackgroundColor: customColors.cardBackground,
+  final DateTime? picked = await showDatePicker(
+    context: context,
+    initialDate: _dueDate ?? DateTime.now(),
+    firstDate: widget.issue == null ? DateTime.now() : DateTime(2000),  // Allow past dates when editing
+    lastDate: DateTime(2030),
+    builder: (context, child) {
+      return Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.dark(
+            primary: customColors.primary!,
+            onPrimary: Colors.white,
+            surface: customColors.cardBackground!,
+            onSurface: customColors.textPrimary!,
           ),
-          child: child!,
-        );
-      },
-    );
+          dialogBackgroundColor: customColors.cardBackground,
+        ),
+        child: child!,
+      );
+    },
+  );
 
-    if (picked != null) {
-      setState(() {
-        _dueDate = picked;
-      });
-    }
+  if (picked != null) {
+    setState(() {
+      _dueDate = picked;
+    });
   }
+}
 
   Future<void> _handleSubmit() async {
     if (_formKey.currentState!.validate()) {
@@ -221,15 +221,18 @@ class _AddIssueFormScreenState extends ConsumerState<AddIssueFormScreen> {
         } else {
           // Update existing issue
           await widget.updateIssueRepository.updateIssue(
-            issueId: widget.issue!.id,
-            issueName: _issueNameController.text.trim(),
-            description: _descriptionController.text.trim(),
-            severity: _selectedSeverity!,
-            status: _selectedStatus!,
-            projectId: _selectedProject!.id,
-            assigneeId: assigneeIds,
-            dueDate: formattedDate,
-          );
+          issueId: widget.issue!.id,
+          issueName: _issueNameController.text.trim(),
+          description: _descriptionController.text.trim(),
+          severity: _selectedSeverity!,
+          status: _selectedStatus!,
+          projectId: _selectedProject!.id,
+          projectName: _selectedProject!.projectName,  // ✅ ADD THIS
+          assigneeId: assigneeIds,
+          assigneeName: assigneeNames,  // ✅ ADD THIS
+          dueDate: formattedDate,
+          files: _selectedImages.isNotEmpty ? _selectedImages : null,
+  );
         }
 
         if (mounted) {
