@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
@@ -44,6 +45,8 @@ class _UsersPageState extends ConsumerState<UsersPage> {
     final connectivityStatus = ref.watch(connectivityStatusProvider);
     final customColors = Theme.of(context).custom;
 
+    final userRole = AuthManager.instance.currentUser?.role?.name.toLowerCase(); //get user role here
+
     return Scaffold(
       drawer: const AppDrawer(),
       appBar: AppBar(
@@ -72,17 +75,9 @@ class _UsersPageState extends ConsumerState<UsersPage> {
         // you can open a dialog or screen here
         actions: [],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: connectivityStatus.when(
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,//add fab logic here
+      floatingActionButton: (userRole == 'admin' || userRole == 'super admin') ? connectivityStatus.when(
         data: (results) {
-          if (results.contains(ConnectivityResult.none)) {
-            return null; // FAB hidden when no internet
-          }
-
-          if (!IsHaveAccess.instance.isAdmin || !IsHaveAccess.instance.isManager) {
-            return null; // FAB hidden when user not admin/manager
-          }
-
           return FloatingActionButton(
             backgroundColor: customColors.primary,
             foregroundColor: Colors.white,
@@ -98,7 +93,7 @@ class _UsersPageState extends ConsumerState<UsersPage> {
         },
         loading: () => null, // hide FAB while checking
         error: (_, __) => null, // hide FAB on error
-      ),
+      ) : null,
 
       body: SafeArea(
         child: connectivityStatus.when(
