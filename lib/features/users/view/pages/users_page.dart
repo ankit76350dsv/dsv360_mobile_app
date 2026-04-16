@@ -6,6 +6,8 @@ import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
+import 'package:dsv360/features/users/repositories/delete_user_repository.dart';
+
 import 'package:dsv360/models/task.dart';
 import 'package:dsv360/models/users.dart';
 
@@ -45,7 +47,8 @@ class _UsersPageState extends ConsumerState<UsersPage> {
     final connectivityStatus = ref.watch(connectivityStatusProvider);
     final customColors = Theme.of(context).custom;
 
-    final userRole = AuthManager.instance.currentUser?.role?.name.toLowerCase(); //get user role here
+    final userRole = AuthManager.instance.currentUser?.role?.name
+        .toLowerCase(); //get user role here
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -75,25 +78,30 @@ class _UsersPageState extends ConsumerState<UsersPage> {
         // you can open a dialog or screen here
         actions: [],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,//add fab logic here
-      floatingActionButton: (userRole == 'admin' || userRole == 'super admin') ? connectivityStatus.when(
-        data: (results) {
-          return FloatingActionButton(
-            backgroundColor: customColors.primary,
-            foregroundColor: Colors.white,
-            shape: const CircleBorder(),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => AddEditUserPage(user: null)),
-              );
-            },
-            child: Icon(Icons.person_add, size: 22),
-          );
-        },
-        loading: () => null, // hide FAB while checking
-        error: (_, __) => null, // hide FAB on error
-      ) : null,
+      floatingActionButtonLocation:
+          FloatingActionButtonLocation.centerFloat, //add fab logic here
+      floatingActionButton: (userRole == 'admin' || userRole == 'super admin')
+          ? connectivityStatus.when(
+              data: (results) {
+                return FloatingActionButton(
+                  backgroundColor: customColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: const CircleBorder(),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AddEditUserPage(user: null),
+                      ),
+                    );
+                  },
+                  child: Icon(Icons.person_add, size: 22),
+                );
+              },
+              loading: () => null, // hide FAB while checking
+              error: (_, __) => null, // hide FAB on error
+            )
+          : null,
 
       body: SafeArea(
         child: connectivityStatus.when(
@@ -337,23 +345,17 @@ class _UserCardState extends ConsumerState<UserCard> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  Row(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "${widget.user.firstName} ${widget.user.lastName}",
-                              style: theme.textTheme.bodyLarge,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2.0),
-                            _userInfoRow(Icons.email, widget.user.emailAddress),
-                          ],
-                        ),
+                      Text(
+                        "${widget.user.firstName} ${widget.user.lastName}",
+                        style: theme.textTheme.bodyLarge,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
+                      const SizedBox(height: 2.0),
+                      _userInfoRow(Icons.email, widget.user.emailAddress),
                     ],
                   ),
                 ],
@@ -530,7 +532,7 @@ class _UserCardState extends ConsumerState<UserCard> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
-      isScrollControlled: false,
+      isScrollControlled: true,
       builder: (_) {
         return _DeleteUserBottomSheet(user: user, usersList: usersList);
       },
@@ -548,6 +550,8 @@ class _UserCardState extends ConsumerState<UserCard> {
       ],
     );
   }
+
+
 }
 
 class _DeleteUserBottomSheet extends ConsumerStatefulWidget {
@@ -592,136 +596,149 @@ class _DeleteUserBottomSheetState
     final pendingTasksAsync = ref.watch(
       pendingTasksListRepositoryProvider(widget.user.userId),
     );
+    final _deleteUserRepository = DeleteUserRepository();
 
     return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 20,
-          right: 20,
-          top: 16,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ✅ Always visible
-            _dragHandle(colors),
-
-            const SizedBox(height: 8),
-
-            // ✅ Async-controlled content
-            pendingTasksAsync.when(
-              loading: () => _LoadingView(colors),
-              error: (e, _) => _ErrorView(e.toString(), colors),
-              data: (tasks) {
-                final hasPendingTasks = tasks.isNotEmpty;
-
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      hasPendingTasks ? 'Task Assignment' : 'No Tasks Pending?',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 12),
-
-                    if (!hasPendingTasks)
-                      _noTasksView(colors)
-                    else
-                      _TaskAssignmentView(
-                        tasks: tasks,
-                        users: widget.usersList,
-                        currentUser: widget.user,
-                        reassignment: reassignment,
-                        onChanged: () => setState(() {}),
-                      ),
-
-                    const SizedBox(height: 20),
-
-                    BottomTwoButtons(
-                      loadingKey: bottomTwoButtonsLoadingKey,
-                      button1Text: "Cancel",
-                      button2Text: "delete user",
-                      button1Function: () {
-                        Navigator.pop(context);
-                      },
-                      button2Function: () async {
-                        // Block only when pending tasks exist but reassignment is incomplete
-                        if (hasPendingTasks &&
-                            reassignment.length != tasks.length) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Please reassign all tasks before deleting the user',
-                              ),
-                            ),
-                          );
-                          return;
-                        }
-
-                        ref
-                                .read(
-                                  submitLoadingProvider(
-                                    bottomTwoButtonsLoadingKey,
-                                  ).notifier,
-                                )
-                                .state =
-                            true;
-
-                        // ALWAYS build payload (empty [] if no tasks)
-                        final reassignmentPayload = _buildReassignmentPayload(
-                          tasks,
-                          reassignment,
-                          widget.usersList,
-                        );
-
-                        debugPrint(
-                          'Reassignment payload: $reassignmentPayload',
-                        );
-
-                        try {
-                          // ALWAYS hit delete API
-                          await ApiClient.instance.post(
-                            'time_entry_management_application_function/employee/${widget.user.userId}',
-                            data: reassignmentPayload,
-                          );
-
-                          Navigator.pop(context, true);
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('User deleted successfully.'),
-                            ),
-                          );
-
-                          ref.invalidate(usersRepositoryProvider);
-                        } catch (e) {
-                          debugPrint('❌ Failed to delete user: $e');
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Failed to delete user'),
-                            ),
-                          );
-                        } finally {
-                          ref
-                                  .read(
-                                    submitLoadingProvider(
-                                      bottomTwoButtonsLoadingKey,
-                                    ).notifier,
-                                  )
-                                  .state =
-                              false;
-                        }
-                      },
-                    ),
-                  ],
-                );
-              },
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 16,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 20,
             ),
-          ],
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ✅ Always visible
+                _dragHandle(colors),
+
+                const SizedBox(height: 8),
+
+                // ✅ Async-controlled content
+                pendingTasksAsync.when(
+                  loading: () => _LoadingView(colors),
+                  error: (e, _) => _ErrorView(e.toString(), colors),
+                  data: (tasks) {
+                    final hasPendingTasks = tasks.isNotEmpty;
+
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          hasPendingTasks
+                              ? 'Task Assignment'
+                              : 'No Tasks Pending?',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 12),
+
+                        if (!hasPendingTasks)
+                          _noTasksView(colors)
+                        else
+                          _TaskAssignmentView(
+                            tasks: tasks,
+                            users: widget.usersList,
+                            currentUser: widget.user,
+                            reassignment: reassignment,
+                            onChanged: () => setState(() {}),
+                          ),
+
+                        const SizedBox(height: 20),
+
+                        BottomTwoButtons(
+                          loadingKey: bottomTwoButtonsLoadingKey,
+                          button1Text: "Cancel",
+                          button2Text: "delete user",
+                          button1Function: () {
+                            Navigator.pop(context);
+                          },
+                          button2Function: () async {
+                            // Block only when pending tasks exist but reassignment is incomplete
+                            if (hasPendingTasks &&
+                                reassignment.length != tasks.length) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Please reassign all tasks before deleting the user',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+
+                            ref
+                                    .read(
+                                      submitLoadingProvider(
+                                        bottomTwoButtonsLoadingKey,
+                                      ).notifier,
+                                    )
+                                    .state =
+                                true;
+
+                            // ALWAYS build payload (empty [] if no tasks)
+                            final reassignmentPayload =
+                                _buildReassignmentPayload(
+                                  tasks,
+                                  reassignment,
+                                  widget.usersList,
+                                );
+
+                            debugPrint(
+                              'Reassignment payload: $reassignmentPayload',
+                            );
+
+                            try {
+                              // ALWAYS hit delete API
+                              await _deleteUserRepository.deleteUser(
+                                userId: widget.user.userId,
+                                reassignmentPayload: reassignmentPayload,
+                              );
+
+                              Navigator.pop(context, true);
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('User deleted successfully.'),
+                                ),
+                              );
+
+                              ref.invalidate(usersRepositoryProvider);
+                            } catch (e) {
+                              debugPrint('❌ Failed to delete user: $e');
+
+                              Navigator.pop(context, true);
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Failed to delete user'),
+                                ),
+                              );
+                            } finally {
+                              ref
+                                      .read(
+                                        submitLoadingProvider(
+                                          bottomTwoButtonsLoadingKey,
+                                        ).notifier,
+                                      )
+                                      .state =
+                                  false;
+                            }
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

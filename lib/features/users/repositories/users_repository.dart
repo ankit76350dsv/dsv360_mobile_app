@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'dart:developer' as developer;
+import 'dart:typed_data';
+import 'package:dio/dio.dart';
+import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/models/users.dart';
 import 'package:flutter/material.dart';
@@ -56,3 +59,35 @@ final usersRepositoryProvider =
     );
 
 final usersSearchQueryProvider = StateProvider.autoDispose<String>((ref) => '');
+
+bool _isZohoUrl(String url) {
+  return url.contains('catalystserverless.in') || url.contains('dsv360.ai');
+}
+
+/// Fetches profile image bytes using an authenticated Dio instance only for
+/// Zoho-hosted URLs. Non-Zoho URLs (e.g. placeholders) are fetched without auth.
+final profileImageProvider =
+    FutureProvider.family<Uint8List?, String>((ref, url) async {
+  if (url.isEmpty) return null;
+  try {
+    final dio = Dio();
+    final Map<String, dynamic>? headers = _isZohoUrl(url)
+        ? {'Authorization': 'Zoho-oauthtoken ${await TokenManager.instance.getToken()}'}
+        : null;
+    final response = await dio.get<List<int>>(
+      url,
+      options: Options(
+        responseType: ResponseType.bytes,
+        headers: headers,
+        followRedirects: true,
+        validateStatus: (status) => status != null && status < 400,
+      ),
+    );
+    final data = response.data;
+    if (data == null) return null;
+    return Uint8List.fromList(data);
+  } catch (e) {
+    debugPrint('profileImageProvider error for $url: $e');
+    return null;
+  }
+});

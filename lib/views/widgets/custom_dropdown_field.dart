@@ -29,6 +29,7 @@ class CustomDropDownField extends StatefulWidget {
 
 class _CustomDropDownFieldState extends State<CustomDropDownField> {
   String? _selectedOption;
+  String? _selectedDisplayText;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -68,10 +69,20 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
     return filtered;
   }
 
+  String? _findDisplayText(String? value) {
+    if (value == null) return null;
+    final match = widget.options.where((o) => o.value == value).firstOrNull;
+    if (match == null) return null;
+    final textWidget = match.child;
+    if (textWidget is Text) return textWidget.data;
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
     _selectedOption = widget.selectedOption;
+    _selectedDisplayText = _findDisplayText(widget.selectedOption);
   }
 
   @override
@@ -79,6 +90,7 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selectedOption != widget.selectedOption) {
       _selectedOption = widget.selectedOption;
+      _selectedDisplayText = _findDisplayText(widget.selectedOption);
     }
   }
 
@@ -142,7 +154,10 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
                   ),
                 ),
                 onSelected: (value) {
-                  setState(() => _selectedOption = value);
+                  setState(() {
+                    _selectedOption = value;
+                    _selectedDisplayText = _findDisplayText(value);
+                  });
                   widget.onChanged(value);
                 },
                 itemBuilder: (context) {
@@ -232,7 +247,10 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
 
                                               return InkWell(
                                                 onTap: () {
-                                                  setState(() => _selectedOption = value);
+                                                  setState(() {
+                                                    _selectedOption = value;
+                                                    _selectedDisplayText = _findDisplayText(value);
+                                                  });
                                                   widget.onChanged(value);
                                                   Navigator.of(context).pop();
                                                 },
@@ -358,7 +376,7 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          _selectedOption ?? widget.hintText,
+                          _selectedDisplayText ?? (_selectedOption != null ? _selectedOption! : widget.hintText),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(

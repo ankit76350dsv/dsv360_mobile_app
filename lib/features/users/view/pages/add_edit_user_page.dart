@@ -30,6 +30,7 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
   final _updateUserRepository = UpdateUserRepository();
 
   String? _roleId;
+  String?_userRole;
 
   @override
   void initState() {
@@ -44,6 +45,7 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
 
       _emailController.text = user.emailAddress;
       _roleId = user.roleId;
+      _userRole= user.role;
     }
   }
 
@@ -165,7 +167,7 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
                         hintText: "Select Role",
                         labelText: "Role",
                         prefixIcon: Icons.business,
-                        selectedOption: _roleId,
+                        selectedOption: _userRole,
                         options: roleOptions,
                         onChanged: (value) => setState(() => _roleId = value),
                       ),
