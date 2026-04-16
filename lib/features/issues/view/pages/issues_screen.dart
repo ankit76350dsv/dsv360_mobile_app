@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
@@ -25,6 +26,39 @@ class IssuesScreen extends ConsumerStatefulWidget {
 class _IssuesScreenState extends ConsumerState<IssuesScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  final List<String> _statusOptions = const [
+    'Open',
+    'Work In Progress',
+    'Resolved',
+    'Closed',
+  ];
+
+  String _selectedFilter = 'All'; // 'All' or 'Unassigned'
+  final List<String> _filterOptions = const ['All', 'Unassigned'];
+
+  List<IssueModel> _filterIssues(List<IssueModel> issues) {
+    var filtered = issues;
+
+    // Apply filter selection
+    if (_selectedFilter == 'Unassigned') {
+      filtered = filtered.where((issue) {
+        return issue.assignedTo == null || issue.assignedTo!.trim().isEmpty;
+      }).toList();
+    }
+
+    // Apply search query
+    if (_searchQuery.isEmpty) {
+      return filtered;
+    }
+
+    return filtered.where((issue) {
+      return issue.issueName.toLowerCase().contains(
+            _searchQuery.toLowerCase(),
+          ) ||
+          issue.id.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+          issue.status.toLowerCase().contains(_searchQuery.toLowerCase());
+    }).toList();
+  }
 
   @override
   void initState() {
@@ -40,19 +74,6 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
-  }
-
-List<IssueModel> _filterIssues(List<IssueModel> issues) {
-    if (_searchQuery.isEmpty) {
-      return issues;
-    }
-    return issues.where((issue) {
-      return issue.issueName.toLowerCase().contains(
-            _searchQuery.toLowerCase(),
-          ) ||
-          issue.id.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          issue.status.toLowerCase().contains(_searchQuery.toLowerCase());
-    }).toList();
   }
 
   Future<void> _showAddIssueDialog({IssueModel? issue}) async {
@@ -84,13 +105,177 @@ List<IssueModel> _filterIssues(List<IssueModel> issues) {
     }
   }
 
+  Future<void> _showStatusUpdateDialog(IssueModel issue) async {
+    final customColors = Theme.of(context).custom;
+    String selectedStatus = issue.status;
+    bool isUpdating = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: customColors.cardBackground,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: Text(
+                'Update Issue Status',
+                style: TextStyle(
+                  color: customColors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    issue.issueName,
+                    style: TextStyle(
+                      color: customColors.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  DropdownButtonFormField<String>(
+                    value: _statusOptions.contains(selectedStatus)
+                        ? selectedStatus
+                        : _statusOptions.first,
+                    dropdownColor: customColors.cardBackground,
+                    decoration: InputDecoration(
+                      labelText: 'Status',
+                      labelStyle: TextStyle(color: customColors.textSecondary),
+                      filled: true,
+                      fillColor: customColors.inputFill,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: customColors.inputBorder!,
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: customColors.inputBorder!,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: customColors.primary!,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                    items: _statusOptions
+                        .map(
+                          (status) => DropdownMenuItem<String>(
+                            value: status,
+                            child: Text(
+                              status,
+                              style: TextStyle(color: customColors.textPrimary),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: isUpdating
+                        ? null
+                        : (value) {
+                            if (value == null) return;
+                            setDialogState(() {
+                              selectedStatus = value;
+                            });
+                          },
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isUpdating
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(color: customColors.textSecondary),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: isUpdating
+                      ? null
+                      : () async {
+                          setDialogState(() {
+                            isUpdating = true;
+                          });
+
+                          try {
+                            final repository = ref.read(
+                              updateIssueRepositoryProvider,
+                            );
+                            await repository.updateIssueStatus(
+                              issueId: issue.id,
+                              status: selectedStatus,
+                            );
+
+                            ref.invalidate(issueListProvider);
+
+                            if (mounted) {
+                              Navigator.of(dialogContext).pop();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text(
+                                    'Issue status updated successfully',
+                                  ),
+                                  backgroundColor: customColors.primary,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              setDialogState(() {
+                                isUpdating = false;
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed to update status: $e'),
+                                  backgroundColor: customColors.error,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: customColors.primary,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: isUpdating
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Update'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _deleteIssue(IssueModel issue) {
     final customColors = Theme.of(context).custom;
 
     showWarningDialogueBox(
       context: context,
       title: 'Delete Issue',
-      subtitle: 'Are you sure you want to delete "${issue.issueName}"? This action cannot be undone.',
+      subtitle:
+          'Are you sure you want to delete "${issue.issueName}"? This action cannot be undone.',
       primaryText: 'Delete',
       onPrimaryPressed: (dialogContext) async {
         Navigator.pop(dialogContext);
@@ -150,6 +335,9 @@ List<IssueModel> _filterIssues(List<IssueModel> issues) {
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
 
+    final userRole =
+        AuthManager.instance.currentUser?.role?.name.toLowerCase() ?? '';
+
     return Scaffold(
       body: Column(
         children: [
@@ -173,19 +361,81 @@ List<IssueModel> _filterIssues(List<IssueModel> issues) {
                       );
                     }
                   },
-                  onInfoTap: () {
-                    // hook for info action
-                  },
                 ),
 
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: CustomSearchBar(
-                    controller: _searchController,
-                    hintText: 'Search Issues',
-                    onChanged: (_) {}, // Trigger rebuild via _searchQuery
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: CustomSearchBar(
+                          controller: _searchController,
+                          hintText: 'Search Issues',
+                          onChanged: (_) {},
+                        ),
+                      ),
+                      if(userRole == 'admin')const SizedBox(width: 8),
+                      if(userRole == 'admin')Container(
+                    
+                        decoration: BoxDecoration(
+                          border: Border.all(color: customColors.inputBorder!),
+                          borderRadius: BorderRadius.circular(12),
+                          color: customColors.inputFill
+                        ),
+                        child: PopupMenuButton<String>(
+                          color: customColors.inputFill,
+                          
+
+                          onSelected: (value) {
+                            setState(() => _selectedFilter = value);
+                          },
+                          itemBuilder: (context) => _filterOptions
+                              .map(
+                                (option) => PopupMenuItem<String>(
+                                  value: option,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        _selectedFilter == option
+                                            ? Icons.radio_button_checked
+                                            : Icons.radio_button_unchecked,
+                                        color: customColors.primary,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        option,
+                                        style: TextStyle(
+                                          color: customColors.textPrimary,
+                                          fontWeight: _selectedFilter == option
+                                              ? FontWeight.w600
+                                              : FontWeight.w400,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Icon(
+                              Icons.filter_list,
+                              color: customColors.textPrimary,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+
+                // In the header, after the search bar, add:
               ],
             ),
           ),
@@ -247,7 +497,7 @@ List<IssueModel> _filterIssues(List<IssueModel> issues) {
                           final dueDate = issue.dueDate != null
                               ? dateFormat.format(issue.dueDate!)
                               : 'N/A';
-                      
+
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 12),
                             child: GenericCard(
@@ -295,7 +545,8 @@ List<IssueModel> _filterIssues(List<IssueModel> issues) {
                                             backgroundColor: Colors.transparent,
                                             builder: (context) =>
                                                 AttachmentListModal(
-                                                  attachments: issue.attachments,
+                                                  attachments:
+                                                      issue.attachments,
                                                 ),
                                           );
                                         }
@@ -312,8 +563,19 @@ List<IssueModel> _filterIssues(List<IssueModel> issues) {
                                       IssueDetailsModalSheet(issue: issue),
                                 );
                               },
-                              onEdit: () => _showAddIssueDialog(issue: issue),
-                              onDelete: () => _deleteIssue(issue),
+                              onEdit: () {
+                                if (userRole == 'admin' ||
+                                    userRole == 'super admin') {
+                                  _showAddIssueDialog(issue: issue);
+                                  return;
+                                }
+                                _showStatusUpdateDialog(issue);
+                              },
+                              onDelete:
+                                  (userRole == 'admin' ||
+                                      userRole == 'super admin')
+                                  ? () => _deleteIssue(issue)
+                                  : null,
                             ),
                           );
                         },
@@ -364,12 +626,14 @@ List<IssueModel> _filterIssues(List<IssueModel> issues) {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddIssueDialog(),
-        backgroundColor: customColors.primary,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
-      ),
+      floatingActionButton: (userRole == "admin" || userRole == "super admin")
+          ? FloatingActionButton(
+              onPressed: () => _showAddIssueDialog(),
+              backgroundColor: customColors.primary,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            )
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }

@@ -1368,12 +1368,14 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
   Timer? _timer;
   Duration _elapsed = Duration.zero;
 
-  
-
   @override
   void initState() {
     super.initState();
     _startTimer();
+    // Refresh data when page is first loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _refreshPageData();
+    });
   }
 
   void _startTimer() {
@@ -1383,6 +1385,15 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
         setState(() {});
       }
     });
+  }
+
+  Future<void> _refreshPageData() async {
+    try {
+      final _ = await ref.refresh(userStatusRepositoryProvider.future);
+      final _ = await ref.refresh(peopleSummaryProvider.future);
+    } catch (e) {
+      debugPrint('Error refreshing data: $e');
+    }
   }
 
   @override
@@ -1498,10 +1509,15 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
       return const GlobalLoader(message: 'Loading user info...');
     }
 
-    final userStatusAsync = ref.watch(userStatusRepositoryProvider);
+        final userStatusAsync = ref.watch(userStatusRepositoryProvider);
     debugPrint("userStatusAsync: $userStatusAsync");
 
-    return Padding(
+    return RefreshIndicator(
+      onRefresh: () async {
+       final _ =  await ref.refresh(userStatusRepositoryProvider.future);
+        final _ = await ref.refresh(peopleSummaryProvider.future);
+      },
+      child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: userStatusAsync.when(
         loading: () =>
@@ -1520,6 +1536,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
             decoration: const BoxDecoration(),
             child: SafeArea(
               child: SingleChildScrollView(
+                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -1886,7 +1903,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
       final totalLeave = (summary['total_leave'] as num?)?.toInt() ?? 0;
       final totalPresent = (summary['total_present'] as num?)?.toInt() ?? 0;
       final unpaid = (summary['unpaid'] as num?)?.toInt() ?? 0;
-      final employees = totalLeave + totalPresent;
+      final employees = totalLeave + totalPresent; //here
       final progress = unpaid == 0 ? 0.0 : (unpaid / totalLeave);
 
       return Padding(
@@ -2002,7 +2019,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
           );
         },
       ),
-    );
+    ));
   }
 }
 

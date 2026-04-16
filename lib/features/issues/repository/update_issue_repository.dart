@@ -7,6 +7,38 @@ import 'package:image_picker/image_picker.dart';
 class UpdateIssueRepository {
   final _client = ApiClient.instance;
 
+  Future<void> updateIssueStatus({
+    required String issueId,
+    required String status,
+  }) async {
+    final path = 'time_entry_management_application_function/issue/$issueId';
+    final formData = FormData.fromMap({'Status': status});
+
+    debugPrint('POST $path with status-only update: $status');
+
+    try {
+      final response = await _client.post(path, data: formData);
+
+      debugPrint('Response status: ${response.statusCode}');
+      debugPrint('Response data: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = response.data;
+        if (responseData is Map<String, dynamic> &&
+            responseData.containsKey('success') &&
+            responseData['success'] != true) {
+          throw Exception(responseData['message'] ?? 'Failed to update status');
+        }
+        return;
+      }
+
+      throw Exception('Failed to update status: ${response.statusCode}');
+    } catch (e) {
+      debugPrint('Error updating issue status: $e');
+      throw Exception('Error updating issue status: $e');
+    }
+  }
+
   Future<IssueModel> updateIssue({
     required String issueId,
     required String issueName,
@@ -23,16 +55,16 @@ class UpdateIssueRepository {
     final path = 'time_entry_management_application_function/issue/$issueId';
 
     final formData = FormData.fromMap({
-  'Issue_name': issueName,
-  'Description': description,
-  'Severity': severity,
-  'Status': status,
-  'Project_ID': projectId,
-  'Project_Name': projectName,     // ✅ added
-  'Assignee_ID': assigneeId,
-  'Assignee_Name': assigneeName,   // ✅ added
-  'Due_Date': dueDate,
-});
+      'Issue_name': issueName,
+      'Description': description,
+      'Severity': severity,
+      'Status': status,
+      'Project_ID': projectId,
+      'Project_Name': projectName, // ✅ added
+      'Assignee_ID': assigneeId,
+      'Assignee_Name': assigneeName, // ✅ added
+      'Due_Date': dueDate,
+    });
 
     if (files != null && files.isNotEmpty) {
       final limitedFiles = files.take(3).toList(growable: false);
