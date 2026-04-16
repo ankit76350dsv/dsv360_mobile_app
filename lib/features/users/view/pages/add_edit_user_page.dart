@@ -1,7 +1,7 @@
-import 'package:dio/dio.dart';
-import 'package:dsv360/core/network/dio_client.dart';
+import 'package:dsv360/features/users/repositories/create_user_repository.dart';
+import 'package:dsv360/features/users/repositories/update_user_repository.dart';
 import 'package:dsv360/models/users.dart';
-import 'package:dsv360/repositories/users_repository.dart';
+import 'package:dsv360/features/users/repositories/users_repository.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';
@@ -26,6 +26,9 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
 
+  final _createUserRepository = CreateUserRepository();
+  final _updateUserRepository = UpdateUserRepository();
+
   String? _roleId;
 
   @override
@@ -44,14 +47,14 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
     }
   }
 
-  Map<String, dynamic> _buildRequestBody() {
-    return {
-      "first_name": _firstNameController.text.trim(),
-      "last_name": _lastNameController.text.trim(),
-      "email_id": _emailController.text.trim(),
-      "role_id": _roleId.toString(), // this is roleId not label
-    };
-  }
+  // Map<String, dynamic> _buildRequestBody() {
+  //   return {
+  //     "first_name": _firstNameController.text.trim(),
+  //     "last_name": _lastNameController.text.trim(),
+  //     "email_id": _emailController.text.trim(),
+  //     "role_id": _roleId.toString(), // this is roleId not label
+  //   };
+  // }
 
   String bottomTwoButtonsLoadingKey = 'add_edit_user';
 
@@ -198,31 +201,46 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
                         },
                         button2Function: () async {
                           if (!_formKey.currentState!.validate()) return;
+
+                          if (_roleId == null || _roleId!.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please select role'),
+                              ),
+                            );
+                            return;
+                          }
+
                           ref
                                   .read(
-                                    submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier,
+                                    submitLoadingProvider(
+                                      bottomTwoButtonsLoadingKey,
+                                    ).notifier,
                                   )
                                   .state =
                               true;
 
-                          final body = _buildRequestBody();
                           try {
                             if (isEditing) {
-                              // UPDATE USER (example)
-                              await ApiClient.instance.post(
-                                '/server/time_entry_management_application_function/UpdateEmployee/${widget.user!.userId}',
-                                data: body,
+                              await _updateUserRepository.updateUser(
+                                userId: widget.user!.userId,
+                                firstName: _firstNameController.text,
+                                lastName: _lastNameController.text,
+                                emailId: _emailController.text,
+                                roleId: _roleId!,
                               );
                             } else {
-                              final formData = FormData.fromMap(body);
-                              // ADD USER
-                              await ApiClient.instance.post(
-                                '/server/time_entry_management_application_function/AddEmployees',
-                                data: formData,
+                              await _createUserRepository.createUser(
+                                firstName: _firstNameController.text,
+                                lastName: _lastNameController.text,
+                                emailId: _emailController.text,
+                                roleId: _roleId!,
                               );
                             }
 
-                            Navigator.pop(context, true); // success
+                            if (!mounted) return;
+
+                            Navigator.pop(context, true);
 
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
@@ -234,25 +252,24 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
                               ),
                             );
 
-                            // throw current state and rebuild it from scratch
                             ref.invalidate(usersRepositoryProvider);
                           } catch (e) {
-                            debugPrint('❌ Failed to submit user: $e');
-
+                            debugPrint('Failed to submit user: $e');
+                            if (!mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Failed to save user'),
+                              SnackBar(
+                                content: Text('Failed to save user: $e'),
                               ),
                             );
                           } finally {
                             ref
-                                .read(
-                                  submitLoadingProvider(
-                                    bottomTwoButtonsLoadingKey,
-                                  ).notifier,
-                                )
-                                .state =
-                            false;
+                                    .read(
+                                      submitLoadingProvider(
+                                        bottomTwoButtonsLoadingKey,
+                                      ).notifier,
+                                    )
+                                    .state =
+                                false;
                           }
                         },
                       ),
@@ -267,22 +284,5 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
     );
   }
 
-  // InputDecoration _inputDecoration(BuildContext context, String label) {
-  //   final colors = Theme.of(context).colorScheme;
-
-  //   return InputDecoration(
-  //     labelText: label,
-  //     filled: true,
-  //     fillColor: colors.surface,
-  //     labelStyle: TextStyle(color: colors.onSurfaceVariant),
-  //     enabledBorder: OutlineInputBorder(
-  //       borderSide: BorderSide(color: colors.outlineVariant),
-  //       borderRadius: BorderRadius.circular(6),
-  //     ),
-  //     focusedBorder: OutlineInputBorder(
-  //       borderSide: BorderSide(color: colors.primary, width: 1.5),
-  //       borderRadius: BorderRadius.circular(6),
-  //     ),
-  //   );
-  // }
+  
 }

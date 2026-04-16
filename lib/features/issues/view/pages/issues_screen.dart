@@ -5,7 +5,7 @@ import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../../../models/issue_model.dart';
+import '../../model/issue_model.dart';
 import '../../../../providers/issue_provider.dart';
 import '../../../../views/widgets/custom_search_bar.dart';
 import '../../../../views/widgets/generic_card.dart';

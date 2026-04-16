@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dsv360/models/issue_model.dart';
+import 'package:dsv360/features/issues/model/issue_model.dart';
 import 'package:dsv360/features/issues/repository/create_issue_repository.dart';
 import 'package:dsv360/features/issues/repository/delete_issue_repository.dart';
 import 'package:dsv360/features/issues/repository/fetch_issues_repository.dart';

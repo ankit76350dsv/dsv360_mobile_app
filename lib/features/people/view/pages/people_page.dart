@@ -21,7 +21,7 @@ import 'package:dsv360/repositories/time_logs_repository.dart';
 import 'package:dsv360/repositories/attendance_tracker_list.dart';
 import 'package:dsv360/repositories/attendance_list_repository.dart';
 import 'package:dsv360/repositories/check_in_repository.dart';
-import 'package:dsv360/repositories/users_repository.dart';
+import 'package:dsv360/features/users/repositories/users_repository.dart';
 import 'package:dsv360/repositories/user_check_in_status_repository.dart';
 import 'package:dsv360/models/user_check_in_status.dart';
 import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';

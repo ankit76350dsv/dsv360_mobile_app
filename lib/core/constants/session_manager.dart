@@ -13,7 +13,7 @@ import 'package:dsv360/repositories/organization_repository.dart';
 import 'package:dsv360/features/accounts/repositories/accounts_list_repository.dart';
 import 'package:dsv360/repositories/feedback_repository.dart';
 import 'package:dsv360/repositories/leaves_repository.dart';
-import 'package:dsv360/repositories/users_repository.dart';
+import 'package:dsv360/features/users/repositories/users_repository.dart';
 import 'package:dsv360/repositories/holiday_repository.dart';
 import 'package:dsv360/repositories/user_check_in_status_repository.dart';
 import 'package:dsv360/features/badges/repositories/all_badges_list.dart';

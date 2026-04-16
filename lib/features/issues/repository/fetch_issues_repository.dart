@@ -1,6 +1,6 @@
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/network/dio_client.dart';
-import 'package:dsv360/models/issue_model.dart';
+import 'package:dsv360/features/issues/model/issue_model.dart';
 import 'package:flutter/foundation.dart';
 
 class FetchIssuesRepository {
