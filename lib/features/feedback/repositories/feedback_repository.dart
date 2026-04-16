@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:developer' as developer;
 
 import 'package:dsv360/core/network/dio_client.dart';
-import 'package:dsv360/models/feedback_model.dart';
+import 'package:dsv360/features/feedback/model/feedback_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

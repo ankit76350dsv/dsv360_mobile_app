@@ -1,7 +1,7 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../models/feedback_model.dart';
+import '../../features/feedback/model/feedback_model.dart';
 
 class FeedbackCard extends StatelessWidget {
   final FeedbackModel feedback;

@@ -1,15 +1,14 @@
 import 'dart:io';
-import 'package:dio/dio.dart';
-import 'package:dsv360/core/constants/server_constant.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/features/feedback/repositories/create_feedback_repository.dart';
 import 'package:flutter/material.dart';
-import '../../core/constants/app_strings.dart';
-import '../../core/utils/form_validators.dart';
-import '../widgets/custom_input_field.dart';
-import '../widgets/primary_button.dart';
-import '../../views/widgets/TopBar.dart';
+import '../../../../core/constants/app_strings.dart';
+import '../../../../core/utils/form_validators.dart';
+import '../../../../views/widgets/custom_input_field.dart';
+import '../../../../views/widgets/primary_button.dart';
+import '../../../../views/widgets/TopBar.dart';
 import 'feedbacks_screen.dart';
 
 class FeedbackFormScreen extends StatefulWidget {
@@ -27,6 +26,9 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
   
   final List<XFile> _selectedImages = [];
   bool _isSubmitting = false;
+  
+  // Repository instance
+  final _feedbackRepository = CreateFeedbackRepository();
 
   @override
   void initState() {
@@ -79,49 +81,32 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
           throw Exception("User not found");
         }
 
-        final dio = Dio();
-        final formData = FormData.fromMap({
-          "Name": _nameController.text.trim(),
-          "Email": _emailController.text.trim(),
-          "Message": _messageController.text.trim(),
-          "User_ID": user.id,
-        });
-
-        if (_selectedImages.isNotEmpty) {
-          for (var image in _selectedImages) {
-            formData.files.add(MapEntry(
-              "profile",
-              await MultipartFile.fromFile(image.path, filename: image.name),
-            ));
-          }
-        }
-
-        final response = await dio.post(
-          '${ServerConstant.serverURL}time_entry_management_application_function/feedback',
-          data: formData,
+        // Use CreateFeedbackRepository to submit feedback
+        await _feedbackRepository.createFeedback(
+          name: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          message: _messageController.text.trim(),
+          images: _selectedImages,
         );
 
-        if (response.data['success'] == true) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content: Text(
-                      response.data['message'] ?? 'Feedback submitted successfully')),
-            );
-            _messageController.clear();
-            setState(() {
-              _selectedImages.clear();
-            });
-            // Navigator.pop(context); // Go back after success
-            Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => FeedbacksScreen(newFeedback: response.data['feedback']),
-          ),
-        );
-          }
-        } else {
-          throw Exception(response.data['message'] ?? 'Submission failed');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Feedback submitted successfully'),
+            ),
+          );
+          _messageController.clear();
+          setState(() {
+            _selectedImages.clear();
+          });
+
+          // Navigate to feedbacks screen
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const FeedbacksScreen(),
+            ),
+          );
         }
       } catch (e) {
         if (mounted) {

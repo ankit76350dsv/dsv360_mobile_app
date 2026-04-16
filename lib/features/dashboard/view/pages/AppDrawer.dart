@@ -16,8 +16,8 @@ import 'package:dsv360/features/users/view/pages/users_page.dart';
 import 'package:dsv360/features/people/view/pages/people_page.dart';
 import 'package:dsv360/features/teams/view/pages/teams_page.dart';
 import 'package:dsv360/views/ai/dsv_ai_page.dart';
-import 'package:dsv360/views/feedback/feedbacks_screen.dart';
-import 'package:dsv360/views/feedback/feedback_form_screen.dart';
+import 'package:dsv360/features/feedback/view/pages/feedbacks_screen.dart';
+import 'package:dsv360/features/feedback/view/pages/feedback_form_screen.dart';
 import 'package:dsv360/views/settings/settings_page.dart';
 
 class AppDrawer extends StatelessWidget {

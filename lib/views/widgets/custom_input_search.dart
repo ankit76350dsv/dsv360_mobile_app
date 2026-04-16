@@ -47,14 +47,14 @@ class _CustomInputSearchState extends ConsumerState<CustomInputSearch> {
         fillColor: customColors.surfaceBackground,
         prefixIcon: Icon(Icons.search, color: Colors.grey),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(200),
           borderSide: BorderSide(
             color: Colors.grey.withOpacity(0.2),
             width: 1.5,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(200),
           borderSide: BorderSide(
             color: Colors.grey.withOpacity(0.2),
             width: 1.5,

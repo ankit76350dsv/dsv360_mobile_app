@@ -11,7 +11,7 @@ import 'package:dsv360/providers/time_entry_provider.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/repositories/organization_repository.dart';
 import 'package:dsv360/features/accounts/repositories/accounts_list_repository.dart';
-import 'package:dsv360/repositories/feedback_repository.dart';
+import 'package:dsv360/features/feedback/repositories/feedback_repository.dart';
 import 'package:dsv360/repositories/leaves_repository.dart';
 import 'package:dsv360/features/users/repositories/users_repository.dart';
 import 'package:dsv360/repositories/holiday_repository.dart';
