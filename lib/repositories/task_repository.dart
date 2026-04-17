@@ -574,7 +574,7 @@ class TasksListRepository extends _$TasksListRepository {
 
   /// Refresh method for pull-to-refresh (keeps cache, shows loading)
   Future<void> refresh(String userId) async {
-    state = const AsyncLoading();
+    state = const AsyncLoading<List<Task>>().copyWithPrevious(state);
     state = await AsyncValue.guard(() => fetchTasks(userId));
   }
 

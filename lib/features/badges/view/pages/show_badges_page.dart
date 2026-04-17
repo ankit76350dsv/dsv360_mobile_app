@@ -94,11 +94,11 @@ class _ShowBadgesPageState extends ConsumerState<ShowBadgesPage> {
             child: FutureBuilder<List<BadgeSummary>>(
               future: _badgesFuture,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                   return const Center(child: DsvLoader());
                 }
 
-                if (snapshot.hasError) {
+                if (snapshot.hasError && !snapshot.hasData) {
                   return Center(
                     child: Padding(
                       padding: const EdgeInsets.all(16),

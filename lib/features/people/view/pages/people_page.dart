@@ -4,6 +4,7 @@ import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/features/people/repositories/people_summary_repository.dart';
+import 'package:dsv360/providers/dashboard_provider.dart';
 import 'package:dsv360/views/widgets/custom_input_search.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dsv360/core/constants/theme.dart';
@@ -1504,6 +1505,15 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
 
     debugPrint(role);
 
+     final dashboardAsync = ref.watch(dashboardDataProvider);
+    var totalEmployees = 0;
+    
+
+    dashboardAsync.whenData((dashboard){
+        totalEmployees = dashboard.userCnt;
+    });
+
+
     // Show loader while activeUser is still being fetched instead of throwing.
     if (userId.isEmpty) {
       return const GlobalLoader(message: 'Loading user info...');
@@ -1903,7 +1913,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
       final totalLeave = (summary['total_leave'] as num?)?.toInt() ?? 0;
       final totalPresent = (summary['total_present'] as num?)?.toInt() ?? 0;
       final unpaid = (summary['unpaid'] as num?)?.toInt() ?? 0;
-      final employees = totalLeave + totalPresent; //here
+      final employees = totalEmployees; //here
       final progress = unpaid == 0 ? 0.0 : (unpaid / totalLeave);
 
       return Padding(
@@ -2222,6 +2232,7 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
     final usersAsync = ref.watch(usersRepositoryProvider);
     final connectivityStatus = ref.watch(connectivityStatusProvider);
 
+   
     return connectivityStatus.when(
       loading: () => const GlobalLoader(message: 'Checking connection...'),
       error: (err, stack) => Center(

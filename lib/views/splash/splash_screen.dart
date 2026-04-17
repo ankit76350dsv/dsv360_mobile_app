@@ -28,7 +28,7 @@ class _SplashScreenState extends ConsumerState<ConsumerStatefulWidget>
   void initState() {
     super.initState();
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 0),
       vsync: this,
     );
 

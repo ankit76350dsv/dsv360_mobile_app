@@ -227,440 +227,446 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           children: [
             TopBar(title: 'Profile', onBack: () => Navigator.pop(context)),
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // --- Header Section ---
-                    SizedBox(
-                      height: 260,
-                      width: double.infinity,
-                      child: Stack(
-                        children: [
-                          // Background Image
-                          SizedBox(
-                            height: 200,
-                            width: double.infinity,
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                  image: _bannerImageUrl != null
-                                      ? (_bannerImageUrl!.startsWith('http')
-                                          ? NetworkImage(_bannerImageUrl!)
-                                          : FileImage(File(_bannerImageUrl!)))
-                                          as ImageProvider
-                                      : (userProfile?.coverLink != null
-                                          ? NetworkImage(userProfile!.coverLink)
-                                          : const AssetImage('assets/images/banner.jpg')
-                                              as ImageProvider),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              child: Container(
+              child: RefreshIndicator(
+                onRefresh: () async{
+                  final userId = await _resolveUserId();
+                   await _refreshProfileAndSyncImages(userId);
+                },
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // --- Header Section ---
+                      SizedBox(
+                        height: 260,
+                        width: double.infinity,
+                        child: Stack(
+                          children: [
+                            // Background Image
+                            SizedBox(
+                              height: 200,
+                              width: double.infinity,
+                              child: DecoratedBox(
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      Colors.transparent,
-                                      customColors.background!.withValues(alpha: 0.8),
-                                    ],
+                                  image: DecorationImage(
+                                    image: _bannerImageUrl != null
+                                        ? (_bannerImageUrl!.startsWith('http')
+                                            ? NetworkImage(_bannerImageUrl!)
+                                            : FileImage(File(_bannerImageUrl!)))
+                                            as ImageProvider
+                                        : (userProfile?.coverLink != null
+                                            ? NetworkImage(userProfile!.coverLink)
+                                            : const AssetImage('assets/images/banner.jpg')
+                                                as ImageProvider),
+                                    fit: BoxFit.cover,
                                   ),
                                 ),
-                              ),
-                            ),
-                          ),
-
-                          Positioned(
-                            top: 12,
-                            right: 12,
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: (_isUploading || _isBannerUploading)
-                                    ? null
-                                    : _pickAndUploadBannerImage,
-                                customBorder: const CircleBorder(),
                                 child: Container(
-                                  width: 38,
-                                  height: 38,
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.45),
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.65),
-                                      width: 1,
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.transparent,
+                                        customColors.background!.withValues(alpha: 0.8),
+                                      ],
                                     ),
                                   ),
-                                  child: _isBannerUploading
-                                      ? const Padding(
-                                          padding: EdgeInsets.all(9),
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                              Colors.white,
-                                            ),
-                                          ),
-                                        )
-                                      : const Icon(
-                                          Icons.edit,
-                                          color: Colors.white,
-                                          size: 18,
-                                        ),
                                 ),
                               ),
                             ),
-                          ),
-
-                          // Profile Avatar with clickable image area
-                          Positioned(
-                            top: 145,
-                            left: 24,
-                            child: SizedBox(
-                              width: 116,
-                              height: 116,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  Material(
-                                    color: Colors.transparent,
-                                    child: InkWell(
-                                      onTap: _isUploading ? null : _pickAndUploadImage,
-                                      customBorder: const CircleBorder(),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(4),
-                                        decoration: BoxDecoration(
-                                          color: customColors.background,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: CircleAvatar(
-                                          radius: 50,
-                                          backgroundImage: _profileImageUrl != null
-                                              ? (_profileImageUrl!.startsWith('http')
-                                                  ? NetworkImage(_profileImageUrl!)
-                                                  : FileImage(File(_profileImageUrl!)))
-                                                  as ImageProvider
-                                              : (userProfile?.profileLink != null
-                                                  ? NetworkImage(userProfile!.profileLink)
-                                                  : const AssetImage('assets/images/profile.jpg')
-                                                      as ImageProvider),
-                                        ),
+                
+                            Positioned(
+                              top: 12,
+                              right: 12,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: (_isUploading || _isBannerUploading)
+                                      ? null
+                                      : _pickAndUploadBannerImage,
+                                  customBorder: const CircleBorder(),
+                                  child: Container(
+                                    width: 38,
+                                    height: 38,
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.45),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white.withValues(alpha: 0.65),
+                                        width: 1,
                                       ),
                                     ),
+                                    child: _isBannerUploading
+                                        ? const Padding(
+                                            padding: EdgeInsets.all(9),
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor:
+                                                  AlwaysStoppedAnimation<Color>(
+                                                Colors.white,
+                                              ),
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.edit,
+                                            color: Colors.white,
+                                            size: 18,
+                                          ),
                                   ),
-                                  Positioned(
-                                    bottom: 20,
-                                    right: 10,
-                                    child: Container(
-                                      width: 20,
-                                      height: 20,
-                                      decoration: BoxDecoration(
-                                        color: customColors.statusCompleted,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: customColors.background!,
-                                          width: 3,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  Positioned(
-                                    bottom: 12,
-                                    right: 12,
-                                    child: Material(
+                                ),
+                              ),
+                            ),
+                
+                            // Profile Avatar with clickable image area
+                            Positioned(
+                              top: 145,
+                              left: 24,
+                              child: SizedBox(
+                                width: 116,
+                                height: 116,
+                                child: Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    Material(
                                       color: Colors.transparent,
                                       child: InkWell(
                                         onTap: _isUploading ? null : _pickAndUploadImage,
                                         customBorder: const CircleBorder(),
                                         child: Container(
-                                          width: 36,
-                                          height: 36,
+                                          padding: const EdgeInsets.all(4),
                                           decoration: BoxDecoration(
-                                            color: customColors.primary,
+                                            color: customColors.background,
                                             shape: BoxShape.circle,
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withValues(alpha: 0.3),
-                                                blurRadius: 4,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ],
                                           ),
-                                          child: _isUploading
-                                              ? const Padding(
-                                                  padding: EdgeInsets.all(8),
-                                                  child: CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                    valueColor:
-                                                        AlwaysStoppedAnimation<Color>(
-                                                      Colors.white,
-                                                    ),
-                                                  ),
-                                                )
-                                              : const Icon(
-                                                  Icons.edit,
-                                                  color: Colors.white,
-                                                  size: 18,
-                                                ),
+                                          child: CircleAvatar(
+                                            radius: 50,
+                                            backgroundImage: _profileImageUrl != null
+                                                ? (_profileImageUrl!.startsWith('http')
+                                                    ? NetworkImage(_profileImageUrl!)
+                                                    : FileImage(File(_profileImageUrl!)))
+                                                    as ImageProvider
+                                                : (userProfile?.profileLink != null
+                                                    ? NetworkImage(userProfile!.profileLink)
+                                                    : const AssetImage('assets/images/profile.jpg')
+                                                        as ImageProvider),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 2),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                fullName.isNotEmpty ? fullName : 'User',
-                                style: TextStyle(
-                                  fontSize: 26,
-                                  fontWeight: FontWeight.bold,
-                                  color: customColors.textPrimary,
+                                    Positioned(
+                                      bottom: 20,
+                                      right: 10,
+                                      child: Container(
+                                        width: 20,
+                                        height: 20,
+                                        decoration: BoxDecoration(
+                                          color: customColors.statusCompleted,
+                                          shape: BoxShape.circle,
+                                          border: Border.all(
+                                            color: customColors.background!,
+                                            width: 3,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      bottom: 12,
+                                      right: 12,
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: _isUploading ? null : _pickAndUploadImage,
+                                          customBorder: const CircleBorder(),
+                                          child: Container(
+                                            width: 36,
+                                            height: 36,
+                                            decoration: BoxDecoration(
+                                              color: customColors.primary,
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black.withValues(alpha: 0.3),
+                                                  blurRadius: 4,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            child: _isUploading
+                                                ? const Padding(
+                                                    padding: EdgeInsets.all(8),
+                                                    child: CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      valueColor:
+                                                          AlwaysStoppedAnimation<Color>(
+                                                        Colors.white,
+                                                      ),
+                                                    ),
+                                                  )
+                                                : const Icon(
+                                                    Icons.edit,
+                                                    color: Colors.white,
+                                                    size: 18,
+                                                  ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(height: 12),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                crossAxisAlignment: WrapCrossAlignment.center,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: customColors.statusCompleted!
-                                          .withValues(alpha: 0.2),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(
+                            ),
+                          ],
+                        ),
+                      ),
+                
+                      const SizedBox(height: 2),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  fullName.isNotEmpty ? fullName : 'User',
+                                  style: TextStyle(
+                                    fontSize: 26,
+                                    fontWeight: FontWeight.bold,
+                                    color: customColors.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
                                         color: customColors.statusCompleted!
-                                            .withValues(alpha: 0.5),
+                                            .withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: customColors.statusCompleted!
+                                              .withValues(alpha: 0.5),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        role.isNotEmpty ? role : 'User',
+                                        style: TextStyle(
+                                          color: customColors.statusCompleted,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
                                     ),
-                                    child: Text(
-                                      role.isNotEmpty ? role : 'User',
-                                      style: TextStyle(
-                                        color: customColors.statusCompleted,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
+                                  ],
+                                ),
+                              ],
+                            ),
+                
+                            const SizedBox(height: 24),
+                
+                            AboutMe(
+                              title: 'About Me',
+                              content:
+                                  userProfile?.aboutMe ??
+                                  'No description available.',
+                              backgroundColor: customColors.cardBackground!,
+                              textColor: customColors.textPrimary!,
+                              accentColor: customColors.statusCompleted!,
+                            ),
+                
+                            const SizedBox(height: 24),
+                
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: customColors.cardBackground,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 4,
+                                        height: 20,
+                                        decoration: BoxDecoration(
+                                          color: customColors.statusCompleted,
+                                          borderRadius: BorderRadius.circular(2),
+                                        ),
                                       ),
-                                    ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Contact Information',
+                                        style: TextStyle(
+                                          color: customColors.statusCompleted,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 20),
+                                  _buildContactRow(
+                                    Icons.email_outlined,
+                                    'Email',
+                                    email,
+                                    customColors.textSecondary!,
+                                    context,
+                                  ),
+                                  Divider(
+                                    color: customColors.divider,
+                                    height: 24,
+                                  ),
+                                  _buildContactRow(
+                                    Icons.phone_outlined,
+                                    'Phone',
+                                    userProfile?.phone ??
+                                        'No Phone details available.',
+                                    customColors.textSecondary!,
+                                    context,
+                                  ),
+                                  Divider(
+                                    color: customColors.divider,
+                                    height: 24,
+                                  ),
+                                  _buildContactRow(
+                                    Icons.location_on_outlined,
+                                    'Address',
+                                    userProfile?.address ??
+                                        'No Address available.',
+                                    customColors.textSecondary!,
+                                    context,
                                   ),
                                 ],
                               ),
-                            ],
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          AboutMe(
-                            title: 'About Me',
-                            content:
-                                userProfile?.aboutMe ??
-                                'No description available.',
-                            backgroundColor: customColors.cardBackground!,
-                            textColor: customColors.textPrimary!,
-                            accentColor: customColors.statusCompleted!,
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: customColors.cardBackground,
-                              borderRadius: BorderRadius.circular(16),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 4,
-                                      height: 20,
-                                      decoration: BoxDecoration(
-                                        color: customColors.statusCompleted,
-                                        borderRadius: BorderRadius.circular(2),
+                
+                            const SizedBox(height: 24),
+                
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: customColors.cardBackground,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        width: 4,
+                                        height: 20,
+                                        decoration: BoxDecoration(
+                                          color: customColors.statusCompleted,
+                                          borderRadius: BorderRadius.circular(2),
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Contact Information',
-                                      style: TextStyle(
-                                        color: customColors.statusCompleted,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Skills',
+                                        style: TextStyle(
+                                          color: customColors.statusCompleted,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 20),
-                                _buildContactRow(
-                                  Icons.email_outlined,
-                                  'Email',
-                                  email,
-                                  customColors.textSecondary!,
-                                  context,
-                                ),
-                                Divider(
-                                  color: customColors.divider,
-                                  height: 24,
-                                ),
-                                _buildContactRow(
-                                  Icons.phone_outlined,
-                                  'Phone',
-                                  userProfile?.phone ??
-                                      'No Phone details available.',
-                                  customColors.textSecondary!,
-                                  context,
-                                ),
-                                Divider(
-                                  color: customColors.divider,
-                                  height: 24,
-                                ),
-                                _buildContactRow(
-                                  Icons.location_on_outlined,
-                                  'Address',
-                                  userProfile?.address ??
-                                      'No Address available.',
-                                  customColors.textSecondary!,
-                                  context,
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 24),
-
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: customColors.cardBackground,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 4,
-                                      height: 20,
-                                      decoration: BoxDecoration(
-                                        color: customColors.statusCompleted,
-                                        borderRadius: BorderRadius.circular(2),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Skills',
-                                      style: TextStyle(
-                                        color: customColors.statusCompleted,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                if (userProfile?.skills != null &&
-                                    userProfile!.skills.isNotEmpty)
-                                  Wrap(
-                                    spacing: 12,
-                                    runSpacing: 12,
-                                    children:
-                                        (userProfile.skills.contains(',')
-                                                ? userProfile.skills.split(',')
-                                                : [userProfile.skills])
-                                            .map(
-                                              (skill) => _buildSkillChip(
-                                                skill.trim(),
-                                                customColors.textSecondary!,
-                                                context,
-                                              ),
-                                            )
-                                            .toList(),
-                                  )
-                                else
-                                  Text(
-                                    'No skills added yet.',
-                                    style: TextStyle(
-                                      color: customColors.textHint,
-                                      fontSize: 14,
-                                      fontStyle: FontStyle.italic,
-                                    ),
+                                    ],
                                   ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 32),
-
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              onPressed: () async {
-                                final confirmed =
-                                    await showWarningDialogueBox<bool>(
-                                      context: context,
-                                      title: 'You will be logged out',
-                                      subtitle:
-                                          'Are you sure you want to logout?',
-                                      primaryText: 'Logout',
-                                      onPrimaryPressed: (dialogContext) =>
-                                          Navigator.of(dialogContext).pop(true),
-                                    );
-
-                                if (confirmed != true) return;
-
-                                await SessionManager.logout(context);
-                                if (context.mounted) {
-                                  Navigator.of(context).pushAndRemoveUntil(
-                                    MaterialPageRoute(
-                                      builder: (context) => const WelcomePage(),
+                                  const SizedBox(height: 16),
+                                  if (userProfile?.skills != null &&
+                                      userProfile!.skills.isNotEmpty)
+                                    Wrap(
+                                      spacing: 12,
+                                      runSpacing: 12,
+                                      children:
+                                          (userProfile.skills.contains(',')
+                                                  ? userProfile.skills.split(',')
+                                                  : [userProfile.skills])
+                                              .map(
+                                                (skill) => _buildSkillChip(
+                                                  skill.trim(),
+                                                  customColors.textSecondary!,
+                                                  context,
+                                                ),
+                                              )
+                                              .toList(),
+                                    )
+                                  else
+                                    Text(
+                                      'No skills added yet.',
+                                      style: TextStyle(
+                                        color: customColors.textHint,
+                                        fontSize: 14,
+                                        fontStyle: FontStyle.italic,
+                                      ),
                                     ),
-                                    (route) => false,
-                                  );
-                                }
-                              },
-                              icon: const Icon(Icons.logout),
-                              label: const Text('Logout'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: customColors.error,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                elevation: 0,
+                                ],
                               ),
                             ),
-                          ),
-
-                          const SizedBox(height: 40),
-                        ],
+                
+                            const SizedBox(height: 32),
+                
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton.icon(
+                                onPressed: () async {
+                                  final confirmed =
+                                      await showWarningDialogueBox<bool>(
+                                        context: context,
+                                        title: 'You will be logged out',
+                                        subtitle:
+                                            'Are you sure you want to logout?',
+                                        primaryText: 'Logout',
+                                        onPrimaryPressed: (dialogContext) =>
+                                            Navigator.of(dialogContext).pop(true),
+                                      );
+                
+                                  if (confirmed != true) return;
+                
+                                  await SessionManager.logout(context);
+                                  if (context.mounted) {
+                                    Navigator.of(context).pushAndRemoveUntil(
+                                      MaterialPageRoute(
+                                        builder: (context) => const WelcomePage(),
+                                      ),
+                                      (route) => false,
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.logout),
+                                label: const Text('Logout'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: customColors.error,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                  elevation: 0,
+                                ),
+                              ),
+                            ),
+                
+                            const SizedBox(height: 40),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

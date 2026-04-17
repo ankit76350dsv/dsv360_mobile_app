@@ -393,6 +393,8 @@ void didChangeDependencies() {
           // Task List
           Expanded(
             child: tasksAsync.when(
+              skipLoadingOnRefresh: true,
+              
               data: (tasks) {
                 // Filter by project first if projectId is provided
                 final projectFilteredTasks = widget.projectId != null && widget.projectId!.isNotEmpty
@@ -439,6 +441,7 @@ void didChangeDependencies() {
                       )
                     : RefreshIndicator(
                         onRefresh: () async {
+                          
                           await ref
                               .read(
                                 tasksListRepositoryProvider(userId).notifier,
