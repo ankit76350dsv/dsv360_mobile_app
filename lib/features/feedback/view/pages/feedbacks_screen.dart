@@ -29,6 +29,8 @@ class _FeedbacksScreenState extends ConsumerState<FeedbacksScreen> {
   String _selectedFilter = 'All'; // 'All', 'Fixed', or 'Will Fix Soon'
   final List<String> _filterOptions = const ['All', 'Fixed', 'Will Fix Soon'];
 
+  final userRole = AuthManager.instance.currentUser?.role?.name.toLowerCase();
+
   List<FeedbackModel> _filterFeedbacks(List<FeedbackModel> feedbacks) {
     var filtered = feedbacks;
 
@@ -98,7 +100,7 @@ class _FeedbacksScreenState extends ConsumerState<FeedbacksScreen> {
         actions: [],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: connectivityStatus.when(
+      floatingActionButton: (userRole != 'admin' || userRole != 'admin') ? connectivityStatus.when(
         data: (results) {
           if (results.contains(ConnectivityResult.none)) {
             return null;
@@ -119,7 +121,7 @@ class _FeedbacksScreenState extends ConsumerState<FeedbacksScreen> {
         },
         loading: () => null,
         error: (_, __) => null,
-      ),
+      ) : null,
       body: SafeArea(
         child: connectivityStatus.when(
           data: (results) {

@@ -2271,11 +2271,14 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                         child: Text('${u.firstName} ${u.lastName}'.trim()),
                       );
                     }).toList(),
-                    onChanged: (value) =>
-                        setState(() => selectedEmployeeId = value),
+                    onChanged: users.isEmpty
+                        ? (value) {}
+                        : (value) => setState(() => selectedEmployeeId = value),
                     hintText: 'Select Employee',
                     labelText: 'Select Employee',
                     prefixIcon: Icons.person_outline,
+                    searchable: true,
+                    searchHintText: 'Search employee',
                   ),
                   const SizedBox(height: 8.0),
 
