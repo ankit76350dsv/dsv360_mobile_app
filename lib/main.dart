@@ -12,6 +12,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await AppInitManager.instance.initCatalyst();
+  await themeController.loadThemeMode();
   runApp(const ProviderScope(child: MyApp()));
 }
 

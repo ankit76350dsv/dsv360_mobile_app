@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'app_colors.dart';
 
 extension ThemeDataExtension on ThemeData {
@@ -7,11 +8,27 @@ extension ThemeDataExtension on ThemeData {
 }
 
 class ThemeController {
-  final ValueNotifier<ThemeMode> themeMode = ValueNotifier(ThemeMode.light);
+  static const _themeModeKey = 'app_theme_mode';
 
-  final ValueNotifier<Color> seedColor = ValueNotifier(
-    const Color(0xFF004da7),
-  ); // fallback
+  final ValueNotifier<ThemeMode> themeMode = ValueNotifier(ThemeMode.light);
+  final ValueNotifier<Color> seedColor = ValueNotifier(const Color(0xFF004da7));
+
+  Future<void> loadThemeMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_themeModeKey);
+
+    if (raw == 'dark') {
+      themeMode.value = ThemeMode.dark;
+    } else {
+      themeMode.value = ThemeMode.light;
+    }
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    themeMode.value = mode;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_themeModeKey, mode == ThemeMode.dark ? 'dark' : 'light');
+  }
 }
 
 final themeController = ThemeController();

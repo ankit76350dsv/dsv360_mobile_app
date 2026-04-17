@@ -61,10 +61,10 @@ class SettingsPage extends StatelessWidget {
                           style: TextStyle(color: customColors.textSecondary),
                         ),
                         value: isDark,
-                        onChanged: (value) {
-                          themeController.themeMode.value = value
-                              ? ThemeMode.dark
-                              : ThemeMode.light;
+                        onChanged: (value) async {
+                          await themeController.setThemeMode(
+                            value ? ThemeMode.dark : ThemeMode.light,
+                          );
                         },
                       ),
                     ],
