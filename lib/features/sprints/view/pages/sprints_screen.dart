@@ -1,6 +1,8 @@
 import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
+import 'package:dsv360/features/sprints/view/pages/create_sprint_page.dart';
+import 'package:dsv360/providers/project_provider.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,8 +15,8 @@ final _sampleStories = [
   SprintStory(
     id: 's1',
     title: 'Admin Page Design',
-    completedPoints: 0,
-    totalPoints: 1,
+    completedPoints: 75,
+    totalPoints: 100,
     memberAvatars: ['M'],
     storyLabel: 'Story-3',
     storyPoints: 3,
@@ -42,17 +44,18 @@ final _sampleStories = [
   ),
 ];
 
+final projectListProvider = FutureProvider((ref) async {
+  final repo = ref.read(projectRepositoryProvider);
+  return repo.fetchProjects();
+});
+
 // ── Main Widget ─────────────────────────────────────────────────────────────
 
 class SprintsScreen extends ConsumerStatefulWidget {
   final String? projectId;
   final String? projectName;
 
-  const SprintsScreen({
-    super.key,
-    this.projectId,
-    this.projectName,
-  });
+  const SprintsScreen({super.key, this.projectId, this.projectName});
 
   @override
   ConsumerState<SprintsScreen> createState() => _SprintsScreenState();
@@ -63,7 +66,8 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
   late TabController _tabController;
   late List<SprintStory> _stories;
 
-  final String _selectedProject = 'Example Project';
+  String? _selectedProjectName;
+  String? _selectedProjectId;
   final String _selectedSprint = 'Sprint-0T';
 
   @override
@@ -79,17 +83,17 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
     super.dispose();
   }
 
-  int get _totalPoints =>
-      _stories.fold(0, (sum, s) => sum + s.storyPoints);
+  int get _totalPoints => _stories.fold(0, (sum, s) => sum + s.storyPoints);
 
-  int get _completedPoints =>
-      _stories.where((s) => s.columnId == 'closed' || s.columnId == 'uat_approved')
-          .fold(0, (sum, s) => sum + s.storyPoints);
+  int get _completedPoints => _stories
+      .where((s) => s.columnId == 'closed' || s.columnId == 'uat_approved')
+      .fold(0, (sum, s) => sum + s.storyPoints);
 
   int get _totalStories => _stories.length;
 
-  int get _completedStories =>
-      _stories.where((s) => s.columnId == 'closed' || s.columnId == 'uat_approved').length;
+  int get _completedStories => _stories
+      .where((s) => s.columnId == 'closed' || s.columnId == 'uat_approved')
+      .length;
 
   double get _progress =>
       _totalPoints == 0 ? 0.0 : _completedPoints / _totalPoints;
@@ -100,6 +104,161 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
     });
   }
 
+  Future<void> _showProjectSelector({
+    required BuildContext context,
+    required List<dynamic> projects,
+    required Color cardBg,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color greyBorder,
+    required Color primary,
+  }) async {
+    String query = '';
+
+    await showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (dialogContext) {
+        final maxHeight = MediaQuery.of(dialogContext).size.height * 0.6;
+
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
+          child: StatefulBuilder(
+            builder: (context, setDialogState) {
+              final filteredProjects = projects.where((p) {
+                final name = (p.projectName ?? '').toString().toLowerCase();
+                return name.contains(query.toLowerCase());
+              }).toList();
+
+              return Container(
+                constraints: BoxConstraints(maxHeight: maxHeight),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: greyBorder, width: 1),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                      child: TextField(
+                        autofocus: true,
+                        onChanged: (value) {
+                          setDialogState(() {
+                            query = value;
+                          });
+                        },
+                        style: TextStyle(color: textPrimary, fontSize: 13),
+                        decoration: InputDecoration(
+                          hintText: 'Search project...',
+                          hintStyle: TextStyle(
+                            color: textSecondary,
+                            fontSize: 12,
+                          ),
+                          isDense: true,
+                          filled: true,
+                          fillColor: cardBg,
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: textSecondary,
+                            size: 18,
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 10,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: greyBorder),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: greyBorder),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: greyBorder),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Flexible(
+                      child: filteredProjects.isEmpty
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Text(
+                                  'No projects found',
+                                  style: TextStyle(
+                                    color: textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                              itemCount: filteredProjects.length,
+                              itemBuilder: (context, index) {
+                                final project = filteredProjects[index];
+                                final isSelected =
+                                    _selectedProjectName == project.projectName;
+
+                                return InkWell(
+                                  borderRadius: BorderRadius.circular(10),
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedProjectName =
+                                          project.projectName;
+                                      _selectedProjectId = project.id;
+                                    });
+                                    debugPrint(
+                                      'Selected Project: $_selectedProjectName ($_selectedProjectId)',
+                                    );
+                                    Navigator.pop(dialogContext);
+                                  },
+                                  child: Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      vertical: 2,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      color: isSelected
+                                          ? primary.withValues(alpha: 0.12)
+                                          : Colors.transparent,
+                                    ),
+                                    child: Text(
+                                      project.projectName,
+                                      style: TextStyle(
+                                        color: textPrimary,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(
@@ -108,19 +267,31 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
         final customColors = Theme.of(context).custom;
         final isDark = mode == ThemeMode.dark;
 
-        final background = customColors.background ??
+        final background =
+            customColors.background ??
             (isDark ? AppColorsDark.background : AppColorsLight.background);
-        final cardBg = customColors.cardBackground ??
-            (isDark ? AppColorsDark.cardBackground : AppColorsLight.cardBackground);
-        final textPrimary = customColors.textPrimary ??
+        final cardBg =
+            customColors.cardBackground ??
+            (isDark
+                ? AppColorsDark.cardBackground
+                : AppColorsLight.cardBackground);
+        final textPrimary =
+            customColors.textPrimary ??
             (isDark ? AppColorsDark.textPrimary : AppColorsLight.textPrimary);
-        final textSecondary = customColors.textSecondary ??
-            (isDark ? AppColorsDark.textSecondary : AppColorsLight.textSecondary);
-        final greyBorder = customColors.greyBorder ??
+        final textSecondary =
+            customColors.textSecondary ??
+            (isDark
+                ? AppColorsDark.textSecondary
+                : AppColorsLight.textSecondary);
+        final greyBorder =
+            customColors.greyBorder ??
             (isDark ? AppColorsDark.greyBorder : AppColorsLight.greyBorder);
         final primary = customColors.primary ?? AppColorsDark.primary;
-        final tabbarBg = customColors.tabbarBackground ??
-            (isDark ? AppColorsDark.tabbarBackground : AppColorsLight.tabbarBackground);
+        final tabbarBg =
+            customColors.tabbarBackground ??
+            (isDark
+                ? AppColorsDark.tabbarBackground
+                : AppColorsLight.tabbarBackground);
 
         return Scaffold(
           drawer: const AppDrawer(),
@@ -138,7 +309,10 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
 
                 // ── Project selector + Complete button ──
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
                   child: Row(
                     children: [
                       Text(
@@ -152,35 +326,102 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: GestureDetector(
-                          onTap: () {},
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: cardBg,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: greyBorder, width: 1),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    _selectedProject,
-                                    style: TextStyle(
-                                      color: textPrimary,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
+                        child: Consumer(
+                          builder: (context, ref, child) {
+                            final projectsAsync = ref.watch(
+                              projectListProvider,
+                            );
+
+                            return projectsAsync.when(
+                              loading: () => Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: cardBg,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: greyBorder,
+                                    width: 1,
                                   ),
                                 ),
-                                Icon(Icons.keyboard_arrow_down,
-                                    color: textSecondary, size: 18),
-                              ],
-                            ),
-                          ),
+                                child: Text(
+                                  'Loading...',
+                                  style: TextStyle(
+                                    color: textSecondary,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+
+                              error: (error, _) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                child: Text(
+                                  'Error loading projects',
+                                  style: TextStyle(color: textSecondary),
+                                ),
+                              ),
+
+                              data: (projects) {
+                                return SizedBox(
+                                  height: 35,
+                                  child: GestureDetector(
+                                    onTap: () => _showProjectSelector(
+                                      context: context,
+                                      projects: projects,
+                                      cardBg: cardBg,
+                                      textPrimary: textPrimary,
+                                      textSecondary: textSecondary,
+                                      greyBorder: greyBorder,
+                                      primary: primary,
+                                    ),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: cardBg,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: greyBorder,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              _selectedProjectName ??
+                                                  'Select Project',
+                                              style: TextStyle(
+                                                color:
+                                                    _selectedProjectName == null
+                                                    ? textSecondary
+                                                    : textPrimary,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          Icon(
+                                            Icons.keyboard_arrow_down,
+                                            color: textSecondary,
+                                            size: 18,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -188,7 +429,9 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                         onTap: () {},
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 7),
+                            horizontal: 14,
+                            vertical: 7,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.transparent,
                             borderRadius: BorderRadius.circular(8),
@@ -210,8 +453,10 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
 
                 // ── Cycle status + Sprint dropdown + Sprint/Issue buttons ──
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 4,
+                  ),
                   child: Row(
                     children: [
                       // CYCLE label
@@ -228,9 +473,13 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                       // Active badge
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 2),
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4CAF50).withValues(alpha: 0.18),
+                          color: const Color(
+                            0xFF4CAF50,
+                          ).withValues(alpha: 0.18),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(
@@ -249,7 +498,9 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                         onTap: () {},
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: cardBg,
                             borderRadius: BorderRadius.circular(6),
@@ -267,8 +518,11 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                 ),
                               ),
                               const SizedBox(width: 2),
-                              Icon(Icons.keyboard_arrow_down,
-                                  color: textSecondary, size: 14),
+                              Icon(
+                                Icons.keyboard_arrow_down,
+                                color: textSecondary,
+                                size: 14,
+                              ),
                             ],
                           ),
                         ),
@@ -276,10 +530,32 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                       const Spacer(),
                       // + SPRINT button
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () {
+                          if (_selectedProjectId == null ||
+                              _selectedProjectId!.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please select a project first'),
+                                elevation: 5,
+                              ),
+                            );
+                            return;
+                          }
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => CreateSprintPage(
+                                projectId: _selectedProjectId!,
+                              ),
+                            ),
+                          );
+                        },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5),
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
                             color: cardBg,
                             borderRadius: BorderRadius.circular(6),
@@ -306,10 +582,14 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                       const SizedBox(width: 6),
                       // + ISSUE button
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () {
+                          //navigate to add issue page here
+                        },
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 5),
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
                           decoration: BoxDecoration(
                             color: cardBg,
                             borderRadius: BorderRadius.circular(6),
@@ -339,8 +619,10 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
 
                 // ── Tab bar: Board / Backlog / Timeline ──
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 6,
+                  ),
                   child: Container(
                     decoration: BoxDecoration(
                       color: tabbarBg,
@@ -351,16 +633,21 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                       labelColor: textPrimary,
                       unselectedLabelColor: textSecondary,
                       labelStyle: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w600),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
                       unselectedLabelStyle: const TextStyle(
-                          fontSize: 13, fontWeight: FontWeight.w500),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
                       indicator: BoxDecoration(
                         color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withValues(
-                                alpha: isDark ? 0.3 : 0.1),
+                              alpha: isDark ? 0.3 : 0.1,
+                            ),
                             blurRadius: 4,
                             offset: const Offset(0, 1),
                           ),
@@ -381,6 +668,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                 Expanded(
                   child: TabBarView(
                     controller: _tabController,
+                    physics: NeverScrollableScrollPhysics(),
                     children: [
                       // Board tab
                       BoardView(

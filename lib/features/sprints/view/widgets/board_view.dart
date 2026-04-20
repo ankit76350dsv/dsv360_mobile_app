@@ -92,9 +92,9 @@ class BoardView extends StatelessWidget {
                   Text(
                     '${(progress * 100).toStringAsFixed(0)} %',
                     style: TextStyle(
-                      color: textPrimary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
+                      color: textPrimary.withValues(alpha: 0.8),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
@@ -104,7 +104,7 @@ class BoardView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(
                   value: progress,
-                  minHeight: 8,
+                  minHeight: 6,
                   backgroundColor: greyBorder,
                   valueColor: const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
                 ),
@@ -135,9 +135,9 @@ class BoardView extends StatelessWidget {
         // ── Search + Navigator bottom bar ──
         Container(
           margin: const EdgeInsets.only(left: 16, right: 16, bottom: 10),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           decoration: BoxDecoration(
-            color: primary,
+            color: greyBorder.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(30),
           ),
           child: Row(
@@ -149,12 +149,12 @@ class BoardView extends StatelessWidget {
                   },
                   child: Row(
                     children: [
-                      const Icon(Icons.search, color: Colors.white, size: 18),
+                      Icon(Icons.search, color: customColors.textPrimary, size: 18),
                       const SizedBox(width: 8),
                       Text(
                         'Search stories...',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.85),
+                          color: customColors.textPrimary,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
@@ -166,7 +166,7 @@ class BoardView extends StatelessWidget {
               Container(
                 width: 1,
                 height: 20,
-                color: Colors.white.withValues(alpha: 0.35),
+                color: customColors.textPrimary!.withValues(alpha: 0.35),
                 margin: const EdgeInsets.symmetric(horizontal: 10),
               ),
               GestureDetector(
@@ -175,10 +175,10 @@ class BoardView extends StatelessWidget {
                 },
                 child: Row(
                   children: [
-                    const Text(
+                    Text(
                       'NAVIGATOR',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: customColors.textPrimary,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.5,
@@ -189,11 +189,11 @@ class BoardView extends StatelessWidget {
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
+                        color: customColors.textPrimary!.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.arrow_forward,
-                          color: Colors.white, size: 14),
+                      child: Icon(Icons.arrow_forward,
+                          color: customColors.textPrimary, size: 14),
                     ),
                   ],
                 ),
