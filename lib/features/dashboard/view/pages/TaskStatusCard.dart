@@ -179,7 +179,7 @@ class TaskStatusCard extends ConsumerWidget {
               constraints: BoxConstraints(maxHeight: height, minHeight: 140),
               // when() renders loader/error/data inline — page is never touched.
               child: taskAsync.when(
-                skipLoadingOnRefresh: false,
+                skipLoadingOnRefresh: true,
                 data: (taskData) => TaskStatusContent(taskData: taskData),
                 loading: () => const Center(child: CircularLoader()),
                 error: (e, _) => const Center(child: Text('Failed to load')),

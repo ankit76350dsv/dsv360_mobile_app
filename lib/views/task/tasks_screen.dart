@@ -48,19 +48,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     super.dispose();
   }
 
-//refresh page on every visit
-  bool _firstBuild = true;
-  @override
-void didChangeDependencies() {
-  super.didChangeDependencies();
-  if (!_firstBuild) {
-    // Refresh both tasks and timer status when returning to this page
-    final userId = ref.read(currentUserIdProvider);
-    ref.read(tasksListRepositoryProvider(userId).notifier).refresh(userId);
-    _fetchTimerStatus();
-  }
-  _firstBuild = false;
-}
+
 
   Future<void> _fetchTimerStatus() async {
     final userId = ref.read(currentUserIdProvider);
@@ -507,12 +495,7 @@ void didChangeDependencies() {
                                             currentUser: task.assignedTo,
                                           ),
                                         ),
-                                      ).then((_) {
-                                  // This runs when you return to TasksScreen
-                                  final userId = ref.read(currentUserIdProvider);
-                                  ref.read(tasksListRepositoryProvider(userId).notifier).refresh(userId);
-                                  _fetchTimerStatus();
-                                });
+                                      );
                                     },
                                   ),
                                 ],

@@ -68,7 +68,6 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
-    
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -1490,7 +1489,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
     final customColors = Theme.of(context).custom;
 
     final summaryAsync = ref.watch(peopleSummaryProvider);
-    
+
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final userId = activeUser?.userId ?? '';
 
@@ -1505,531 +1504,603 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
 
     debugPrint(role);
 
-     final dashboardAsync = ref.watch(dashboardDataProvider);
+    final dashboardAsync = ref.watch(dashboardDataProvider);
     var totalEmployees = 0;
-    
 
-    dashboardAsync.whenData((dashboard){
-        totalEmployees = dashboard.userCnt;
+    dashboardAsync.whenData((dashboard) {
+      totalEmployees = dashboard.userCnt;
     });
-
 
     // Show loader while activeUser is still being fetched instead of throwing.
     if (userId.isEmpty) {
       return const GlobalLoader(message: 'Loading user info...');
     }
 
-        final userStatusAsync = ref.watch(userStatusRepositoryProvider);
+    final userStatusAsync = ref.watch(userStatusRepositoryProvider);
     debugPrint("userStatusAsync: $userStatusAsync");
+    final isApplePlatform =
+        Theme.of(context).platform == TargetPlatform.iOS ||
+        Theme.of(context).platform == TargetPlatform.macOS;
 
     return RefreshIndicator(
       onRefresh: () async {
-       final _ =  await ref.refresh(userStatusRepositoryProvider.future);
+        final _ = await ref.refresh(userStatusRepositoryProvider.future);
         final _ = await ref.refresh(peopleSummaryProvider.future);
       },
-      child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: userStatusAsync.when(
-        loading: () =>
-            const GlobalLoader(message: 'Loading Check In/Out status...'),
-        error: (error, stack) => GlobalError(
-          message: 'Failed to load Check In/Out status: Try Again',
-          onRetry: () => ref.invalidate(userStatusRepositoryProvider),
-        ),
-        data: (status) {
-          final isCheckedIn = status.isCheckIn;
-          _elapsed = (isCheckedIn && status.checkInTime != null)
-              ? DateTime.now().difference(status.checkInTime!)
-              : Duration.zero;
+      child: ColoredBox(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: userStatusAsync.when(
+          loading: () =>
+              const GlobalLoader(message: 'Loading Check In/Out status...'),
+          error: (error, stack) => GlobalError(
+            message: 'Failed to load Check In/Out status: Try Again',
+            onRetry: () => ref.invalidate(userStatusRepositoryProvider),
+          ),
+          data: (status) {
+            final isCheckedIn = status.isCheckIn;
+            _elapsed = (isCheckedIn && status.checkInTime != null)
+                ? DateTime.now().difference(status.checkInTime!)
+                : Duration.zero;
 
-          return Container(
-            decoration: const BoxDecoration(),
-            child: SafeArea(
-              child: SingleChildScrollView(
-                 physics: const AlwaysScrollableScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}"
-                                      .trim(),
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: customColors.primary,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                empId.isNotEmpty
-                                    ? "EMP-ID: $empId"
-                                    : "EMP-ID: --",
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: customColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          if (!isCheckedIn)
-                            Container(
-                              margin: const EdgeInsets.only(top: 12),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 5,
-                              ),
-                
-                              decoration: BoxDecoration(
-                                color: const Color.fromARGB(
-                                  57,
-                                  255,
-                                  105,
-                                  59,
-                                ).withOpacity(0.15),
-                                borderRadius: BorderRadius.circular(40),
-                                border: Border.all(color: Colors.red.shade700),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.access_time,
-                                    color: Colors.red.shade800,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    "Yet to check-in",
-                                    style: TextStyle(
-                                      color: Colors.red.shade900,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
-                      ),
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  physics: isApplePlatform
+                      ? const ClampingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics(),
+                        )
+                      : const AlwaysScrollableScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: constraints.maxHeight,
                     ),
-                
-                    /// TIME ELAPSED
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Card(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 18.0),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.timer_outlined,
-                                    color: customColors.textSecondary,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'TIME ELAPSED',
-                                    style: TextStyle(
-                                      color: customColors.textSecondary,
-                                      letterSpacing: 1,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12.0),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  _TimeBox(value: _elapsed.inDays, label: "Days"),
-                                  _TimeBox(
-                                    value: _elapsed.inHours % 24,
-                                    label: "Hrs",
-                                  ),
-                                  _TimeBox(
-                                    value: _elapsed.inMinutes % 60,
-                                    label: "Mins",
-                                  ),
-                                  _TimeBox(
-                                    value: _elapsed.inSeconds % 60,
-                                    label: "Secs",
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isCheckedIn
-                                      ? customColors.primary!.withOpacity(0.1)
-                                      : Colors.grey.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Icon(
-                                      Icons.circle,
-                                      size: 8,
-                                      color: isCheckedIn
-                                          ? customColors.primary
-                                          : Colors.grey,
+                                    Expanded(
+                                      child: Text(
+                                        "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}"
+                                            .trim(),
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: customColors.primary,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: 12),
                                     Text(
-                                      isCheckedIn
-                                          ? 'Checked In'
-                                          : 'Not Checked In',
+                                      empId.isNotEmpty
+                                          ? "EMP-ID: $empId"
+                                          : "EMP-ID: --",
                                       style: TextStyle(
-                                        color: isCheckedIn
-                                            ? customColors.primary
-                                            : Colors.grey,
-                                        fontSize: 12,
+                                        fontSize: 13,
                                         fontWeight: FontWeight.w600,
+                                        color: customColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (!isCheckedIn)
+                                  Container(
+                                    margin: const EdgeInsets.only(top: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 5,
+                                    ),
+
+                                    decoration: BoxDecoration(
+                                      color: const Color.fromARGB(
+                                        57,
+                                        255,
+                                        105,
+                                        59,
+                                      ).withOpacity(0.15),
+                                      borderRadius: BorderRadius.circular(40),
+                                      border: Border.all(
+                                        color: Colors.red.shade700,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.access_time,
+                                          color: Colors.red.shade800,
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          "Yet to check-in",
+                                          style: TextStyle(
+                                            color: Colors.red.shade900,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+
+                          /// TIME ELAPSED
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Card(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 18.0,
+                                ),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.timer_outlined,
+                                          color: customColors.textSecondary,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'TIME ELAPSED',
+                                          style: TextStyle(
+                                            color: customColors.textSecondary,
+                                            letterSpacing: 1,
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12.0),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceEvenly,
+                                      children: [
+                                        _TimeBox(
+                                          value: _elapsed.inDays,
+                                          label: "Days",
+                                        ),
+                                        _TimeBox(
+                                          value: _elapsed.inHours % 24,
+                                          label: "Hrs",
+                                        ),
+                                        _TimeBox(
+                                          value: _elapsed.inMinutes % 60,
+                                          label: "Mins",
+                                        ),
+                                        _TimeBox(
+                                          value: _elapsed.inSeconds % 60,
+                                          label: "Secs",
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: isCheckedIn
+                                            ? customColors.primary!.withOpacity(
+                                                0.1,
+                                              )
+                                            : Colors.grey.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.circle,
+                                            size: 8,
+                                            color: isCheckedIn
+                                                ? customColors.primary
+                                                : Colors.grey,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            isCheckedIn
+                                                ? 'Checked In'
+                                                : 'Not Checked In',
+                                            style: TextStyle(
+                                              color: isCheckedIn
+                                                  ? customColors.primary
+                                                  : Colors.grey,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-                
-                    const SizedBox(height: 16.0),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: SingleButton(
-                        loadingKey: 'checkInCheckOutButton',
-                        text: isCheckedIn ? 'CHECK OUT' : 'CHECK IN NOW',
-                        onPressed: () => _handleAction(
-                          userId: userId,
-                          username:
-                              "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}"
-                                  .trim(),
-                          activeStatus: status,
-                        ),
-                        icon: isCheckedIn ? Icons.logout : Icons.login,
-                      ),
-                    ),
-                
-                    //Resporting manager here : reporitng to...
-                    if (role != 'Admin')
-                      Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                
-                          child: Container(
-                            margin: EdgeInsets.only(top: 20),
-                            width: double.infinity,
-                            constraints: const BoxConstraints(
-                              maxWidth: 500,
-                            ), // ✅ keeps it centered on large screens
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color:
-                                  Theme.of(context).brightness == Brightness.dark
-                                  ? Colors.grey.shade900
-                                  : Colors.grey.shade50,
-                              border: Border.all(
-                                color:
-                                    customColors.greyBorder ??
-                                    Colors.grey.shade300,
-                                width: 1,
+
+                          const SizedBox(height: 16.0),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: SingleButton(
+                              loadingKey: 'checkInCheckOutButton',
+                              text: isCheckedIn ? 'CHECK OUT' : 'CHECK IN NOW',
+                              onPressed: () => _handleAction(
+                                userId: userId,
+                                username:
+                                    "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}"
+                                        .trim(),
+                                activeStatus: status,
                               ),
-                
-                              /// ✅ Rounded corners
-                              borderRadius: BorderRadius.circular(14),
-                
-                              /// ✅ Shadow respecting theme
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(
-                                    Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? 0.3
-                                        : 0.04,
-                                  ),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
+                              icon: isCheckedIn ? Icons.logout : Icons.login,
                             ),
-                
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                /// Avatar
-                                CircleAvatar(
-                                  radius: 22,
-                                  backgroundColor:
-                                      Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Colors.grey.shade700
-                                      : Colors.grey.shade200,
-                                  child: ClipOval(
-                                    child:
-                                        (reporterImage != '' &&
-                                            reporterImage.trim().isNotEmpty)
-                                        ? Image.network(
-                                            reporterImage,
-                                            width: 44,
-                                            height: 44,
-                                            fit: BoxFit.cover,
-                                            loadingBuilder:
-                                                (context, child, progress) {
-                                                  if (progress == null)
-                                                    return child;
-                                                  return Center(
-                                                    child: SizedBox(
-                                                      width: 14,
-                                                      height: 14,
-                                                      child:
-                                                          CircularProgressIndicator(
-                                                            strokeWidth: 2,
-                                                          ),
-                                                    ),
-                                                  );
-                                                },
-                                            errorBuilder:
-                                                (context, error, stackTrace) {
-                                                  return Icon(
-                                                    Icons.person,
-                                                    color: customColors
-                                                        .textSecondary,
-                                                    size: 20,
-                                                  );
-                                                },
-                                          )
-                                        : Icon(
-                                            Icons.person,
-                                            color: customColors.textSecondary,
-                                            size: 20,
-                                          ),
-                                  ),
+                          ),
+
+                          //Resporting manager here : reporitng to...
+                          if (role != 'Admin')
+                            Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
                                 ),
-                
-                                const SizedBox(width: 12),
-                
-                                /// Text Section
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+
+                                child: Container(
+                                  margin: EdgeInsets.only(top: 20),
+                                  width: double.infinity,
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 500,
+                                  ), // ✅ keeps it centered on large screens
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.grey.shade900
+                                        : Colors.grey.shade50,
+                                    border: Border.all(
+                                      color:
+                                          customColors.greyBorder ??
+                                          Colors.grey.shade300,
+                                      width: 1,
+                                    ),
+
+                                    /// ✅ Rounded corners
+                                    borderRadius: BorderRadius.circular(14),
+
+                                    /// ✅ Shadow respecting theme
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(
+                                          Theme.of(context).brightness ==
+                                                  Brightness.dark
+                                              ? 0.3
+                                              : 0.04,
+                                        ),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
                                     children: [
-                                      Text(
-                                        "Reporting To",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey.shade600,
+                                      /// Avatar
+                                      CircleAvatar(
+                                        radius: 22,
+                                        backgroundColor:
+                                            Theme.of(context).brightness ==
+                                                Brightness.dark
+                                            ? Colors.grey.shade700
+                                            : Colors.grey.shade200,
+                                        child: ClipOval(
+                                          child:
+                                              (reporterImage != '' &&
+                                                  reporterImage
+                                                      .trim()
+                                                      .isNotEmpty)
+                                              ? Image.network(
+                                                  reporterImage,
+                                                  width: 44,
+                                                  height: 44,
+                                                  fit: BoxFit.cover,
+                                                  loadingBuilder:
+                                                      (
+                                                        context,
+                                                        child,
+                                                        progress,
+                                                      ) {
+                                                        if (progress == null)
+                                                          return child;
+                                                        return Center(
+                                                          child: SizedBox(
+                                                            width: 14,
+                                                            height: 14,
+                                                            child:
+                                                                CircularProgressIndicator(
+                                                                  strokeWidth:
+                                                                      2,
+                                                                ),
+                                                          ),
+                                                        );
+                                                      },
+                                                  errorBuilder:
+                                                      (
+                                                        context,
+                                                        error,
+                                                        stackTrace,
+                                                      ) {
+                                                        return Icon(
+                                                          Icons.person,
+                                                          color: customColors
+                                                              .textSecondary,
+                                                          size: 20,
+                                                        );
+                                                      },
+                                                )
+                                              : Icon(
+                                                  Icons.person,
+                                                  color: customColors
+                                                      .textSecondary,
+                                                  size: 20,
+                                                ),
                                         ),
                                       ),
-                
-                                      const SizedBox(height: 4),
-                
-                                      Text(
-                                        reporterName,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.w600,
+
+                                      const SizedBox(width: 12),
+
+                                      /// Text Section
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Reporting To",
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                            ),
+
+                                            const SizedBox(height: 4),
+
+                                            Text(
+                                              reporterName,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+
+                                            const SizedBox(height: 4),
+
+                                            Row(
+                                              children: [
+                                                Container(
+                                                  width: 6,
+                                                  height: 6,
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                        color: Colors.green,
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                ),
+                                                const SizedBox(width: 6),
+                                                Text(
+                                                  "In",
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    color:
+                                                        Colors.green.shade700,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
                                         ),
-                                      ),
-                
-                                      const SizedBox(height: 4),
-                
-                                      Row(
-                                        children: [
-                                          Container(
-                                            width: 6,
-                                            height: 6,
-                                            decoration: const BoxDecoration(
-                                              color: Colors.green,
-                                              shape: BoxShape.circle,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 6),
-                                          Text(
-                                            "In",
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.green.shade700,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
                                       ),
                                     ],
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 20,),
-                      
-                
-                    // ── SUMMARY SECTION ──────────────────────────────────────
-                    // Only the layout + progress-bar logic below was changed.
-                    // All colours, text, borders, shadows stay exactly as before.
-                    if (role == 'Admin')
-  summaryAsync.when(
-    loading: () => const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 16),
-      child: GlobalLoader(message: 'Loading summary...'),
-    ),
-    error: (_, __) => Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: GlobalError(
-        message: 'Failed to load summary: Try Again',
-        onRetry: () => ref.invalidate(peopleSummaryProvider),
-      ),
-    ),
-    data: (summary) {
-      final totalLeave = (summary['total_leave'] as num?)?.toInt() ?? 0;
-      final totalPresent = (summary['total_present'] as num?)?.toInt() ?? 0;
-      final unpaid = (summary['unpaid'] as num?)?.toInt() ?? 0;
-      final employees = totalEmployees; //here
-      final progress = unpaid == 0 ? 0.0 : (unpaid / totalLeave);
+                          SizedBox(height: 20),
 
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 12),
-            Column(
-              children: [
-                Text(
-                  "Summary",
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: customColors.textPrimary,
-                    fontSize: 17,
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-            ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _summaryStatItem(
-                    context: context,
-                    title: "Total Leaves",
-                    value: "$totalLeave",
-                    employees: "$employees Employees",
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  height: 90,
-                  width: 90,
-                  decoration: BoxDecoration(
-                    color: customColors.surfaceBackground,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: customColors.greyBorder!),
-                  ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      SizedBox(
-                        height: 60,
-                        width: 60,
-                        child: CircularProgressIndicator(
-                          value: progress,
-                          strokeWidth: 6,
-                          backgroundColor: customColors.greyBorder,
-                          valueColor: AlwaysStoppedAnimation(customColors.primary),
-                        ),
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "$totalLeave",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                              color: customColors.textPrimary,
+                          // ── SUMMARY SECTION ──────────────────────────────────────
+                          // Only the layout + progress-bar logic below was changed.
+                          // All colours, text, borders, shadows stay exactly as before.
+                          if (role == 'Admin')
+                            summaryAsync.when(
+                              loading: () => const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 16),
+                                child: GlobalLoader(
+                                  message: 'Loading summary...',
+                                ),
+                              ),
+                              error: (_, __) => Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                child: GlobalError(
+                                  message: 'Failed to load summary: Try Again',
+                                  onRetry: () =>
+                                      ref.invalidate(peopleSummaryProvider),
+                                ),
+                              ),
+                              data: (summary) {
+                                final totalLeave =
+                                    (summary['total_leave'] as num?)?.toInt() ??
+                                    0;
+                                final totalPresent =
+                                    (summary['total_present'] as num?)
+                                        ?.toInt() ??
+                                    0;
+                                final unpaid =
+                                    (summary['unpaid'] as num?)?.toInt() ?? 0;
+                                final employees = totalEmployees; //here
+                                final progress = unpaid == 0
+                                    ? 0.0
+                                    : (unpaid / totalLeave);
+
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 12),
+                                      Column(
+                                        children: [
+                                          Text(
+                                            "Summary",
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              color: customColors.textPrimary,
+                                              fontSize: 17,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                        ],
+                                      ),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: _summaryStatItem(
+                                              context: context,
+                                              title: "Total Leaves",
+                                              value: "$totalLeave",
+                                              employees: "$employees Employees",
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Container(
+                                            height: 90,
+                                            width: 90,
+                                            decoration: BoxDecoration(
+                                              color: customColors
+                                                  .surfaceBackground,
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              border: Border.all(
+                                                color: customColors.greyBorder!,
+                                              ),
+                                            ),
+                                            child: Stack(
+                                              alignment: Alignment.center,
+                                              children: [
+                                                SizedBox(
+                                                  height: 60,
+                                                  width: 60,
+                                                  child: CircularProgressIndicator(
+                                                    value: progress,
+                                                    strokeWidth: 6,
+                                                    backgroundColor:
+                                                        customColors.greyBorder,
+                                                    valueColor:
+                                                        AlwaysStoppedAnimation(
+                                                          customColors.primary,
+                                                        ),
+                                                  ),
+                                                ),
+                                                Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  children: [
+                                                    Text(
+                                                      "$totalLeave",
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 14,
+                                                        color: customColors
+                                                            .textPrimary,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      "Total",
+                                                      style: TextStyle(
+                                                        fontSize: 10,
+                                                        color: customColors
+                                                            .textSecondary,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _summaryStatItem(
+                                              context: context,
+                                              title: "Total CheckIn",
+                                              value: "$totalPresent",
+                                              employees: "$employees Employees",
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: _summaryStatItem(
+                                              context: context,
+                                              title: "Leave Without Pay",
+                                              value: "$unpaid",
+                                              employees: "$employees Employees",
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 40),
+                                    ],
+                                  ),
+                                );
+                              },
                             ),
-                          ),
-                          Text(
-                            "Total",
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: customColors.textSecondary,
-                            ),
-                          ),
+                          // ── END SUMMARY SECTION ───────────────────────────────────
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _summaryStatItem(
-                    context: context,
-                    title: "Total CheckIn",
-                    value: "$totalPresent",
-                    employees: "$employees Employees",
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _summaryStatItem(
-                    context: context,
-                    title: "Leave Without Pay",
-                    value: "$unpaid",
-                    employees: "$employees Employees",
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 40),
-          ],
+                );
+              },
+            );
+          },
         ),
-      );
-    },
-  ),
-                    // ── END SUMMARY SECTION ───────────────────────────────────
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
       ),
-    ));
+    );
   }
 }
 
@@ -2232,7 +2303,6 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
     final usersAsync = ref.watch(usersRepositoryProvider);
     final connectivityStatus = ref.watch(connectivityStatusProvider);
 
-   
     return connectivityStatus.when(
       loading: () => const GlobalLoader(message: 'Checking connection...'),
       error: (err, stack) => Center(
