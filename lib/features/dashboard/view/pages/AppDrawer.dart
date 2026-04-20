@@ -4,6 +4,7 @@ import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
+import 'package:dsv360/features/sprints/view/pages/sprints_screen.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/views/projects/projects_screen.dart';
@@ -195,7 +196,7 @@ class AppDrawer extends StatelessWidget {
                   _DrawerItem(
                     icon: Icons.people_outline,
                     label: 'People',
-                    subLabel: 'Team directory',
+                    subLabel: 'People directory',
                     onTap: () {
                       Navigator.push(
                         context,
@@ -203,6 +204,7 @@ class AppDrawer extends StatelessWidget {
                       );
                     },
                   ),
+                  
                   if (IsHaveAccess.instance.isAdmin)
                     _DrawerItem(
                       icon: Icons.groups_outlined,
@@ -215,6 +217,17 @@ class AppDrawer extends StatelessWidget {
                         );
                       },
                     ),
+                    _DrawerItem(
+                    icon: Icons.account_tree_outlined,
+                    label: 'Sprints',
+                    subLabel: 'Sprint your Project',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const SprintsScreen()),
+                      );
+                    },
+                  ),
                   _DrawerItem(
                     icon: Icons.smart_toy_outlined,
                     label: 'DSV AI',
