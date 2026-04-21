@@ -1,6 +1,8 @@
 import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
+import 'package:dsv360/features/sprints/model/sprints_model.dart';
+import 'package:dsv360/features/sprints/repositories/get_sprints_repository.dart';
 import 'package:dsv360/features/sprints/view/pages/create_sprint_page.dart';
 import 'package:dsv360/providers/project_provider.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
@@ -49,6 +51,14 @@ final projectListProvider = FutureProvider((ref) async {
   return repo.fetchProjects();
 });
 
+final sprintListProvider = FutureProvider.family<List<SprintModel>, String>((
+  ref,
+  projectId,
+) async {
+  final repo = ref.read(getSprintsRepositoryProvider);
+  return repo.fetchSprints(projectId: projectId);
+});
+
 // ── Main Widget ─────────────────────────────────────────────────────────────
 
 class SprintsScreen extends ConsumerStatefulWidget {
@@ -68,7 +78,9 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
 
   String? _selectedProjectName;
   String? _selectedProjectId;
-  final String _selectedSprint = 'Sprint-0T';
+
+  String? _selectedSprintName;
+  //String? _selectedSprintId;
 
   @override
   void initState() {
@@ -259,6 +271,185 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
     );
   }
 
+  Future<void> _showSprintSelector({
+  required BuildContext context,
+  required List<SprintModel> sprints,
+  required Color cardBg,
+  required Color textPrimary,
+  required Color textSecondary,
+  required Color greyBorder,
+  required Color primary,
+}) async {
+  String query = '';
+
+  await showDialog<void>(
+    context: context,
+    barrierColor: Colors.black.withValues(alpha: 0.35),
+    builder: (dialogContext) {
+      final maxHeight = MediaQuery.of(dialogContext).size.height * 0.6;
+
+      return Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 24,
+        ),
+        child: StatefulBuilder(
+          builder: (context, setDialogState) {
+            final filteredSprints = sprints.where((s) {
+              final name = (s.sprintName).toLowerCase();
+              return name.contains(query.toLowerCase());
+            }).toList();
+
+            return Container(
+              constraints: BoxConstraints(maxHeight: maxHeight),
+              decoration: BoxDecoration(
+                color: cardBg,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: greyBorder, width: 1),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                    child: TextField(
+                      autofocus: true,
+                      onChanged: (value) {
+                        setDialogState(() {
+                          query = value;
+                        });
+                      },
+                      style: TextStyle(color: textPrimary, fontSize: 13),
+                      decoration: InputDecoration(
+                        hintText: 'Search sprint...',
+                        hintStyle: TextStyle(
+                          color: textSecondary,
+                          fontSize: 12,
+                        ),
+                        isDense: true,
+                        filled: true,
+                        fillColor: cardBg,
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: textSecondary,
+                          size: 18,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 10,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: greyBorder),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: greyBorder),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide(color: greyBorder),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: filteredSprints.isEmpty
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Text(
+                                'No sprints found',
+                                style: TextStyle(
+                                  color: textSecondary,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                            itemCount: filteredSprints.length,
+                            itemBuilder: (context, index) {
+                              final sprint = filteredSprints[index];
+                              final isSelected =
+                                  _selectedSprintName == sprint.sprintName;
+
+                              return InkWell(
+                                borderRadius: BorderRadius.circular(10),
+                                onTap: () {
+                                  setState(() {
+                                    _selectedSprintName = sprint.sprintName;
+                                  });
+                                  Navigator.pop(dialogContext);
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.symmetric(vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    color: isSelected
+                                        ? primary.withValues(alpha: 0.12)
+                                        : Colors.transparent,
+                                  ),
+                                  child: Text(
+                                    sprint.sprintName,
+                                    style: TextStyle(
+                                      color: textPrimary,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      );
+    },
+  );
+}
+
+  Widget _buildLoadingSprint(Color cardBg, Color textSecondary) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(color: cardBg),
+      child: Text('Loading...', style: TextStyle(color: textSecondary)),
+    );
+  }
+
+  Widget _buildErrorSprint(Color textSecondary) {
+    return Text('Error', style: TextStyle(color: textSecondary));
+  }
+
+  Widget _buildDisabledSprintDropdown(
+    Color cardBg,
+    Color border,
+    Color textSecondary,
+  ) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: cardBg,
+        border: Border.all(color: border),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        'Select Project first',
+        style: TextStyle(color: textSecondary),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(
@@ -298,6 +489,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
           backgroundColor: background,
           body: SafeArea(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── Top Bar ──
                 TopBar(
@@ -425,7 +617,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                         ),
                       ),
                       const SizedBox(width: 8),
-                      GestureDetector(
+                       GestureDetector(
                         onTap: () {},
                         child: Container(
                           padding: const EdgeInsets.symmetric(
@@ -444,9 +636,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
-                          ),
-                        ),
-                      ),
+                          ),)),
                     ],
                   ),
                 ),
@@ -457,163 +647,225 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                     horizontal: 16,
                     vertical: 4,
                   ),
-                  child: Row(
-                    children: [
-                      // CYCLE label
-                      Text(
-                        'CYCLE',
-                        style: TextStyle(
-                          color: textSecondary,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.4,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      // Active badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF4CAF50,
-                          ).withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          'ACTIVE',
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        // CYCLE label
+                        Text(
+                          'CYCLE',
                           style: TextStyle(
-                            color: Color(0xFF4CAF50),
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.3,
+                            color: textSecondary,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.4,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      // Sprint dropdown
-                      GestureDetector(
-                        onTap: () {},
-                        child: Container(
+                        const SizedBox(width: 6),
+                        // Active badge
+                        Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                            horizontal: 7,
+                            vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: cardBg,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: greyBorder, width: 1),
+                            color: const Color(
+                              0xFF4CAF50,
+                            ).withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                _selectedSprint,
-                                style: TextStyle(
-                                  color: textPrimary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(width: 2),
-                              Icon(
-                                Icons.keyboard_arrow_down,
-                                color: textSecondary,
-                                size: 14,
-                              ),
-                            ],
+                          child: const Text(
+                            'ACTIVE',
+                            style: TextStyle(
+                              color: Color(0xFF4CAF50),
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.3,
+                            ),
                           ),
                         ),
-                      ),
-                      const Spacer(),
-                      // + SPRINT button
-                      GestureDetector(
-                        onTap: () {
-                          if (_selectedProjectId == null ||
-                              _selectedProjectId!.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Please select a project first'),
-                                elevation: 5,
+                        const SizedBox(width: 6),
+                        // Sprint dropdown
+                        Consumer(
+                          builder: (context, ref, child) {
+                            if (_selectedProjectId == null ||
+                                _selectedProjectId!.isEmpty) {
+                              return _buildDisabledSprintDropdown(
+                                cardBg,
+                                greyBorder,
+                                textSecondary,
+                              );
+                            }
+
+                            final sprintsAsync = ref.watch(
+                              sprintListProvider(_selectedProjectId!),
+                            );
+
+                            return sprintsAsync.when(
+                              loading: () =>
+                                  _buildLoadingSprint(cardBg, textSecondary),
+                              error: (_, __) =>
+                                  _buildErrorSprint(textSecondary),
+                                                            data: (sprints) {
+                                if (sprints.isEmpty) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    child: Text(
+                                      'No sprint',
+                                      style: TextStyle(
+                                        color: textSecondary,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  );
+                                }
+
+                                return GestureDetector(
+                                  onTap: () => _showSprintSelector(
+                                    context: context,
+                                    sprints: sprints,
+                                    cardBg: cardBg,
+                                    textPrimary: textPrimary,
+                                    textSecondary: textSecondary,
+                                    greyBorder: greyBorder,
+                                    primary: primary,
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: cardBg,
+                                      borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(
+                                        color: greyBorder,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          _selectedSprintName ??
+                                              'Select Sprint',
+                                          style: TextStyle(
+                                            color: _selectedSprintName == null
+                                                ? textSecondary
+                                                : textPrimary,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 2),
+                                        Icon(
+                                          Icons.keyboard_arrow_down,
+                                          color: textSecondary,
+                                          size: 14,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 6),
+                        // + SPRINT button
+                        GestureDetector(
+                          onTap: () {
+                            if (_selectedProjectId == null ||
+                                _selectedProjectId!.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Please select a project first',
+                                  ),
+                                  elevation: 5,
+                                ),
+                              );
+                              return;
+                            }
+
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => CreateSprintPage(
+                                  projectId: _selectedProjectId!,
+                                ),
                               ),
                             );
-                            return;
-                          }
-
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => CreateSprintPage(
-                                projectId: _selectedProjectId!,
-                              ),
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
                             ),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: cardBg,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: greyBorder, width: 1),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.add, color: primary, size: 13),
-                              const SizedBox(width: 2),
-                              Text(
-                                'SPRINT',
-                                style: TextStyle(
-                                  color: textPrimary,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.3,
+                            decoration: BoxDecoration(
+                              color: cardBg,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: greyBorder, width: 1),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.add, color: primary, size: 13),
+                                const SizedBox(width: 2),
+                                Text(
+                                  'SPRINT',
+                                  style: TextStyle(
+                                    color: textPrimary,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.3,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 6),
-                      // + ISSUE button
-                      GestureDetector(
-                        onTap: () {
-                          //navigate to add issue page here
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: cardBg,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: greyBorder, width: 1),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.add, color: primary, size: 13),
-                              const SizedBox(width: 2),
-                              Text(
-                                'ISSUE',
-                                style: TextStyle(
-                                  color: textPrimary,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.3,
+                        const SizedBox(width: 6),
+                        // + ISSUE button
+                        GestureDetector(
+                          onTap: () {
+                            //navigate to add issue page here
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: cardBg,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: greyBorder, width: 1),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.add, color: primary, size: 13),
+                                const SizedBox(width: 2),
+                                Text(
+                                  'ISSUE',
+                                  style: TextStyle(
+                                    color: textPrimary,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.3,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
 
