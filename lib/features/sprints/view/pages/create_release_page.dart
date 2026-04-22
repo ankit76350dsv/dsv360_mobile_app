@@ -1,4 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/features/sprints/repositories/create_release_repository.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
@@ -73,8 +74,16 @@ class _CreateReleasePageState extends ConsumerState<CreateReleasePage> {
     submitLoadingNotifier.state = true;
 
     try {
-      // TODO: wire up create release repository
-      await Future.delayed(const Duration(milliseconds: 500));
+      final repo = ref.read(createReleaseRepositoryProvider);
+
+      final formattedDate = DateFormat('yyyy-MM-dd').format(_releaseDate!);
+
+      await repo.CreateRelease(
+        title: _titleController.text.trim(),
+        projctID: widget.projectId,
+        description: _descriptionController.text.trim(),
+        dueDate: formattedDate,
+      );
 
       if (!mounted) return;
 

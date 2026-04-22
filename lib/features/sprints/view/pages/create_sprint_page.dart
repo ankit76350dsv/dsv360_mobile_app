@@ -8,8 +8,9 @@ import 'package:intl/intl.dart';
 
 class CreateSprintPage extends ConsumerStatefulWidget {
   final String projectId;
+  final String? projectName;
   const CreateSprintPage({super.key, 
-  required this.projectId,});
+  required this.projectId,this.projectName});
 
   @override
   ConsumerState<CreateSprintPage> createState() => _CreateSprintPageState();
@@ -157,7 +158,37 @@ class _CreateSprintPageState extends ConsumerState<CreateSprintPage> {
                       fontWeight: FontWeight.w600,
                     ),
               ),
+              
             ),
+                          Padding(
+                padding: const EdgeInsets.only(left: 20, right: 20, top: 10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: colors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: colors.primary.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.folder_outlined,
+                        color: colors.primary,
+                        size: 18,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Project: ${widget.projectName ?? 'Unknown'}',
+                        style: TextStyle(
+                          color: colors.primary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),

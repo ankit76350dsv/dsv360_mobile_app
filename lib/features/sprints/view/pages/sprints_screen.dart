@@ -862,6 +862,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                 MaterialPageRoute(
                                   builder: (context) => CreateSprintPage(
                                     projectId: _selectedProjectId!,
+                                    projectName: _selectedProjectName,
                                   ),
                                 ),
                               );
