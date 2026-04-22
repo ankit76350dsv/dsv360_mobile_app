@@ -355,9 +355,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                       );
                     }
                   },
-                  onInfoTap: () {
-                    // hook for info action
-                  },
+                  // onInfoTap: () {
+                  //   // hook for info action
+                  // },
                 ),
 
                 // Search Bar

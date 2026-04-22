@@ -1,11 +1,13 @@
+import 'package:dsv360/features/sprints/view/pages/navigator_screen.dart';
 import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:dsv360/core/constants/theme.dart';
 import 'sprint_story.dart';
 import 'sprint_column.dart';
 import 'kanban_column.dart';
 import 'progress_stat.dart';
 
-class BoardView extends StatelessWidget {
+class BoardView extends StatefulWidget {
   final List<SprintStory> stories;
   final void Function(SprintStory, String) onMove;
   final bool isDark;
@@ -39,32 +41,110 @@ class BoardView extends StatelessWidget {
   });
 
   @override
+  State<BoardView> createState() => _BoardViewState();
+}
+
+class _BoardViewState extends State<BoardView> {
+  late ScrollController _scrollController;
+  Timer? _autoScrollTimer;
+  bool _isDragging = false;
+  double _pointerX = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _autoScrollTimer?.cancel();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _startAutoScroll(double pointerX, Size size) {
+    _isDragging = true;
+    _pointerX = pointerX;
+
+    _autoScrollTimer?.cancel();
+    _autoScrollTimer = Timer.periodic(
+      const Duration(milliseconds: 10),
+      (timer) {
+        if (!_scrollController.hasClients) return;
+
+        // Scroll right when pointer is near right edge (within 80 pixels)
+        if (_pointerX > size.width - 80) {
+          _scrollController.jumpTo(
+            (_scrollController.offset + 8).clamp(
+              0,
+              _scrollController.position.maxScrollExtent,
+            ),
+          );
+        }
+        // Scroll left when pointer is near left edge (within 80 pixels)
+        else if (_pointerX < 80) {
+          _scrollController.jumpTo(
+            (_scrollController.offset - 8).clamp(
+              0,
+              _scrollController.position.maxScrollExtent,
+            ),
+          );
+        }
+      },
+    );
+  }
+
+  void _stopAutoScroll() {
+    _autoScrollTimer?.cancel();
+    _autoScrollTimer = null;
+    _isDragging = false;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         // ── Kanban columns (horizontal scroll) ──
         Expanded(
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
-            itemCount: columns.length,
-            itemBuilder: (ctx, i) {
-              final col = columns[i];
-              final colStories =
-                  stories.where((s) => s.columnId == col.id).toList();
-              return KanbanColumn(
-                column: col,
-                stories: colStories,
-                allStories: stories,
-                onMove: onMove,
-                isDark: isDark,
-                cardBg: cardBg,
-                textPrimary: textPrimary,
-                textSecondary: textSecondary,
-                greyBorder: greyBorder,
-                primary: primary,
-              );
+          child: Listener(
+            onPointerMove: (event) {
+              if (_isDragging) {
+                _startAutoScroll(event.position.dx, context.size ?? Size.zero);
+              }
             },
+            onPointerUp: (_) {
+              _stopAutoScroll();
+            },
+            onPointerCancel: (_) {
+              _stopAutoScroll();
+            },
+            child: ListView.builder(
+              controller: _scrollController,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+              itemCount: columns.length,
+              itemBuilder: (ctx, i) {
+                final col = columns[i];
+                final colStories = widget.stories
+                    .where((s) => s.columnId == col.id)
+                    .toList();
+                return KanbanColumn(
+                  column: col,
+                  stories: colStories,
+                  allStories: widget.stories,
+                  onMove: widget.onMove,
+                  isDark: widget.isDark,
+                  cardBg: widget.cardBg,
+                  textPrimary: widget.textPrimary,
+                  textSecondary: widget.textSecondary,
+                  greyBorder: widget.greyBorder,
+                  primary: widget.primary,
+                  onDragStart: () => setState(() => _isDragging = true),
+                  onDragEnd: _stopAutoScroll,
+                );
+              },
+            ),
           ),
         ),
 
@@ -73,12 +153,13 @@ class BoardView extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: cardBg,
+            color: widget.cardBg,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: greyBorder, width: 0.8),
+            border: Border.all(color: widget.greyBorder, width: 0.8),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+                color: Colors.black.withValues(
+                    alpha: widget.isDark ? 0.25 : 0.06),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -90,9 +171,9 @@ class BoardView extends StatelessWidget {
               Row(
                 children: [
                   Text(
-                    '${(progress * 100).toStringAsFixed(0)} %',
+                    '${(widget.progress * 100).toStringAsFixed(0)} %',
                     style: TextStyle(
-                      color: textPrimary.withValues(alpha: 0.8),
+                      color: widget.textPrimary.withValues(alpha: 0.8),
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                     ),
@@ -103,9 +184,9 @@ class BoardView extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(
-                  value: progress,
+                  value: widget.progress,
                   minHeight: 6,
-                  backgroundColor: greyBorder,
+                  backgroundColor: widget.greyBorder,
                   valueColor: const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
                 ),
               ),
@@ -113,18 +194,20 @@ class BoardView extends StatelessWidget {
               Row(
                 children: [
                   ProgressStat(
-                    label: '$completedPoints/$totalPoints SP',
-                    color: textSecondary,
+                    label:
+                        '${widget.completedPoints}/${widget.totalPoints} SP',
+                    color: widget.textSecondary,
                   ),
                   const SizedBox(width: 16),
                   ProgressStat(
-                    label: '$completedStories/$totalStories Stories',
-                    color: textSecondary,
+                    label:
+                        '${widget.completedStories}/${widget.totalStories} Stories',
+                    color: widget.textSecondary,
                   ),
                   const Spacer(),
                   ProgressStat(
                     label: '86 Days left',
-                    color: textSecondary,
+                    color: widget.textSecondary,
                   ),
                 ],
               ),
@@ -137,7 +220,7 @@ class BoardView extends StatelessWidget {
           margin: const EdgeInsets.only(left: 16, right: 16, bottom: 10),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
           decoration: BoxDecoration(
-            color: greyBorder.withValues(alpha: 0.5),
+            color: widget.greyBorder.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(30),
           ),
           child: Row(
@@ -149,12 +232,14 @@ class BoardView extends StatelessWidget {
                   },
                   child: Row(
                     children: [
-                      Icon(Icons.search, color: customColors.textPrimary, size: 18),
+                      Icon(Icons.search,
+                          color: widget.customColors.textPrimary,
+                          size: 18),
                       const SizedBox(width: 8),
                       Text(
                         'Search stories...',
                         style: TextStyle(
-                          color: customColors.textPrimary,
+                          color: widget.customColors.textPrimary,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
@@ -166,19 +251,20 @@ class BoardView extends StatelessWidget {
               Container(
                 width: 1,
                 height: 20,
-                color: customColors.textPrimary!.withValues(alpha: 0.35),
+                color: widget.customColors.textPrimary!
+                    .withValues(alpha: 0.35),
                 margin: const EdgeInsets.symmetric(horizontal: 10),
               ),
               GestureDetector(
                 onTap: () {
-                  // TODO: Navigate to navigator page
+                  Navigator.push(context, MaterialPageRoute(builder: (context)=> NavigatorScreen()));
                 },
                 child: Row(
                   children: [
                     Text(
                       'NAVIGATOR',
                       style: TextStyle(
-                        color: customColors.textPrimary,
+                        color: widget.customColors.textPrimary,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 0.5,
@@ -189,11 +275,13 @@ class BoardView extends StatelessWidget {
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: customColors.textPrimary!.withValues(alpha: 0.2),
+                        color: widget.customColors.textPrimary!
+                            .withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(Icons.arrow_forward,
-                          color: customColors.textPrimary, size: 14),
+                          color: widget.customColors.textPrimary,
+                          size: 14),
                     ),
                   ],
                 ),

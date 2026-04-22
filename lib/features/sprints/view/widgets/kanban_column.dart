@@ -14,6 +14,8 @@ class KanbanColumn extends StatefulWidget {
   final Color textSecondary;
   final Color greyBorder;
   final Color primary;
+  final VoidCallback? onDragStart;
+  final VoidCallback? onDragEnd;
 
   const KanbanColumn({
     required this.column,
@@ -26,6 +28,8 @@ class KanbanColumn extends StatefulWidget {
     required this.textSecondary,
     required this.greyBorder,
     required this.primary,
+    this.onDragStart,
+    this.onDragEnd,
   });
 
   @override
@@ -41,12 +45,14 @@ class _KanbanColumnState extends State<KanbanColumn> {
       onWillAcceptWithDetails: (details) {
         if (details.data.columnId == widget.column.id) return false;
         setState(() => _isDragOver = true);
+        widget.onDragStart?.call();
         return true;
       },
       onLeave: (_) => setState(() => _isDragOver = false),
       onAcceptWithDetails: (details) {
         setState(() => _isDragOver = false);
         widget.onMove(details.data, widget.column.id);
+        widget.onDragEnd?.call();
       },
       builder: (ctx, candidate, rejected) {
         return AnimatedContainer(
