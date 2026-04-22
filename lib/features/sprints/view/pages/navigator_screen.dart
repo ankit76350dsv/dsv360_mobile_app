@@ -116,7 +116,9 @@ final List<_ReleaseItem> _sampleReleases = [
 // ── Screen ──────────────────────────────────────────────────────────────────
 
 class NavigatorScreen extends ConsumerStatefulWidget {
-  const NavigatorScreen({super.key});
+  final bool autoFocusSearch;
+
+  const NavigatorScreen({super.key, this.autoFocusSearch = false});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _NavigatorPageState();
@@ -124,15 +126,21 @@ class NavigatorScreen extends ConsumerStatefulWidget {
 
 class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
   late TextEditingController _searchController;
+  late FocusNode _searchFocusNode;
   late List<_ReleaseItem> _releases;
   String _searchQuery = '';
   final storyColor = const Color.fromARGB(255, 116, 29, 255);
-  
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
+    _searchFocusNode = FocusNode();
+    if (widget.autoFocusSearch) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _searchFocusNode.requestFocus();
+      });
+    }
     _releases = _sampleReleases
         .map(
           (r) => _ReleaseItem(
@@ -157,6 +165,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -420,8 +429,9 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                     horizontal: 16,
                     vertical: 8,
                   ),
-                  child: CustomSearchBar(
+                                    child: CustomSearchBar(
                     controller: _searchController,
+                    focusNode: _searchFocusNode,
                     onChanged: (value) =>
                         setState(() => _searchQuery = value),
                     hintText: 'Search navigator',

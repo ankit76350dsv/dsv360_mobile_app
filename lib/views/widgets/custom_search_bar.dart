@@ -6,6 +6,7 @@ class CustomSearchBar extends StatefulWidget {
   final String hintText;
   final Function(String) onChanged;
   final VoidCallback? onClear;
+  final FocusNode? focusNode;
 
   const CustomSearchBar({
     super.key,
@@ -13,6 +14,7 @@ class CustomSearchBar extends StatefulWidget {
     this.hintText = 'Search',
     required this.onChanged,
     this.onClear,
+    this.focusNode,
   });
 
   @override
@@ -57,7 +59,7 @@ class _CustomSearchBarState extends State<CustomSearchBar> {
 
     return TextField(
       controller: widget.controller,
-      focusNode: _focusNode,
+      focusNode: widget.focusNode ?? _focusNode,
       onChanged: widget.onChanged,
       style: TextStyle(
         color: customColors.textPrimary,

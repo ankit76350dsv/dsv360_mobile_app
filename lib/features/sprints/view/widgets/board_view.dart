@@ -174,7 +174,7 @@ class _BoardViewState extends State<BoardView> {
                     '${(widget.progress * 100).toStringAsFixed(0)} %',
                     style: TextStyle(
                       color: widget.textPrimary.withValues(alpha: 0.8),
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -185,7 +185,7 @@ class _BoardViewState extends State<BoardView> {
                 borderRadius: BorderRadius.circular(6),
                 child: LinearProgressIndicator(
                   value: widget.progress,
-                  minHeight: 6,
+                  minHeight: 4,
                   backgroundColor: widget.greyBorder,
                   valueColor: const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
                 ),
@@ -216,74 +216,91 @@ class _BoardViewState extends State<BoardView> {
         ),
 
         // ── Search + Navigator bottom bar ──
-        Container(
-          margin: const EdgeInsets.only(left: 16, right: 16, bottom: 10),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-          decoration: BoxDecoration(
-            color: widget.greyBorder.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(30),
-          ),
+        Padding(
+          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 10),
           child: Row(
             children: [
+              // Search pill
               Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    // TODO: Navigate to navigator search page
-                  },
-                  child: Row(
-                    children: [
-                      Icon(Icons.search,
-                          color: widget.customColors.textPrimary,
-                          size: 18),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Search stories...',
-                        style: TextStyle(
-                          color: widget.customColors.textPrimary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NavigatorScreen(
+                          autoFocusSearch: true,
                         ),
                       ),
-                    ],
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: widget.greyBorder.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.search,
+                            color: widget.customColors.textPrimary, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Search stories...',
+                          style: TextStyle(
+                            color: widget.customColors.textPrimary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              Container(
-                width: 1,
-                height: 20,
-                color: widget.customColors.textPrimary!
-                    .withValues(alpha: 0.35),
-                margin: const EdgeInsets.symmetric(horizontal: 10),
-              ),
+              const SizedBox(width: 10),
+              // Navigator pill
               GestureDetector(
                 onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=> NavigatorScreen()));
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NavigatorScreen(),
+                    ),
+                  );
                 },
-                child: Row(
-                  children: [
-                    Text(
-                      'NAVIGATOR',
-                      style: TextStyle(
-                        color: widget.customColors.textPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        color: widget.customColors.textPrimary!
-                            .withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(Icons.arrow_forward,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: widget.greyBorder.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        'NAVIGATOR',
+                        style: TextStyle(
                           color: widget.customColors.textPrimary,
-                          size: 14),
-                    ),
-                  ],
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: widget.customColors.textPrimary!
+                              .withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(Icons.arrow_forward,
+                            color: widget.customColors.textPrimary, size: 14),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
