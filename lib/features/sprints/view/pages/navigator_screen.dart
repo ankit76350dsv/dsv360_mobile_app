@@ -1,124 +1,43 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
+import 'package:dsv360/features/sprints/model/epic_model.dart';
+import 'package:dsv360/features/sprints/model/heirarchy_model.dart';
+import 'package:dsv360/features/sprints/model/release_milestone_model.dart';
+import 'package:dsv360/features/sprints/model/story_model.dart';
+import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
+import 'package:dsv360/providers/project_provider.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:dsv360/views/widgets/custom_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-// ── Sample data models ──────────────────────────────────────────────────────
+// ── Providers ─────────────────────────────────────────────────────────────────
 
-class _StoryItem {
-  final String id;
-  final String name;
+final _projectListProvider = FutureProvider((ref) async {
+  return ref.read(projectRepositoryProvider).fetchProjects();
+});
 
-  const _StoryItem({required this.id, required this.name});
-}
+final _hierarchyProvider =
+    FutureProvider.family<HierarchyModel, String>((ref, projectId) async {
+  return ref.read(hierarchyRepositoryProvider).fetchHierarchy(
+        projectId: projectId,
+      );
+});
 
-class _EpicItem {
-  final String id;
-  final String name;
-  final List<_StoryItem> stories;
-  bool expanded;
-
-  _EpicItem({
-    required this.id,
-    required this.name,
-    required this.stories,
-    this.expanded = false,
-  });
-}
-
-class _ReleaseItem {
-  final String id;
-  final String name;
-  final List<_EpicItem> epics;
-  bool expanded;
-
-  _ReleaseItem({
-    required this.id,
-    required this.name,
-    required this.epics,
-    this.expanded = false,
-  });
-}
-
-final List<_ReleaseItem> _sampleReleases = [
-  _ReleaseItem(
-    id: 'r1',
-    name: 'v1.0 - MVP Release',
-    epics: [
-      _EpicItem(
-        id: 'e1',
-        name: 'Authentication and Flow',
-        stories: [
-          _StoryItem(id: 'Story-1', name: 'User Login & Research'),
-          _StoryItem(id: 'Story-2', name: 'Password Recovery Flow'),
-        ],
-      ),
-    ],
-  ),
-  _ReleaseItem(
-    id: 'r2',
-    name: 'Time Tracking Module Release',
-    epics: [
-      _EpicItem(
-        id: 'e2',
-        name: 'Timer Core',
-        stories: [
-          _StoryItem(id: 'Story-3', name: 'Start & Stop Timer'),
-        ],
-      ),
-    ],
-  ),
-  _ReleaseItem(
-    id: 'r3',
-    name: 'v2.0 - Advanced Function Release',
-    epics: [],
-  ),
-  _ReleaseItem(
-    id: 'r4',
-    name: 'V3.0 - MVP Release',
-    expanded: true,
-    epics: [
-      _EpicItem(
-        id: 'e3',
-        name: 'Authentication and Flow',
-        stories: [],
-      ),
-      _EpicItem(
-        id: 'e4',
-        name: 'Time Tracking Module',
-        expanded: true,
-        stories: [
-          _StoryItem(id: 'Story-4', name: 'User Login & Research'),
-          _StoryItem(id: 'Story-5', name: 'Role Based Account Redirect'),
-        ],
-      ),
-    ],
-  ),
-  _ReleaseItem(
-    id: 'r5',
-    name: 'V4.0 - MVP Release',
-    expanded: true,
-    epics: [
-      _EpicItem(
-        id: 'e5',
-        name: 'Create Project Flow',
-        expanded: true,
-        stories: [
-          _StoryItem(id: 'Story-6', name: 'Design Flow Architecture'),
-        ],
-      ),
-    ],
-  ),
-];
-
-// ── Screen ──────────────────────────────────────────────────────────────────
+// ── Screen ────────────────────────────────────────────────────────────────────
 
 class NavigatorScreen extends ConsumerStatefulWidget {
   final bool autoFocusSearch;
+  final String? projectId;
+  final String? projectName;
 
-  const NavigatorScreen({super.key, this.autoFocusSearch = false});
+  const NavigatorScreen({
+    super.key,
+    this.autoFocusSearch = false,
+    this.projectId,
+    this.projectName,
+  });
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _NavigatorPageState();
@@ -127,39 +46,27 @@ class NavigatorScreen extends ConsumerStatefulWidget {
 class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
   late TextEditingController _searchController;
   late FocusNode _searchFocusNode;
-  late List<_ReleaseItem> _releases;
   String _searchQuery = '';
-  final storyColor = const Color.fromARGB(255, 116, 29, 255);
+
+  String? _selectedProjectId;
+  String? _selectedProjectName;
+
+  // expand state keyed by ROWID
+  final Map<String, bool> _milestoneExpanded = {};
+  final Map<String, bool> _epicExpanded = {};
 
   @override
   void initState() {
     super.initState();
     _searchController = TextEditingController();
     _searchFocusNode = FocusNode();
+    _selectedProjectId = widget.projectId;
+    _selectedProjectName = widget.projectName;
     if (widget.autoFocusSearch) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _searchFocusNode.requestFocus();
       });
     }
-    _releases = _sampleReleases
-        .map(
-          (r) => _ReleaseItem(
-            id: r.id,
-            name: r.name,
-            expanded: r.expanded,
-            epics: r.epics
-                .map(
-                  (e) => _EpicItem(
-                    id: e.id,
-                    name: e.name,
-                    expanded: e.expanded,
-                    stories: e.stories,
-                  ),
-                )
-                .toList(),
-          ),
-        )
-        .toList();
   }
 
   @override
@@ -169,29 +76,180 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
     super.dispose();
   }
 
-  List<_ReleaseItem> get _filtered {
-    if (_searchQuery.isEmpty) return _releases;
+  // ── Project selector dialog (same style as sprints screen) ─────────────────
+
+  Future<void> _showProjectSelector({
+    required List<dynamic> projects,
+    required Color cardBg,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color greyBorder,
+    required Color primary,
+  }) async {
+    String query = '';
+
+    await showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (dialogContext) {
+        final maxHeight = MediaQuery.of(dialogContext).size.height * 0.6;
+
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          child: StatefulBuilder(
+            builder: (ctx, setDialogState) {
+              final filtered = projects.where((p) {
+                final name = (p.projectName ?? '').toString().toLowerCase();
+                return name.contains(query.toLowerCase());
+              }).toList();
+
+              return Container(
+                constraints: BoxConstraints(maxHeight: maxHeight),
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: greyBorder, width: 1),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                      child: TextField(
+                        autofocus: true,
+                        onChanged: (v) => setDialogState(() => query = v),
+                        style: TextStyle(color: textPrimary, fontSize: 13),
+                        decoration: InputDecoration(
+                          hintText: 'Search project...',
+                          hintStyle:
+                              TextStyle(color: textSecondary, fontSize: 12),
+                          isDense: true,
+                          filled: true,
+                          fillColor: cardBg,
+                          prefixIcon:
+                              Icon(Icons.search, color: textSecondary, size: 18),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 10),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: greyBorder),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: greyBorder),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: BorderSide(color: greyBorder),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Flexible(
+                      child: filtered.isEmpty
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Text(
+                                  'No projects found',
+                                  style: TextStyle(
+                                      color: textSecondary, fontSize: 12),
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              padding:
+                                  const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                              itemCount: filtered.length,
+                              itemBuilder: (context, index) {
+                                final project = filtered[index];
+                                final isSelected =
+                                    _selectedProjectId == project.id;
+
+                                return InkWell(
+                                  borderRadius: BorderRadius.circular(10),
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedProjectId = project.id;
+                                      _selectedProjectName =
+                                          project.projectName;
+                                      _milestoneExpanded.clear();
+                                      _epicExpanded.clear();
+                                    });
+                                    Navigator.pop(dialogContext);
+                                  },
+                                  child: Container(
+                                    margin: const EdgeInsets.symmetric(
+                                        vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 10),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(10),
+                                      color: isSelected
+                                          ? primary.withValues(alpha: 0.12)
+                                          : Colors.transparent,
+                                    ),
+                                    child: Text(
+                                      project.projectName,
+                                      style: TextStyle(
+                                        color: textPrimary,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  // ── Filtering ──────────────────────────────────────────────────────────────
+
+  List<ReleaseMilestoneModel> _filterMilestones(
+    List<ReleaseMilestoneModel> milestones,
+    List<EpicModel> epics,
+    List<StoryModel> stories,
+  ) {
+    if (_searchQuery.isEmpty) return milestones;
     final q = _searchQuery.toLowerCase();
-    return _releases
-        .where(
-          (r) =>
-              r.name.toLowerCase().contains(q) ||
-              r.epics.any(
-                (e) =>
-                    e.name.toLowerCase().contains(q) ||
-                    e.stories.any((s) => s.name.toLowerCase().contains(q)),
-              ),
-        )
-        .toList();
+    return milestones.where((m) {
+      if (m.title.toLowerCase().contains(q)) return true;
+      final mEpics = epics.where((e) => e.milestoneId == m.id);
+      return mEpics.any((e) {
+        if (e.title.toLowerCase().contains(q)) return true;
+        return stories
+            .where((s) => s.epicId == e.id)
+            .any((s) => s.title.toLowerCase().contains(q));
+      });
+    }).toList();
   }
 
   // ── Builders ───────────────────────────────────────────────────────────────
 
-  Widget _buildStoryTile(_StoryItem story, Color primary) {
+  Color _epicColor(EpicModel epic) {
+    try {
+      final hex = epic.color.replaceFirst('#', '');
+      return Color(int.parse('FF$hex', radix: 16));
+    } catch (_) {
+      return const Color(0xFF1A56DB);
+    }
+  }
+
+  Widget _buildStoryTile(StoryModel story, Color epicColor) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: primary,
+        color: epicColor,
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(
@@ -207,7 +265,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
           children: [
             Expanded(
               child: Text(
-                story.name,
+                story.title,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 14,
@@ -215,6 +273,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                 ),
               ),
             ),
+            const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -222,10 +281,12 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                story.id,
+                story.id.length > 4
+                    ? 'Story-${story.id.substring(story.id.length - 4)}'
+                    : 'Story-${story.id}',
                 style: TextStyle(
-                  color: primary,
-                  fontSize: 12,
+                  color: epicColor,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -237,18 +298,20 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
   }
 
   Widget _buildEpicTile(
-    _EpicItem epic,
-    Color primary,
-    Color surface,
+    EpicModel epic,
+    List<StoryModel> allStories,
     Color border,
     Color textPrimary,
     Color textSecondary,
     bool isLightMode,
   ) {
-    // Use grey with 0.7 opacity in light mode, otherwise use surface color
-    final epicBackground = isLightMode 
-        ? Colors.grey.withValues(alpha: 0.1)
-        : surface;
+    final epicColor = _epicColor(epic);
+    final epicStories = allStories.where((s) => s.epicId == epic.id).toList();
+    final isExpanded = _epicExpanded[epic.id] ?? false;
+
+    final epicBackground = isLightMode
+        ? Colors.grey.withValues(alpha: 0.08)
+        : const Color(0xFF2A2A2A);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -258,7 +321,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
         border: Border.all(color: border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 3,
             offset: const Offset(0, 1),
           ),
@@ -268,14 +331,25 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
         children: [
           InkWell(
             borderRadius: BorderRadius.circular(10),
-            onTap: () => setState(() => epic.expanded = !epic.expanded),
+            onTap: () =>
+                setState(() => _epicExpanded[epic.id] = !isExpanded),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(
                 children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: epicColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
                   Expanded(
                     child: Text(
-                      epic.name,
+                      epic.title,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -286,7 +360,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                   _AddButton(color: textSecondary),
                   const SizedBox(width: 6),
                   Icon(
-                    epic.expanded ? Icons.expand_less : Icons.expand_more,
+                    isExpanded ? Icons.expand_less : Icons.expand_more,
                     color: textSecondary,
                     size: 20,
                   ),
@@ -294,28 +368,40 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
               ),
             ),
           ),
-          if (epic.expanded && epic.stories.isNotEmpty)
+          if (isExpanded && epicStories.isNotEmpty)
             Column(
               children: [
-                ...epic.stories.map((s) => _buildStoryTile(s, storyColor)),
+                ...epicStories.map((s) => _buildStoryTile(s, epicColor)),
                 const SizedBox(height: 8),
               ],
+            ),
+          if (isExpanded && epicStories.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                'No stories',
+                style: TextStyle(color: textSecondary, fontSize: 13),
+              ),
             ),
         ],
       ),
     );
   }
 
-  Widget _buildReleaseTile(
-    _ReleaseItem release,
-    Color primary,
+  Widget _buildMilestoneTile(
+    ReleaseMilestoneModel milestone,
+    List<EpicModel> allEpics,
+    List<StoryModel> allStories,
     Color cardBackground,
-    Color surface,
     Color border,
     Color textPrimary,
     Color textSecondary,
     bool isLightMode,
   ) {
+    final milestoneEpics =
+        allEpics.where((e) => e.milestoneId == milestone.id).toList();
+    final isExpanded = _milestoneExpanded[milestone.id] ?? false;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
@@ -324,7 +410,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
         border: Border.all(color: border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: Colors.black.withValues(alpha: 0.07),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),
@@ -334,14 +420,16 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
         children: [
           InkWell(
             borderRadius: BorderRadius.circular(12),
-            onTap: () => setState(() => release.expanded = !release.expanded),
+            onTap: () => setState(
+                () => _milestoneExpanded[milestone.id] = !isExpanded),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
-                      release.name,
+                      milestone.title,
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -352,7 +440,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                   _AddButton(color: textSecondary),
                   const SizedBox(width: 6),
                   Icon(
-                    release.expanded ? Icons.expand_less : Icons.expand_more,
+                    isExpanded ? Icons.expand_less : Icons.expand_more,
                     color: textSecondary,
                     size: 20,
                   ),
@@ -360,14 +448,13 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
               ),
             ),
           ),
-          if (release.expanded && release.epics.isNotEmpty)
+          if (isExpanded && milestoneEpics.isNotEmpty)
             Column(
               children: [
-                ...release.epics.map(
+                ...milestoneEpics.map(
                   (e) => _buildEpicTile(
                     e,
-                    primary,
-                    surface,
+                    allStories,
                     border,
                     textPrimary,
                     textSecondary,
@@ -377,6 +464,80 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                 const SizedBox(height: 8),
               ],
             ),
+          if (isExpanded && milestoneEpics.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Text(
+                'No epics',
+                style: TextStyle(color: textSecondary, fontSize: 13),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ── Project dropdown row (same look as sprints screen) ─────────────────────
+
+  Widget _buildProjectDropdown({
+    required List<dynamic> projects,
+    required Color cardBg,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color greyBorder,
+    required Color primary,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Row(
+        children: [
+          
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: SizedBox(
+                height: 35,
+                child: GestureDetector(
+                  onTap: () => _showProjectSelector(
+                    projects: projects,
+                    cardBg: cardBg,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    greyBorder: greyBorder,
+                    primary: primary,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: greyBorder, width: 1),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _selectedProjectName ?? 'Select Project',
+                            style: TextStyle(
+                              color: _selectedProjectName == null
+                                  ? textSecondary
+                                  : textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Icon(Icons.keyboard_arrow_down,
+                            color: textSecondary, size: 18),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -388,25 +549,22 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
     final primary = customColors.primary ?? const Color(0xFF1A56DB);
-    
     final textPrimary = customColors.textPrimary ?? Colors.black;
-    final textSecondary =
-        customColors.textSecondary ?? Colors.grey;
-    final cardBackground =
-        customColors.surfaceBackground ?? Colors.white;
-    final surface = customColors.cardBackground ?? const Color(0xFFF5F5F5);
+    final textSecondary = customColors.textSecondary ?? Colors.grey;
+    final cardBackground = customColors.cardBackground ?? Colors.white;
+    final surfaceBackground = customColors.surfaceBackground ?? Colors.white;
     final border = customColors.inputBorder ?? Colors.grey.shade300;
-    
-    // Detect if light mode
+    final greyBorder = customColors.greyBorder ?? Colors.grey.shade300;
     final isLightMode = Theme.of(context).brightness == Brightness.light;
 
-    final filtered = _filtered;
+    final projectsAsync = ref.watch(_projectListProvider);
 
     return Scaffold(
       body: Column(
         children: [
+          // ── Header ────────────────────────────────────────────────────────
           Container(
-            padding: const EdgeInsets.only(top: 48, bottom: 12),
+            padding: const EdgeInsets.only(top: 48, bottom: 8),
             child: Column(
               children: [
                 TopBar(
@@ -424,12 +582,12 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                     }
                   },
                 ),
+
+                // Search bar
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                                    child: CustomSearchBar(
+                      horizontal: 16, vertical: 8),
+                  child: CustomSearchBar(
                     controller: _searchController,
                     focusNode: _searchFocusNode,
                     onChanged: (value) =>
@@ -437,32 +595,52 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                     hintText: 'Search navigator',
                   ),
                 ),
+
+                // Project dropdown
+                projectsAsync.when(
+                  loading: () => _buildProjectDropdown(
+                    projects: const [],
+                    cardBg: cardBackground,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    greyBorder: greyBorder,
+                    primary: primary,
+                  ),
+                  error: (_, __) => Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 4),
+                    child: Text(
+                      'Error loading projects',
+                      style: TextStyle(color: textSecondary, fontSize: 13),
+                    ),
+                  ),
+                  data: (projects) => _buildProjectDropdown(
+                    projects: projects,
+                    cardBg: cardBackground,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    greyBorder: greyBorder,
+                    primary: primary,
+                  ),
+                ),
+
+                const SizedBox(height: 4),
               ],
             ),
           ),
 
-          // List
+          // ── Content ───────────────────────────────────────────────────────
           Expanded(
-            child: filtered.isEmpty
-                ? Center(
-                    child: Text(
-                      'No results found',
-                      style: TextStyle(color: textSecondary, fontSize: 15),
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 100),
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) => _buildReleaseTile(
-                      filtered[index],
-                      primary,
-                      cardBackground,
-                      surface,
-                      border,
-                      textPrimary,
-                      textSecondary,
-                      isLightMode,
-                    ),
+            child: _selectedProjectId == null || _selectedProjectId!.isEmpty
+                ? _buildSelectProjectPrompt(textSecondary, primary)
+                : _buildHierarchy(
+                    _selectedProjectId!,
+                    surfaceBackground,
+                    border,
+                    textPrimary,
+                    textSecondary,
+                    primary,
+                    isLightMode,
                   ),
           ),
         ],
@@ -476,9 +654,108 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
+
+  Widget _buildSelectProjectPrompt(Color textSecondary, Color primary) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.folder_open_outlined,
+              size: 56, color: textSecondary.withValues(alpha: 0.4)),
+          const SizedBox(height: 12),
+          Text(
+            'Select a project to view\nthe navigator',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: textSecondary, fontSize: 15),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHierarchy(
+    String projectId,
+    Color cardBackground,
+    Color border,
+    Color textPrimary,
+    Color textSecondary,
+    Color primary,
+    bool isLightMode,
+  ) {
+    final hierarchyAsync = ref.watch(_hierarchyProvider(projectId));
+
+    return hierarchyAsync.when(
+      data: (hierarchy) {
+        final milestones = _filterMilestones(
+          hierarchy.milestones,
+          hierarchy.epics,
+          hierarchy.stories,
+        );
+
+        if (milestones.isEmpty) {
+          return Center(
+            child: Text(
+              _searchQuery.isEmpty ? 'No data found' : 'No results found',
+              style: TextStyle(color: textSecondary, fontSize: 15),
+            ),
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async =>
+              ref.invalidate(_hierarchyProvider(projectId)),
+          child: ListView.builder(
+            padding: const EdgeInsets.only(bottom: 100),
+            itemCount: milestones.length,
+            itemBuilder: (context, index) => _buildMilestoneTile(
+              milestones[index],
+              hierarchy.epics,
+              hierarchy.stories,
+              cardBackground,
+              border,
+              textPrimary,
+              textSecondary,
+              isLightMode,
+            ),
+          ),
+        );
+      },
+      loading: () => const Center(child: DsvLoader()),
+      error: (err, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline,
+                  size: 48, color: Colors.red.shade300),
+              const SizedBox(height: 12),
+              Text(
+                'Failed to load hierarchy',
+                style: TextStyle(color: textPrimary, fontSize: 15),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                err.toString(),
+                textAlign: TextAlign.center,
+                style: TextStyle(color: textSecondary, fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () =>
+                    ref.invalidate(_hierarchyProvider(projectId)),
+                child: Text('Retry',
+                    style: TextStyle(color: Colors.blue.shade400)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-// ── Small reusable add button ────────────────────────────────────────────────
+// ── Small reusable add button ─────────────────────────────────────────────────
 
 class _AddButton extends StatelessWidget {
   final Color color;

@@ -22,6 +22,8 @@ class BoardView extends StatefulWidget {
   final int totalPoints;
   final int completedStories;
   final int totalStories;
+  final String? projectId;
+  final String? projectName;
 
   const BoardView({
     required this.stories,
@@ -38,6 +40,8 @@ class BoardView extends StatefulWidget {
     required this.totalPoints,
     required this.completedStories,
     required this.totalStories,
+    this.projectId,
+    this.projectName,
   });
 
   @override
@@ -224,11 +228,23 @@ class _BoardViewState extends State<BoardView> {
               Expanded(
                 child: GestureDetector(
                   onTap: () {
+                    if (widget.projectId == null || widget.projectId!.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please select a project first'),
+                          behavior: SnackBarBehavior.floating,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                      return;
+                    }
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const NavigatorScreen(
+                        builder: (context) => NavigatorScreen(
                           autoFocusSearch: true,
+                          projectId: widget.projectId,
+                          projectName: widget.projectName,
                         ),
                       ),
                     );
@@ -262,10 +278,23 @@ class _BoardViewState extends State<BoardView> {
               // Navigator pill
               GestureDetector(
                 onTap: () {
+                  if (widget.projectId == null || widget.projectId!.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please select a project first'),
+                        behavior: SnackBarBehavior.floating,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                    return;
+                  }
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const NavigatorScreen(),
+                      builder: (context) => NavigatorScreen(
+                        projectId: widget.projectId,
+                        projectName: widget.projectName,
+                      ),
                     ),
                   );
                 },

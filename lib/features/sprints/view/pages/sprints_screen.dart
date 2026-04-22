@@ -98,7 +98,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
   int get _totalPoints => _stories.fold(0, (sum, s) => sum + s.storyPoints);
 
   int get _completedPoints => _stories
-      .where((s) => s.columnId == 'closed' || s.columnId == 'uat_approved')
+      .where((s) => s.columnId == 'closed')
       .fold(0, (sum, s) => sum + s.storyPoints);
 
   int get _totalStories => _stories.length;
@@ -947,6 +947,8 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                         totalPoints: _totalPoints,
                         completedStories: _completedStories,
                         totalStories: _totalStories,
+                        projectId: _selectedProjectId ?? widget.projectId,
+                        projectName: _selectedProjectName ?? widget.projectName,
                       ),
                       // Backlog tab
                       Center(
