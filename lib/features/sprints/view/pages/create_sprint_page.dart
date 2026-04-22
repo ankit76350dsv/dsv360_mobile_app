@@ -181,22 +181,7 @@ class _CreateSprintPageState extends ConsumerState<CreateSprintPage> {
 
                       const SizedBox(height: 20),
 
-                      // Goal
-                      CustomInputField(
-                        controller: _goalController,
-                        hintText: 'Sprint Goal',
-                        labelText: 'Goal',
-                        prefixIcon: Icons.track_changes,
-                        maxLines: 3,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Enter sprint goal';
-                          }
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(height: 20),
+                  
 
                       // ---------------- DATE UI (EXACT MATCH) ----------------
                       Row(
@@ -309,6 +294,25 @@ class _CreateSprintPageState extends ConsumerState<CreateSprintPage> {
                             ),
                           ),
                         ],
+                      ),
+
+                      const SizedBox(height: 20,),
+
+
+                       // Goal
+                      CustomInputField(
+                        controller: _goalController,
+                        hintText: 'Sprint Goal',
+                        labelText: 'Goal',
+                        prefixIcon: Icons.track_changes,
+                        isMultiline: true,
+                        maxLines: 3,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Enter sprint goal';
+                          }
+                          return null;
+                        },
                       ),
 
                       const SizedBox(height: 32),
