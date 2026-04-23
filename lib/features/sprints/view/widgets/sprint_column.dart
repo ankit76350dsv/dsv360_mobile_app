@@ -22,23 +22,23 @@ const columns = [
       title: 'WIP',
       color: Color(0xFF1976D2)),
   SprintColumn(
-      id: 'internal_testing',
-      title: 'INTERNAL TESTING',
+      id: 'under_internal_testing',
+      title: 'UNDER INTERNAL TESTING',
       color: Color(0xFFFF9800)),
   SprintColumn(
-      id: 'pending_zoho',
+      id: 'pending_from_zoho',
       title: 'PENDING ZOHO',
       color: Color(0xFF9C27B0)),
   SprintColumn(
-      id: 'pending_client',
+      id: 'pending_from_client',
       title: 'PENDING CLIENT',
       color: Color(0xFFE91E63)),
   SprintColumn(
-      id: 'released_uat',
+      id: 'released_for_uat',
       title: 'RELEASED FOR UAT',
       color: Color(0xFF00BCD4)),
   SprintColumn(
-      id: 'uat_approved',
+      id: 'uat_approved_by_client',
       title: 'UAT APPROVED',
       color: Color(0xFF4CAF50)),
   SprintColumn(

@@ -3,6 +3,7 @@ import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
 import 'package:dsv360/features/sprints/model/sprints_model.dart';
 import 'package:dsv360/features/sprints/repositories/get_sprints_repository.dart';
+import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
 import 'package:dsv360/features/sprints/view/pages/create_sprint_page.dart';
 import 'package:dsv360/providers/project_provider.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
@@ -10,41 +11,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/sprint_story.dart';
 import '../widgets/board_view.dart';
-
-// ── Sample data ──────────────────────────────────────────────────────────
-
-final _sampleStories = [
-  SprintStory(
-    id: 's1',
-    title: 'Admin Page Design',
-    completedPoints: 75,
-    totalPoints: 100,
-    memberAvatars: ['M'],
-    storyLabel: 'Story-3',
-    storyPoints: 3,
-    columnId: 'not_started',
-  ),
-  SprintStory(
-    id: 's2',
-    title: 'Research Price Distribution',
-    completedPoints: 0,
-    totalPoints: 6,
-    memberAvatars: ['M'],
-    storyLabel: 'Story-3',
-    storyPoints: 3,
-    columnId: 'not_started',
-  ),
-  SprintStory(
-    id: 's3',
-    title: 'Design Module Patterns',
-    completedPoints: 0,
-    totalPoints: 8,
-    memberAvatars: ['M'],
-    storyLabel: 'Story-3',
-    storyPoints: 3,
-    columnId: 'not_started',
-  ),
-];
 
 final projectListProvider = FutureProvider((ref) async {
   final repo = ref.read(projectRepositoryProvider);
@@ -58,6 +24,30 @@ final sprintListProvider = FutureProvider.family<List<SprintModel>, String>((
   final repo = ref.read(getSprintsRepositoryProvider);
   return repo.fetchSprints(projectId: projectId);
 });
+
+final hierarchyProvider =
+    FutureProvider.family<
+      List<SprintStory>,
+      ({String projectId, String? sprintId})
+    >((ref, args) async {
+      final repo = ref.read(hierarchyRepositoryProvider);
+      final hierarchy = await repo.fetchHierarchy(projectId: args.projectId);
+      return hierarchy.stories
+          .where((s) => args.sprintId == null || s.sprintId == args.sprintId)
+          .map((s) {
+            return SprintStory(
+              id: s.id,
+              title: s.title,
+              completedPoints: 0,
+              totalPoints: s.points,
+              memberAvatars: [],
+              storyLabel: 'Story',
+              storyPoints: s.points,
+              columnId: s.status.toLowerCase().replaceAll(' ', '_'),
+            );
+          })
+          .toList();
+    });
 
 // ── Main Widget ─────────────────────────────────────────────────────────────
 
@@ -74,21 +64,46 @@ class SprintsScreen extends ConsumerStatefulWidget {
 class _SprintsScreenState extends ConsumerState<SprintsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  late List<SprintStory> _stories;
 
   String? _selectedProjectName;
   String? _selectedProjectId;
 
   String? _selectedSprintName;
-  //String? _selectedSprintId;
+  String? _selectedSprintId;
 
   bool _isRefreshingData = false;
+
+  void _autoSelectFirstProject(List<dynamic> projects) {
+    if (_selectedProjectId != null || projects.isEmpty) return;
+
+    final firstProject = projects.first;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _selectedProjectId != null) return;
+      setState(() {
+        _selectedProjectName = firstProject.projectName;
+        _selectedProjectId = firstProject.id;
+      });
+    });
+  }
+
+  void _autoSelectFirstSprint(List<SprintModel> sprints) {
+    if (_selectedProjectId == null || _selectedProjectId!.isEmpty) return;
+    if (_selectedSprintId != null || sprints.isEmpty) return;
+
+    final firstSprint = sprints.first;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || _selectedSprintId != null) return;
+      setState(() {
+        _selectedSprintName = firstSprint.sprintName;
+        _selectedSprintId = firstSprint.rowId;
+      });
+    });
+  }
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _stories = List.from(_sampleStories);
   }
 
   @override
@@ -97,20 +112,23 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
     super.dispose();
   }
 
-  int get _totalPoints => _stories.fold(0, (sum, s) => sum + s.storyPoints);
+  int _totalPoints(List<SprintStory> stories) =>
+      stories.fold(0, (sum, s) => sum + s.storyPoints);
 
-  int get _completedPoints => _stories
+  int _completedPoints(List<SprintStory> stories) => stories
       .where((s) => s.columnId == 'closed')
       .fold(0, (sum, s) => sum + s.storyPoints);
 
-  int get _totalStories => _stories.length;
+  int _totalStories(List<SprintStory> stories) => stories.length;
 
-  int get _completedStories => _stories
+  int _completedStories(List<SprintStory> stories) => stories
       .where((s) => s.columnId == 'closed' || s.columnId == 'uat_approved')
       .length;
 
-  double get _progress =>
-      _totalPoints == 0 ? 0.0 : _completedPoints / _totalPoints;
+  double _progress(List<SprintStory> stories) {
+    final total = _totalPoints(stories);
+    return total == 0 ? 0.0 : _completedPoints(stories) / total;
+  }
 
   void _moveStory(SprintStory story, String newColumnId) {
     setState(() {
@@ -231,7 +249,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                           project.projectName;
                                       _selectedProjectId = project.id;
                                       _selectedSprintName = null;
-                                      // _selectedSprintId = null;
+                                      _selectedSprintId = null;
                                     });
                                     debugPrint(
                                       'Selected Project: $_selectedProjectName ($_selectedProjectId)',
@@ -385,6 +403,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                   onTap: () {
                                     setState(() {
                                       _selectedSprintName = sprint.sprintName;
+                                      _selectedSprintId = sprint.rowId;
                                     });
                                     Navigator.pop(dialogContext);
                                   },
@@ -523,38 +542,38 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                       if (Navigator.canPop(context)) Navigator.pop(context);
                     },
                     onInfoTap: () async {
-  if (_isRefreshingData) return;
-  
-  setState(() => _isRefreshingData = true);
-  try {
-    final _ = await ref.refresh(projectListProvider.future);
-    if (_selectedProjectId != null &&
-        _selectedProjectId!.isNotEmpty) {
-      final _ = await ref.refresh(
-        sprintListProvider(_selectedProjectId!).future,
-      );
-    }
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Data refreshed successfully'),
-          duration: Duration(seconds: 1),
-        ),
-      );
-    }
-  } catch (e) {
-    debugPrint('Refresh error: $e');
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Refresh failed: $e')),
-      );
-    }
-  } finally {
-    if (mounted) {
-      setState(() => _isRefreshingData = false);
-    }
-  }
-},
+                      if (_isRefreshingData) return;
+
+                      setState(() => _isRefreshingData = true);
+                      try {
+                        final _ = await ref.refresh(projectListProvider.future);
+                        if (_selectedProjectId != null &&
+                            _selectedProjectId!.isNotEmpty) {
+                          final _ = await ref.refresh(
+                            sprintListProvider(_selectedProjectId!).future,
+                          );
+                        }
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Data refreshed successfully'),
+                              duration: Duration(seconds: 1),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        debugPrint('Refresh error: $e');
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Refresh failed: $e')),
+                          );
+                        }
+                      } finally {
+                        if (mounted) {
+                          setState(() => _isRefreshingData = false);
+                        }
+                      }
+                    },
                     actionIcon: Icons.refresh_rounded,
                   ),
 
@@ -618,6 +637,8 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                 ),
 
                                 data: (projects) {
+                                  _autoSelectFirstProject(projects);
+
                                   return SizedBox(
                                     height: 35,
                                     child: GestureDetector(
@@ -772,6 +793,8 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                 error: (_, __) =>
                                     _buildErrorSprint(textSecondary),
                                 data: (sprints) {
+                                  _autoSelectFirstSprint(sprints);
+
                                   if (sprints.isEmpty) {
                                     return Container(
                                       padding: const EdgeInsets.symmetric(
@@ -990,24 +1013,61 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                       physics: NeverScrollableScrollPhysics(),
                       children: [
                         // Board tab
-                        BoardView(
-                          stories: _stories,
-                          onMove: _moveStory,
-                          isDark: isDark,
-                          customColors: customColors,
-                          cardBg: cardBg,
-                          textPrimary: textPrimary,
-                          textSecondary: textSecondary,
-                          greyBorder: greyBorder,
-                          primary: primary,
-                          progress: _progress,
-                          completedPoints: _completedPoints,
-                          totalPoints: _totalPoints,
-                          completedStories: _completedStories,
-                          totalStories: _totalStories,
-                          projectId: _selectedProjectId ?? widget.projectId,
-                          projectName:
-                              _selectedProjectName ?? widget.projectName,
+                        Builder(
+                          builder: (context) {
+                            final projectId =
+                                _selectedProjectId ?? widget.projectId;
+                            if (projectId == null || projectId.isEmpty) {
+                              return Center(
+                                child: Text(
+                                  'Select a project to view board',
+                                  style: TextStyle(
+                                    color: textSecondary,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              );
+                            }
+                            final hierarchyAsync = ref.watch(
+                              hierarchyProvider((
+                                projectId: projectId,
+                                sprintId: _selectedSprintId,
+                              )),
+                            );
+                            return hierarchyAsync.when(
+                              loading: () => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                              error: (e, _) => Center(
+                                child: Text(
+                                  'Error loading stories: $e',
+                                  style: TextStyle(color: textSecondary),
+                                ),
+                              ),
+                              data: (stories) {
+                                return BoardView(
+                                  stories: stories,
+                                  onMove: _moveStory,
+                                  isDark: isDark,
+                                  customColors: customColors,
+                                  cardBg: cardBg,
+                                  textPrimary: textPrimary,
+                                  textSecondary: textSecondary,
+                                  greyBorder: greyBorder,
+                                  primary: primary,
+                                  progress: _progress(stories),
+                                  completedPoints: _completedPoints(stories),
+                                  totalPoints: _totalPoints(stories),
+                                  completedStories: _completedStories(stories),
+                                  totalStories: _totalStories(stories),
+                                  projectId: projectId,
+                                  projectName:
+                                      _selectedProjectName ??
+                                      widget.projectName,
+                                );
+                              },
+                            );
+                          },
                         ),
                         // Backlog tab
                         Center(
