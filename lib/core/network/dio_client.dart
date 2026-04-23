@@ -136,6 +136,35 @@ class ApiClient {
     }
   }
 
+  Future<Response> patch(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      final response = await _dio.patch(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+
+      debugPrint("ApiClient patch response: ${response.data}");
+      debugPrint("ApiClient patch status: ${response.statusCode}");
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response;
+      } else {
+        throw Exception('Unexpected status code: ${response.statusCode}');
+      }
+    } on DioException catch (e, trace) {
+      throw Exception('Dio PATCH request failed: ${e.message} $trace');
+    } catch (e, trace) {
+      throw Exception('Unexpected error in PATCH request: $e $trace');
+    }
+  }
+
   // / Public method to make a POST request
   Future<Response> post(
     String path, {

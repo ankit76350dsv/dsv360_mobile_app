@@ -6,6 +6,7 @@ import 'sprint_story.dart';
 import 'sprint_column.dart';
 import 'kanban_column.dart';
 import 'progress_stat.dart';
+import 'package:intl/intl.dart';
 
 class BoardView extends StatefulWidget {
   final List<SprintStory> stories;
@@ -24,6 +25,7 @@ class BoardView extends StatefulWidget {
   final int totalStories;
   final String? projectId;
   final String? projectName;
+  final String? sprintEndDate;
 
   const BoardView({
     required this.stories,
@@ -42,6 +44,7 @@ class BoardView extends StatefulWidget {
     required this.totalStories,
     this.projectId,
     this.projectName,
+    this.sprintEndDate,
   });
 
   @override
@@ -103,6 +106,42 @@ class _BoardViewState extends State<BoardView> {
     _autoScrollTimer?.cancel();
     _autoScrollTimer = null;
     _isDragging = false;
+  }
+
+  int _calculateDaysRemaining() {
+    if (widget.sprintEndDate == null || widget.sprintEndDate!.isEmpty) {
+      return 0;
+    }
+    try {
+      final endDate = DateFormat('yyyy-MM-dd').parse(widget.sprintEndDate!);
+      final now = DateTime.now();
+      final difference = endDate.difference(now).inDays;
+      return difference;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  String _getDaysLabel() {
+    final days = _calculateDaysRemaining();
+    if (days == 0) {
+      return 'Due today';
+    } else if (days < 0) {
+      return 'Due exceeded ${-days} ${-days == -1 ? 'day ago' : 'days ago'}';
+    } else {
+      return '$days ${days == 1 ? 'day left' : 'days left'}';
+    }
+  }
+
+  Color _getDaysColor() {
+    final days = _calculateDaysRemaining();
+    if (days == 0) {
+      return const Color(0xFFFFC107); // Yellow
+    } else if (days < 0) {
+      return const Color(0xFFF44336); // Red
+    } else {
+      return const Color(0xFF4CAF50); // Green
+    }
   }
 
   @override
@@ -210,8 +249,8 @@ class _BoardViewState extends State<BoardView> {
                   ),
                   const Spacer(),
                   ProgressStat(
-                    label: '86 Days left',
-                    color: widget.textSecondary,
+                    label: _getDaysLabel(),
+                    color: _getDaysColor(),
                   ),
                 ],
               ),

@@ -4,6 +4,7 @@ import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
 import 'package:dsv360/features/sprints/model/sprints_model.dart';
 import 'package:dsv360/features/sprints/repositories/get_sprints_repository.dart';
 import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
+import 'package:dsv360/features/sprints/repositories/update_story_status_repository.dart';
 import 'package:dsv360/features/sprints/view/pages/create_sprint_page.dart';
 import 'package:dsv360/providers/project_provider.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
@@ -44,6 +45,7 @@ final hierarchyProvider =
               storyLabel: 'Story',
               storyPoints: s.points,
               columnId: s.status.toLowerCase().replaceAll(' ', '_'),
+              status: s.status,
             );
           })
           .toList();
@@ -130,9 +132,39 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
     return total == 0 ? 0.0 : _completedPoints(stories) / total;
   }
 
+  static const _columnToApiStatus = {//here
+    'not_started': 'NOT_STARTED',
+    'wip': 'WIP',
+    'pending_from_zoho': 'PENDING_FROM_ZOHO',
+    'pending_from_client': 'PENDING_FROM_CLIENT',
+    'released_for_uat': 'RELEASED_FOR_UAT',
+    'uat_approved_by_client': 'UAT_APPROVED_BY_CLIENT',
+    'under_internal_testing': 'UNDER_INTERNAL_TESTING',
+    'closed': 'CLOSED',
+  };
+
   void _moveStory(SprintStory story, String newColumnId) {
+    final previousColumnId = story.columnId;
     setState(() {
       story.columnId = newColumnId;
+    });
+
+    final apiStatus = _columnToApiStatus[newColumnId];
+    if (apiStatus == null) return;
+
+    ref
+        .read(updateStoryStatusRepositoryProvider)
+        .updateStatus(storyId: story.id, status: apiStatus)
+        .catchError((e) {
+      debugPrint('Failed to update story status: $e');
+      if (mounted) {
+        setState(() {
+          story.columnId = previousColumnId;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update status: $e')),
+        );
+      }
     });
   }
 
@@ -480,11 +512,16 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
 
   Future<void> _onRefresh() async {
     try {
-      // Refresh the projects and sprints data
       final _ = await ref.refresh(projectListProvider.future);
       if (_selectedProjectId != null && _selectedProjectId!.isNotEmpty) {
         final _ = await ref.refresh(
           sprintListProvider(_selectedProjectId!).future,
+        );
+        final _ = await ref.refresh(
+          hierarchyProvider((
+            projectId: _selectedProjectId!,
+            sprintId: _selectedSprintId,
+          )).future,
         );
       }
     } catch (e) {
@@ -551,6 +588,12 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                             _selectedProjectId!.isNotEmpty) {
                           final _ = await ref.refresh(
                             sprintListProvider(_selectedProjectId!).future,
+                          );
+                          final _ = await ref.refresh(
+                            hierarchyProvider((
+                              projectId: _selectedProjectId!,
+                              sprintId: _selectedSprintId,
+                            )).future,
                           );
                         }
                         if (mounted) {
@@ -1034,6 +1077,9 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                 sprintId: _selectedSprintId,
                               )),
                             );
+                            final sprintsAsync = ref.watch(
+                              sprintListProvider(projectId),
+                            );
                             return hierarchyAsync.when(
                               loading: () => const Center(
                                 child: CircularProgressIndicator(),
@@ -1045,6 +1091,20 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                 ),
                               ),
                               data: (stories) {
+                                String? sprintEndDate;
+                                if (_selectedSprintId != null) {
+                                  sprintsAsync.whenData((sprints) {
+                                    try {
+                                      final selectedSprint = sprints
+                                          .firstWhere(
+                                            (s) => s.rowId == _selectedSprintId,
+                                          );
+                                      sprintEndDate = selectedSprint.endDate;
+                                    } catch (e) {
+                                      // Sprint not found
+                                    }
+                                  });
+                                }
                                 return BoardView(
                                   stories: stories,
                                   onMove: _moveStory,
@@ -1064,6 +1124,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                   projectName:
                                       _selectedProjectName ??
                                       widget.projectName,
+                                  sprintEndDate: sprintEndDate,
                                 );
                               },
                             );

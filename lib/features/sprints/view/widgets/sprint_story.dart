@@ -7,6 +7,7 @@ class SprintStory {
   final String storyLabel;
   final int storyPoints;
   String columnId;
+  String status;
 
   SprintStory({
     required this.id,
@@ -17,5 +18,6 @@ class SprintStory {
     required this.storyLabel,
     required this.storyPoints,
     required this.columnId,
+    required this.status,
   });
 }
