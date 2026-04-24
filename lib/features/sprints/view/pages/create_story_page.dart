@@ -20,6 +20,7 @@ class CreateStoryPage extends ConsumerStatefulWidget {
   final String? epicId;
   final String? projectNameSelected;
   final String? sprintNameSelected;
+  
 
   const CreateStoryPage({
     super.key,
@@ -134,14 +135,19 @@ class _CreateStoryPageState extends ConsumerState<CreateStoryPage> {
   ];
 
   @override
-  void initState() {
-    super.initState();
-    _selectedProjectId = widget.projectId;
-    _selectedSprintId = widget.sprintId;
-    _selectedEpicId = widget.epicId;
+void initState() {
+  super.initState();
 
-    _loadInitialData();
-  }
+  _selectedProjectId = widget.projectId;
+  _selectedSprintId = widget.sprintId;
+  _selectedEpicId = widget.epicId;
+
+  debugPrint(
+    'Preselected project: ${widget.projectNameSelected} (${widget.projectId})'
+  );
+
+  _loadInitialData();
+}
 
   Future<void> _loadInitialData() async {
     await Future.wait([
@@ -337,19 +343,35 @@ class _CreateStoryPageState extends ConsumerState<CreateStoryPage> {
             ))
         .toList();
 
-    final projectItems = _projects
-        .map((p) => DropdownMenuItem<String>(
-              value: p.id,
-              child: Text(p.projectName),
-            ))
-        .toList();
+    final projectItems = [
+      if (widget.projectId != null &&
+          widget.projectNameSelected != null &&
+          !_projects.any((p) => p.id == widget.projectId))
+        DropdownMenuItem<String>(
+          value: widget.projectId!,
+          child: Text(widget.projectNameSelected!),
+        ),
 
-    final sprintItems = _sprints
-        .map((s) => DropdownMenuItem<String>(
-              value: s.rowId,
-              child: Text(s.sprintName),
-            ))
-        .toList();
+      ..._projects.map((p) => DropdownMenuItem<String>(
+            value: p.id,
+            child: Text(p.projectName),
+          )),
+    ];
+
+    final sprintItems = [
+      if (widget.sprintId != null &&
+          widget.sprintNameSelected != null &&
+          !_sprints.any((s) => s.rowId == widget.sprintId))
+        DropdownMenuItem<String>(
+          value: widget.sprintId!,
+          child: Text(widget.sprintNameSelected!),
+        ),
+
+      ..._sprints.map((s) => DropdownMenuItem<String>(
+            value: s.rowId,
+            child: Text(s.sprintName),
+          )),
+    ];
 
     final epicItems = _epics
         .map((e) => DropdownMenuItem<String>(
@@ -430,7 +452,7 @@ class _CreateStoryPageState extends ConsumerState<CreateStoryPage> {
                             ? 'Loading projects...'
                             : _hasProjectsError
                                 ? 'Failed to load projects'
-                                : 'Select project',
+                                : widget.projectNameSelected?? 'Select Project',
                         labelText: 'Project *',
                         prefixIcon: Icons.folder_outlined,
                         searchable: true,
@@ -561,7 +583,7 @@ class _CreateStoryPageState extends ConsumerState<CreateStoryPage> {
                       // Group Name
                       CustomInputField(
                         controller: _groupNameController,
-                        hintText: 'Group Name (optional)',
+                        hintText: 'Group Name',
                         labelText: 'Group Name',
                         prefixIcon: Icons.group_outlined,
                       ),
@@ -571,7 +593,7 @@ class _CreateStoryPageState extends ConsumerState<CreateStoryPage> {
                       // Module Name
                       CustomInputField(
                         controller: _moduleNameController,
-                        hintText: 'Module Name (optional)',
+                        hintText: 'Module Name',
                         labelText: 'Module Name',
                         prefixIcon: Icons.view_module_outlined,
                       ),
@@ -580,7 +602,7 @@ class _CreateStoryPageState extends ConsumerState<CreateStoryPage> {
 
                       // Requirement Type
                       CustomDropDownField(
-                        hintText: 'Select requirement type (optional)',
+                        hintText: 'Select requirement type',
                         labelText: 'Requirement Type',
                         prefixIcon: Icons.list_alt_outlined,
                         options: _requirementTypeOptions
@@ -598,7 +620,7 @@ class _CreateStoryPageState extends ConsumerState<CreateStoryPage> {
 
                       // Billing Type
                       CustomDropDownField(
-                        hintText: 'Select billing type (optional)',
+                        hintText: 'Select billing type',
                         labelText: 'Billing Type',
                         prefixIcon: Icons.receipt_outlined,
                         options: _billingTypeOptions
@@ -615,7 +637,7 @@ class _CreateStoryPageState extends ConsumerState<CreateStoryPage> {
 
                       // Zoho Product Name
                       CustomDropDownField(
-                        hintText: 'Select Zoho product (optional)',
+                        hintText: 'Select Zoho product',
                         labelText: 'Zoho Product Name',
                         prefixIcon: Icons.inventory_2_outlined,
                         searchable: true,
@@ -637,7 +659,7 @@ class _CreateStoryPageState extends ConsumerState<CreateStoryPage> {
                       CustomDropDownField(
                         hintText: _isUsersLoading
                             ? 'Loading users...'
-                            : 'Select primary owner (optional)',
+                            : 'Select primary owner',
                         labelText: 'Primary Ownership',
                         prefixIcon: Icons.person_pin_outlined,
                         searchable: true,
@@ -655,7 +677,7 @@ class _CreateStoryPageState extends ConsumerState<CreateStoryPage> {
                       CustomDropDownField(
                         hintText: _isUsersLoading
                             ? 'Loading users...'
-                            : 'Select secondary owner (optional)',
+                            : 'Select secondary owner',
                         labelText: 'Secondary Ownership',
                         prefixIcon: Icons.person_pin_circle_outlined,
                         searchable: true,
@@ -672,7 +694,7 @@ class _CreateStoryPageState extends ConsumerState<CreateStoryPage> {
                       // FI Remarks
                       CustomInputField(
                         controller: _fiRemarksController,
-                        hintText: 'FI Remarks (optional)',
+                        hintText: 'FI Remarks',
                         isMultiline: true,
                         labelText: 'FI Remarks',
                         prefixIcon: Icons.comment_outlined,
@@ -684,7 +706,7 @@ class _CreateStoryPageState extends ConsumerState<CreateStoryPage> {
                       // Client Remarks
                       CustomInputField(
                         controller: _clientRemarksController,
-                        hintText: 'Client Remarks (optional)',
+                        hintText: 'Client Remarks',
                         isMultiline: true,
                         labelText: 'Client Remarks',
                         prefixIcon: Icons.rate_review_outlined,

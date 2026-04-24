@@ -929,7 +929,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                 MaterialPageRoute(
                                   builder: (context) => CreateSprintPage(
                                     projectId: _selectedProjectId!,
-                                    projectName: _selectedProjectName,
+                                    projectName: _selectedProjectName!,
                                   ),
                                 ),
                               );
@@ -966,7 +966,17 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                           // + ISSUE button
                           GestureDetector(
                             onTap: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context)=>CreateStoryPage(projectId: _selectedProjectId ?? widget.projectId, sprintId: _selectedSprintId ?? '', projectNameSelected: widget.projectName, sprintNameSelected: _selectedSprintName,)));
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context)=>CreateStoryPage(
+                                      projectId: _selectedProjectId ?? widget.projectId,
+                                      sprintId: _selectedSprintId ?? '',
+                                      sprintNameSelected: _selectedSprintName!,
+                                      projectNameSelected: _selectedProjectName!,
+                                  ),
+                                ),
+                                );
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(
