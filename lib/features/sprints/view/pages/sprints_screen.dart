@@ -6,6 +6,7 @@ import 'package:dsv360/features/sprints/repositories/get_sprints_repository.dart
 import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
 import 'package:dsv360/features/sprints/repositories/update_story_status_repository.dart';
 import 'package:dsv360/features/sprints/view/pages/create_sprint_page.dart';
+import 'package:dsv360/features/sprints/view/pages/create_story_page.dart';
 import 'package:dsv360/providers/project_provider.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
@@ -965,7 +966,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                           // + ISSUE button
                           GestureDetector(
                             onTap: () {
-                              //navigate to add issue page here
+                              Navigator.push(context, MaterialPageRoute(builder: (context)=>CreateStoryPage(projectId: _selectedProjectId ?? widget.projectId, sprintId: _selectedSprintId ?? '', projectNameSelected: widget.projectName, sprintNameSelected: _selectedSprintName,)));
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(

@@ -44,30 +44,52 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
     return 3;
   }
 
-  List<DropdownMenuItem<String>> _rankedItems(List<DropdownMenuItem<String>> items, String query) {
-    final q = query.toLowerCase().trim();
-    if (q.isEmpty) return items;
+  List<DropdownMenuItem<String>> _rankedItems(
+  List<DropdownMenuItem<String>> items,
+  String query,
+) {
+  final q = query.toLowerCase().trim();
 
-    final filtered = items.where((item) {
-      final value = (item.value ?? '').toLowerCase();
-      return value.contains(q);
-    }).toList();
+  if (q.isEmpty) return items;
 
-    filtered.sort((a, b) {
-      final aValue = (a.value ?? '').toLowerCase();
-      final bValue = (b.value ?? '').toLowerCase();
-
-      final priorityCompare = _matchPriority(aValue, q).compareTo(_matchPriority(bValue, q));
-      if (priorityCompare != 0) return priorityCompare;
-
-      final indexCompare = aValue.indexOf(q).compareTo(bValue.indexOf(q));
-      if (indexCompare != 0) return indexCompare;
-
-      return aValue.compareTo(bValue);
-    });
-
-    return filtered;
+  String labelOf(DropdownMenuItem<String> item) {
+    if (item.child is Text) {
+      return ((item.child as Text).data ?? '').toLowerCase();
+    }
+    return '';
   }
+
+  final filtered = items.where((item) {
+    return labelOf(item).contains(q);
+  }).toList();
+
+  filtered.sort((a, b) {
+    final aText = labelOf(a);
+    final bText = labelOf(b);
+
+    final priorityCompare =
+        _matchPriority(aText, q).compareTo(
+          _matchPriority(bText, q),
+        );
+
+    if (priorityCompare != 0) {
+      return priorityCompare;
+    }
+
+    final indexCompare =
+        aText.indexOf(q).compareTo(
+          bText.indexOf(q),
+        );
+
+    if (indexCompare != 0) {
+      return indexCompare;
+    }
+
+    return aText.compareTo(bText);
+  });
+
+  return filtered;
+}
 
   String? _findDisplayText(String? value) {
     if (value == null) return null;
@@ -376,7 +398,7 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          _selectedDisplayText ?? (_selectedOption != null ? _selectedOption! : widget.hintText),
+                          _selectedDisplayText ?? widget.hintText,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
