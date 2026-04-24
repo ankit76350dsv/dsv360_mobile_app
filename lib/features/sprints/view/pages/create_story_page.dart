@@ -361,7 +361,13 @@ void initState() {
     ];
 
     final sprintItems = [
+      const DropdownMenuItem<String>(
+        value: 'BACKLOG',
+        child: Text('Backlog'),
+      ),
+
       if (widget.sprintId != null &&
+          widget.sprintId != 'BACKLOG' &&
           widget.sprintNameSelected != null &&
           !_sprints.any((s) => s.rowId == widget.sprintId))
         DropdownMenuItem<String>(

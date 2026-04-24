@@ -379,30 +379,41 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                     },
                   ),
                   const SizedBox(width: 6),
-                  Icon(
-                    isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: textSecondary,
-                    size: 20,
+                  AnimatedRotation(
+                    turns: isExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    child: Icon(
+                      Icons.expand_more,
+                      color: textSecondary,
+                      size: 20,
+                    ),
                   ),
                 ],
               ),
             ),
           ),
-          if (isExpanded && epicStories.isNotEmpty)
-            Column(
-              children: [
-                ...epicStories.map((s) => _buildStoryTile(s, epicColor)),
-                const SizedBox(height: 8),
-              ],
-            ),
-          if (isExpanded && epicStories.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(
-                'No stories',
-                style: TextStyle(color: textSecondary, fontSize: 13),
-              ),
-            ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            child: isExpanded
+                ? Column(
+                    children: [
+                      if (epicStories.isNotEmpty) ...[
+                        ...epicStories.map((s) => _buildStoryTile(s, epicColor)),
+                        const SizedBox(height: 8),
+                      ] else
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Text(
+                            'No stories',
+                            style: TextStyle(color: textSecondary, fontSize: 13),
+                          ),
+                        ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );
@@ -471,39 +482,50 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Icon(
-                    isExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: textSecondary,
-                    size: 20,
+                  AnimatedRotation(
+                    turns: isExpanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    child: Icon(
+                      Icons.expand_more,
+                      color: textSecondary,
+                      size: 20,
+                    ),
                   ),
                 ],
               ),
             ),
           ),
-          if (isExpanded && milestoneEpics.isNotEmpty)
-            Column(
-              children: [
-                ...milestoneEpics.map(
-                  (e) => _buildEpicTile(
-                    e,
-                    allStories,
-                    border,
-                    textPrimary,
-                    textSecondary,
-                    isLightMode,
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          if (isExpanded && milestoneEpics.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Text(
-                'No epics',
-                style: TextStyle(color: textSecondary, fontSize: 13),
-              ),
-            ),
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            child: isExpanded
+                ? Column(
+                    children: [
+                      if (milestoneEpics.isNotEmpty) ...[
+                        ...milestoneEpics.map(
+                          (e) => _buildEpicTile(
+                            e,
+                            allStories,
+                            border,
+                            textPrimary,
+                            textSecondary,
+                            isLightMode,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                      ] else
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Text(
+                            'No epics',
+                            style: TextStyle(color: textSecondary, fontSize: 13),
+                          ),
+                        ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );

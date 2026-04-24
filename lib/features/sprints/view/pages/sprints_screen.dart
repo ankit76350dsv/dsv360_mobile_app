@@ -972,8 +972,8 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                   builder: (context)=>CreateStoryPage(
                                       projectId: _selectedProjectId ?? widget.projectId,
                                       sprintId: _selectedSprintId ?? '',
-                                      sprintNameSelected: _selectedSprintName!,
-                                      projectNameSelected: _selectedProjectName!,
+                                      sprintNameSelected: _selectedSprintName,
+                                      projectNameSelected: _selectedProjectName,
                                   ),
                                 ),
                                 );
