@@ -20,6 +20,7 @@ class CreateStoryPage extends ConsumerStatefulWidget {
   final String? epicId;
   final String? projectNameSelected;
   final String? sprintNameSelected;
+  final String? epicName;
   
 
   const CreateStoryPage({
@@ -28,7 +29,8 @@ class CreateStoryPage extends ConsumerStatefulWidget {
     this.sprintId,
     this.epicId,
     this.projectNameSelected,
-    this.sprintNameSelected
+    this.sprintNameSelected,
+    this.epicName
     
       });
 
@@ -543,7 +545,7 @@ void initState() {
                                 ? 'Loading epics...'
                                 : _hasEpicsError
                                     ? 'Failed to load epics'
-                                    : 'Select epic',
+                                    : widget.epicName ?? 'Select epic',
                         labelText: 'Epic *',
                         prefixIcon: Icons.layers_outlined,
                         searchable: true,

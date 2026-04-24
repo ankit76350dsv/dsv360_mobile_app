@@ -8,6 +8,7 @@ import 'package:dsv360/features/sprints/model/story_model.dart';
 import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
 import 'package:dsv360/features/sprints/view/pages/create_epic_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_release_page.dart';
+import 'package:dsv360/features/sprints/view/pages/create_story_page.dart';
 import 'package:dsv360/providers/project_provider.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:dsv360/views/widgets/custom_search_bar.dart';
@@ -363,7 +364,18 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                     color: textSecondary,
                     label: 'Story',
                     onTap: () {
-                      // TODO: Implement create story navigation
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CreateStoryPage(
+                            projectId: _selectedProjectId,
+                            epicId: epic.id,
+                            projectNameSelected: _selectedProjectName,
+                            //here
+                            epicName : epic.title,
+                          ),
+                        ),
+                      );
                     },
                   ),
                   const SizedBox(width: 6),

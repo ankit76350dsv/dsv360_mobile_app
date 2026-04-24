@@ -1135,6 +1135,8 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                   projectName:
                                       _selectedProjectName ??
                                       widget.projectName,
+                                  sprintId: _selectedSprintId,
+                                  sprintName: _selectedSprintName,
                                   sprintEndDate: sprintEndDate,
                                 );
                               },

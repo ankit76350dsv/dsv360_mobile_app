@@ -1,3 +1,4 @@
+
 import 'package:dsv360/features/sprints/view/pages/navigator_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -25,6 +26,8 @@ class BoardView extends StatefulWidget {
   final int totalStories;
   final String? projectId;
   final String? projectName;
+  final String? sprintId;
+  final String? sprintName;
   final String? sprintEndDate;
 
   const BoardView({
@@ -44,6 +47,8 @@ class BoardView extends StatefulWidget {
     required this.totalStories,
     this.projectId,
     this.projectName,
+    this.sprintId,
+    this.sprintName,
     this.sprintEndDate,
   });
 
@@ -314,6 +319,46 @@ class _BoardViewState extends State<BoardView> {
                 ),
               ),
               const SizedBox(width: 10),
+              // Add story pill
+              // GestureDetector(
+              //   onTap: () {
+              //     Navigator.push(
+              //       context,
+              //       MaterialPageRoute(
+              //         builder: (_) => CreateStoryPage(
+              //           projectId: widget.projectId,
+              //           sprintId: widget.sprintId,
+              //           projectNameSelected: widget.projectName,
+              //           sprintNameSelected: widget.sprintName,
+              //         ),
+              //       ),
+              //     );
+              //   },
+              //   child: Container(
+              //     padding: const EdgeInsets.symmetric(
+              //         horizontal: 14, vertical: 10),
+              //     decoration: BoxDecoration(
+              //       color: widget.greyBorder.withValues(alpha: 0.5),
+              //       borderRadius: BorderRadius.circular(30),
+              //     ),
+              //     child: Row(
+              //       children: [
+              //         Icon(Icons.add, color: widget.primary, size: 18),
+              //         const SizedBox(width: 4),
+              //         Text(
+              //           'STORY',
+              //           style: TextStyle(
+              //             color: widget.customColors.textPrimary,
+              //             fontSize: 12,
+              //             fontWeight: FontWeight.w700,
+              //             letterSpacing: 0.5,
+              //           ),
+              //         ),
+              //       ],
+              //     ),
+              //   ),
+              // ),
+              // const SizedBox(width: 10),
               // Navigator pill
               GestureDetector(
                 onTap: () {
