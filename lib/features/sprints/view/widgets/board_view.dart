@@ -127,7 +127,7 @@ class _BoardViewState extends State<BoardView> {
     if (days == 0) {
       return 'Due today';
     } else if (days < 0) {
-      return 'Due exceeded ${-days} ${-days == -1 ? 'day ago' : 'days ago'}';
+      return 'Due exceeded ${-days} ${-days == 1 ? 'day ago' : 'days ago'}';
     } else {
       return '$days ${days == 1 ? 'day left' : 'days left'}';
     }

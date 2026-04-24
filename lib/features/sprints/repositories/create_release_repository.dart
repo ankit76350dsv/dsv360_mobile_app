@@ -9,7 +9,7 @@ final createReleaseRepositoryProvider = Provider<CreateReleaseRepository>((
 });
 
 class CreateReleaseRepository {
-  Future<CreateReleaseModel> CreateRelease({
+  Future<CreateReleaseModel> createRelease({
     required String title,
     required String projctID,
     required String description,

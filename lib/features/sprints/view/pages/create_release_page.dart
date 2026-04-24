@@ -78,7 +78,7 @@ class _CreateReleasePageState extends ConsumerState<CreateReleasePage> {
 
       final formattedDate = DateFormat('yyyy-MM-dd').format(_releaseDate!);
 
-      await repo.CreateRelease(
+      await repo.createRelease(
         title: _titleController.text.trim(),
         projctID: widget.projectId,
         description: _descriptionController.text.trim(),

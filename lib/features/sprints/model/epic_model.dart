@@ -4,6 +4,7 @@ class EpicModel {
   final String description;
   final String milestoneId;
   final String color;
+  final String projectId;
 
   EpicModel({
     required this.id,
@@ -11,6 +12,7 @@ class EpicModel {
     required this.description,
     required this.milestoneId,
     required this.color,
+    required this.projectId,
   });
 
   factory EpicModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class EpicModel {
       description: json['Description'] ?? '',
       milestoneId: json['MilestoneID'] ?? '',
       color: json['Color'] ?? '',
+      projectId: json['ProjectID'] ?? '',
     );
   }
 }

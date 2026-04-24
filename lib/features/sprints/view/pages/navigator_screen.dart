@@ -6,6 +6,7 @@ import 'package:dsv360/features/sprints/model/heirarchy_model.dart';
 import 'package:dsv360/features/sprints/model/release_milestone_model.dart';
 import 'package:dsv360/features/sprints/model/story_model.dart';
 import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
+import 'package:dsv360/features/sprints/view/pages/create_epic_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_release_page.dart';
 import 'package:dsv360/providers/project_provider.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
@@ -358,7 +359,13 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                       ),
                     ),
                   ),
-                  _AddButton(color: textSecondary),
+                  _AddButton(
+                    color: textSecondary,
+                    label: 'Story',
+                    onTap: () {
+                      // TODO: Implement create story navigation
+                    },
+                  ),
                   const SizedBox(width: 6),
                   Icon(
                     isExpanded ? Icons.expand_less : Icons.expand_more,
@@ -438,7 +445,19 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                       ),
                     ),
                   ),
-                  _AddButton(color: textSecondary),
+                  _AddButton(
+                    color: textSecondary,
+                    label: 'Epic',
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => CreateEpicPage(
+                          projectId: _selectedProjectId!,
+                          milestoneId: milestone.id,
+                        ),
+                      ),
+                    ),
+                  ),
                   const SizedBox(width: 6),
                   Icon(
                     isExpanded ? Icons.expand_less : Icons.expand_more,
@@ -762,19 +781,33 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
 
 class _AddButton extends StatelessWidget {
   final Color color;
+  final String label;
+  final VoidCallback? onTap;
 
-  const _AddButton({required this.color});
+  const _AddButton({
+    required this.color,
+    this.label = 'Epic',
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: EdgeInsets.only(left: 8, right: 4),
+        height: 28,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          children: [
+            Text("$label "),
+            Icon(Icons.add, color: color, size: 18),
+          ],
+        ),
       ),
-      child: Icon(Icons.add, color: color, size: 18),
     );
   }
 }
