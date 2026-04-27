@@ -1,11 +1,13 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
+import 'package:dsv360/features/badges/repositories/badge_assignment_repository.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 import 'package:dsv360/features/sprints/model/sprints_model.dart';
 import 'package:dsv360/features/sprints/model/story_model.dart';
 import 'package:dsv360/features/sprints/model/task_model.dart';
 import 'package:dsv360/features/sprints/repositories/get_sprints_repository.dart';
 import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
+import 'package:dsv360/features/sprints/view/pages/add_task_page.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // ── Provider ──────────────────────────────────────────────────────────────────
 
 final _storyDetailsProvider = FutureProvider.family<
-    ({StoryModel? story, List<TaskModel> tasks, List<SprintModel> sprints}),
+    ({StoryModel? story, List<TaskModel> tasks, List<SprintModel> sprints, Map<String, String> userIdToName}),
     ({String projectId, String storyId})>((ref, args) async {
   final hierarchyFuture = ref
       .read(hierarchyRepositoryProvider)
@@ -23,9 +25,14 @@ final _storyDetailsProvider = FutureProvider.family<
       .read(getSprintsRepositoryProvider)
       .fetchSprints(projectId: args.projectId);
 
-  final results = await Future.wait([hierarchyFuture, sprintsFuture]);
+  final usersFuture = ref
+      .read(badgeAssignmentRepositoryProvider)
+      .fetchUsers();
+
+  final results = await Future.wait([hierarchyFuture, sprintsFuture, usersFuture]);
   final hierarchy = results[0] as dynamic;
   final sprints = results[1] as List<SprintModel>;
+  final users = results[2] as dynamic;
 
   final story = (hierarchy.stories as List<StoryModel>)
       .where((s) => s.id == args.storyId)
@@ -36,7 +43,12 @@ final _storyDetailsProvider = FutureProvider.family<
       .where((t) => t.storyId == args.storyId)
       .toList();
 
-  return (story: story, tasks: tasks, sprints: sprints);
+  final userIdToName = <String, String>{};
+  for (final user in users) {
+    userIdToName[user.userId] = user.fullName;
+  }
+
+  return (story: story, tasks: tasks, sprints: sprints, userIdToName: userIdToName);
 });
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -126,6 +138,7 @@ class StoryDetailsPage extends ConsumerWidget {
                 final story = data.story;
                 final tasks = data.tasks;
                 final sprints = data.sprints;
+                final userIdToName = data.userIdToName;
 
                 if (story == null) {
                   return Center(
@@ -176,7 +189,7 @@ class StoryDetailsPage extends ConsumerWidget {
                               label: 'Assignee',
                               value: story.assigneeId.isEmpty
                                   ? 'Not set'
-                                  : story.assigneeId,
+                                  : userIdToName[story.assigneeId] ?? story.assigneeId,
                               customColors: customColors,
                             ),
                           ),
@@ -294,7 +307,7 @@ class StoryDetailsPage extends ConsumerWidget {
                               label: 'Primary Owner',
                               value: story.primaryOwnership.isEmpty
                                   ? 'Not set'
-                                  : story.primaryOwnership,
+                                  : userIdToName[story.primaryOwnership] ?? story.primaryOwnership,
                               customColors: customColors,
                             ),
                           ),
@@ -306,7 +319,7 @@ class StoryDetailsPage extends ConsumerWidget {
                               label: 'Secondary Owner',
                               value: story.secondaryOwnership.isEmpty
                                   ? 'Not set'
-                                  : story.secondaryOwnership,
+                                  : userIdToName[story.secondaryOwnership] ?? story.secondaryOwnership,
                               customColors: customColors,
                             ),
                           ),
@@ -354,43 +367,47 @@ class StoryDetailsPage extends ConsumerWidget {
                           ),
                           const Spacer(),
                           GestureDetector(
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Add task coming soon'),
-                                  duration: Duration(seconds: 1),
+                                        onTap: (){
+                                          Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AddTaskPage(
+                                    projectId: projectId,
+                                    storyId: story.id,
+                                    storyTitle: story.title,
+                                  ),
                                 ),
                               );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: primary.withValues(alpha: 0.10),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                    color:
-                                        primary.withValues(alpha: 0.30),
-                                    width: 1),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.add,
-                                      color: primary, size: 14),
-                                  const SizedBox(width: 3),
-                                  Text(
-                                    'Add Task',
-                                    style: TextStyle(
-                                      color: primary,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal:12,
+                                            vertical: 8,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: customColors.primary,
+                                            borderRadius: BorderRadius.circular(10),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: (customColors.primary ??
+                                                        const Color(0xFF2563EB))
+                                                    .withValues(alpha: 0.3),
+                                                blurRadius: 3,
+                                                offset: const Offset(0, 3),
+                                              ),
+                                            ],
+                                          ),
+                                          child: Text(
+                                            '+ Add Task',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              letterSpacing: 0.1,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                         ],
                       ),
                       const SizedBox(height: 10),
@@ -615,7 +632,7 @@ class _TaskTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = _taskStatusColor();
-    final progress = totalTasks > 0 ? completedTasks / totalTasks : 0.0;
+   
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -653,8 +670,7 @@ class _TaskTile extends StatelessWidget {
                     color: customColors.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    decoration:
-                        _isDone ? TextDecoration.lineThrough : null,
+                  
                     decorationColor: customColors.textSecondary,
                   ),
                 ),
@@ -682,33 +698,8 @@ class _TaskTile extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: progress,
-                    minHeight: 5,
-                    backgroundColor: greyBorder,
-                    valueColor: const AlwaysStoppedAnimation(
-                        Color(0xFF4CAF50)),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                '$completedTasks/$totalTasks  (${(progress * 100).toStringAsFixed(0)}%)',
-                style: TextStyle(
-                  color: customColors.textSecondary,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ],
+        ]
+          
       ),
     );
   }

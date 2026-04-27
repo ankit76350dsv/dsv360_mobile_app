@@ -1,6 +1,7 @@
 import 'package:dsv360/features/sprints/model/epic_model.dart';
 import 'package:dsv360/features/sprints/model/release_milestone_model.dart';
 import 'package:dsv360/features/sprints/model/story_model.dart';
+import 'package:dsv360/features/sprints/model/sub_task_model.dart';
 import 'package:dsv360/features/sprints/model/task_model.dart';
 
 class HierarchyModel {
@@ -8,12 +9,14 @@ class HierarchyModel {
   final List<EpicModel> epics;
   final List<StoryModel> stories;
   final List<TaskModel> tasks;
+  final List<SubTaskModel> subtasks;
 
   HierarchyModel({
     required this.milestones,
     required this.epics,
     required this.stories,
     required this.tasks,
+    required this.subtasks,
   });
 
   factory HierarchyModel.fromJson(Map<String, dynamic> json) {
@@ -35,6 +38,7 @@ class HierarchyModel {
       tasks: (data['tasks'] as List? ?? [])
           .map((e) => TaskModel.fromJson(Map<String, dynamic>.from(e)))
           .toList(),
+      subtasks: (data['subTasks'] as List? ?? []).map((e)=>SubTaskModel.fromJson(Map<String, dynamic>.from(e))).toList(),
     );
   }
 }
