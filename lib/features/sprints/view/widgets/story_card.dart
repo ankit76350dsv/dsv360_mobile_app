@@ -63,36 +63,65 @@ class StoryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          // Progress bar with completed/total on same line
-          Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: story.totalPoints > 0
-                        ? story.completedPoints / story.totalPoints
-                        : 0,
-                    minHeight: 6,
-                    backgroundColor: greyBorder,
-                    valueColor: const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
+          // Progress bar with completed/total on same line - only show if tasks exist
+          if (story.totalTasks > 0)
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: story.totalTasks > 0
+                          ? story.completedTasks / story.totalTasks
+                          : 0,
+                      minHeight: 6,
+                      backgroundColor: greyBorder,
+                      valueColor: const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${story.completedPoints}/${story.totalPoints}',
-                style: TextStyle(
-                  color: textSecondary,
-                  fontSize: 10,
+                const SizedBox(width: 8),
+                Text(
+                  '${story.completedTasks}/${story.totalTasks}',
+                  style: TextStyle(
+                    color: textSecondary,
+                    fontSize: 10,
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            )
+          else
+            const SizedBox(height: 0),
           const SizedBox(height: 4),
           // Bottom row: avatar + story label + points
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              
+              
+                 
+              // Story points badge
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4CAF50).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '${story.storyPoints}SP',
+                  style: const TextStyle(
+                    color: Color(0xFF4CAF50),
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              
+           
+              // Story label
+              
+
               // Avatar
               Container(
                 width: 18,
@@ -110,30 +139,6 @@ class StoryCard extends StatelessWidget {
                         color: primary,
                         fontSize: 9,
                         fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 4),
-              // Story label
-              Text(
-                story.storyLabel,
-                style: TextStyle(color: textSecondary, fontSize: 9),
-              ),
-              const SizedBox(width: 4),
-              // Story points badge
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4CAF50).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  '${story.storyPoints}SP',
-                  style: const TextStyle(
-                    color: Color(0xFF4CAF50),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

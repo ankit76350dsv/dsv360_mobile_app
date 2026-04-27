@@ -39,6 +39,15 @@ final hierarchyProvider =
       return hierarchy.stories
           .where((s) => args.sprintId == null || s.sprintId == args.sprintId)
           .map((s) {
+            // Calculate task counts for this story
+            final tasksForStory = hierarchy.tasks
+                .where((t) => t.storyId == s.id)
+                .toList();
+            final totalTasksCount = tasksForStory.length;
+            final completedTasksCount = tasksForStory
+                .where((t) => t.status.toLowerCase() == 'closed')
+                .length;
+
             return SprintStory(
               id: s.id,
               title: s.title,
@@ -49,6 +58,8 @@ final hierarchyProvider =
               storyPoints: s.points,
               columnId: s.status.toLowerCase().replaceAll(' ', '_'),
               status: s.status,
+              totalTasks: totalTasksCount,
+              completedTasks: completedTasksCount,
             );
           })
           .toList();

@@ -191,6 +191,9 @@ class _BoardViewState extends State<BoardView> {
                   onDragStart: () => setState(() => _isDragging = true),
                   onDragEnd: _stopAutoScroll,
                   projectId: widget.projectId,
+                  projectName: widget.projectName,
+                  sprintId: widget.sprintId,
+                  sprintName: widget.sprintName,
                 );
               },
             ),
@@ -320,47 +323,7 @@ class _BoardViewState extends State<BoardView> {
                 ),
               ),
               const SizedBox(width: 10),
-              // Add story pill
-              // GestureDetector(
-              //   onTap: () {
-              //     Navigator.push(
-              //       context,
-              //       MaterialPageRoute(
-              //         builder: (_) => CreateStoryPage(
-              //           projectId: widget.projectId,
-              //           sprintId: widget.sprintId,
-              //           projectNameSelected: widget.projectName,
-              //           sprintNameSelected: widget.sprintName,
-              //         ),
-              //       ),
-              //     );
-              //   },
-              //   child: Container(
-              //     padding: const EdgeInsets.symmetric(
-              //         horizontal: 14, vertical: 10),
-              //     decoration: BoxDecoration(
-              //       color: widget.greyBorder.withValues(alpha: 0.5),
-              //       borderRadius: BorderRadius.circular(30),
-              //     ),
-              //     child: Row(
-              //       children: [
-              //         Icon(Icons.add, color: widget.primary, size: 18),
-              //         const SizedBox(width: 4),
-              //         Text(
-              //           'STORY',
-              //           style: TextStyle(
-              //             color: widget.customColors.textPrimary,
-              //             fontSize: 12,
-              //             fontWeight: FontWeight.w700,
-              //             letterSpacing: 0.5,
-              //           ),
-              //         ),
-              //       ],
-              //     ),
-              //   ),
-              // ),
-              // const SizedBox(width: 10),
-              // Navigator pill
+              
               GestureDetector(
                 onTap: () {
                   if (widget.projectId == null || widget.projectId!.isEmpty) {

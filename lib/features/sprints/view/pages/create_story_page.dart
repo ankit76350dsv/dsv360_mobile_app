@@ -21,7 +21,7 @@ class CreateStoryPage extends ConsumerStatefulWidget {
   final String? projectNameSelected;
   final String? sprintNameSelected;
   final String? epicName;
-  
+  final String? status;
 
   const CreateStoryPage({
     super.key,
@@ -30,9 +30,9 @@ class CreateStoryPage extends ConsumerStatefulWidget {
     this.epicId,
     this.projectNameSelected,
     this.sprintNameSelected,
-    this.epicName
-    
-      });
+    this.epicName,
+    this.status,
+  });
 
   @override
   ConsumerState<CreateStoryPage> createState() => _CreateStoryPageState();
@@ -143,6 +143,10 @@ void initState() {
   _selectedProjectId = widget.projectId;
   _selectedSprintId = widget.sprintId;
   _selectedEpicId = widget.epicId;
+  
+  if (widget.status != null && widget.status!.isNotEmpty) {
+    _status = widget.status!;
+  }
 
   debugPrint(
     'Preselected project: ${widget.projectNameSelected} (${widget.projectId})'

@@ -8,6 +8,8 @@ class SprintStory {
   final int storyPoints;
   String columnId;
   String status;
+  final int totalTasks;
+  final int completedTasks;
 
   SprintStory({
     required this.id,
@@ -19,5 +21,7 @@ class SprintStory {
     required this.storyPoints,
     required this.columnId,
     required this.status,
+    this.totalTasks = 0,
+    this.completedTasks = 0,
   });
 }
