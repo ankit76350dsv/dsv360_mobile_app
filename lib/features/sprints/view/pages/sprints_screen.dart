@@ -6,6 +6,7 @@ import 'package:dsv360/features/sprints/repositories/get_sprints_repository.dart
 import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
 import 'package:dsv360/features/sprints/repositories/update_story_status_repository.dart';
 import 'package:dsv360/features/sprints/view/pages/create_epic_page.dart';
+import 'package:dsv360/features/sprints/view/pages/create_release_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_sprint_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_story_page.dart';
 import 'package:dsv360/providers/project_provider.dart';
@@ -72,8 +73,12 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
   String? _selectedProjectName;
   String? _selectedProjectId;
 
+  String? _selectedSprintStatus;
+
   String? _selectedSprintName;
   String? _selectedSprintId;
+
+
 
   bool _isRefreshingData = false;
 
@@ -100,6 +105,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
       setState(() {
         _selectedSprintName = firstSprint.sprintName;
         _selectedSprintId = firstSprint.rowId;
+        _selectedSprintStatus = firstSprint.status;
       });
     });
   }
@@ -438,6 +444,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                     setState(() {
                                       _selectedSprintName = sprint.sprintName;
                                       _selectedSprintId = sprint.rowId;
+                                      _selectedSprintStatus = sprint.status;
                                     });
                                     Navigator.pop(dialogContext);
                                   },
@@ -512,25 +519,56 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
     );
   }
 
-  Future<void> _onRefresh() async {
-    try {
-      final _ = await ref.refresh(projectListProvider.future);
-      if (_selectedProjectId != null && _selectedProjectId!.isNotEmpty) {
-        final _ = await ref.refresh(
-          sprintListProvider(_selectedProjectId!).future,
-        );
-        final _ = await ref.refresh(
-          hierarchyProvider((
-            projectId: _selectedProjectId!,
-            sprintId: _selectedSprintId,
-          )).future,
-        );
-      }
-    } catch (e) {
-      debugPrint('Refresh error: $e');
-    }
-  }
+ Future<void> _onRefresh() async {
+  try {
+    final _ = await ref.refresh(projectListProvider.future);
 
+    if (_selectedProjectId != null && _selectedProjectId!.isNotEmpty) {
+
+      // get fresh sprint list
+      final refreshedSprints = await ref.refresh(
+  sprintListProvider(_selectedProjectId!).future,
+);
+
+if (_selectedSprintId != null) {
+  try {
+    final selectedSprint = refreshedSprints.firstWhere(
+      (s) => s.rowId == _selectedSprintId,
+    );
+
+    setState(() {
+      _selectedSprintStatus = selectedSprint.status;
+      _selectedSprintName = selectedSprint.sprintName;
+    });
+  } catch (_) {}
+}
+      // update selected sprint status from fresh data
+      if (_selectedSprintId != null) {
+        try {
+          final selectedSprint = refreshedSprints.firstWhere(
+            (s) => s.rowId == _selectedSprintId,
+          );
+
+          if (mounted) {
+            setState(() {
+              _selectedSprintStatus = selectedSprint.status;
+              _selectedSprintName = selectedSprint.sprintName;
+            });
+          }
+        } catch (_) {}
+      }
+
+      final _ = await ref.refresh(
+        hierarchyProvider((
+          projectId: _selectedProjectId!,
+          sprintId: _selectedSprintId,
+        )).future,
+      );
+    }
+  } catch (e) {
+    debugPrint('Refresh error: $e');
+  }
+}
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(
@@ -805,9 +843,9 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                               ).withValues(alpha: 0.18),
                               borderRadius: BorderRadius.circular(4),
                             ),
-                            child: const Text(
-                              'ACTIVE',
-                              style: TextStyle(
+                            child: Text(
+                             (_selectedSprintStatus ?? 'Active'),
+                              style: const TextStyle(
                                 color: Color(0xFF4CAF50),
                                 fontSize: 9,
                                 fontWeight: FontWeight.w700,
@@ -964,6 +1002,51 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                             ),
                           ),
                           const SizedBox(width: 6),
+
+                          // + Release button
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CreateReleasePage(
+                                    projectId: _selectedProjectId,
+                                    projectName: _selectedProjectName
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: cardBg,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: greyBorder, width: 1),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.add, color: primary, size: 13),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    'RELEASE',
+                                    style: TextStyle(
+                                      color: textPrimary,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+
+
                           // + EPIC button
                           GestureDetector(
                             onTap: () {
@@ -1037,7 +1120,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                   Icon(Icons.add, color: primary, size: 13),
                                   const SizedBox(width: 2),
                                   Text(
-                                    'ISSUE',
+                                    'STORY',
                                     style: TextStyle(
                                       color: textPrimary,
                                       fontSize: 11,

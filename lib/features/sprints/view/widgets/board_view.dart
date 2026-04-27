@@ -129,7 +129,7 @@ class _BoardViewState extends State<BoardView> {
 
   String _getDaysLabel() {
     final days = _calculateDaysRemaining();
-    if (days == 0) {
+    if (days == 0 && widget.sprintName != null) {
       return 'Due today';
     } else if (days < 0) {
       return 'Due exceeded ${-days} ${-days == 1 ? 'day ago' : 'days ago'}';
