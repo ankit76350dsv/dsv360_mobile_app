@@ -16,6 +16,7 @@ class KanbanColumn extends StatefulWidget {
   final Color primary;
   final VoidCallback? onDragStart;
   final VoidCallback? onDragEnd;
+  final String? projectId;
 
   const KanbanColumn({
     required this.column,
@@ -30,6 +31,7 @@ class KanbanColumn extends StatefulWidget {
     required this.primary,
     this.onDragStart,
     this.onDragEnd,
+    this.projectId,
   });
 
   @override
@@ -146,6 +148,7 @@ class _KanbanColumnState extends State<KanbanColumn> {
                           textSecondary: widget.textSecondary,
                           greyBorder: widget.greyBorder,
                           primary: widget.primary,
+                          projectId: widget.projectId,
                         ),
                       ),
               ),

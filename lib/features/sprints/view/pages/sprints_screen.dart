@@ -784,7 +784,9 @@ if (_selectedSprintId != null) {
                         ),
                         const SizedBox(width: 8),
                         GestureDetector(
-                          onTap: () {},
+                          onTap: () {
+                            
+                          },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 14,

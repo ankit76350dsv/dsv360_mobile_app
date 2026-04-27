@@ -1,3 +1,4 @@
+import 'package:dsv360/features/sprints/view/pages/story_details_page.dart';
 import 'package:flutter/material.dart';
 import 'sprint_story.dart';
 
@@ -9,6 +10,7 @@ class StoryCard extends StatelessWidget {
   final Color textSecondary;
   final Color greyBorder;
   final Color primary;
+  final String? projectId;
 
   const StoryCard({
     required this.story,
@@ -18,6 +20,7 @@ class StoryCard extends StatelessWidget {
     required this.textSecondary,
     required this.greyBorder,
     required this.primary,
+    this.projectId,
   });
 
   @override
@@ -141,17 +144,32 @@ class StoryCard extends StatelessWidget {
     );
 
     return LongPressDraggable<SprintStory>(
-  data: story,
-  delay: const Duration(milliseconds: 120),
-  feedback: Material(
-    color: Colors.transparent,
-    child: Opacity(
-      opacity: 0.85,
-      child: SizedBox(width: 164, child: card),
-    ),
-  ),
-  childWhenDragging: Opacity(opacity: 0.35, child: card),
-  child: card,
-);
+      data: story,
+      delay: const Duration(milliseconds: 120),
+      feedback: Material(
+        color: Colors.transparent,
+        child: Opacity(
+          opacity: 0.85,
+          child: SizedBox(width: 164, child: card),
+        ),
+      ),
+      childWhenDragging: Opacity(opacity: 0.35, child: card),
+      child: GestureDetector(
+        onTap: () {
+          if (projectId == null || projectId!.isEmpty) return;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => StoryDetailsPage(
+                storyId: story.id,
+                projectId: projectId!,
+                storyTitle: story.title,
+              ),
+            ),
+          );
+        },
+        child: card,
+      ),
+    );
   }
 }

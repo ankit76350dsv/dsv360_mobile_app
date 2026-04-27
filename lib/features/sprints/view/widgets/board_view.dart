@@ -190,6 +190,7 @@ class _BoardViewState extends State<BoardView> {
                   primary: widget.primary,
                   onDragStart: () => setState(() => _isDragging = true),
                   onDragEnd: _stopAutoScroll,
+                  projectId: widget.projectId,
                 );
               },
             ),
