@@ -477,6 +477,8 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                         builder: (_) => CreateEpicPage(
                           projectId: _selectedProjectId!,
                           milestoneId: milestone.id,
+                          projectName: _selectedProjectName,
+                         releaseName: milestone.title,
                         ),
                       ),
                     ),
@@ -701,7 +703,15 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context)=>CreateReleasePage(projectId: widget.projectId!)));
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => CreateReleasePage(
+                projectId: _selectedProjectId,
+                projectName: _selectedProjectName,
+              ),
+            ),
+          );
         },
         backgroundColor: primary,
         shape: const CircleBorder(),
@@ -742,25 +752,36 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
 
     return hierarchyAsync.when(
       data: (hierarchy) {
-        final milestones = _filterMilestones(
-          hierarchy.milestones,
-          hierarchy.epics,
-          hierarchy.stories,
-        );
+  final milestones = _filterMilestones(
+    hierarchy.milestones,
+    hierarchy.epics,
+    hierarchy.stories,
+  );
 
-        if (milestones.isEmpty) {
-          return Center(
-            child: Text(
-              _searchQuery.isEmpty ? 'No data found' : 'No results found',
-              style: TextStyle(color: textSecondary, fontSize: 15),
+  return RefreshIndicator(
+    onRefresh: () async =>
+        ref.invalidate(_hierarchyProvider(projectId)),
+    child: milestones.isEmpty
+    ? ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.6,
+            child: Center(
+              child: Text(
+                _searchQuery.isEmpty
+                    ? 'No data found'
+                    : 'No results found',
+                style: TextStyle(
+                  color: textSecondary,
+                  fontSize: 15,
+                ),
+              ),
             ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: () async =>
-              ref.invalidate(_hierarchyProvider(projectId)),
-          child: ListView.builder(
+          ),
+        ],
+      )
+        : ListView.builder(
             padding: const EdgeInsets.only(bottom: 100),
             itemCount: milestones.length,
             itemBuilder: (context, index) => _buildMilestoneTile(
@@ -774,8 +795,8 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
               isLightMode,
             ),
           ),
-        );
-      },
+  );
+},
       loading: () => const Center(child: DsvLoader()),
       error: (err, _) => Center(
         child: Padding(

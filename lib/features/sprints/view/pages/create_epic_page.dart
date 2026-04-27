@@ -1,18 +1,27 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/features/sprints/model/release_milestone_model.dart';
 import 'package:dsv360/features/sprints/repositories/create_epic_repository.dart';
+import 'package:dsv360/features/sprints/repositories/get_projects_repository.dart';
+import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
+import 'package:dsv360/models/project_model.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class CreateEpicPage extends ConsumerStatefulWidget {
-  final String projectId;
-  final String milestoneId;
+  final String? projectId;
+  final String? projectName;
+  final String? milestoneId;
+  final String? releaseName;
 
   const CreateEpicPage({
     super.key,
-    required this.projectId,
-    required this.milestoneId,
+    this.projectId,
+    this.projectName,
+    this.milestoneId, //release is referred as milestone
+    this.releaseName,
   });
 
   @override
@@ -28,6 +37,17 @@ class _CreateEpicPageState extends ConsumerState<CreateEpicPage> {
   final String _loadingKey = 'create_epic_key';
 
   String? _selectedColor;
+  String? _selectedProjectId;
+  String? _selectedMilestoneId;
+  String? _selectedMilestoneName;
+
+  List<ProjectModel> _projects = [];
+  List<ReleaseMilestoneModel> _milestones = [];
+  bool _isProjectsLoading = false;
+  bool _hasProjectsError = false;
+
+  bool _isMilestonesLoading = false;
+  bool _hasMilestonesError = false;
 
   final List<String> _colors = [
     "#FA9921",
@@ -45,13 +65,84 @@ class _CreateEpicPageState extends ConsumerState<CreateEpicPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _selectedProjectId = widget.projectId;
+    // if (widget.projectId == null) {
+    //   _fetchProjects();
+    // }
+    _selectedMilestoneId = widget.milestoneId;
+    _selectedMilestoneName = widget.releaseName;
+
+    _fetchProjects();
+    if (_selectedProjectId != null && _selectedProjectId!.isNotEmpty) {
+      _fetchMilestones(_selectedProjectId!);
+    }
+  }
+
+
+
+  Future<void> _fetchProjects() async {
+    setState(() {
+      _isProjectsLoading = true;
+      _hasProjectsError = false;
+    });
+    try {
+      _projects = await ref.read(projectRepositoryProvider).fetchProjects();
+    } catch (_) {
+      _hasProjectsError = true;
+      _projects = [];
+    } finally {
+      if (mounted) setState(() => _isProjectsLoading = false);
+    }
+  }
+
+    Future<void> _fetchMilestones(String projectId) async {
+    setState(() {
+      _isMilestonesLoading = true;
+      _hasMilestonesError = false;
+      _milestones = [];
+    });
+    try {
+      final hierarchy = await ref
+          .read(hierarchyRepositoryProvider)
+          .fetchHierarchy(projectId: projectId);
+      _milestones = hierarchy.milestones;
+
+      if (_selectedMilestoneId != null &&
+          !_milestones.any((m) => m.id == _selectedMilestoneId)) {
+        _selectedMilestoneId = null;
+      }
+    } catch (_) {
+      _hasMilestonesError = true;
+      _milestones = [];
+    } finally {
+      if (mounted) setState(() => _isMilestonesLoading = false);
+    }
+  }
+
+  @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
 
-  Future<void> _createEpic(BuildContext context) async {
+  Future<void> _createEpic() async {
+    if (_selectedProjectId == null || _selectedProjectId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a project')),
+      );
+      return;
+    }
+
+    if (_selectedMilestoneId == null || _selectedMilestoneId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a release')),
+      );
+      return;
+    }
+
     if (_selectedColor == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a color')),
@@ -69,8 +160,9 @@ class _CreateEpicPageState extends ConsumerState<CreateEpicPage> {
       await repo.createEpic(
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
-        projectId: widget.projectId,
-        milestoneId: widget.milestoneId,
+        projectId: _selectedProjectId!,
+        //milestoneId: widget.milestoneId ?? '',
+        milestoneId: _selectedMilestoneId!,
         color: _selectedColor!,
       );
 
@@ -96,6 +188,30 @@ class _CreateEpicPageState extends ConsumerState<CreateEpicPage> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final customColors = Theme.of(context).custom;
+
+   final projectItems = [
+      if (widget.projectId != null &&
+          widget.projectName!= null &&
+          !_projects.any((p) => p.id == widget.projectId))
+        DropdownMenuItem<String>(
+          value: widget.projectId!,
+          child: Text(widget.projectName!),
+        ),
+
+      ..._projects.map((p) => DropdownMenuItem<String>(
+            value: p.id,
+            child: Text(p.projectName),
+          )),
+    ];
+
+    final milestoneItems = _milestones
+        .map(
+          (m) => DropdownMenuItem<String>(
+            value: m.id,
+            child: Text(m.title),
+          ),
+        )
+        .toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -126,6 +242,64 @@ class _CreateEpicPageState extends ConsumerState<CreateEpicPage> {
                   key: _formKey,
                   child: Column(
                     children: [
+                      // Project dropdown
+                      CustomDropDownField(
+                        hintText: _isProjectsLoading
+                            ? 'Loading projects...'
+                            : _hasProjectsError
+                                ? 'Failed to load projects'
+                                : widget.projectName ?? 'Select Project',
+                        labelText: 'Project *',
+                        prefixIcon: Icons.folder_outlined,
+                        searchable: true,
+                        searchHintText: 'Search project',
+                        options: projectItems,
+                        selectedOption: _selectedProjectId,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedProjectId = value;
+                            _selectedMilestoneId = null;
+                            _selectedMilestoneName = null;
+                            _milestones = [];
+                          });
+                          if (value != null && value.isNotEmpty) {
+                            _fetchMilestones(value);
+                          }
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      CustomDropDownField(
+                        hintText: _selectedProjectId == null
+                            ? 'Select project first'
+                            : _isMilestonesLoading
+                                ? 'Loading release...'
+                                : _hasMilestonesError
+                                    ? 'Failed to load release'
+                                    : _selectedMilestoneName ?? 'Select release',
+                        labelText: 'Release*',
+                        prefixIcon: Icons.new_releases_outlined,
+                        searchable: true,
+                        searchHintText: 'Search release',
+                        options: milestoneItems,
+                        selectedOption: _selectedMilestoneId,
+                        onChanged: milestoneItems.isEmpty
+                            ? (_) {}
+                            : (value) {
+                                final name = _milestones
+                                    .where((m) => m.id == value)
+                                    .map((m) => m.title)
+                                    .firstOrNull;
+                                setState(() {
+                                  _selectedMilestoneId = value;
+                                  _selectedMilestoneName = name;
+                                });
+                              },
+                      ),
+
+                      const SizedBox(height: 20),
+
                       /// Epic Title
                       CustomInputField(
                         controller: _titleController,
@@ -200,8 +374,7 @@ class _CreateEpicPageState extends ConsumerState<CreateEpicPage> {
                                     int.parse(colorHex.replaceAll('#', '0xFF')),
                                   );
 
-                                  final isSelected =
-                                      _selectedColor == colorHex;
+                                  final isSelected = _selectedColor == colorHex;
 
                                   return GestureDetector(
                                     onTap: () {
@@ -234,7 +407,6 @@ class _CreateEpicPageState extends ConsumerState<CreateEpicPage> {
 
                       const SizedBox(height: 32),
 
-                      /// Buttons (same component reused)
                       BottomTwoButtons(
                         loadingKey: _loadingKey,
                         button1Text: 'cancel',
@@ -242,7 +414,7 @@ class _CreateEpicPageState extends ConsumerState<CreateEpicPage> {
                         button1Function: () => Navigator.pop(context),
                         button2Function: () {
                           if (_formKey.currentState!.validate()) {
-                            _createEpic(context);
+                            _createEpic();
                           }
                         },
                       ),

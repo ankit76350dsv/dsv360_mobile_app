@@ -5,6 +5,7 @@ import 'package:dsv360/features/sprints/model/sprints_model.dart';
 import 'package:dsv360/features/sprints/repositories/get_sprints_repository.dart';
 import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
 import 'package:dsv360/features/sprints/repositories/update_story_status_repository.dart';
+import 'package:dsv360/features/sprints/view/pages/create_epic_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_sprint_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_story_page.dart';
 import 'package:dsv360/providers/project_provider.dart';
@@ -951,6 +952,48 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                   const SizedBox(width: 2),
                                   Text(
                                     'SPRINT',
+                                    style: TextStyle(
+                                      color: textPrimary,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          // + EPIC button
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CreateEpicPage(
+                                    projectId: _selectedProjectId ?? widget.projectId,
+                                    projectName: _selectedProjectName ?? widget.projectName,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: cardBg,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: greyBorder, width: 1),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.add, color: primary, size: 13),
+                                  const SizedBox(width: 2),
+                                  Text(
+                                    'EPIC',
                                     style: TextStyle(
                                       color: textPrimary,
                                       fontSize: 11,

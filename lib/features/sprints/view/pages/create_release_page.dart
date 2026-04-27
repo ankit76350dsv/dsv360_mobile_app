@@ -1,15 +1,19 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/features/sprints/repositories/create_release_repository.dart';
+import 'package:dsv360/features/sprints/repositories/get_projects_repository.dart';
+import 'package:dsv360/models/project_model.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 class CreateReleasePage extends ConsumerStatefulWidget {
-  final String projectId;
+  final String? projectId;
+  final String? projectName;
 
-  const CreateReleasePage({super.key, required this.projectId});
+  const CreateReleasePage({super.key, this.projectId, this.projectName});
 
   @override
   ConsumerState<CreateReleasePage> createState() => _CreateReleasePageState();
@@ -23,13 +27,40 @@ class _CreateReleasePageState extends ConsumerState<CreateReleasePage> {
 
   DateTime? _releaseDate;
 
+  String? _selectedProjectId;
+  List<ProjectModel> _projects = [];
+  bool _isProjectsLoading = false;
+  bool _hasProjectsError = false;
+
   final String _loadingKey = 'create_release_key';
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedProjectId = widget.projectId;
+    _fetchProjects();
+  }
 
   @override
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchProjects() async {
+    setState(() {
+      _isProjectsLoading = true;
+      _hasProjectsError = false;
+    });
+    try {
+      _projects = await ref.read(projectRepositoryProvider).fetchProjects();
+    } catch (_) {
+      _hasProjectsError = true;
+      _projects = [];
+    } finally {
+      if (mounted) setState(() => _isProjectsLoading = false);
+    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -61,7 +92,14 @@ class _CreateReleasePageState extends ConsumerState<CreateReleasePage> {
     }
   }
 
-  Future<void> _createRelease(BuildContext context) async {
+  Future<void> _createRelease() async {
+    if (_selectedProjectId == null || _selectedProjectId!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a project')),
+      );
+      return;
+    }
+
     if (_releaseDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a release date')),
@@ -75,12 +113,11 @@ class _CreateReleasePageState extends ConsumerState<CreateReleasePage> {
 
     try {
       final repo = ref.read(createReleaseRepositoryProvider);
-
       final formattedDate = DateFormat('yyyy-MM-dd').format(_releaseDate!);
 
       await repo.createRelease(
         title: _titleController.text.trim(),
-        projctID: widget.projectId,
+        projctID: _selectedProjectId!,
         description: _descriptionController.text.trim(),
         dueDate: formattedDate,
       );
@@ -106,6 +143,20 @@ class _CreateReleasePageState extends ConsumerState<CreateReleasePage> {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final customColors = Theme.of(context).custom;
+
+    final projectItems = [
+      if (widget.projectId != null &&
+          widget.projectName != null &&
+          !_projects.any((p) => p.id == widget.projectId))
+        DropdownMenuItem<String>(
+          value: widget.projectId!,
+          child: Text(widget.projectName!),
+        ),
+      ..._projects.map((p) => DropdownMenuItem<String>(
+            value: p.id,
+            child: Text(p.projectName),
+          )),
+    ];
 
     return Scaffold(
       appBar: AppBar(
@@ -136,6 +187,26 @@ class _CreateReleasePageState extends ConsumerState<CreateReleasePage> {
                   key: _formKey,
                   child: Column(
                     children: [
+                      // Project dropdown
+                      CustomDropDownField(
+                        hintText: _isProjectsLoading
+                            ? 'Loading projects...'
+                            : _hasProjectsError
+                                ? 'Failed to load projects'
+                                : widget.projectName ?? 'Select Project',
+                        labelText: 'Project *',
+                        prefixIcon: Icons.folder_outlined,
+                        searchable: true,
+                        searchHintText: 'Search project',
+                        options: projectItems,
+                        selectedOption: _selectedProjectId,
+                        onChanged: (value) {
+                          setState(() => _selectedProjectId = value);
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+
                       // Release Title
                       CustomInputField(
                         controller: _titleController,
@@ -152,7 +223,7 @@ class _CreateReleasePageState extends ConsumerState<CreateReleasePage> {
 
                       const SizedBox(height: 20),
 
-                       // Release Date
+                      // Release Date
                       InkWell(
                         onTap: () => _selectDate(context),
                         child: Container(
@@ -187,8 +258,7 @@ class _CreateReleasePageState extends ConsumerState<CreateReleasePage> {
                                 child: Text(
                                   _releaseDate == null
                                       ? 'Release Date'
-                                      : DateFormat('dd-MM-yyyy')
-                                          .format(_releaseDate!),
+                                      : DateFormat('dd-MM-yyyy').format(_releaseDate!),
                                   style: TextStyle(
                                     color: _releaseDate == null
                                         ? customColors.textHint
@@ -223,8 +293,6 @@ class _CreateReleasePageState extends ConsumerState<CreateReleasePage> {
 
                       const SizedBox(height: 32),
 
-                     
-
                       BottomTwoButtons(
                         loadingKey: _loadingKey,
                         button1Text: 'cancel',
@@ -232,7 +300,7 @@ class _CreateReleasePageState extends ConsumerState<CreateReleasePage> {
                         button1Function: () => Navigator.pop(context),
                         button2Function: () {
                           if (_formKey.currentState!.validate()) {
-                            _createRelease(context);
+                            _createRelease();
                           }
                         },
                       ),

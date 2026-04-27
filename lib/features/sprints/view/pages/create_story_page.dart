@@ -65,7 +65,7 @@ class _CreateStoryPageState extends ConsumerState<CreateStoryPage> {
   String? _zohoProductName;
 
   // Loaded data
-  List<ProjectModel> _projects = [];
+  List<ProjectModel> _projects = []; //projects declared here
   List<SprintModel> _sprints = [];
   List<EpicModel> _epics = [];
   List<BadgeUser> _users = [];
@@ -160,7 +160,7 @@ void initState() {
     ]);
   }
 
-  Future<void> _fetchProjects() async {
+  Future<void> _fetchProjects() async { // projects here
     setState(() {
       _isProjectsLoading = true;
       _hasProjectsError = false;
