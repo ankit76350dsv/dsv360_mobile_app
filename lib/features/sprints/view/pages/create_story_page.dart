@@ -265,16 +265,12 @@ void initState() {
     try {
       final repo = ref.read(createStoryRepositoryProvider);
       
-
-
-      
-      
-    
+      final finalSprintId = sprintId == 'BACKLOG' ? '' : sprintId;
 
       await repo.createStory(
         title: _titleController.text.trim(),
         projectId: projectId,
-        sprintId: sprintId,
+        sprintId: finalSprintId,
         description: _descriptionController.text.trim(),
         epicId: _selectedEpicId,
         assigneeId: _selectedAssigneeId,
@@ -508,7 +504,12 @@ void initState() {
                         onChanged: sprintItems.isEmpty
                             ? (_) {}
                             : (value) {
-                                setState(() => _selectedSprintId = value);
+                                setState(() {
+                                  _selectedSprintId = value;
+                                  if (value == 'BACKLOG') {
+                                    _status = 'BACKLOG';
+                                  }
+                                });
                               },
                       ),
 
@@ -521,7 +522,9 @@ void initState() {
                         prefixIcon: Icons.track_changes_outlined,
                         options: statusItems,
                         selectedOption: _status,
-                        onChanged: (val) {
+                        onChanged: _selectedSprintId == 'BACKLOG'
+                            ? (_) {}
+                            : (val) {
                           if (val != null) setState(() => _status = val);
                         },
                       ),

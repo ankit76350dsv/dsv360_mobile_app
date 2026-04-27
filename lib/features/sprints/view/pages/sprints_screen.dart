@@ -8,6 +8,7 @@ import 'package:dsv360/features/sprints/repositories/update_story_status_reposit
 import 'package:dsv360/features/sprints/view/pages/create_epic_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_release_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_sprint_page.dart';
+import 'package:dsv360/features/sprints/view/pages/backlog_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_story_page.dart';
 import 'package:dsv360/providers/project_provider.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
@@ -1283,14 +1284,27 @@ if (_selectedSprintId != null) {
                           },
                         ),
                         // Backlog tab
-                        Center(
-                          child: Text(
-                            'Backlog coming soon',
-                            style: TextStyle(
-                              color: textSecondary,
-                              fontSize: 14,
-                            ),
-                          ),
+                        Builder(
+                          builder: (context) {
+                            final projectId =
+                                _selectedProjectId ?? widget.projectId;
+                            if (projectId == null || projectId.isEmpty) {
+                              return Center(
+                                child: Text(
+                                  'Select a project to view backlog',
+                                  style: TextStyle(
+                                    color: textSecondary,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              );
+                            }
+                            return BacklogPage(
+                              projectId: projectId,
+                              projectName:
+                                  _selectedProjectName ?? widget.projectName,
+                            );
+                          },
                         ),
                         // Timeline tab
                         Center(
