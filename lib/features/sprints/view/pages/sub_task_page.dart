@@ -6,6 +6,7 @@ import 'package:dsv360/features/sprints/model/sub_task_model.dart';
 import 'package:dsv360/features/sprints/model/task_model.dart';
 import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
 import 'package:dsv360/features/sprints/repositories/time_entry_repository.dart';
+import 'package:dsv360/features/sprints/view/pages/create_time_entry_page.dart';
 import 'package:dsv360/features/time_entry/model/time_entry_model.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
@@ -51,11 +52,13 @@ final _timeEntriesProvider =
 class SubTaskPage extends ConsumerStatefulWidget {
   final TaskModel task;
   final String projectId;
+  final String sprintId;
 
   const SubTaskPage({
     super.key,
     required this.task,
     required this.projectId,
+    required this.sprintId,
   });
 
   @override
@@ -217,6 +220,11 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
               onBack: () {
                 if (Navigator.canPop(context)) Navigator.pop(context);
               },
+              actionIcon: Icons.refresh,
+              onInfoTap: () {
+                ref.invalidate(_subTaskPageDataProvider(dataArgs));
+                ref.invalidate(_timeEntriesProvider(widget.task.id));
+              },
             ),
           ),
 
@@ -257,45 +265,6 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
             ),
           ),
 
-          // ── Status row ────────────────────────────────────────────────
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: Row(
-              children: [
-                Text(
-                  'Status :',
-                  style: TextStyle(
-                    color: textSecondary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _StatusButton(
-                    current: taskStatus,
-                    statusOptions: _statusOptions,
-                    cardBg: cardBg,
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    greyBorder: greyBorder,
-                    primary: primary,
-                    onShowSelector: (ctx, cur) => _showStatusSelector(
-                      context: ctx,
-                      current: cur,
-                      cardBg: cardBg,
-                      textPrimary: textPrimary,
-                      textSecondary: textSecondary,
-                      greyBorder: greyBorder,
-                      primary: primary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
           // ── Log Time / Start Timer ────────────────────────────────────
           Padding(
             padding:
@@ -304,10 +273,26 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () {},
+                    onPressed: () async {
+                      final result = await Navigator.push<bool>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CreateTimeEntryPage(
+                            task: widget.task,
+                            projectId: widget.projectId,
+                            projectName: '',
+                            storyId: widget.task.storyId,
+                            sprintId: widget.sprintId,
+                          ),
+                        ),
+                      );
+                      if (result == true) {
+                        ref.invalidate(_timeEntriesProvider(widget.task.id));
+                      }
+                    },
                     icon: Icon(Icons.add, size: 16, color: textPrimary),
                     label: Text(
-                      'Log Time',
+                      'Log Time (Task)',
                       style: TextStyle(
                         color: textPrimary,
                         fontSize: 13,
@@ -350,6 +335,48 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
               ],
             ),
           ),
+
+          // ── Status row ────────────────────────────────────────────────
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: Row(
+              children: [
+                Text(
+                  '  Status   ',
+                  style: TextStyle(
+                    color: textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Expanded(
+                  child: _StatusButton(
+                    current: taskStatus,
+                    statusOptions: _statusOptions,
+                    cardBg: cardBg,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    greyBorder: greyBorder,
+                    primary: primary,
+                    onShowSelector: (ctx, cur) => _showStatusSelector(
+                      context: ctx,
+                      current: cur,
+                      cardBg: cardBg,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      greyBorder: greyBorder,
+                      primary: primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                
+              ],
+            ),
+          ),
+
+          
 
           // ── Tab Bar ───────────────────────────────────────────────────
           Container(
@@ -528,6 +555,12 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                                   greyBorder: greyBorder,
                                   primary: primary,
                                 ),
+                                task: widget.task,
+                                projectId: widget.projectId,
+                                sprintId: widget.sprintId,
+                                onTimeEntryAdded: () => ref.invalidate(
+                                  _timeEntriesProvider(widget.task.id),
+                                ),
                               );
                             }),
                         ],
@@ -537,23 +570,31 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                 ),
 
                 // ── Time Entries tab ───────────────────────────────
-                timeEntriesAsync.when(
-                  loading: () => const Center(child: DsvLoader()),
-                  error: (err, _) => _ErrorRetry(
-                    message: 'Failed to load time entries',
-                    detail: err.toString(),
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    onRetry: () => ref.invalidate(
-                        _timeEntriesProvider(widget.task.id)),
-                  ),
-                  data: (entries) => _TimeEntriesTab(
-                    entries: entries,
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    cardBg: cardBg,
-                    greyBorder: greyBorder,
-                    primary: primary,
+                RefreshIndicator(
+                  onRefresh: () async =>
+                      ref.invalidate(_timeEntriesProvider(widget.task.id)),
+                  child: timeEntriesAsync.when(
+                    loading: () => const Center(child: DsvLoader()),
+                    error: (err, _) => ListView(
+                      children: [
+                        _ErrorRetry(
+                          message: 'Failed to load time entries',
+                          detail: err.toString(),
+                          textPrimary: textPrimary,
+                          textSecondary: textSecondary,
+                          onRetry: () => ref.invalidate(
+                              _timeEntriesProvider(widget.task.id)),
+                        ),
+                      ],
+                    ),
+                    data: (entries) => _TimeEntriesTab(
+                      entries: entries,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      cardBg: cardBg,
+                      greyBorder: greyBorder,
+                      primary: primary,
+                    ),
                   ),
                 ),
               ],
@@ -683,6 +724,10 @@ class _SubTaskCard extends StatefulWidget {
   final Color greyBorder;
   final Color primary;
   final Future<String?> Function(BuildContext, String) onShowSelector;
+  final TaskModel task;
+  final String projectId;
+  final String sprintId;
+  final VoidCallback onTimeEntryAdded;
 
   const _SubTaskCard({
     required this.subTask,
@@ -695,6 +740,10 @@ class _SubTaskCard extends StatefulWidget {
     required this.greyBorder,
     required this.primary,
     required this.onShowSelector,
+    required this.task,
+    required this.projectId,
+    required this.sprintId,
+    required this.onTimeEntryAdded,
   });
 
   @override
@@ -887,9 +936,25 @@ class _SubTaskCardState extends State<_SubTaskCard> {
               ),
               const Spacer(),
               _SmallButton(
-                label: '+ LOG TIME',
+                label: '+ LOG TIME (SubTask)',
                 color: widget.primary,
-                onTap: () {},
+                onTap: () async {
+                  final result = await Navigator.push<bool>(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CreateTimeEntryPage(
+                        task: widget.task,
+                        projectId: widget.projectId,
+                        projectName: '',
+                        storyId: widget.task.storyId,
+                        sprintId: widget.sprintId,
+                        sourceType: 'SPRINT_SUBTASK',
+                        subTaskId: widget.subTask.rowId,
+                      ),
+                    ),
+                  );
+                  if (result == true) widget.onTimeEntryAdded();
+                },
               ),
               const SizedBox(width: 8),
               _SmallButton(
@@ -974,7 +1039,7 @@ class _TimeEntriesTab extends StatelessWidget {
             Expanded(
               child: _SummaryTile(
                 value: _formatTotalTime(_totalMinutes),
-                label: 'minutes',
+                label: 'Total Time',
                 icon: Icons.schedule_outlined,
                 cardBg: cardBg,
                 textPrimary: textPrimary,

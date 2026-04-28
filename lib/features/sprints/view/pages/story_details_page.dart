@@ -433,6 +433,7 @@ class StoryDetailsPage extends ConsumerWidget {
                               customColors: customColors,
                               isLightMode: isLightMode,
                               projectId: projectId,
+                              sprintId: story.sprintId,
                             )),
                     ],
                   ),
@@ -609,6 +610,7 @@ class _TaskTile extends StatelessWidget {
   final CustomColors customColors;
   final bool isLightMode;
   final String projectId;
+  final String sprintId;
 
   const _TaskTile({
     required this.task,
@@ -618,6 +620,7 @@ class _TaskTile extends StatelessWidget {
     required this.customColors,
     required this.isLightMode,
     required this.projectId,
+    required this.sprintId,
   });
 
   bool get _isDone => task.status.toLowerCase() == 'closed';
@@ -641,7 +644,7 @@ class _TaskTile extends StatelessWidget {
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => SubTaskPage(task: task, projectId: projectId),
+          builder: (_) => SubTaskPage(task: task, projectId: projectId, sprintId: sprintId),
         ),
       ),
       child: Container(
