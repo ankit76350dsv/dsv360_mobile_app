@@ -506,9 +506,6 @@ void initState() {
                             : (value) {
                                 setState(() {
                                   _selectedSprintId = value;
-                                  if (value == 'BACKLOG') {
-                                    _status = 'BACKLOG';
-                                  }
                                 });
                               },
                       ),
@@ -522,9 +519,7 @@ void initState() {
                         prefixIcon: Icons.track_changes_outlined,
                         options: statusItems,
                         selectedOption: _status,
-                        onChanged: _selectedSprintId == 'BACKLOG'
-                            ? (_) {}
-                            : (val) {
+                        onChanged: (val) {
                           if (val != null) setState(() => _status = val);
                         },
                       ),

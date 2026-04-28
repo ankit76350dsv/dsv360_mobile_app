@@ -658,7 +658,7 @@ class _BacklogStoryCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
 
-            // ── Row 3: Status + Deploy to Cycle ──
+            // ── Row 3: Status ──
             Row(
               children: [
                 Container(
@@ -679,7 +679,13 @@ class _BacklogStoryCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // ── Row 4: Deploy to Cycle Button ──
+            Row(
+              children: [
                 Expanded(
                   child: sprintsAsync.when(
                     loading: () => _DeployButton(
