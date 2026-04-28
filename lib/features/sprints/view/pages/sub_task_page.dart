@@ -1,25 +1,49 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
+import 'package:dsv360/features/badges/model/badge_user.dart';
+import 'package:dsv360/features/badges/repositories/badge_assignment_repository.dart';
 import 'package:dsv360/features/sprints/model/sub_task_model.dart';
 import 'package:dsv360/features/sprints/model/task_model.dart';
 import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
+import 'package:dsv360/features/sprints/repositories/time_entry_repository.dart';
+import 'package:dsv360/features/time_entry/model/time_entry_model.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-// ── Provider ──────────────────────────────────────────────────────────────────
+// ── Providers ─────────────────────────────────────────────────────────────────
 
-final _subTasksProvider = FutureProvider.family<
-    List<SubTaskModel>,
+final _subTaskPageDataProvider = FutureProvider.family<
+    ({List<SubTaskModel> subTasks, Map<String, String> userIdToName}),
     ({String projectId, String taskId})>((ref, args) async {
-  final hierarchy = await ref
+  final hierarchyFuture = ref
       .read(hierarchyRepositoryProvider)
       .fetchHierarchy(projectId: args.projectId);
+  final usersFuture =
+      ref.read(badgeAssignmentRepositoryProvider).fetchUsers();
 
-  return hierarchy.subtasks
+  final results = await Future.wait([hierarchyFuture, usersFuture]);
+  final hierarchy = results[0] as dynamic;
+  final users = results[1] as List<BadgeUser>;
+
+  final subTasks = (hierarchy.subtasks as List<SubTaskModel>)
       .where((s) => s.taskId == args.taskId)
       .toList();
+
+  final userIdToName = <String, String>{};
+  for (final u in users) {
+    userIdToName[u.userId] = u.fullName;
+  }
+
+  return (subTasks: subTasks, userIdToName: userIdToName);
+});
+
+final _timeEntriesProvider =
+    FutureProvider.family<List<TimeEntry>, String>((ref, taskId) async {
+  return ref
+      .read(sprintTimeEntryRepositoryProvider)
+      .fetchTimeEntriesForTask(taskId: taskId);
 });
 
 // ── Page ──────────────────────────────────────────────────────────────────────
@@ -97,22 +121,95 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
     return match['label']!.toUpperCase();
   }
 
+  // sprints_screen-style dialog selector
+  Future<String?> _showStatusSelector({
+    required BuildContext context,
+    required String current,
+    required Color cardBg,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color greyBorder,
+    required Color primary,
+  }) async {
+    String? result;
+    await showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (dialogContext) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+          child: Container(
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: greyBorder, width: 1),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: _statusOptions.map((s) {
+                final isSelected =
+                    s['value']!.toLowerCase() == current.toLowerCase();
+                return InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () {
+                    result = s['value'];
+                    Navigator.pop(dialogContext);
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: isSelected
+                          ? primary.withValues(alpha: 0.12)
+                          : Colors.transparent,
+                    ),
+                    child: Text(
+                      s['label']!,
+                      style: TextStyle(
+                        color: textPrimary,
+                        fontSize: 13,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
+    );
+    return result;
+  }
+
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
     final textPrimary = customColors.textPrimary ?? Colors.black;
     final textSecondary = customColors.textSecondary ?? Colors.grey;
+    final cardBg = customColors.cardBackground ?? Colors.white;
+    final greyBorder = customColors.greyBorder ?? Colors.grey.shade300;
     final primary = customColors.primary ?? const Color(0xFF1A56DB);
     final taskStatus = widget.task.status;
     final taskStatusColor = _statusColor(taskStatus);
 
-    final args = (projectId: widget.projectId, taskId: widget.task.id);
-    final subTasksAsync = ref.watch(_subTasksProvider(args));
+    final dataArgs = (projectId: widget.projectId, taskId: widget.task.id);
+    final dataAsync = ref.watch(_subTaskPageDataProvider(dataArgs));
+    final timeEntriesAsync =
+        ref.watch(_timeEntriesProvider(widget.task.id));
 
     return Scaffold(
       body: Column(
         children: [
-          // ── Top Bar ────────────────────────────────────────────────────────
+          // ── Top Bar ──────────────────────────────────────────────────────
           Container(
             padding: const EdgeInsets.only(top: 48, bottom: 8),
             child: TopBar(
@@ -123,9 +220,10 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
             ),
           ),
 
-          // ── Task title + status badge ──────────────────────────────────────
+          // ── Task title + status badge ─────────────────────────────────
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
               children: [
                 Expanded(
@@ -140,8 +238,8 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: taskStatusColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
@@ -159,39 +257,49 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
             ),
           ),
 
-          // ── Status dropdown row ────────────────────────────────────────────
+          // ── Status row ────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: SizedBox(
-              height: 40,
-              child: Row(
-                children: [
-                  Text(
-                    'Status :',
-                    style: TextStyle(
-                      color: textSecondary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            child: Row(
+              children: [
+                Text(
+                  'Status :',
+                  style: TextStyle(
+                    color: textSecondary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _StatusButton(
+                    current: taskStatus,
+                    statusOptions: _statusOptions,
+                    cardBg: cardBg,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    greyBorder: greyBorder,
+                    primary: primary,
+                    onShowSelector: (ctx, cur) => _showStatusSelector(
+                      context: ctx,
+                      current: cur,
+                      cardBg: cardBg,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      greyBorder: greyBorder,
+                      primary: primary,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _StatusDropdown(
-                      value: taskStatus,
-                      options: _statusOptions,
-                      statusColor: taskStatusColor,
-                      customColors: customColors,
-                      onChanged: (_) {},
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
 
-          // ── Log Time / Start Timer buttons ────────────────────────────────
+          // ── Log Time / Start Timer ────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Row(
               children: [
                 Expanded(
@@ -207,9 +315,9 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      side: BorderSide(
-                          color: customColors.greyBorder ?? Colors.grey.shade300),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: 10),
+                      side: BorderSide(color: greyBorder),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
                     ),
@@ -231,7 +339,8 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2E7D32),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      padding:
+                          const EdgeInsets.symmetric(vertical: 10),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
@@ -242,9 +351,10 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
             ),
           ),
 
-          // ── Tab Bar ───────────────────────────────────────────────────────
+          // ── Tab Bar ───────────────────────────────────────────────────
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            margin:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
               color: customColors.tabbarBackground ??
                   Colors.grey.withValues(alpha: 0.1),
@@ -252,6 +362,9 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
             ),
             child: TabBar(
               controller: _tabController,
+              physics: const NeverScrollableScrollPhysics(),
+              isScrollable: false,
+              
               indicator: BoxDecoration(
                 color: primary,
                 borderRadius: BorderRadius.circular(8),
@@ -265,9 +378,11 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
               unselectedLabelStyle: const TextStyle(
                   fontSize: 12, fontWeight: FontWeight.w600),
               tabs: [
+                
                 Tab(
-                  child: subTasksAsync.when(
-                    data: (list) => Text('SUB-TASKS (${list.length})'),
+                  child: dataAsync.when(
+                    data: (d) =>
+                        Text('SUB-TASKS (${d.subTasks.length})'),
                     loading: () => const Text('SUB-TASKS'),
                     error: (_, __) => const Text('SUB-TASKS'),
                   ),
@@ -277,68 +392,54 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
             ),
           ),
 
-          // ── Tab Views ─────────────────────────────────────────────────────
+          // ── Tab Views ─────────────────────────────────────────────────
           Expanded(
             child: TabBarView(
               controller: _tabController,
               children: [
-                // ── Sub-tasks tab ──────────────────────────────────────────
-                subTasksAsync.when(
+                // ── Sub-tasks tab ──────────────────────────────────
+                dataAsync.when(
                   loading: () => const Center(child: DsvLoader()),
-                  error: (err, _) => Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.error_outline,
-                              size: 48, color: Colors.red.shade300),
-                          const SizedBox(height: 12),
-                          Text('Failed to load sub-tasks',
-                              style: TextStyle(
-                                  color: textPrimary, fontSize: 15)),
-                          const SizedBox(height: 6),
-                          Text(err.toString(),
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                  color: textSecondary, fontSize: 13)),
-                          const SizedBox(height: 16),
-                          TextButton(
-                            onPressed: () =>
-                                ref.invalidate(_subTasksProvider(args)),
-                            child: Text('Retry',
-                                style: TextStyle(
-                                    color: Colors.blue.shade400)),
-                          ),
-                        ],
-                      ),
-                    ),
+                  error: (err, _) => _ErrorRetry(
+                    message: 'Failed to load sub-tasks',
+                    detail: err.toString(),
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    onRetry: () => ref
+                        .invalidate(_subTaskPageDataProvider(dataArgs)),
                   ),
-                  data: (subTasks) {
+                  data: (data) {
+                    final subTasks = data.subTasks;
+                    final userIdToName = data.userIdToName;
                     final completedCount = subTasks
-                        .where((s) => s.status.toLowerCase() == 'closed')
+                        .where((s) =>
+                            s.status.toLowerCase() == 'closed')
                         .length;
 
                     return RefreshIndicator(
-                      onRefresh: () async =>
-                          ref.invalidate(_subTasksProvider(args)),
+                      onRefresh: () async => ref.invalidate(
+                          _subTaskPageDataProvider(dataArgs)),
                       child: ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                        padding: const EdgeInsets.fromLTRB(
+                            16, 8, 16, 100),
                         children: [
-                          // ── Progress bar row ─────────────────────────
+                          // progress row
                           Row(
                             children: [
                               Expanded(
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(4),
+                                  borderRadius:
+                                      BorderRadius.circular(4),
                                   child: LinearProgressIndicator(
                                     value: subTasks.isEmpty
                                         ? 0
-                                        : completedCount / subTasks.length,
-                                    backgroundColor:
-                                        Colors.grey.withValues(alpha: 0.2),
+                                        : completedCount /
+                                            subTasks.length,
+                                    backgroundColor: Colors.grey
+                                        .withValues(alpha: 0.2),
                                     valueColor:
-                                        AlwaysStoppedAnimation<Color>(primary),
+                                        AlwaysStoppedAnimation<Color>(
+                                            primary),
                                     minHeight: 6,
                                   ),
                                 ),
@@ -360,7 +461,8 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                                       horizontal: 12, vertical: 7),
                                   decoration: BoxDecoration(
                                     color: primary,
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius:
+                                        BorderRadius.circular(8),
                                     boxShadow: [
                                       BoxShadow(
                                         color: primary
@@ -385,27 +487,47 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                           ),
                           const SizedBox(height: 12),
 
-                          // ── Sub-task cards ───────────────────────────
                           if (subTasks.isEmpty)
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 16),
                               child: Text(
                                 'No sub-tasks yet',
                                 style: TextStyle(
-                                    color: textSecondary, fontSize: 13),
+                                    color: textSecondary,
+                                    fontSize: 13),
                               ),
                             )
                           else
                             ...subTasks.asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final subTask = entry.value;
+                              final idx = entry.key;
+                              final sub = entry.value;
+                              final assigneeName =
+                                  sub.assigneeId.isEmpty
+                                      ? 'Unassigned'
+                                      : userIdToName[
+                                              sub.assigneeId] ??
+                                          sub.assigneeId;
                               return _SubTaskCard(
-                                subTask: subTask,
-                                index: index + 1,
+                                subTask: sub,
+                                index: idx + 1,
+                                assigneeName: assigneeName,
                                 statusOptions: _statusOptions,
-                                customColors: customColors,
-                                onStatusChanged: (_) {},
+                                cardBg: cardBg,
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                                greyBorder: greyBorder,
+                                primary: primary,
+                                onShowSelector: (ctx, cur) =>
+                                    _showStatusSelector(
+                                  context: ctx,
+                                  current: cur,
+                                  cardBg: cardBg,
+                                  textPrimary: textPrimary,
+                                  textSecondary: textSecondary,
+                                  greyBorder: greyBorder,
+                                  primary: primary,
+                                ),
                               );
                             }),
                         ],
@@ -414,12 +536,24 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                   },
                 ),
 
-                // ── Time entries tab ───────────────────────────────────────
-                Center(
-                  child: Text(
-                    'No time entries yet',
-                    style:
-                        TextStyle(color: textSecondary, fontSize: 13),
+                // ── Time Entries tab ───────────────────────────────
+                timeEntriesAsync.when(
+                  loading: () => const Center(child: DsvLoader()),
+                  error: (err, _) => _ErrorRetry(
+                    message: 'Failed to load time entries',
+                    detail: err.toString(),
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    onRetry: () => ref.invalidate(
+                        _timeEntriesProvider(widget.task.id)),
+                  ),
+                  data: (entries) => _TimeEntriesTab(
+                    entries: entries,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    cardBg: cardBg,
+                    greyBorder: greyBorder,
+                    primary: primary,
                   ),
                 ),
               ],
@@ -431,117 +565,52 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
   }
 }
 
-// ── Status Dropdown ───────────────────────────────────────────────────────────
+// ── Status button (sprints_screen style) ──────────────────────────────────────
 
-class _StatusDropdown extends StatefulWidget {
-  final String value;
-  final List<Map<String, String>> options;
-  final Color statusColor;
-  final CustomColors customColors;
-  final ValueChanged<String?> onChanged;
+class _StatusButton extends StatefulWidget {
+  final String current;
+  final List<Map<String, String>> statusOptions;
+  final Color cardBg;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color greyBorder;
+  final Color primary;
+  final Future<String?> Function(BuildContext, String) onShowSelector;
 
-  const _StatusDropdown({
-    required this.value,
-    required this.options,
-    required this.statusColor,
-    required this.customColors,
-    required this.onChanged,
+  const _StatusButton({
+    required this.current,
+    required this.statusOptions,
+    required this.cardBg,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.greyBorder,
+    required this.primary,
+    required this.onShowSelector,
   });
 
   @override
-  State<_StatusDropdown> createState() => _StatusDropdownState();
+  State<_StatusButton> createState() => _StatusButtonState();
 }
 
-class _StatusDropdownState extends State<_StatusDropdown> {
+class _StatusButtonState extends State<_StatusButton> {
   late String _current;
 
   @override
   void initState() {
     super.initState();
-    _current = widget.value.toUpperCase();
+    _current = widget.current.toUpperCase();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final borderColor =
-        widget.customColors.greyBorder ?? Colors.grey.shade300;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      decoration: BoxDecoration(
-        border: Border.all(color: borderColor),
-        borderRadius: BorderRadius.circular(8),
-        color: widget.customColors.cardBackground,
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _current,
-          isExpanded: true,
-          icon: Icon(Icons.keyboard_arrow_down,
-              color: widget.customColors.textSecondary, size: 18),
-          style: TextStyle(
-            color: widget.statusColor,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
-          dropdownColor: widget.customColors.cardBackground,
-          items: widget.options
-              .map((s) => DropdownMenuItem<String>(
-                    value: s['value']!,
-                    child: Text(
-                      s['label']!.toUpperCase(),
-                      style: TextStyle(
-                        color: widget.customColors.textPrimary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ))
-              .toList(),
-          onChanged: (val) {
-            if (val != null) {
-              setState(() => _current = val);
-              widget.onChanged(val);
-            }
-          },
-        ),
-      ),
+  String _label(String val) {
+    final match = widget.statusOptions.firstWhere(
+      (s) => s['value']!.toLowerCase() == val.toLowerCase(),
+      orElse: () => {'label': val.replaceAll('_', ' ')},
     );
-  }
-}
-
-// ── Sub-task Card ─────────────────────────────────────────────────────────────
-
-class _SubTaskCard extends StatefulWidget {
-  final SubTaskModel subTask;
-  final int index;
-  final List<Map<String, String>> statusOptions;
-  final CustomColors customColors;
-  final ValueChanged<String?> onStatusChanged;
-
-  const _SubTaskCard({
-    required this.subTask,
-    required this.index,
-    required this.statusOptions,
-    required this.customColors,
-    required this.onStatusChanged,
-  });
-
-  @override
-  State<_SubTaskCard> createState() => _SubTaskCardState();
-}
-
-class _SubTaskCardState extends State<_SubTaskCard> {
-  late String _status;
-
-  @override
-  void initState() {
-    super.initState();
-    _status = widget.subTask.status.toUpperCase();
+    return match['label']!.toUpperCase();
   }
 
-  Color _statusColor(String status) {
-    switch (status.toLowerCase()) {
+  Color _color(String val) {
+    switch (val.toLowerCase()) {
       case 'closed':
         return const Color(0xFF4CAF50);
       case 'wip':
@@ -563,6 +632,115 @@ class _SubTaskCardState extends State<_SubTaskCard> {
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    final statusColor = _color(_current);
+    return GestureDetector(
+      onTap: () async {
+        final selected =
+            await widget.onShowSelector(context, _current);
+        if (selected != null) setState(() => _current = selected);
+      },
+      child: Container(
+        padding:
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: widget.cardBg,
+          border: Border.all(color: widget.greyBorder, width: 1),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _label(_current),
+              style: TextStyle(
+                color: statusColor,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.keyboard_arrow_down,
+                color: widget.textSecondary, size: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Sub-task Card ─────────────────────────────────────────────────────────────
+
+class _SubTaskCard extends StatefulWidget {
+  final SubTaskModel subTask;
+  final int index;
+  final String assigneeName;
+  final List<Map<String, String>> statusOptions;
+  final Color cardBg;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color greyBorder;
+  final Color primary;
+  final Future<String?> Function(BuildContext, String) onShowSelector;
+
+  const _SubTaskCard({
+    required this.subTask,
+    required this.index,
+    required this.assigneeName,
+    required this.statusOptions,
+    required this.cardBg,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.greyBorder,
+    required this.primary,
+    required this.onShowSelector,
+  });
+
+  @override
+  State<_SubTaskCard> createState() => _SubTaskCardState();
+}
+
+class _SubTaskCardState extends State<_SubTaskCard> {
+  late String _status;
+
+  @override
+  void initState() {
+    super.initState();
+    _status = widget.subTask.status.toUpperCase();
+  }
+
+  Color _statusColor(String val) {
+    switch (val.toLowerCase()) {
+      case 'closed':
+        return const Color(0xFF4CAF50);
+      case 'wip':
+        return const Color(0xFF1976D2);
+      case 'not_started':
+        return const Color(0xFF9E9E9E);
+      case 'released_for_uat':
+        return const Color(0xFF00BCD4);
+      case 'uat_approved_by_client':
+        return const Color(0xFF4CAF50);
+      case 'under_internal_testing':
+        return const Color(0xFFFF9800);
+      case 'pending_from_zoho':
+        return const Color(0xFF9C27B0);
+      case 'pending_from_client':
+        return const Color(0xFFE91E63);
+      default:
+        return const Color(0xFF9E9E9E);
+    }
+  }
+
+  String _statusLabel(String val) {
+    final match = widget.statusOptions.firstWhere(
+      (s) => s['value']!.toLowerCase() == val.toLowerCase(),
+      orElse: () => {'label': val.replaceAll('_', ' ')},
+    );
+    return match['label']!.toUpperCase();
+  }
+
   String _formatDuration(double hours) {
     final totalMinutes = (hours * 60).round();
     final h = totalMinutes ~/ 60;
@@ -577,14 +755,13 @@ class _SubTaskCardState extends State<_SubTaskCard> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = widget.customColors;
     final statusColor = _statusColor(_status);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: colors.cardBackground,
+        color: widget.cardBg,
         border: Border.all(
             color: Colors.white.withValues(alpha: 0.1), width: 1),
         borderRadius: BorderRadius.circular(14),
@@ -599,7 +776,7 @@ class _SubTaskCardState extends State<_SubTaskCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Title + badge ──────────────────────────────────────────────
+          // title + badge
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -607,7 +784,7 @@ class _SubTaskCardState extends State<_SubTaskCard> {
                 child: Text(
                   widget.subTask.title,
                   style: TextStyle(
-                    color: colors.textPrimary,
+                    color: widget.textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
@@ -615,17 +792,16 @@ class _SubTaskCardState extends State<_SubTaskCard> {
               ),
               const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: (colors.primary ?? const Color(0xFF1A56DB))
-                      .withValues(alpha: 0.12),
+                  color: widget.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   'SubTask-${widget.index}',
                   style: TextStyle(
-                    color: colors.primary ?? const Color(0xFF1A56DB),
+                    color: widget.primary,
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                   ),
@@ -635,91 +811,76 @@ class _SubTaskCardState extends State<_SubTaskCard> {
           ),
           const SizedBox(height: 6),
 
-          // ── Assignee ───────────────────────────────────────────────────
+          // assignee name (resolved, not ID)
           Text(
-            widget.subTask.assigneeId.isEmpty
-                ? 'Unassigned'
-                : widget.subTask.assigneeId,
+            widget.assigneeName,
             style: TextStyle(
-              color: colors.textPrimary,
+              color: widget.textPrimary,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
 
-          // ── Status dropdown row ────────────────────────────────────────
-          SizedBox(
-            height: 36,
-            child: Row(
-              children: [
-                Text(
-                  'Status :',
-                  style: TextStyle(
-                    color: colors.textSecondary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+          // status selector — sprints_screen style
+          Row(
+            children: [
+              Text(
+                'Status :',
+                style: TextStyle(
+                  color: widget.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(width: 8),
-                Expanded(
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () async {
+                    final selected = await widget.onShowSelector(
+                        context, _status);
+                    if (selected != null) {
+                      setState(() => _status = selected);
+                    }
+                  },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 2),
+                        horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      border: Border.all(
-                          color:
-                              colors.greyBorder ?? Colors.grey.shade300),
+                      color: widget.cardBg,
+                      border: Border.all(color: widget.greyBorder),
                       borderRadius: BorderRadius.circular(8),
-                      color: colors.cardBackground,
                     ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _status,
-                        isExpanded: true,
-                        icon: Icon(Icons.keyboard_arrow_down,
-                            color: colors.textSecondary, size: 16),
-                        style: TextStyle(
-                          color: statusColor,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _statusLabel(_status),
+                            style: TextStyle(
+                              color: statusColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
-                        dropdownColor: colors.cardBackground,
-                        items: widget.statusOptions
-                            .map((s) => DropdownMenuItem<String>(
-                                  value: s['value']!,
-                                  child: Text(
-                                    s['label']!.toUpperCase(),
-                                    style: TextStyle(
-                                      color: colors.textPrimary,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ))
-                            .toList(),
-                        onChanged: (val) {
-                          if (val != null) {
-                            setState(() => _status = val);
-                            widget.onStatusChanged(val);
-                          }
-                        },
-                      ),
+                        Icon(Icons.keyboard_arrow_down,
+                            color: widget.textSecondary, size: 14),
+                      ],
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
 
-          // ── Time / Date + buttons ──────────────────────────────────────
+          // time / date + action buttons
           Row(
             children: [
               Text(
                 '${_formatDuration(widget.subTask.estimatedHours)}  ${_formatDate(widget.subTask.dueDate)}',
                 style: TextStyle(
-                  color: colors.textSecondary,
+                  color: widget.textSecondary,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -727,7 +888,7 @@ class _SubTaskCardState extends State<_SubTaskCard> {
               const Spacer(),
               _SmallButton(
                 label: '+ LOG TIME',
-                color: colors.primary ?? const Color(0xFF1A56DB),
+                color: widget.primary,
                 onTap: () {},
               ),
               const SizedBox(width: 8),
@@ -740,6 +901,481 @@ class _SubTaskCardState extends State<_SubTaskCard> {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Time Entries Tab ──────────────────────────────────────────────────────────
+
+class _TimeEntriesTab extends StatelessWidget {
+  final List<TimeEntry> entries;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color cardBg;
+  final Color greyBorder;
+  final Color primary;
+
+  const _TimeEntriesTab({
+    required this.entries,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.cardBg,
+    required this.greyBorder,
+    required this.primary,
+  });
+
+  int get _totalMinutes => entries.fold(
+      0, (sum, e) => sum + (e.getDurationInHours() * 60).round());
+
+  String _formatTotalTime(int minutes) {
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    return '${h}h ${m}m';
+  }
+
+  Map<DateTime, List<TimeEntry>> _grouped() {
+    final map = <DateTime, List<TimeEntry>>{};
+    for (final e in entries) {
+      final key =
+          DateTime(e.date.year, e.date.month, e.date.day);
+      map.putIfAbsent(key, () => []).add(e);
+    }
+    final sorted = map.keys.toList()..sort((a, b) => b.compareTo(a));
+    return {for (final k in sorted) k: map[k]!};
+  }
+
+  String _dayDuration(List<TimeEntry> dayEntries) {
+    final total = dayEntries.fold(
+        0, (s, e) => s + (e.getDurationInHours() * 60).round());
+    final h = total ~/ 60;
+    final m = total % 60;
+    if (h > 0) return '${h}h ${m}m';
+    return '${m}m';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (entries.isEmpty) {
+      return Center(
+        child: Text('No time entries yet',
+            style: TextStyle(color: textSecondary, fontSize: 13)),
+      );
+    }
+
+    final grouped = _grouped();
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+      children: [
+        // ── Summary tiles ────────────────────────────────────────────
+        Row(
+          children: [
+            Expanded(
+              child: _SummaryTile(
+                value: _formatTotalTime(_totalMinutes),
+                label: 'minutes',
+                icon: Icons.schedule_outlined,
+                cardBg: cardBg,
+                textPrimary: textPrimary,
+                textSecondary: textSecondary,
+                primary: primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _SummaryTile(
+                value: entries.length.toString().padLeft(2, '0'),
+                label: 'Entries',
+                icon: Icons.adjust_outlined,
+                cardBg: cardBg,
+                textPrimary: textPrimary,
+                textSecondary: textSecondary,
+                primary: primary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // ── Grouped date sections ────────────────────────────────────
+        ...grouped.entries.expand((mapEntry) {
+          final date = mapEntry.key;
+          final dayEntries = mapEntry.value;
+          final dayLabel =
+              DateFormat('EEE, d MMM yyyy').format(date);
+          return [
+            Padding(
+              padding:
+                  const EdgeInsets.only(bottom: 8, top: 4),
+              child: Row(
+                children: [
+                  Text(
+                    dayLabel,
+                    style: TextStyle(
+                      color: textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: primary.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      _dayDuration(dayEntries),
+                      style: TextStyle(
+                        color: primary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ...dayEntries.map((e) => _TimeEntryCard(
+                  entry: e,
+                  cardBg: cardBg,
+                  textPrimary: textPrimary,
+                  textSecondary: textSecondary,
+                  greyBorder: greyBorder,
+                  primary: primary,
+                )),
+            const SizedBox(height: 8),
+          ];
+        }),
+      ],
+    );
+  }
+}
+
+// ── Summary tile ──────────────────────────────────────────────────────────────
+
+class _SummaryTile extends StatelessWidget {
+  final String value;
+  final String label;
+  final IconData icon;
+  final Color cardBg;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color primary;
+
+  const _SummaryTile({
+    required this.value,
+    required this.label,
+    required this.icon,
+    required this.cardBg,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.primary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+            color: primary.withValues(alpha: 0.2), width: 1),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: primary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: textSecondary,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(icon,
+              color: primary.withValues(alpha: 0.5), size: 28),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Time Entry Card ───────────────────────────────────────────────────────────
+
+class _TimeEntryCard extends StatefulWidget {
+  final TimeEntry entry;
+  final Color cardBg;
+  final Color textPrimary;
+  final Color textSecondary;
+  final Color greyBorder;
+  final Color primary;
+
+  const _TimeEntryCard({
+    required this.entry,
+    required this.cardBg,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.greyBorder,
+    required this.primary,
+  });
+
+  @override
+  State<_TimeEntryCard> createState() => _TimeEntryCardState();
+}
+
+class _TimeEntryCardState extends State<_TimeEntryCard> {
+  bool _expanded = false;
+
+  String _formatTime(String t) {
+    try {
+      final parts = t.split(':');
+      int h = int.parse(parts[0]);
+      final m = parts[1];
+      final period = h >= 12 ? 'PM' : 'AM';
+      h = h % 12;
+      if (h == 0) h = 12;
+      return '$h:$m $period';
+    } catch (_) {
+      return t;
+    }
+  }
+
+  String _duration() {
+    final h = widget.entry.getDurationInHours();
+    final totalMin = (h * 60).round();
+    final hrs = totalMin ~/ 60;
+    final mins = totalMin % 60;
+    if (hrs > 0) return '${hrs}h ${mins}m';
+    return '${mins}m';
+  }
+
+  bool get _isBillable =>
+      widget.entry.type.toLowerCase() == 'billable';
+
+  @override
+  Widget build(BuildContext context) {
+    final billableColor =
+        _isBillable ? const Color(0xFF1976D2) : const Color(0xFF9E9E9E);
+    final timeRange =
+        '${_formatTime(widget.entry.startTime)} - ${_formatTime(widget.entry.endTime)}';
+    final note = widget.entry.note.trim();
+    final hasLongNote = note.length > 55;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: widget.cardBg,
+        border: Border.all(
+            color: Colors.white.withValues(alpha: 0.1), width: 1),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // note row + duration badge
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: note.isEmpty
+                    ? Text(
+                        'No note',
+                        style: TextStyle(
+                          color: widget.textSecondary,
+                          fontSize: 13,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      )
+                    : Text(
+                        note,
+                        style: TextStyle(
+                          color: widget.textPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: _expanded ? null : 1,
+                        overflow: _expanded
+                            ? TextOverflow.visible
+                            : TextOverflow.ellipsis,
+                      ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: widget.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  _duration(),
+                  style: TextStyle(
+                    color: widget.primary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // expand/collapse toggle
+          if (hasLongNote && note.isNotEmpty)
+            GestureDetector(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _expanded
+                          ? Icons.keyboard_arrow_up
+                          : Icons.keyboard_arrow_down,
+                      color: widget.primary,
+                      size: 16,
+                    ),
+                    Text(
+                      _expanded ? 'Collapse' : 'Expand',
+                      style: TextStyle(
+                        color: widget.primary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 6),
+
+          // assignee + time range + billable tag
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: widget.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Text(
+                  widget.entry.user.isEmpty
+                      ? 'Unknown'
+                      : widget.entry.user,
+                  style: TextStyle(
+                    color: widget.primary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Text(
+                timeRange,
+                style: TextStyle(
+                  color: widget.textSecondary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: billableColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Text(
+                  _isBillable ? 'BILLABLE' : 'NON-BILLABLE',
+                  style: TextStyle(
+                    color: billableColor,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Error / Retry ─────────────────────────────────────────────────────────────
+
+class _ErrorRetry extends StatelessWidget {
+  final String message;
+  final String detail;
+  final Color textPrimary;
+  final Color textSecondary;
+  final VoidCallback onRetry;
+
+  const _ErrorRetry({
+    required this.message,
+    required this.detail,
+    required this.textPrimary,
+    required this.textSecondary,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.error_outline,
+                size: 48, color: Colors.red.shade300),
+            const SizedBox(height: 12),
+            Text(message,
+                style: TextStyle(color: textPrimary, fontSize: 15)),
+            const SizedBox(height: 6),
+            Text(detail,
+                textAlign: TextAlign.center,
+                style:
+                    TextStyle(color: textSecondary, fontSize: 13)),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: onRetry,
+              child: Text('Retry',
+                  style: TextStyle(color: Colors.blue.shade400)),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -765,7 +1401,8 @@ class _SmallButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(7),
