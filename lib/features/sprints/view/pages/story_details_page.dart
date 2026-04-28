@@ -57,12 +57,14 @@ final _storyDetailsProvider = FutureProvider.family<
 class StoryDetailsPage extends ConsumerWidget {
   final String storyId;
   final String projectId;
+  final String projectName;
   final String? storyTitle;
 
   const StoryDetailsPage({
     super.key,
     required this.storyId,
     required this.projectId,
+    this.projectName = '',
     this.storyTitle,
   });
 
@@ -433,6 +435,7 @@ class StoryDetailsPage extends ConsumerWidget {
                               customColors: customColors,
                               isLightMode: isLightMode,
                               projectId: projectId,
+                              projectName: projectName,
                               sprintId: story.sprintId,
                             )),
                     ],
@@ -610,6 +613,7 @@ class _TaskTile extends StatelessWidget {
   final CustomColors customColors;
   final bool isLightMode;
   final String projectId;
+  final String projectName;
   final String sprintId;
 
   const _TaskTile({
@@ -620,6 +624,7 @@ class _TaskTile extends StatelessWidget {
     required this.customColors,
     required this.isLightMode,
     required this.projectId,
+    required this.projectName,
     required this.sprintId,
   });
 
@@ -644,7 +649,7 @@ class _TaskTile extends StatelessWidget {
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => SubTaskPage(task: task, projectId: projectId, sprintId: sprintId),
+          builder: (_) => SubTaskPage(task: task, projectId: projectId, projectName: projectName, sprintId: sprintId),
         ),
       ),
       child: Container(

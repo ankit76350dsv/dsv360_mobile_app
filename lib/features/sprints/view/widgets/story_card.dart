@@ -11,6 +11,7 @@ class StoryCard extends StatelessWidget {
   final Color greyBorder;
   final Color primary;
   final String? projectId;
+  final String? projectName;
 
   const StoryCard({
     required this.story,
@@ -21,6 +22,7 @@ class StoryCard extends StatelessWidget {
     required this.greyBorder,
     required this.primary,
     this.projectId,
+    this.projectName,
   });
 
   @override
@@ -168,6 +170,7 @@ class StoryCard extends StatelessWidget {
               builder: (_) => StoryDetailsPage(
                 storyId: story.id,
                 projectId: projectId!,
+                projectName: projectName ?? '',
                 storyTitle: story.title,
               ),
             ),

@@ -205,6 +205,7 @@ class _KanbanColumnState extends State<KanbanColumn> {
                           greyBorder: widget.greyBorder,
                           primary: widget.primary,
                           projectId: widget.projectId,
+                          projectName: widget.projectName ?? '',
                         ),
                       ),
               ),

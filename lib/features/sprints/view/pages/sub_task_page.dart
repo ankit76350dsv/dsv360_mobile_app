@@ -1,3 +1,4 @@
+import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/features/badges/model/badge_user.dart';
@@ -5,8 +6,11 @@ import 'package:dsv360/features/badges/repositories/badge_assignment_repository.
 import 'package:dsv360/features/sprints/model/sub_task_model.dart';
 import 'package:dsv360/features/sprints/model/task_model.dart';
 import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
+import 'package:dsv360/features/sprints/repositories/start_timer_repository.dart';
 import 'package:dsv360/features/sprints/repositories/time_entry_repository.dart';
+import 'package:dsv360/features/sprints/repositories/timer_info_repository.dart';
 import 'package:dsv360/features/sprints/view/pages/create_time_entry_page.dart';
+import 'package:dsv360/features/sprints/view/pages/stop_timer_page.dart';
 import 'package:dsv360/features/time_entry/model/time_entry_model.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
@@ -52,12 +56,14 @@ final _timeEntriesProvider =
 class SubTaskPage extends ConsumerStatefulWidget {
   final TaskModel task;
   final String projectId;
+  final String projectName;
   final String sprintId;
 
   const SubTaskPage({
     super.key,
     required this.task,
     required this.projectId,
+    required this.projectName,
     required this.sprintId,
   });
 
@@ -68,6 +74,12 @@ class SubTaskPage extends ConsumerStatefulWidget {
 class _SubTaskPageState extends ConsumerState<SubTaskPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+
+  // ── Task-level timer state ─────────────────────────────────────────────────
+  bool _taskTimerRunning = false;
+  bool _taskTimerFetching = true;
+  String? _taskTimerRowId;
+  DateTime? _taskTimerStartTime;
 
   static const List<Map<String, String>> _statusOptions = [
     {'label': 'Not Started', 'value': 'NOT_STARTED'},
@@ -84,12 +96,118 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _fetchTimerStatus();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  Future<void> _fetchTimerStatus() async {
+    setState(() => _taskTimerFetching = true);
+    try {
+      final user = AuthManager.instance.currentUser;
+      final userId = user?.id.toString() ?? '';
+      if (userId.isEmpty) {
+        setState(() => _taskTimerFetching = false);
+        return;
+      }
+      final timerInfo = await ref
+          .read(timerInfoRepositoryProvider)
+          .getTimerInfo(userId: userId);
+
+      if (!mounted) return;
+
+      final isRunning = timerInfo != null &&
+          !timerInfo.message.toLowerCase().contains('not');
+
+      setState(() {
+        _taskTimerFetching = false;
+        if (isRunning) {
+          _taskTimerRunning = true;
+          _taskTimerRowId = timerInfo.timerId;
+          // Parse server's startTime for accurate elapsed time
+          final parsed = DateTime.tryParse(
+            timerInfo.startTime.replaceFirst(' ', 'T'),
+          );
+          _taskTimerStartTime = parsed;
+        } else {
+          _taskTimerRunning = false;
+          _taskTimerRowId = null;
+          _taskTimerStartTime = null;
+        }
+      });
+    } catch (_) {
+      if (mounted) setState(() => _taskTimerFetching = false);
+    }
+  }
+
+  Future<void> _startTaskTimer() async {
+    setState(() => _taskTimerFetching = true);
+    try {
+      final user = AuthManager.instance.currentUser;
+      final userId = user?.id.toString() ?? '';
+      final username =
+          '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
+      final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+
+      final result = await ref.read(startTimerRepositoryProvider).startTimer(
+            entryDate: today,
+            projectId: widget.projectId,
+            projectName: widget.projectName,
+            sourceType: 'SPRINT_TASK',
+            sprintId: widget.sprintId,
+            sprintTaskId: widget.task.id,
+            storyId: widget.task.storyId,
+            taskId: widget.task.id,
+            taskName: widget.task.title,
+            userId: userId,
+            username: username,
+          );
+
+      setState(() {
+        _taskTimerRowId = result.rowId;
+        // For freshly started timers, use DateTime.now() so timer starts from 0
+        // (server time is already a few milliseconds old by navigation time)
+        _taskTimerStartTime = DateTime.now();
+        _taskTimerRunning = true;
+        _taskTimerFetching = false;
+      });
+    } catch (e) {
+      setState(() => _taskTimerFetching = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to start timer: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _openStopTaskTimer() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => StopTimerPage(
+          rowId: _taskTimerRowId!,
+          serverStartTime: _taskTimerStartTime!,
+          taskName: widget.task.title,
+        ),
+      ),
+    );
+    if (result == true) {
+      setState(() {
+        _taskTimerRunning = false;
+        _taskTimerRowId = null;
+        _taskTimerStartTime = null;
+      });
+      ref.invalidate(_timeEntriesProvider(widget.task.id));
+    }
+    // Re-fetch timer status every time we return from stop page
+    await _fetchTimerStatus();
   }
 
   Color _statusColor(String status) {
@@ -124,7 +242,6 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
     return match['label']!.toUpperCase();
   }
 
-  // sprints_screen-style dialog selector
   Future<String?> _showStatusSelector({
     required BuildContext context,
     required String current,
@@ -206,8 +323,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
 
     final dataArgs = (projectId: widget.projectId, taskId: widget.task.id);
     final dataAsync = ref.watch(_subTaskPageDataProvider(dataArgs));
-    final timeEntriesAsync =
-        ref.watch(_timeEntriesProvider(widget.task.id));
+    final timeEntriesAsync = ref.watch(_timeEntriesProvider(widget.task.id));
 
     return Scaffold(
       body: Column(
@@ -280,7 +396,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                           builder: (_) => CreateTimeEntryPage(
                             task: widget.task,
                             projectId: widget.projectId,
-                            projectName: '',
+                            projectName: widget.projectName,
                             storyId: widget.task.storyId,
                             sprintId: widget.sprintId,
                           ),
@@ -289,6 +405,8 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                       if (result == true) {
                         ref.invalidate(_timeEntriesProvider(widget.task.id));
                       }
+                      // Re-fetch timer status on return
+                      await _fetchTimerStatus();
                     },
                     icon: Icon(Icons.add, size: 16, color: textPrimary),
                     label: Text(
@@ -311,19 +429,44 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.play_arrow,
-                        size: 16, color: Colors.white),
-                    label: const Text(
-                      'Start Timer',
-                      style: TextStyle(
+                    onPressed: _taskTimerFetching
+                        ? null
+                        : _taskTimerRunning
+                            ? _openStopTaskTimer
+                            : _startTaskTimer,
+                    icon: _taskTimerFetching
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white),
+                            ),
+                          )
+                        : Icon(
+                            _taskTimerRunning
+                                ? Icons.pause
+                                : Icons.play_arrow,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                    label: Text(
+                      _taskTimerFetching
+                          ? 'Loading...'
+                          : _taskTimerRunning
+                              ? 'Pause Timer'
+                              : 'Start Timer',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2E7D32),
+                      backgroundColor: _taskTimerRunning
+                          ? const Color(0xFFD32F2F)
+                          : const Color(0xFF2E7D32),
                       padding:
                           const EdgeInsets.symmetric(vertical: 10),
                       elevation: 0,
@@ -371,12 +514,9 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                   ),
                 ),
                 const SizedBox(width: 10),
-                
               ],
             ),
           ),
-
-          
 
           // ── Tab Bar ───────────────────────────────────────────────────
           Container(
@@ -391,7 +531,6 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
               controller: _tabController,
               physics: const NeverScrollableScrollPhysics(),
               isScrollable: false,
-              
               indicator: BoxDecoration(
                 color: primary,
                 borderRadius: BorderRadius.circular(8),
@@ -405,7 +544,6 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
               unselectedLabelStyle: const TextStyle(
                   fontSize: 12, fontWeight: FontWeight.w600),
               tabs: [
-                
                 Tab(
                   child: dataAsync.when(
                     data: (d) =>
@@ -557,10 +695,12 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                                 ),
                                 task: widget.task,
                                 projectId: widget.projectId,
+                                projectName: widget.projectName,
                                 sprintId: widget.sprintId,
                                 onTimeEntryAdded: () => ref.invalidate(
                                   _timeEntriesProvider(widget.task.id),
                                 ),
+                                onReturnFromPage: _fetchTimerStatus,
                               );
                             }),
                         ],
@@ -606,7 +746,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
   }
 }
 
-// ── Status button (sprints_screen style) ──────────────────────────────────────
+// ── Status button ─────────────────────────────────────────────────────────────
 
 class _StatusButton extends StatefulWidget {
   final String current;
@@ -726,8 +866,10 @@ class _SubTaskCard extends StatefulWidget {
   final Future<String?> Function(BuildContext, String) onShowSelector;
   final TaskModel task;
   final String projectId;
+  final String projectName;
   final String sprintId;
   final VoidCallback onTimeEntryAdded;
+  final Future<void> Function() onReturnFromPage;
 
   const _SubTaskCard({
     required this.subTask,
@@ -742,8 +884,10 @@ class _SubTaskCard extends StatefulWidget {
     required this.onShowSelector,
     required this.task,
     required this.projectId,
+    required this.projectName,
     required this.sprintId,
     required this.onTimeEntryAdded,
+    required this.onReturnFromPage,
   });
 
   @override
@@ -753,10 +897,86 @@ class _SubTaskCard extends StatefulWidget {
 class _SubTaskCardState extends State<_SubTaskCard> {
   late String _status;
 
+  // ── SubTask timer state ────────────────────────────────────────────────────
+  bool _timerRunning = false;
+  bool _timerFetching = false;
+  String? _timerRowId;
+  DateTime? _timerStartTime;
+
   @override
   void initState() {
     super.initState();
     _status = widget.subTask.status.toUpperCase();
+  }
+
+  Future<void> _startSubTaskTimer() async {
+    setState(() => _timerFetching = true);
+    try {
+      final user = AuthManager.instance.currentUser;
+      final userId = user?.id.toString() ?? '';
+      final username =
+          '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
+      final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final subTaskName =
+          '${widget.task.title} > ${widget.subTask.title}';
+
+      final result = await StartTimerRepository().startTimer(
+        entryDate: today,
+        projectId: widget.projectId,
+        projectName: widget.projectName,
+        sourceType: 'SPRINT_SUBTASK',
+        sprintId: widget.sprintId,
+        sprintTaskId: widget.task.id,
+        storyId: widget.task.storyId,
+        taskId: widget.task.id,
+        taskName: subTaskName,
+        userId: userId,
+        username: username,
+        sprintSubTaskId: widget.subTask.rowId,
+      );
+
+      setState(() {
+        _timerRowId = result.rowId;
+        // For freshly started timers, use DateTime.now() so timer starts from 0
+        // (server time is already a few milliseconds old by navigation time)
+        _timerStartTime = DateTime.now();
+        _timerRunning = true;
+        _timerFetching = false;
+      });
+    } catch (e) {
+      setState(() => _timerFetching = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to start timer: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _openStopSubTaskTimer() async {
+    final subTaskName = '${widget.task.title} > ${widget.subTask.title}';
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => StopTimerPage(
+          rowId: _timerRowId!,
+          serverStartTime: _timerStartTime!,
+          taskName: subTaskName,
+        ),
+      ),
+    );
+    if (result == true) {
+      setState(() {
+        _timerRunning = false;
+        _timerRowId = null;
+        _timerStartTime = null;
+      });
+      widget.onTimeEntryAdded();
+    }
+    // Re-fetch task-level timer status on return
+    await widget.onReturnFromPage();
   }
 
   Color _statusColor(String val) {
@@ -860,7 +1080,7 @@ class _SubTaskCardState extends State<_SubTaskCard> {
           ),
           const SizedBox(height: 6),
 
-          // assignee name (resolved, not ID)
+          // assignee
           Text(
             widget.assigneeName,
             style: TextStyle(
@@ -871,7 +1091,7 @@ class _SubTaskCardState extends State<_SubTaskCard> {
           ),
           const SizedBox(height: 8),
 
-          // status selector — sprints_screen style
+          // status selector
           Row(
             children: [
               Text(
@@ -936,7 +1156,7 @@ class _SubTaskCardState extends State<_SubTaskCard> {
               ),
               const Spacer(),
               _SmallButton(
-                label: '+ LOG TIME (SubTask)',
+                label: '+ LOG TIME',
                 color: widget.primary,
                 onTap: () async {
                   final result = await Navigator.push<bool>(
@@ -945,7 +1165,7 @@ class _SubTaskCardState extends State<_SubTaskCard> {
                       builder: (_) => CreateTimeEntryPage(
                         task: widget.task,
                         projectId: widget.projectId,
-                        projectName: '',
+                        projectName: widget.projectName,
                         storyId: widget.task.storyId,
                         sprintId: widget.sprintId,
                         sourceType: 'SPRINT_SUBTASK',
@@ -954,15 +1174,26 @@ class _SubTaskCardState extends State<_SubTaskCard> {
                     ),
                   );
                   if (result == true) widget.onTimeEntryAdded();
+                  await widget.onReturnFromPage();
                 },
               ),
               const SizedBox(width: 8),
-              _SmallButton(
-                label: 'TIMER',
-                color: const Color(0xFF2E7D32),
-                icon: Icons.play_arrow,
-                onTap: () {},
-              ),
+              _timerFetching
+                  ? const SizedBox(
+                      width: 32,
+                      height: 32,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : _SmallButton(
+                      label: _timerRunning ? 'STOP' : 'TIMER',
+                      color: _timerRunning
+                          ? const Color(0xFFD32F2F)
+                          : const Color(0xFF2E7D32),
+                      icon: _timerRunning ? Icons.pause : Icons.play_arrow,
+                      onTap: _timerRunning
+                          ? _openStopSubTaskTimer
+                          : _startSubTaskTimer,
+                    ),
             ],
           ),
         ],
@@ -1033,7 +1264,7 @@ class _TimeEntriesTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
       children: [
-        // ── Summary tiles ────────────────────────────────────────────
+        // summary tiles
         Row(
           children: [
             Expanded(
@@ -1063,7 +1294,7 @@ class _TimeEntriesTab extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
-        // ── Grouped date sections ────────────────────────────────────
+        // grouped date sections
         ...grouped.entries.expand((mapEntry) {
           final date = mapEntry.key;
           final dayEntries = mapEntry.value;
@@ -1263,7 +1494,6 @@ class _TimeEntryCardState extends State<_TimeEntryCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // note row + duration badge
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -1310,7 +1540,6 @@ class _TimeEntryCardState extends State<_TimeEntryCard> {
             ],
           ),
 
-          // expand/collapse toggle
           if (hasLongNote && note.isNotEmpty)
             GestureDetector(
               onTap: () => setState(() => _expanded = !_expanded),
@@ -1341,7 +1570,6 @@ class _TimeEntryCardState extends State<_TimeEntryCard> {
 
           const SizedBox(height: 6),
 
-          // assignee + time range + billable tag
           Wrap(
             spacing: 8,
             runSpacing: 4,

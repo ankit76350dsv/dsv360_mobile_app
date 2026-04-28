@@ -81,7 +81,10 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
 
   // ── Pickers ──────────────────────────────────────────────────────────────
 
-  Future<void> _pickDate(BuildContext context, CustomColors customColors) async {
+  Future<void> _pickDate(
+    BuildContext context,
+    CustomColors customColors,
+  ) async {
     final today = DateTime.now();
     final picked = await showDatePicker(
       context: context,
@@ -97,7 +100,8 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
             onSurface: customColors.textPrimary!,
           ),
           dialogTheme: DialogThemeData(
-              backgroundColor: customColors.cardBackground!),
+            backgroundColor: customColors.cardBackground!,
+          ),
         ),
         child: child!,
       ),
@@ -126,7 +130,8 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
             onSurface: customColors.textPrimary!,
           ),
           dialogTheme: DialogThemeData(
-              backgroundColor: customColors.cardBackground!),
+            backgroundColor: customColors.cardBackground!,
+          ),
         ),
         child: child!,
       ),
@@ -145,8 +150,7 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
   // ── Validation & Submit ──────────────────────────────────────────────────
 
   void _showSnack(String msg) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   Future<void> _submit() async {
@@ -176,8 +180,7 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
     final userId = user?.id.toString() ?? '';
     final username = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
 
-    final notifier =
-        ref.read(submitLoadingProvider(_loadingKey).notifier);
+    final notifier = ref.read(submitLoadingProvider(_loadingKey).notifier);
     notifier.state = true;
 
     try {
@@ -247,18 +250,18 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: Container(
               width: double.infinity,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: primary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                    color: primary.withValues(alpha: 0.2), width: 1),
+                  color: primary.withValues(alpha: 0.2),
+                  width: 1,
+                ),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.task_alt_outlined,
-                      color: primary, size: 16),
+                  Icon(Icons.task_alt_outlined, color: primary, size: 16),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -310,8 +313,9 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _FieldLabel(
-                                label: 'Start Time *',
-                                textSecondary: textSecondary),
+                              label: 'Start Time *',
+                              textSecondary: textSecondary,
+                            ),
                             const SizedBox(height: 6),
                             _PickerTile(
                               icon: Icons.access_time_outlined,
@@ -337,8 +341,9 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _FieldLabel(
-                                label: 'End Time *',
-                                textSecondary: textSecondary),
+                              label: 'End Time *',
+                              textSecondary: textSecondary,
+                            ),
                             const SizedBox(height: 6),
                             _PickerTile(
                               icon: Icons.access_time_filled_outlined,
@@ -388,8 +393,7 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
                   const SizedBox(height: 16),
 
                   // ── Note ────────────────────────────────────────
-                  _FieldLabel(
-                      label: 'Note *', textSecondary: textSecondary),
+                  _FieldLabel(label: 'Note *', textSecondary: textSecondary),
                   const SizedBox(height: 6),
                   CustomInputField(
                     controller: _noteController,
@@ -401,8 +405,7 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
                   const SizedBox(height: 16),
 
                   // ── Type selector ────────────────────────────────
-                  _FieldLabel(
-                      label: 'Type *', textSecondary: textSecondary),
+                  _FieldLabel(label: 'Type *', textSecondary: textSecondary),
                   const SizedBox(height: 6),
                   Row(
                     children: _typeOptions.map((option) {
@@ -414,12 +417,9 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
                             margin: EdgeInsets.only(
                               right: option == _typeOptions.first ? 8 : 0,
                             ),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: isSelected
-                                  ? primary
-                                  : cardBg,
+                              color: isSelected ? primary : cardBg,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isSelected ? primary : greyBorder,
@@ -428,16 +428,16 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
                               boxShadow: isSelected
                                   ? [
                                       BoxShadow(
-                                        color:
-                                            primary.withValues(alpha: 0.3),
+                                        color: primary.withValues(alpha: 0.3),
                                         blurRadius: 6,
                                         offset: const Offset(0, 2),
                                       ),
                                     ]
                                   : [
                                       BoxShadow(
-                                        color: Colors.black
-                                            .withValues(alpha: 0.05),
+                                        color: Colors.black.withValues(
+                                          alpha: 0.05,
+                                        ),
                                         blurRadius: 4,
                                         offset: const Offset(0, 1),
                                       ),
@@ -553,8 +553,7 @@ class _PickerTile extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
           color: inputFill,
           borderRadius: BorderRadius.circular(14),
@@ -572,11 +571,7 @@ class _PickerTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 18,
-              color: hasValue ? primary : textSecondary,
-            ),
+            Icon(icon, size: 18, color: hasValue ? primary : textSecondary),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -584,13 +579,11 @@ class _PickerTile extends StatelessWidget {
                 style: TextStyle(
                   color: hasValue ? textPrimary : textSecondary,
                   fontSize: 14,
-                  fontWeight:
-                      hasValue ? FontWeight.w600 : FontWeight.w400,
+                  fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
             ),
-            Icon(Icons.keyboard_arrow_down,
-                color: textSecondary, size: 18),
+            Icon(Icons.keyboard_arrow_down, color: textSecondary, size: 18),
           ],
         ),
       ),
