@@ -8,6 +8,7 @@ import 'package:dsv360/features/sprints/model/task_model.dart';
 import 'package:dsv360/features/sprints/repositories/get_sprints_repository.dart';
 import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
 import 'package:dsv360/features/sprints/view/pages/add_task_page.dart';
+import 'package:dsv360/features/sprints/view/pages/sub_task_page.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -431,6 +432,7 @@ class StoryDetailsPage extends ConsumerWidget {
                               greyBorder: greyBorder,
                               customColors: customColors,
                               isLightMode: isLightMode,
+                              projectId: projectId,
                             )),
                     ],
                   ),
@@ -606,6 +608,7 @@ class _TaskTile extends StatelessWidget {
   final Color greyBorder;
   final CustomColors customColors;
   final bool isLightMode;
+  final String projectId;
 
   const _TaskTile({
     required this.task,
@@ -614,6 +617,7 @@ class _TaskTile extends StatelessWidget {
     required this.greyBorder,
     required this.customColors,
     required this.isLightMode,
+    required this.projectId,
   });
 
   bool get _isDone => task.status.toLowerCase() == 'closed';
@@ -632,9 +636,15 @@ class _TaskTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = _taskStatusColor();
-   
 
-    return Container(
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => SubTaskPage(task: task, projectId: projectId),
+        ),
+      ),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -699,8 +709,8 @@ class _TaskTile extends StatelessWidget {
             ],
           ),
         ]
-          
       ),
+    ),
     );
   }
 }
