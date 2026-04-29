@@ -9,6 +9,9 @@ import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
 import 'package:dsv360/features/sprints/repositories/start_timer_repository.dart';
 import 'package:dsv360/features/sprints/repositories/time_entry_repository.dart';
 import 'package:dsv360/features/sprints/repositories/timer_info_repository.dart';
+import 'package:dsv360/features/sprints/repositories/update_subtask_status_repository.dart';
+import 'package:dsv360/features/sprints/repositories/update_task_status_repository.dart';
+
 import 'package:dsv360/features/sprints/view/pages/add_sub_task_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_time_entry_page.dart';
 import 'package:dsv360/features/sprints/view/pages/stop_timer_page.dart';
@@ -209,6 +212,54 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
     }
     // Re-fetch timer status every time we return from stop page
     await _fetchTimerStatus();
+  }
+
+  Future<void> _updateTaskStatus(String newStatus) async {
+    try {
+      await UpdateTaskStatusRepository().updateTaskStatus(
+        taskId: widget.task.id,
+        status: newStatus,
+      
+      );
+        debugPrint(widget.task.id);
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Task status updated to ${_statusLabel(newStatus)}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          backgroundColor: const Color(0xFF4CAF50),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to update task status: $e',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+    }
   }
 
   Color _statusColor(String status) {
@@ -512,6 +563,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                       greyBorder: greyBorder,
                       primary: primary,
                     ),
+                    onStatusChanged: _updateTaskStatus,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -760,6 +812,7 @@ class _StatusButton extends StatefulWidget {
   final Color greyBorder;
   final Color primary;
   final Future<String?> Function(BuildContext, String) onShowSelector;
+  final Future<void> Function(String) onStatusChanged;
 
   const _StatusButton({
     required this.current,
@@ -770,6 +823,7 @@ class _StatusButton extends StatefulWidget {
     required this.greyBorder,
     required this.primary,
     required this.onShowSelector,
+    required this.onStatusChanged,
   });
 
   @override
@@ -823,7 +877,10 @@ class _StatusButtonState extends State<_StatusButton> {
       onTap: () async {
         final selected =
             await widget.onShowSelector(context, _current);
-        if (selected != null) setState(() => _current = selected);
+        if (selected != null && selected != _current) {
+          await widget.onStatusChanged(selected);
+          setState(() => _current = selected);
+        }
       },
       child: Container(
         padding:
@@ -1025,6 +1082,55 @@ class _SubTaskCardState extends State<_SubTaskCard> {
     return DateFormat('yyyy-MM-dd').format(date);
   }
 
+  Future<void> _updateSubtaskStatus(String newStatus) async {
+    try {
+      await UpdateSubTaskStatusRepository().updateSubTaskStatus(
+        subtaskId: widget.subTask.rowId,
+        status: newStatus,
+      );
+
+      if (!mounted) return;
+
+      setState(() => _status = newStatus);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Status updated to ${_statusLabel(newStatus)}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          backgroundColor: const Color(0xFF4CAF50),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Failed to update status: $e',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final statusColor = _statusColor(_status);
@@ -1111,11 +1217,12 @@ class _SubTaskCardState extends State<_SubTaskCard> {
                   onTap: () async {
                     final selected = await widget.onShowSelector(
                         context, _status);
-                    if (selected != null) {
-                      setState(() => _status = selected);
+                    if (selected != null && selected != _status) {
+                      await _updateSubtaskStatus(selected);
                     }
                   },
                   child: Container(
+                    
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
@@ -1123,21 +1230,25 @@ class _SubTaskCardState extends State<_SubTaskCard> {
                       border: Border.all(color: widget.greyBorder),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _statusLabel(_status),
-                            style: TextStyle(
-                              color: statusColor,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                    child: Expanded(
+                      child: Row(
+                       
+                        children: [
+                         
+                          Expanded(
+                            child: Text(
+                              _statusLabel(_status),
+                              style: TextStyle(
+                                color: statusColor,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ),
-                        ),
-                        Icon(Icons.keyboard_arrow_down,
-                            color: widget.textSecondary, size: 14),
-                      ],
+                          Icon(Icons.keyboard_arrow_down,
+                              color: widget.textSecondary, size: 14),
+                        ],
+                      ),
                     ),
                   ),
                 ),
