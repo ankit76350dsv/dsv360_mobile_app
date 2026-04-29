@@ -392,6 +392,58 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
 
                   const SizedBox(height: 16),
 
+                  // ── Type selector (Dropdown) ─────────────────────
+                  _FieldLabel(label: 'Type *', textSecondary: textSecondary),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: inputFill,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: inputBorder, width: 1.5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: DropdownButton<String>(
+                      value: _type,
+                      isExpanded: true,
+                      underline: const SizedBox(),
+                      style: TextStyle(
+                        color: textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      dropdownColor: cardBg,
+                      items: _typeOptions.map((option) {
+                        return DropdownMenuItem<String>(
+                          value: option,
+                          child: Row(
+                            children: [
+                              Icon(
+                                option == 'Billable'
+                                    ? Icons.attach_money_rounded
+                                    : Icons.money_off_rounded,
+                                size: 16,
+                                color: primary,
+                              ),
+                              const SizedBox(width: 10),
+                              Text(option),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) setState(() => _type = value);
+                      },
+                    ),
+                  ),
+                   const SizedBox(height: 16),
+
                   // ── Note ────────────────────────────────────────
                   _FieldLabel(label: 'Note *', textSecondary: textSecondary),
                   const SizedBox(height: 6),
@@ -402,77 +454,9 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
                     maxLines: 4,
                     minLines: 3,
                   ),
-                  const SizedBox(height: 16),
+                 
 
-                  // ── Type selector ────────────────────────────────
-                  _FieldLabel(label: 'Type *', textSecondary: textSecondary),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: _typeOptions.map((option) {
-                      final isSelected = _type == option;
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _type = option),
-                          child: Container(
-                            margin: EdgeInsets.only(
-                              right: option == _typeOptions.first ? 8 : 0,
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              color: isSelected ? primary : cardBg,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSelected ? primary : greyBorder,
-                                width: isSelected ? 1.5 : 1,
-                              ),
-                              boxShadow: isSelected
-                                  ? [
-                                      BoxShadow(
-                                        color: primary.withValues(alpha: 0.3),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ]
-                                  : [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(
-                                          alpha: 0.05,
-                                        ),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 1),
-                                      ),
-                                    ],
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  option == 'Billable'
-                                      ? Icons.attach_money_rounded
-                                      : Icons.money_off_rounded,
-                                  size: 16,
-                                  color: isSelected
-                                      ? Colors.white
-                                      : textSecondary,
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  option,
-                                  style: TextStyle(
-                                    color: isSelected
-                                        ? Colors.white
-                                        : textSecondary,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+                 
 
                   const SizedBox(height: 32),
 

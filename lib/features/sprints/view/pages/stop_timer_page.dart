@@ -227,7 +227,7 @@ class _StopTimerPageState extends ConsumerState<StopTimerPage> {
                   ),
                   const SizedBox(height: 20),
 
-                  // ── Type selector ─────────────────────────────────────────
+                  // ── Type selector (Dropdown) ──────────────────────────────
                   Text(
                     'Type',
                     style: TextStyle(
@@ -237,40 +237,45 @@ class _StopTimerPageState extends ConsumerState<StopTimerPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Row(
-                    children: _typeOptions.map((type) {
-                      final isSelected = _selectedType == type;
-                      return Expanded(
-                        child: GestureDetector(
-                          onTap: () => setState(() => _selectedType = type),
-                          child: Container(
-                            margin: EdgeInsets.only(
-                              right: type == _typeOptions.first ? 8 : 0,
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? primary.withValues(alpha: 0.12)
-                                  : cardBg,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: isSelected ? primary : inputBorder,
-                                width: isSelected ? 1.5 : 1,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: inputBorder, width: 1.5),
+                    ),
+                    child: DropdownButton<String>(
+                      value: _selectedType,
+                      isExpanded: true,
+                      underline: const SizedBox(),
+                      style: TextStyle(
+                        color: textPrimary,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      dropdownColor: cardBg,
+                      items: _typeOptions.map((type) {
+                        return DropdownMenuItem<String>(
+                          value: type,
+                          child: Row(
+                            children: [
+                              Icon(
+                                type == 'Billable'
+                                    ? Icons.attach_money_rounded
+                                    : Icons.money_off_rounded,
+                                size: 16,
+                                color: primary,
                               ),
-                            ),
-                            child: Text(
-                              type,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: isSelected ? primary : textSecondary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
+                              const SizedBox(width: 10),
+                              Text(type),
+                            ],
                           ),
-                        ),
-                      );
-                    }).toList(),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) setState(() => _selectedType = value);
+                      },
+                    ),
                   ),
                   const SizedBox(height: 20),
 
@@ -317,9 +322,15 @@ class _StopTimerPageState extends ConsumerState<StopTimerPage> {
                   ),
                   const SizedBox(height: 28),
 
-                  // ── Stop button ───────────────────────────────────────────
-                  SizedBox(
-                    width: double.infinity,
+
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    
+                    children: [
+                        // ── Stop button ───────────────────────────────────────────
+                  Expanded(
+                    
                     child: ElevatedButton.icon(
                       onPressed: _isLoading ? null : _stopTimer,
                       icon: _isLoading
@@ -348,16 +359,16 @@ class _StopTimerPageState extends ConsumerState<StopTimerPage> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(100),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(width: 12),
 
                   // ── Cancel button ─────────────────────────────────────────
-                  SizedBox(
-                    width: double.infinity,
+                  Expanded(
+                 
                     child: OutlinedButton(
                       onPressed:
                           _isLoading ? null : () => Navigator.of(context).pop(false),
@@ -366,7 +377,7 @@ class _StopTimerPageState extends ConsumerState<StopTimerPage> {
                         side: BorderSide(color: inputBorder),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(100),
                         ),
                       ),
                       child: Text(
@@ -380,6 +391,9 @@ class _StopTimerPageState extends ConsumerState<StopTimerPage> {
                       ),
                     ),
                   ),
+                  ],),
+
+                  
                 ],
               ),
             ),
