@@ -9,6 +9,7 @@ import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
 import 'package:dsv360/features/sprints/repositories/start_timer_repository.dart';
 import 'package:dsv360/features/sprints/repositories/time_entry_repository.dart';
 import 'package:dsv360/features/sprints/repositories/timer_info_repository.dart';
+import 'package:dsv360/features/sprints/view/pages/add_sub_task_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_time_entry_page.dart';
 import 'package:dsv360/features/sprints/view/pages/stop_timer_page.dart';
 import 'package:dsv360/features/time_entry/model/time_entry_model.dart';
@@ -620,7 +621,9 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                               ),
                               const SizedBox(width: 12),
                               GestureDetector(
-                                onTap: () {},
+                                onTap: () {
+                                  Navigator.push(context, MaterialPageRoute(builder: (context)=>AddSubTaskPage(projectId: widget.projectId, storyId: widget.task.storyId, taskId: widget.task.id))); //here
+                                },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 12, vertical: 7),

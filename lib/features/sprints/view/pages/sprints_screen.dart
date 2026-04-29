@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/sprint_story.dart';
 import '../widgets/board_view.dart';
+import '../widgets/timeline_view.dart';
 
 final projectListProvider = FutureProvider((ref) async {
   final repo = ref.read(projectRepositoryProvider);
@@ -65,6 +66,12 @@ final hierarchyProvider =
           })
           .toList();
     });
+
+final rawHierarchyProvider =
+    FutureProvider.family<dynamic, String>((ref, projectId) async {
+  final repo = ref.read(hierarchyRepositoryProvider);
+  return repo.fetchHierarchy(projectId: projectId);
+});
 
 // ── Main Widget ─────────────────────────────────────────────────────────────
 
@@ -1307,14 +1314,64 @@ if (_selectedSprintId != null) {
                           },
                         ),
                         // Timeline tab
-                        Center(
-                          child: Text(
-                            'Timeline coming soon',
-                            style: TextStyle(
-                              color: textSecondary,
-                              fontSize: 14,
-                            ),
-                          ),
+                        Builder(
+                          builder: (context) {
+                            final projectId =
+                                _selectedProjectId ?? widget.projectId;
+                            if (projectId == null || projectId.isEmpty) {
+                              return Center(
+                                child: Text(
+                                  'Select a project to view timeline',
+                                  style: TextStyle(
+                                    color: textSecondary,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              );
+                            }
+                            final rawAsync = ref.watch(
+                              rawHierarchyProvider(projectId),
+                            );
+                            final sprintsAsync =
+                                ref.watch(sprintListProvider(projectId));
+                            return rawAsync.when(
+                              loading: () => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                              error: (e, _) => Center(
+                                child: Text(
+                                  'Error loading timeline: $e',
+                                  style: TextStyle(color: textSecondary),
+                                ),
+                              ),
+                              data: (hierarchy) {
+                                String? sprintStart;
+                                String? sprintEnd;
+                                sprintsAsync.whenData((sprints) {
+                                  try {
+                                    final s = sprints.firstWhere(
+                                      (s) => s.rowId == _selectedSprintId,
+                                    );
+                                    sprintStart = s.startDate;
+                                    sprintEnd = s.endDate;
+                                  } catch (_) {}
+                                });
+                                return TimelineView(
+                                  hierarchy: hierarchy,
+                                  sprintId: _selectedSprintId,
+                                  isDark: isDark,
+                                  cardBg: cardBg,
+                                  textPrimary: textPrimary,
+                                  textSecondary: textSecondary,
+                                  greyBorder: greyBorder,
+                                  primary: primary,
+                                  sprintStartDate: sprintStart,
+                                  sprintEndDate: sprintEnd,
+                                  sprintName: _selectedSprintName,
+                                );
+                              },
+                            );
+                          },
                         ),
                       ],
                     ),
