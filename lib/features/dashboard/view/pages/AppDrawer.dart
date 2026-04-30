@@ -5,6 +5,7 @@ import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/sprints/view/pages/sprints_screen.dart';
+import 'package:dsv360/features/worklogs/view/pages/work_log_screen.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/views/projects/projects_screen.dart';
@@ -225,6 +226,17 @@ class AppDrawer extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const SprintsScreen()),
+                      );
+                    },
+                  ),
+                  _DrawerItem(
+                    icon: Icons.access_time_outlined,
+                    label: 'Work Logs',
+                    subLabel: 'Track your time entries',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const WorkLogScreen()),
                       );
                     },
                   ),
