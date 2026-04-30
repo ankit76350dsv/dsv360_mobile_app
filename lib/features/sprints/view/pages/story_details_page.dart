@@ -218,6 +218,19 @@ class StoryDetailsPage extends ConsumerWidget {
                         ),
                       ),
 
+                      // ── Description (full width) ─────────────────────
+                      _buildDetailCard(
+                        context: context,
+                        icon: Icons.description_outlined,
+                        label: 'Description',
+                        value: story.description.isEmpty
+                            ? 'Not set'
+                            : story.description,
+                        customColors: customColors,
+                        maxLines: 4,
+                      ),
+                      const SizedBox(height: 12),
+
                       // ── Assignee & Sprint row ────────────────────────
                       Row(
                         children: [
@@ -513,17 +526,22 @@ class StoryDetailsPage extends ConsumerWidget {
                           ),
                         )
                       else
-                        ...tasks.map((task) => _TaskTile(
-                              task: task,
-                              totalTasks: tasks.length,
-                              completedTasks: completedTaskCount,
-                              greyBorder: greyBorder,
-                              customColors: customColors,
-                              isLightMode: isLightMode,
-                              projectId: projectId,
-                              projectName: projectName,
-                              sprintId: story.sprintId,
-                            )),
+        ...tasks.map((task) => _TaskTile(
+              task: task,
+              totalTasks: tasks.length,
+              completedTasks: completedTaskCount,
+              greyBorder: greyBorder,
+              customColors: customColors,
+              isLightMode: isLightMode,
+              projectId: projectId,
+              projectName: projectName,
+              sprintId: story.sprintId,
+              onTaskStatusChanged: () => ref.invalidate(
+                _storyDetailsProvider(
+                  (projectId: projectId, storyId: storyId),
+                ),
+              ),
+            )),
                     ],
                   ),
                 );
@@ -701,6 +719,7 @@ class _TaskTile extends StatelessWidget {
   final String projectId;
   final String projectName;
   final String sprintId;
+  final VoidCallback? onTaskStatusChanged;
 
   const _TaskTile({
     required this.task,
@@ -712,6 +731,7 @@ class _TaskTile extends StatelessWidget {
     required this.projectId,
     required this.projectName,
     required this.sprintId,
+    this.onTaskStatusChanged,
   });
 
   bool get _isDone => task.status.toLowerCase() == 'closed';
@@ -735,7 +755,13 @@ class _TaskTile extends StatelessWidget {
       onTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => SubTaskPage(task: task, projectId: projectId, projectName: projectName, sprintId: sprintId),
+          builder: (_) => SubTaskPage(
+              task: task,
+              projectId: projectId,
+              projectName: projectName,
+              sprintId: sprintId,
+              onTaskStatusChanged: onTaskStatusChanged,
+            ),
         ),
       ),
       child: Container(

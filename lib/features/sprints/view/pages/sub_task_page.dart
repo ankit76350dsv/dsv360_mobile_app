@@ -68,6 +68,7 @@ class SubTaskPage extends ConsumerStatefulWidget {
   final String projectId;
   final String projectName;
   final String sprintId;
+  final VoidCallback? onTaskStatusChanged;
 
   const SubTaskPage({
     super.key,
@@ -75,6 +76,7 @@ class SubTaskPage extends ConsumerStatefulWidget {
     required this.projectId,
     required this.projectName,
     required this.sprintId,
+    this.onTaskStatusChanged,
   });
 
   @override
@@ -227,27 +229,33 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
   Future<void> _updateTaskStatus(String newStatus) async {
     try {
       setState(() => _isUpdatingStatus = true);
-      await UpdateTaskStatusRepository().updateTaskStatus(
+      final response = await UpdateTaskStatusRepository().updateTaskStatus(
         taskId: widget.task.id,
         status: newStatus,
       );
       debugPrint(widget.task.id);
       if (!mounted) return;
 
-      // Update local status immediately
-      setState(() => _taskStatusOverride = newStatus);
+      // Extract the updated status from server response
+      final updatedStatus = response['Status'] as String? ?? newStatus;
+      
+      // Update local status with server response
+      setState(() => _taskStatusOverride = updatedStatus);
 
       // Refresh all data without showing loading
       final dataArgs = (projectId: widget.projectId, taskId: widget.task.id);
       ref.invalidate(_subTaskPageDataProvider(dataArgs));
       await _fetchTimerStatus();
 
+      // Call callback to refresh task status on story details page
+      widget.onTaskStatusChanged?.call();
+
       setState(() => _isUpdatingStatus = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Task status updated to ${_statusLabel(newStatus)}',
+            'Task status updated to ${_statusLabel(updatedStatus)}',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 13,
@@ -420,8 +428,9 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
               onInfoTap: () {
                 _taskStatusOverride = null;
                 _fetchTimerStatus();
-                final _ = ref.refresh(_subTaskPageDataProvider(dataArgs));
-                final _ = ref.refresh(_timeEntriesProvider(widget.task.id));
+                final dataArgs = (projectId: widget.projectId, taskId: widget.task.id);
+                ref.invalidate(_subTaskPageDataProvider(dataArgs));
+                ref.invalidate(_timeEntriesProvider(widget.task.id));
               },
             ),
           ),
