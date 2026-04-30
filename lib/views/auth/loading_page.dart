@@ -2,6 +2,7 @@ import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/session_manager.dart';
 import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
+import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/models/active_user.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
@@ -62,7 +63,7 @@ class _LoadingPageState extends ConsumerState<LoadingPage> {
       debugPrint('Error fetching user data: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load user data: $e')),
+          SnackBar(content: Text('Failed to load user data.')),
         );
         // Navigate back to WelcomePage on critical failure
          Navigator.pushReplacement(
@@ -79,14 +80,15 @@ class _LoadingPageState extends ConsumerState<LoadingPage> {
   Widget build(BuildContext context) {
     return const Scaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Loading...', style: TextStyle(fontSize: 16)),
-          ],
-        ),
+        child: DsvLoader(),
+        // child: Column(
+        //   mainAxisAlignment: MainAxisAlignment.center,
+        //   children: [
+        //     CircularProgressIndicator(),
+        //     SizedBox(height: 16),
+        //     Text('Loading...', style: TextStyle(fontSize: 16)),
+        //   ],
+        // ),
       ),
     );
   }

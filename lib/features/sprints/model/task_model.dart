@@ -18,11 +18,18 @@ class TaskModel {
   });
 
   factory TaskModel.fromJson(Map<String, dynamic> json) {
+    final storyIdValue =
+        json['StoryID'] ?? json['Story_ID'] ?? json['StoryId'];
+    final storyId = storyIdValue == null
+        ? ''
+        : storyIdValue.toString().trim().toLowerCase() == 'null'
+            ? ''
+            : storyIdValue.toString();
     return TaskModel(
       id: json['ROWID'] ?? '',
       title: json['Title'] ?? '',
       description: json['Description'] ?? '',
-      storyId: json['StoryID'] ?? '',
+      storyId: storyId,
       status: json['Status'] ?? '',
       dueDate: json['DueDate'] ?? '',
       estimatedHours: int.tryParse(json['EstimatedHours'] ?? '0') ?? 0,

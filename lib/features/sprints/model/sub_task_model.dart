@@ -37,6 +37,13 @@ class SubTaskModel {
   });
 
   factory SubTaskModel.fromJson(Map<String, dynamic> json) {
+    final storyIdValue =
+      json['StoryID'] ?? json['Story_ID'] ?? json['StoryId'];
+    final storyId = storyIdValue == null
+      ? ''
+      : storyIdValue.toString().trim().toLowerCase() == 'null'
+        ? ''
+        : storyIdValue.toString();
     return SubTaskModel(
       rowId: json['ROWID']?.toString() ?? '',
       title: json['Title']?.toString() ?? '',
@@ -46,7 +53,7 @@ class SubTaskModel {
       isDeleted: json['IsDeleted'] == '1',
 
       taskId: json['TaskID']?.toString() ?? '',
-      storyId: json['StoryID']?.toString() ?? '',
+      storyId: storyId,
       projectId: json['ProjectID']?.toString() ?? '',
       orgId: json['OrgID']?.toString() ?? '',
       assigneeId: json['AssigneeID']?.toString() ?? '',

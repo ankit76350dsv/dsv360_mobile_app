@@ -23,33 +23,38 @@ import 'package:intl/intl.dart';
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
-final _subTaskPageDataProvider = FutureProvider.family<
-    ({List<SubTaskModel> subTasks, Map<String, String> userIdToName}),
-    ({String projectId, String taskId})>((ref, args) async {
-  final hierarchyFuture = ref
-      .read(hierarchyRepositoryProvider)
-      .fetchHierarchy(projectId: args.projectId);
-  final usersFuture =
-      ref.read(badgeAssignmentRepositoryProvider).fetchUsers();
+final _subTaskPageDataProvider =
+    FutureProvider.family<
+      ({List<SubTaskModel> subTasks, Map<String, String> userIdToName}),
+      ({String projectId, String taskId})
+    >((ref, args) async {
+      final hierarchyFuture = ref
+          .read(hierarchyRepositoryProvider)
+          .fetchHierarchy(projectId: args.projectId);
+      final usersFuture = ref
+          .read(badgeAssignmentRepositoryProvider)
+          .fetchUsers();
 
-  final results = await Future.wait([hierarchyFuture, usersFuture]);
-  final hierarchy = results[0] as dynamic;
-  final users = results[1] as List<BadgeUser>;
+      final results = await Future.wait([hierarchyFuture, usersFuture]);
+      final hierarchy = results[0] as dynamic;
+      final users = results[1] as List<BadgeUser>;
 
-  final subTasks = (hierarchy.subtasks as List<SubTaskModel>)
-      .where((s) => s.taskId == args.taskId)
-      .toList();
+      final subTasks = (hierarchy.subtasks as List<SubTaskModel>)
+          .where((s) => s.taskId == args.taskId)
+          .toList();
 
-  final userIdToName = <String, String>{};
-  for (final u in users) {
-    userIdToName[u.userId] = u.fullName;
-  }
+      final userIdToName = <String, String>{};
+      for (final u in users) {
+        userIdToName[u.userId] = u.fullName;
+      }
 
-  return (subTasks: subTasks, userIdToName: userIdToName);
-});
+      return (subTasks: subTasks, userIdToName: userIdToName);
+    });
 
-final _timeEntriesProvider =
-    FutureProvider.family<List<TimeEntry>, String>((ref, taskId) async {
+final _timeEntriesProvider = FutureProvider.family<List<TimeEntry>, String>((
+  ref,
+  taskId,
+) async {
   return ref
       .read(sprintTimeEntryRepositoryProvider)
       .fetchTimeEntriesForTask(taskId: taskId);
@@ -84,15 +89,17 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
   bool _taskTimerFetching = true;
   String? _taskTimerRowId;
   DateTime? _taskTimerStartTime;
+  String? _taskStatusOverride;
+  bool _isUpdatingStatus = false;
 
   static const List<Map<String, String>> _statusOptions = [
     {'label': 'Not Started', 'value': 'NOT_STARTED'},
     {'label': 'WIP', 'value': 'WIP'},
     {'label': 'Under Internal Testing', 'value': 'UNDER_INTERNAL_TESTING'},
-    {'label': 'Pending Zoho', 'value': 'PENDING_FROM_ZOHO'},
-    {'label': 'Pending Client', 'value': 'PENDING_FROM_CLIENT'},
+    {'label': 'Pending From Zoho', 'value': 'PENDING_FROM_ZOHO'},
+    {'label': 'Pending From Client', 'value': 'PENDING_FROM_CLIENT'},
     {'label': 'Released For UAT', 'value': 'RELEASED_FOR_UAT'},
-    {'label': 'UAT Approved', 'value': 'UAT_APPROVED_BY_CLIENT'},
+    {'label': 'UAT Approved by Client', 'value': 'UAT_APPROVED_BY_CLIENT'},
     {'label': 'Closed', 'value': 'CLOSED'},
   ];
 
@@ -124,8 +131,8 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
 
       if (!mounted) return;
 
-      final isRunning = timerInfo != null &&
-          !timerInfo.message.toLowerCase().contains('not');
+      final isRunning =
+          timerInfo != null && !timerInfo.message.toLowerCase().contains('not');
 
       setState(() {
         _taskTimerFetching = false;
@@ -153,11 +160,13 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
     try {
       final user = AuthManager.instance.currentUser;
       final userId = user?.id.toString() ?? '';
-      final username =
-          '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
+      final username = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'
+          .trim();
       final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
-      final result = await ref.read(startTimerRepositoryProvider).startTimer(
+      final result = await ref
+          .read(startTimerRepositoryProvider)
+          .startTimer(
             entryDate: today,
             projectId: widget.projectId,
             projectName: widget.projectName,
@@ -216,13 +225,23 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
 
   Future<void> _updateTaskStatus(String newStatus) async {
     try {
+      setState(() => _isUpdatingStatus = true);
       await UpdateTaskStatusRepository().updateTaskStatus(
         taskId: widget.task.id,
         status: newStatus,
-      
       );
-        debugPrint(widget.task.id);
+      debugPrint(widget.task.id);
       if (!mounted) return;
+
+      // Update local status immediately
+      setState(() => _taskStatusOverride = newStatus);
+
+      // Refresh all data without showing loading
+      final dataArgs = (projectId: widget.projectId, taskId: widget.task.id);
+      ref.invalidate(_subTaskPageDataProvider(dataArgs));
+      await _fetchTimerStatus();
+
+      setState(() => _isUpdatingStatus = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -242,6 +261,8 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
       );
     } catch (e) {
       if (!mounted) return;
+
+      setState(() => _isUpdatingStatus = false);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -310,8 +331,10 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
       builder: (dialogContext) {
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding:
-              const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 40,
+            vertical: 24,
+          ),
           child: Container(
             decoration: BoxDecoration(
               color: cardBg,
@@ -332,9 +355,13 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                   child: Container(
                     width: double.infinity,
                     margin: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2),
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 10),
+                      horizontal: 10,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(10),
                       color: isSelected
@@ -370,7 +397,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
     final cardBg = customColors.cardBackground ?? Colors.white;
     final greyBorder = customColors.greyBorder ?? Colors.grey.shade300;
     final primary = customColors.primary ?? const Color(0xFF1A56DB);
-    final taskStatus = widget.task.status;
+    final taskStatus = _taskStatusOverride ?? widget.task.status;
     final taskStatusColor = _statusColor(taskStatus);
 
     final dataArgs = (projectId: widget.projectId, taskId: widget.task.id);
@@ -398,8 +425,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
 
           // ── Task title + status badge ─────────────────────────────────
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Row(
               children: [
                 Expanded(
@@ -415,7 +441,9 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                 const SizedBox(width: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 4),
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: taskStatusColor.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
@@ -435,8 +463,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
 
           // ── Log Time / Start Timer ────────────────────────────────────
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Row(
               children: [
                 Expanded(
@@ -470,22 +497,22 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                       ),
                     ),
                     style: OutlinedButton.styleFrom(
-                      padding:
-                          const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
                       side: BorderSide(color: greyBorder),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: _taskTimerFetching
+                    onPressed: (_taskTimerFetching || _isUpdatingStatus)
                         ? null
                         : _taskTimerRunning
-                            ? _openStopTaskTimer
-                            : _startTaskTimer,
+                        ? _openStopTaskTimer
+                        : _startTaskTimer,
                     icon: _taskTimerFetching
                         ? const SizedBox(
                             width: 14,
@@ -493,13 +520,12 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white),
+                                Colors.white,
+                              ),
                             ),
                           )
                         : Icon(
-                            _taskTimerRunning
-                                ? Icons.pause
-                                : Icons.play_arrow,
+                            _taskTimerRunning ? Icons.pause : Icons.play_arrow,
                             size: 16,
                             color: Colors.white,
                           ),
@@ -507,8 +533,8 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                       _taskTimerFetching
                           ? 'Loading...'
                           : _taskTimerRunning
-                              ? 'Pause Timer'
-                              : 'Start Timer',
+                          ? 'Pause Timer'
+                          : 'Start Timer',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 13,
@@ -519,11 +545,11 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                       backgroundColor: _taskTimerRunning
                           ? const Color(0xFFD32F2F)
                           : const Color(0xFF2E7D32),
-                      padding:
-                          const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.symmetric(vertical: 10),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
                 ),
@@ -533,8 +559,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
 
           // ── Status row ────────────────────────────────────────────────
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             child: Row(
               children: [
                 Text(
@@ -573,10 +598,10 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
 
           // ── Tab Bar ───────────────────────────────────────────────────
           Container(
-            margin:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
-              color: customColors.tabbarBackground ??
+              color:
+                  customColors.tabbarBackground ??
                   Colors.grey.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
@@ -593,14 +618,17 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
               labelColor: Colors.white,
               unselectedLabelColor: textSecondary,
               labelStyle: const TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w700),
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
               unselectedLabelStyle: const TextStyle(
-                  fontSize: 12, fontWeight: FontWeight.w600),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
               tabs: [
                 Tab(
                   child: dataAsync.when(
-                    data: (d) =>
-                        Text('SUB-TASKS (${d.subTasks.length})'),
+                    data: (d) => Text('SUB-TASKS (${d.subTasks.length})'),
                     loading: () => const Text('SUB-TASKS'),
                     error: (_, __) => const Text('SUB-TASKS'),
                   ),
@@ -623,41 +651,38 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                     detail: err.toString(),
                     textPrimary: textPrimary,
                     textSecondary: textSecondary,
-                    onRetry: () => ref
-                        .invalidate(_subTaskPageDataProvider(dataArgs)),
+                    onRetry: () =>
+                        ref.invalidate(_subTaskPageDataProvider(dataArgs)),
                   ),
                   data: (data) {
                     final subTasks = data.subTasks;
                     final userIdToName = data.userIdToName;
                     final completedCount = subTasks
-                        .where((s) =>
-                            s.status.toLowerCase() == 'closed')
+                        .where((s) => s.status.toLowerCase() == 'closed')
                         .length;
 
                     return RefreshIndicator(
-                      onRefresh: () async => ref.invalidate(
-                          _subTaskPageDataProvider(dataArgs)),
+                      onRefresh: () async =>
+                          ref.invalidate(_subTaskPageDataProvider(dataArgs)),
                       child: ListView(
-                        padding: const EdgeInsets.fromLTRB(
-                            16, 8, 16, 100),
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
                         children: [
                           // progress row
                           Row(
                             children: [
                               Expanded(
                                 child: ClipRRect(
-                                  borderRadius:
-                                      BorderRadius.circular(4),
+                                  borderRadius: BorderRadius.circular(4),
                                   child: LinearProgressIndicator(
                                     value: subTasks.isEmpty
                                         ? 0
-                                        : completedCount /
-                                            subTasks.length,
-                                    backgroundColor: Colors.grey
-                                        .withValues(alpha: 0.2),
-                                    valueColor:
-                                        AlwaysStoppedAnimation<Color>(
-                                            primary),
+                                        : completedCount / subTasks.length,
+                                    backgroundColor: Colors.grey.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      primary,
+                                    ),
                                     minHeight: 6,
                                   ),
                                 ),
@@ -674,19 +699,28 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                               const SizedBox(width: 12),
                               GestureDetector(
                                 onTap: () {
-                                  Navigator.push(context, MaterialPageRoute(builder: (context)=>AddSubTaskPage(projectId: widget.projectId, storyId: widget.task.storyId, taskId: widget.task.id))); //here
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => AddSubTaskPage(
+                                        projectId: widget.projectId,
+                                        storyId: widget.task.storyId,
+                                        taskId: widget.task.id,
+                                      ),
+                                    ),
+                                  ); //here
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 7),
+                                    horizontal: 12,
+                                    vertical: 7,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: primary,
-                                    borderRadius:
-                                        BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(8),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: primary
-                                            .withValues(alpha: 0.3),
+                                        color: primary.withValues(alpha: 0.3),
                                         blurRadius: 4,
                                         offset: const Offset(0, 2),
                                       ),
@@ -709,25 +743,23 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
 
                           if (subTasks.isEmpty)
                             Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 16),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
                               child: Text(
                                 'No sub-tasks yet',
                                 style: TextStyle(
-                                    color: textSecondary,
-                                    fontSize: 13),
+                                  color: textSecondary,
+                                  fontSize: 13,
+                                ),
                               ),
                             )
                           else
                             ...subTasks.asMap().entries.map((entry) {
                               final idx = entry.key;
                               final sub = entry.value;
-                              final assigneeName =
-                                  sub.assigneeId.isEmpty
-                                      ? 'Unassigned'
-                                      : userIdToName[
-                                              sub.assigneeId] ??
-                                          sub.assigneeId;
+                              final assigneeName = sub.assigneeId.isEmpty
+                                  ? 'Unassigned'
+                                  : userIdToName[sub.assigneeId] ??
+                                        sub.assigneeId;
                               return _SubTaskCard(
                                 subTask: sub,
                                 index: idx + 1,
@@ -740,14 +772,14 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                                 primary: primary,
                                 onShowSelector: (ctx, cur) =>
                                     _showStatusSelector(
-                                  context: ctx,
-                                  current: cur,
-                                  cardBg: cardBg,
-                                  textPrimary: textPrimary,
-                                  textSecondary: textSecondary,
-                                  greyBorder: greyBorder,
-                                  primary: primary,
-                                ),
+                                      context: ctx,
+                                      current: cur,
+                                      cardBg: cardBg,
+                                      textPrimary: textPrimary,
+                                      textSecondary: textSecondary,
+                                      greyBorder: greyBorder,
+                                      primary: primary,
+                                    ),
                                 task: widget.task,
                                 projectId: widget.projectId,
                                 projectName: widget.projectName,
@@ -756,6 +788,16 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                                   _timeEntriesProvider(widget.task.id),
                                 ),
                                 onReturnFromPage: _fetchTimerStatus,
+                                onStatusChanged: () async {
+                                  final dataArgs = (
+                                    projectId: widget.projectId,
+                                    taskId: widget.task.id,
+                                  );
+                                  ref.invalidate(
+                                    _subTaskPageDataProvider(dataArgs),
+                                  );
+                                  await _fetchTimerStatus();
+                                },
                               );
                             }),
                         ],
@@ -778,7 +820,8 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                           textPrimary: textPrimary,
                           textSecondary: textSecondary,
                           onRetry: () => ref.invalidate(
-                              _timeEntriesProvider(widget.task.id)),
+                            _timeEntriesProvider(widget.task.id),
+                          ),
                         ),
                       ],
                     ),
@@ -875,16 +918,14 @@ class _StatusButtonState extends State<_StatusButton> {
     final statusColor = _color(_current);
     return GestureDetector(
       onTap: () async {
-        final selected =
-            await widget.onShowSelector(context, _current);
+        final selected = await widget.onShowSelector(context, _current);
         if (selected != null && selected != _current) {
           await widget.onStatusChanged(selected);
           setState(() => _current = selected);
         }
       },
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
         decoration: BoxDecoration(
           color: widget.cardBg,
           border: Border.all(color: widget.greyBorder, width: 1),
@@ -902,8 +943,11 @@ class _StatusButtonState extends State<_StatusButton> {
               ),
             ),
             const SizedBox(width: 4),
-            Icon(Icons.keyboard_arrow_down,
-                color: widget.textSecondary, size: 16),
+            Icon(
+              Icons.keyboard_arrow_down,
+              color: widget.textSecondary,
+              size: 16,
+            ),
           ],
         ),
       ),
@@ -930,6 +974,7 @@ class _SubTaskCard extends StatefulWidget {
   final String sprintId;
   final VoidCallback onTimeEntryAdded;
   final Future<void> Function() onReturnFromPage;
+  final Future<void> Function() onStatusChanged;
 
   const _SubTaskCard({
     required this.subTask,
@@ -948,6 +993,7 @@ class _SubTaskCard extends StatefulWidget {
     required this.sprintId,
     required this.onTimeEntryAdded,
     required this.onReturnFromPage,
+    required this.onStatusChanged,
   });
 
   @override
@@ -974,11 +1020,13 @@ class _SubTaskCardState extends State<_SubTaskCard> {
     try {
       final user = AuthManager.instance.currentUser;
       final userId = user?.id.toString() ?? '';
-      final username =
-          '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
+      final username = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'
+          .trim();
       final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-      final subTaskName =
-          '${widget.task.title} > ${widget.subTask.title}';
+      final subTaskName = '${widget.task.title} > ${widget.subTask.title}';
+      final storyId = widget.subTask.storyId.isNotEmpty
+          ? widget.subTask.storyId
+          : widget.task.storyId;
 
       final result = await StartTimerRepository().startTimer(
         entryDate: today,
@@ -987,7 +1035,7 @@ class _SubTaskCardState extends State<_SubTaskCard> {
         sourceType: 'SPRINT_SUBTASK',
         sprintId: widget.sprintId,
         sprintTaskId: widget.task.id,
-        storyId: widget.task.storyId,
+        storyId: storyId,
         taskId: widget.task.id,
         taskName: subTaskName,
         userId: userId,
@@ -1093,6 +1141,9 @@ class _SubTaskCardState extends State<_SubTaskCard> {
 
       setState(() => _status = newStatus);
 
+      // Refresh all data without showing loading
+      await widget.onStatusChanged();
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -1141,7 +1192,9 @@ class _SubTaskCardState extends State<_SubTaskCard> {
       decoration: BoxDecoration(
         color: widget.cardBg,
         border: Border.all(
-            color: Colors.white.withValues(alpha: 0.1), width: 1),
+          color: Colors.white.withValues(alpha: 0.1),
+          width: 1,
+        ),
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -1170,8 +1223,7 @@ class _SubTaskCardState extends State<_SubTaskCard> {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: widget.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
@@ -1216,15 +1268,18 @@ class _SubTaskCardState extends State<_SubTaskCard> {
                 child: GestureDetector(
                   onTap: () async {
                     final selected = await widget.onShowSelector(
-                        context, _status);
+                      context,
+                      _status,
+                    );
                     if (selected != null && selected != _status) {
                       await _updateSubtaskStatus(selected);
                     }
                   },
                   child: Container(
-                    
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 6),
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: widget.cardBg,
                       border: Border.all(color: widget.greyBorder),
@@ -1232,9 +1287,7 @@ class _SubTaskCardState extends State<_SubTaskCard> {
                     ),
                     child: Expanded(
                       child: Row(
-                       
                         children: [
-                         
                           Expanded(
                             child: Text(
                               _statusLabel(_status),
@@ -1245,8 +1298,11 @@ class _SubTaskCardState extends State<_SubTaskCard> {
                               ),
                             ),
                           ),
-                          Icon(Icons.keyboard_arrow_down,
-                              color: widget.textSecondary, size: 14),
+                          Icon(
+                            Icons.keyboard_arrow_down,
+                            color: widget.textSecondary,
+                            size: 14,
+                          ),
                         ],
                       ),
                     ),
@@ -1335,8 +1391,8 @@ class _TimeEntriesTab extends StatelessWidget {
     required this.primary,
   });
 
-  int get _totalMinutes => entries.fold(
-      0, (sum, e) => sum + (e.getDurationInHours() * 60).round());
+  int get _totalMinutes =>
+      entries.fold(0, (sum, e) => sum + (e.getDurationInHours() * 60).round());
 
   String _formatTotalTime(int minutes) {
     final h = minutes ~/ 60;
@@ -1347,8 +1403,7 @@ class _TimeEntriesTab extends StatelessWidget {
   Map<DateTime, List<TimeEntry>> _grouped() {
     final map = <DateTime, List<TimeEntry>>{};
     for (final e in entries) {
-      final key =
-          DateTime(e.date.year, e.date.month, e.date.day);
+      final key = DateTime(e.date.year, e.date.month, e.date.day);
       map.putIfAbsent(key, () => []).add(e);
     }
     final sorted = map.keys.toList()..sort((a, b) => b.compareTo(a));
@@ -1357,7 +1412,9 @@ class _TimeEntriesTab extends StatelessWidget {
 
   String _dayDuration(List<TimeEntry> dayEntries) {
     final total = dayEntries.fold(
-        0, (s, e) => s + (e.getDurationInHours() * 60).round());
+      0,
+      (s, e) => s + (e.getDurationInHours() * 60).round(),
+    );
     final h = total ~/ 60;
     final m = total % 60;
     if (h > 0) return '${h}h ${m}m';
@@ -1368,8 +1425,10 @@ class _TimeEntriesTab extends StatelessWidget {
   Widget build(BuildContext context) {
     if (entries.isEmpty) {
       return Center(
-        child: Text('No time entries yet',
-            style: TextStyle(color: textSecondary, fontSize: 13)),
+        child: Text(
+          'No time entries yet',
+          style: TextStyle(color: textSecondary, fontSize: 13),
+        ),
       );
     }
 
@@ -1412,12 +1471,10 @@ class _TimeEntriesTab extends StatelessWidget {
         ...grouped.entries.expand((mapEntry) {
           final date = mapEntry.key;
           final dayEntries = mapEntry.value;
-          final dayLabel =
-              DateFormat('EEE, d MMM yyyy').format(date);
+          final dayLabel = DateFormat('EEE, d MMM yyyy').format(date);
           return [
             Padding(
-              padding:
-                  const EdgeInsets.only(bottom: 8, top: 4),
+              padding: const EdgeInsets.only(bottom: 8, top: 4),
               child: Row(
                 children: [
                   Text(
@@ -1431,7 +1488,9 @@ class _TimeEntriesTab extends StatelessWidget {
                   const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 3),
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: primary.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(6),
@@ -1448,14 +1507,16 @@ class _TimeEntriesTab extends StatelessWidget {
                 ],
               ),
             ),
-            ...dayEntries.map((e) => _TimeEntryCard(
-                  entry: e,
-                  cardBg: cardBg,
-                  textPrimary: textPrimary,
-                  textSecondary: textSecondary,
-                  greyBorder: greyBorder,
-                  primary: primary,
-                )),
+            ...dayEntries.map(
+              (e) => _TimeEntryCard(
+                entry: e,
+                cardBg: cardBg,
+                textPrimary: textPrimary,
+                textSecondary: textSecondary,
+                greyBorder: greyBorder,
+                primary: primary,
+              ),
+            ),
             const SizedBox(height: 8),
           ];
         }),
@@ -1492,8 +1553,7 @@ class _SummaryTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-            color: primary.withValues(alpha: 0.2), width: 1),
+        border: Border.all(color: primary.withValues(alpha: 0.2), width: 1),
       ),
       child: Row(
         children: [
@@ -1520,8 +1580,7 @@ class _SummaryTile extends StatelessWidget {
               ],
             ),
           ),
-          Icon(icon,
-              color: primary.withValues(alpha: 0.5), size: 28),
+          Icon(icon, color: primary.withValues(alpha: 0.5), size: 28),
         ],
       ),
     );
@@ -1577,13 +1636,13 @@ class _TimeEntryCardState extends State<_TimeEntryCard> {
     return '${mins}m';
   }
 
-  bool get _isBillable =>
-      widget.entry.type.toLowerCase() == 'billable';
+  bool get _isBillable => widget.entry.type.toLowerCase() == 'billable';
 
   @override
   Widget build(BuildContext context) {
-    final billableColor =
-        _isBillable ? const Color(0xFF1976D2) : const Color(0xFF9E9E9E);
+    final billableColor = _isBillable
+        ? const Color(0xFF1976D2)
+        : const Color(0xFF9E9E9E);
     final timeRange =
         '${_formatTime(widget.entry.startTime)} - ${_formatTime(widget.entry.endTime)}';
     final note = widget.entry.note.trim();
@@ -1595,7 +1654,9 @@ class _TimeEntryCardState extends State<_TimeEntryCard> {
       decoration: BoxDecoration(
         color: widget.cardBg,
         border: Border.all(
-            color: Colors.white.withValues(alpha: 0.1), width: 1),
+          color: Colors.white.withValues(alpha: 0.1),
+          width: 1,
+        ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -1636,8 +1697,7 @@ class _TimeEntryCardState extends State<_TimeEntryCard> {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: widget.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6),
@@ -1690,16 +1750,13 @@ class _TimeEntryCardState extends State<_TimeEntryCard> {
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 7, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
                   color: widget.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: Text(
-                  widget.entry.user.isEmpty
-                      ? 'Unknown'
-                      : widget.entry.user,
+                  widget.entry.user.isEmpty ? 'Unknown' : widget.entry.user,
                   style: TextStyle(
                     color: widget.primary,
                     fontSize: 11,
@@ -1716,8 +1773,7 @@ class _TimeEntryCardState extends State<_TimeEntryCard> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 7, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
                   color: billableColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(5),
@@ -1765,21 +1821,22 @@ class _ErrorRetry extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline,
-                size: 48, color: Colors.red.shade300),
+            Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
             const SizedBox(height: 12),
-            Text(message,
-                style: TextStyle(color: textPrimary, fontSize: 15)),
+            Text(message, style: TextStyle(color: textPrimary, fontSize: 15)),
             const SizedBox(height: 6),
-            Text(detail,
-                textAlign: TextAlign.center,
-                style:
-                    TextStyle(color: textSecondary, fontSize: 13)),
+            Text(
+              detail,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: textSecondary, fontSize: 13),
+            ),
             const SizedBox(height: 16),
             TextButton(
               onPressed: onRetry,
-              child: Text('Retry',
-                  style: TextStyle(color: Colors.blue.shade400)),
+              child: Text(
+                'Retry',
+                style: TextStyle(color: Colors.blue.shade400),
+              ),
             ),
           ],
         ),
@@ -1808,8 +1865,7 @@ class _SmallButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: color,
           borderRadius: BorderRadius.circular(7),

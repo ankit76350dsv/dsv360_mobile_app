@@ -13,6 +13,7 @@ import 'package:dsv360/features/sprints/view/pages/create_sprint_page.dart';
 import 'package:dsv360/features/sprints/view/pages/backlog_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_story_page.dart';
 import 'package:dsv360/providers/project_provider.dart';
+import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -872,6 +873,10 @@ if (_selectedSprintId != null) {
             (isDark
                 ? AppColorsDark.tabbarBackground
                 : AppColorsLight.tabbarBackground);
+        final activeUser = ref.watch(activeUserRepositoryProvider);
+        final roleName = (activeUser?.roleName ?? '').toLowerCase().trim();
+        final canManageSprints =
+          roleName == 'admin' || roleName == 'super admin';
 
         return Scaffold(
           drawer: const AppDrawer(),
@@ -1053,54 +1058,73 @@ if (_selectedSprintId != null) {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: _selectedSprintStatus == 'ACTIVE' ? () async{
-                            final isConfirmed = await showWarningDialogueBox(context: context, 
-                            title: "Complete Sprint", 
-                            subtitle: "Are you sure you want to mark \nSprint : $_selectedSprintName\n as Complete?", 
-                            primaryText: "Complete");
+                        if (canManageSprints)
+                          GestureDetector(
+                            onTap: _selectedSprintStatus == 'ACTIVE'
+                                ? () async {
+                                    final isConfirmed =
+                                        await showWarningDialogueBox(
+                                          context: context,
+                                          title: "Complete Sprint",
+                                          subtitle:
+                                              "Are you sure you want to mark \nSprint : $_selectedSprintName\n as Complete?",
+                                          primaryText: "Complete",
+                                        );
 
-                            if(isConfirmed == true){
-                              // Get all sprints to show in carry-over selection
-                              if (_selectedProjectId != null && _selectedProjectId!.isNotEmpty) {
-                                final sprints = await ref.read(getSprintsRepositoryProvider)
-                                    .fetchSprints(projectId: _selectedProjectId!);
-                                
-                                if (mounted) {
-                                  await _showCarryOverSprintSelector(
-                                    context: context,
-                                    sprints: sprints,
-                                    cardBg: cardBg,
-                                    textPrimary: textPrimary,
-                                    textSecondary: textSecondary,
-                                    greyBorder: greyBorder,
-                                    primary: primary,
-                                  );
-                                }
-                              }
-                            }
-                            
-                          } : null,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: _selectedSprintStatus == 'ACTIVE' ? primary : primary.withValues(alpha: 0.6), width: 1.5),
-                            ),
-                            child: Text(
-                              _selectedSprintStatus == 'ACTIVE' ? 'Complete Sprint' : 'Completed',
-                              style: TextStyle(
-                                color: _selectedSprintStatus == 'ACTIVE' ? primary : primary.withValues(alpha: 0.6),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                                    if (isConfirmed == true) {
+                                      // Get all sprints to show in carry-over selection
+                                      if (_selectedProjectId != null &&
+                                          _selectedProjectId!.isNotEmpty) {
+                                        final sprints = await ref
+                                            .read(getSprintsRepositoryProvider)
+                                            .fetchSprints(
+                                              projectId: _selectedProjectId!,
+                                            );
+
+                                        if (mounted) {
+                                          await _showCarryOverSprintSelector(
+                                            context: context,
+                                            sprints: sprints,
+                                            cardBg: cardBg,
+                                            textPrimary: textPrimary,
+                                            textSecondary: textSecondary,
+                                            greyBorder: greyBorder,
+                                            primary: primary,
+                                          );
+                                        }
+                                      }
+                                    }
+                                  }
+                                : null,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: _selectedSprintStatus == 'ACTIVE'
+                                      ? primary
+                                      : primary.withValues(alpha: 0.6),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Text(
+                                _selectedSprintStatus == 'ACTIVE'
+                                    ? 'Complete Sprint'
+                                    : 'Completed',
+                                style: TextStyle(
+                                  color: _selectedSprintStatus == 'ACTIVE'
+                                      ? primary
+                                      : primary.withValues(alpha: 0.6),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -1243,191 +1267,211 @@ if (_selectedSprintId != null) {
                             },
                           ),
                           const SizedBox(width: 6),
-                          // + SPRINT button
-                          GestureDetector(
-                            onTap: () {
-                              if (_selectedProjectId == null ||
-                                  _selectedProjectId!.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      'Please select a project first',
+                          if (canManageSprints) ...[
+                            // + SPRINT button
+                            GestureDetector(
+                              onTap: () {
+                                if (_selectedProjectId == null ||
+                                    _selectedProjectId!.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Please select a project first',
+                                      ),
+                                      elevation: 5,
                                     ),
-                                    elevation: 5,
+                                  );
+                                  return;
+                                }
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CreateSprintPage(
+                                      projectId: _selectedProjectId!,
+                                      projectName: _selectedProjectName!,
+                                    ),
                                   ),
                                 );
-                                return;
-                              }
-
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => CreateSprintPage(
-                                    projectId: _selectedProjectId!,
-                                    projectName: _selectedProjectName!,
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: cardBg,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: greyBorder,
+                                    width: 1,
                                   ),
                                 ),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: cardBg,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: greyBorder, width: 1),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.add, color: primary, size: 13),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    'SPRINT',
-                                    style: TextStyle(
-                                      color: textPrimary,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.3,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.add, color: primary, size: 13),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      'SPRINT',
+                                      style: TextStyle(
+                                        color: textPrimary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.3,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 6),
+                            const SizedBox(width: 6),
 
-                          // + Release button
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => CreateReleasePage(
-                                    projectId: _selectedProjectId,
-                                    projectName: _selectedProjectName
+                            // + Release button
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CreateReleasePage(
+                                      projectId: _selectedProjectId,
+                                      projectName: _selectedProjectName,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: cardBg,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: greyBorder,
+                                    width: 1,
                                   ),
                                 ),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: cardBg,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: greyBorder, width: 1),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.add, color: primary, size: 13),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    'RELEASE',
-                                    style: TextStyle(
-                                      color: textPrimary,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.3,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.add, color: primary, size: 13),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      'RELEASE',
+                                      style: TextStyle(
+                                        color: textPrimary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.3,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 6),
+                            const SizedBox(width: 6),
 
-
-                          // + EPIC button
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => CreateEpicPage(
-                                    projectId: _selectedProjectId ?? widget.projectId,
-                                    projectName: _selectedProjectName ?? widget.projectName,
+                            // + EPIC button
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CreateEpicPage(
+                                      projectId:
+                                          _selectedProjectId ??
+                                          widget.projectId,
+                                      projectName:
+                                          _selectedProjectName ??
+                                          widget.projectName,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: cardBg,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: greyBorder,
+                                    width: 1,
                                   ),
                                 ),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: cardBg,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: greyBorder, width: 1),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.add, color: primary, size: 13),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    'EPIC',
-                                    style: TextStyle(
-                                      color: textPrimary,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.3,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.add, color: primary, size: 13),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      'EPIC',
+                                      style: TextStyle(
+                                        color: textPrimary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.3,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          // + ISSUE button
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context)=>CreateStoryPage(
-                                      projectId: _selectedProjectId ?? widget.projectId,
+                            const SizedBox(width: 6),
+                            // + ISSUE button
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => CreateStoryPage(
+                                      projectId:
+                                          _selectedProjectId ??
+                                          widget.projectId,
                                       sprintId: _selectedSprintId ?? '',
                                       sprintNameSelected: _selectedSprintName,
-                                      projectNameSelected: _selectedProjectName,
-                                  ),
-                                ),
-                                );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: cardBg,
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: greyBorder, width: 1),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.add, color: primary, size: 13),
-                                  const SizedBox(width: 2),
-                                  Text(
-                                    'STORY',
-                                    style: TextStyle(
-                                      color: textPrimary,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.3,
+                                      projectNameSelected:
+                                          _selectedProjectName,
                                     ),
                                   ),
-                                ],
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: cardBg,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: greyBorder,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.add, color: primary, size: 13),
+                                    const SizedBox(width: 2),
+                                    Text(
+                                      'STORY',
+                                      style: TextStyle(
+                                        color: textPrimary,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
+                          ],
                         ],
                       ),
                     ),
