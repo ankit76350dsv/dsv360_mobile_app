@@ -1,4 +1,8 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/widgets/global_error.dart';
+import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 import 'package:flutter/material.dart';
@@ -297,9 +301,17 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
           ),
         ],
       ),
-      // backgroundColor: const Color(0xFF0F0F11),
       body: SafeArea(
-        child: Column(
+        child: ref.watch(connectivityStatusProvider).when(
+          data: (results) {
+            if (results.contains(ConnectivityResult.none)) {
+              return GlobalError(
+                message: 'Please check your internet connection.',
+                isNetworkError: true,
+                onRetry: () => ref.invalidate(connectivityStatusProvider),
+              );
+            }
+            return Column(
           children: [
             /// CHAT AREA
             Expanded(
@@ -497,6 +509,13 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
               ),
             ),
           ],
+            );
+          },
+          error: (error, stack) => GlobalError(
+            message: 'Failed to check connectivity: $error',
+            onRetry: () => ref.invalidate(connectivityStatusProvider),
+          ),
+          loading: () => const GlobalLoader(message: 'Checking connection...'),
         ),
       ),
     );

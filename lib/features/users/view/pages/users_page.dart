@@ -83,6 +83,7 @@ class _UsersPageState extends ConsumerState<UsersPage> {
       floatingActionButton: (userRole == 'admin' || userRole == 'super admin')
           ? connectivityStatus.when(
               data: (results) {
+                if (results.contains(ConnectivityResult.none)) return null;
                 return FloatingActionButton(
                   backgroundColor: customColors.primary,
                   foregroundColor: Colors.white,
@@ -98,8 +99,8 @@ class _UsersPageState extends ConsumerState<UsersPage> {
                   child: Icon(Icons.person_add, size: 22),
                 );
               },
-              loading: () => null, // hide FAB while checking
-              error: (_, __) => null, // hide FAB on error
+              loading: () => null,
+              error: (_, __) => null,
             )
           : null,
 

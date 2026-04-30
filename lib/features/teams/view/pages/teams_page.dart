@@ -1,5 +1,9 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/widgets/global_error.dart';
+import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/teams/view/pages/add_edit_team.dart';
 import 'package:dsv360/features/teams/providers/teams_provider.dart';
@@ -93,16 +97,18 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
       setState(() {
         _isLoadingEmployees = false;
       });
-      
-      // Show error message in snackbar
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error loading employees: $e'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        final connectivity = await Connectivity().checkConnectivity();
+        if (!mounted) return;
+        if (!connectivity.contains(ConnectivityResult.none)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error loading employees: $e'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
       }
     }
   }
@@ -287,11 +293,32 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
         final textPrimary = customColors.textPrimary ??
             (isDark ? AppColorsDark.textPrimary : AppColorsLight.textPrimary);
 
+        final connectivityStatus = ref.watch(connectivityStatusProvider);
+
         return Scaffold(
           drawer: const AppDrawer(),
           backgroundColor: background,
           body: SafeArea(
-            child: Column(
+            child: connectivityStatus.when(
+              data: (results) {
+                if (results.contains(ConnectivityResult.none)) {
+                  return Column(
+                    children: [
+                      TopBar(
+                        title: 'Teams',
+                        onBack: () => Navigator.pop(context),
+                      ),
+                      Expanded(
+                        child: GlobalError(
+                          message: 'Please check your internet connection.',
+                          isNetworkError: true,
+                          onRetry: () => ref.invalidate(connectivityStatusProvider),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return Column(
               children: [
                 // ── Top bar ──
                 TopBar(
@@ -607,6 +634,13 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
                   ),
                 ),
               ],
+                );
+              },
+              error: (error, stack) => GlobalError(
+                message: 'Failed to check connectivity: $error',
+                onRetry: () => ref.invalidate(connectivityStatusProvider),
+              ),
+              loading: () => const GlobalLoader(message: 'Checking connection...'),
             ),
           ),
         );

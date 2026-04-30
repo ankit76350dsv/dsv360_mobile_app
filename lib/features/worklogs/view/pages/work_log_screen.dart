@@ -1,6 +1,10 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
+import 'package:dsv360/core/widgets/global_error.dart';
+import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
 import 'package:dsv360/features/worklogs/model/worklog_model.dart';
 import 'package:dsv360/features/worklogs/viewmodel/worklogs_viewmodel.dart';
@@ -177,49 +181,75 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
         final surfaceBg = customColors.surfaceBackground ??
             (isDark ? AppColorsDark.surfaceBackground : AppColorsLight.surfaceBackground);
 
+        final connectivityStatus = ref.watch(connectivityStatusProvider);
+
         return Scaffold(
           drawer: const AppDrawer(),
           backgroundColor: background,
           body: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TopBar(
-                  title: 'Work Logs',
-                  onBack: () {
-                    if (Navigator.canPop(context)) Navigator.pop(context);
-                  },
-                  onInfoTap: _loadData,
-                  actionIcon: Icons.refresh_rounded,
-                ),
-                // Row 1: Search bar
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: _buildSearchBar(surfaceBg, textSecondary),
-                ),
-                // Row 3: Timeline label + Add Log
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                  child: _buildTimelineAndAddRow(primary, textSecondary),
-                ),
-                // Row 2: Date range
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: _buildDateRangeRow(
-                    context, cardBg, greyBorder, textPrimary, textSecondary,
-                  ),
-                ),
-                
-                // Scrollable content with pull-to-refresh
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () => _loadData(isRefresh: true),
-                    child: _buildScrollContent(
-                      cardBg, textPrimary, textSecondary, greyBorder, primary, isDark,
+            child: connectivityStatus.when(
+              data: (results) {
+                if (results.contains(ConnectivityResult.none)) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TopBar(
+                        title: 'Work Logs',
+                        onBack: () {
+                          if (Navigator.canPop(context)) Navigator.pop(context);
+                        },
+                      ),
+                      Expanded(
+                        child: GlobalError(
+                          message: 'Please check your internet connection.',
+                          isNetworkError: true,
+                          onRetry: () => ref.invalidate(connectivityStatusProvider),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    TopBar(
+                      title: 'Work Logs',
+                      onBack: () {
+                        if (Navigator.canPop(context)) Navigator.pop(context);
+                      },
+                      onInfoTap: _loadData,
+                      actionIcon: Icons.refresh_rounded,
                     ),
-                  ),
-                ),
-              ],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: _buildSearchBar(surfaceBg, textSecondary),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                      child: _buildTimelineAndAddRow(primary, textSecondary),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                      child: _buildDateRangeRow(
+                        context, cardBg, greyBorder, textPrimary, textSecondary,
+                      ),
+                    ),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: () => _loadData(isRefresh: true),
+                        child: _buildScrollContent(
+                          cardBg, textPrimary, textSecondary, greyBorder, primary, isDark,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
+              error: (error, stack) => GlobalError(
+                message: 'Failed to check connectivity: $error',
+                onRetry: () => ref.invalidate(connectivityStatusProvider),
+              ),
+              loading: () => const GlobalLoader(message: 'Checking connection...'),
             ),
           ),
         );

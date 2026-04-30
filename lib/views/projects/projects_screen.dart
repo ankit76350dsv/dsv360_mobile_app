@@ -201,12 +201,36 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           return connectivityStatus.when(
             data: (results) {
               if (results.contains(ConnectivityResult.none)) {
-                return GlobalError(
-                  message: 'Please check your internet connection.',
-                  isNetworkError: true,
-                  onRetry: () {
-                    ref.invalidate(connectivityStatusProvider);
-                  },
+                return Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.only(top: 48, bottom: 12),
+                      child: TopBar(
+                        title: 'Projects',
+                        onBack: () {
+                          if (Navigator.canPop(context)) {
+                            Navigator.pop(context);
+                          } else {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const DashboardPage(),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                    Expanded(
+                      child: GlobalError(
+                        message: 'Please check your internet connection.',
+                        isNetworkError: true,
+                        onRetry: () {
+                          ref.invalidate(connectivityStatusProvider);
+                        },
+                      ),
+                    ),
+                  ],
                 );
               }
 
@@ -358,10 +382,11 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           );
         },
       ),
-      floatingActionButton: _isAdminUser()
+      floatingActionButton: _isAdminUser() &&
+              ref.watch(connectivityStatusProvider).valueOrNull?.contains(ConnectivityResult.none) != true
           ? FloatingActionButton(
-        onPressed: () => _showAddProjectDialog(context: context),
-        backgroundColor: customColors.primary,
+              onPressed: () => _showAddProjectDialog(context: context),
+              backgroundColor: customColors.primary,
               shape: const CircleBorder(),
               child: const Icon(Icons.add, color: Colors.white, size: 28),
             )

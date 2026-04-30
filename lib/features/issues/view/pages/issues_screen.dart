@@ -1,6 +1,10 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
+import 'package:dsv360/core/widgets/global_error.dart';
+import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -334,117 +338,156 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
-
     final userRole =
         AuthManager.instance.currentUser?.role?.name.toLowerCase() ?? '';
+    final connectivityStatus = ref.watch(connectivityStatusProvider);
 
     return Scaffold(
-      body: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.only(top: 48, bottom: 12),
-            child: Column(
+      floatingActionButton: (userRole == "admin" || userRole == "super admin") &&
+              connectivityStatus.valueOrNull?.contains(ConnectivityResult.none) != true
+          ? FloatingActionButton(
+              onPressed: () => _showAddIssueDialog(),
+              backgroundColor: customColors.primary,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      body: connectivityStatus.when(
+        data: (results) {
+          if (results.contains(ConnectivityResult.none)) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ---------- Top bar ----------
-                TopBar(
-                  title: 'Issues',
-                  onBack: () {
-                    if (Navigator.canPop(context)) {
-                      Navigator.pop(context);
-                    } else {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const DashboardPage(),
-                        ),
-                      );
-                    }
-                  },
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: CustomSearchBar(
-                          controller: _searchController,
-                          hintText: 'Search Issues',
-                          onChanged: (_) {},
-                        ),
-                      ),
-                      if(userRole == 'admin')const SizedBox(width: 8),
-                      if(userRole == 'admin')Container(
-                    
-                        decoration: BoxDecoration(
-                          border: Border.all(color: customColors.inputBorder!),
-                          borderRadius: BorderRadius.circular(12),
-                          color: customColors.inputFill
-                        ),
-                        child: PopupMenuButton<String>(
-                          color: customColors.inputFill,
-                          
-
-                          onSelected: (value) {
-                            setState(() => _selectedFilter = value);
-                          },
-                          itemBuilder: (context) => _filterOptions
-                              .map(
-                                (option) => PopupMenuItem<String>(
-                                  value: option,
-                                  child: Row(
-                                    children: [
-                                      Icon(
-                                        _selectedFilter == option
-                                            ? Icons.radio_button_checked
-                                            : Icons.radio_button_unchecked,
-                                        color: customColors.primary,
-                                        size: 18,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        option,
-                                        style: TextStyle(
-                                          color: customColors.textPrimary,
-                                          fontWeight: _selectedFilter == option
-                                              ? FontWeight.w600
-                                              : FontWeight.w400,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                Container(
+                  padding: const EdgeInsets.only(top: 48, bottom: 12),
+                  child: TopBar(
+                    title: 'Issues',
+                    onBack: () {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const DashboardPage(),
                           ),
-
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Icon(
-                              Icons.filter_list,
-                              color: customColors.textPrimary,
-                              size: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                        );
+                      }
+                    },
                   ),
                 ),
-
-                // In the header, after the search bar, add:
+                Expanded(
+                  child: GlobalError(
+                    message: 'Please check your internet connection.',
+                    isNetworkError: true,
+                    onRetry: () => ref.invalidate(connectivityStatusProvider),
+                  ),
+                ),
               ],
-            ),
-          ),
+            );
+          }
 
-          // Issues List
-          Expanded(
-            child: ref
-                .watch(issueListProvider)
-                .when(
+          return Column(
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.only(top: 48, bottom: 12),
+                child: Column(
+                  children: [
+                    TopBar(
+                      title: 'Issues',
+                      onBack: () {
+                        if (Navigator.canPop(context)) {
+                          Navigator.pop(context);
+                        } else {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const DashboardPage(),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: CustomSearchBar(
+                              controller: _searchController,
+                              hintText: 'Search Issues',
+                              onChanged: (_) {},
+                            ),
+                          ),
+                          if (userRole == 'admin') const SizedBox(width: 8),
+                          if (userRole == 'admin')
+                            Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: customColors.inputBorder!),
+                                borderRadius: BorderRadius.circular(12),
+                                color: customColors.inputFill,
+                              ),
+                              child: PopupMenuButton<String>(
+                                color: customColors.inputFill,
+                                onSelected: (value) {
+                                  setState(() => _selectedFilter = value);
+                                },
+                                itemBuilder: (context) => _filterOptions
+                                    .map(
+                                      (option) => PopupMenuItem<String>(
+                                        value: option,
+                                        child: Row(
+                                          children: [
+                                            Icon(
+                                              _selectedFilter == option
+                                                  ? Icons.radio_button_checked
+                                                  : Icons
+                                                      .radio_button_unchecked,
+                                              color: customColors.primary,
+                                              size: 18,
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              option,
+                                              style: TextStyle(
+                                                color: customColors.textPrimary,
+                                                fontWeight:
+                                                    _selectedFilter == option
+                                                        ? FontWeight.w600
+                                                        : FontWeight.w400,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Icon(
+                                    Icons.filter_list,
+                                    color: customColors.textPrimary,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // Issues List
+              Expanded(
+                child: ref.watch(issueListProvider).when(
                   data: (issues) {
                     final filteredIssues = _filterIssues(issues);
 
@@ -456,9 +499,8 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                             Icon(
                               Icons.inbox_outlined,
                               size: 64,
-                              color: customColors.textSecondary!.withValues(
-                                alpha: 0.5,
-                              ),
+                              color: customColors.textSecondary!
+                                  .withValues(alpha: 0.5),
                             ),
                             const SizedBox(height: 16),
                             Text(
@@ -491,9 +533,8 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                         itemBuilder: (context, index) {
                           final issue = filteredIssues[index];
                           final dateFormat = DateFormat('dd/MM/yy');
-                          final createdDate = dateFormat.format(
-                            issue.createdDate,
-                          );
+                          final createdDate =
+                              dateFormat.format(issue.createdDate);
                           final dueDate = issue.dueDate != null
                               ? dateFormat.format(issue.dueDate!)
                               : 'N/A';
@@ -513,12 +554,11 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                               chips: [
                                 CardChip(
                                   icon: Icons.person_outline,
-                                  count:
-                                      (issue.assignedTo == null ||
+                                  count: (issue.assignedTo == null ||
                                           issue.assignedTo!.trim().isEmpty)
                                       ? "0"
                                       : (issue.assignedTo!.split(',').length)
-                                            .toString(),
+                                          .toString(),
                                   isActive: true,
                                   onTap: () {
                                     showModalBottomSheet(
@@ -535,19 +575,20 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                                 ),
                                 CardChip(
                                   icon: Icons.attach_file,
-                                  count: issue.attachments.length.toString(),
+                                  count:
+                                      issue.attachments.length.toString(),
                                   isActive: issue.attachments.isNotEmpty,
                                   onTap: issue.attachments.isNotEmpty
                                       ? () {
                                           showModalBottomSheet(
                                             context: context,
                                             isScrollControlled: true,
-                                            backgroundColor: Colors.transparent,
+                                            backgroundColor:
+                                                Colors.transparent,
                                             builder: (context) =>
                                                 AttachmentListModal(
-                                                  attachments:
-                                                      issue.attachments,
-                                                ),
+                                              attachments: issue.attachments,
+                                            ),
                                           );
                                         }
                                       : null,
@@ -571,8 +612,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                                 }
                                 _showStatusUpdateDialog(issue);
                               },
-                              onDelete:
-                                  (userRole == 'admin' ||
+                              onDelete: (userRole == 'admin' ||
                                       userRole == 'super admin')
                                   ? () => _deleteIssue(issue)
                                   : null,
@@ -583,58 +623,21 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                     );
                   },
                   loading: () => Center(child: DsvLoader()),
-                  error: (error, stack) => Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: customColors.error,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Error loading issues',
-                          style: TextStyle(
-                            color: customColors.textPrimary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.normal,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          error.toString(),
-                          style: TextStyle(
-                            color: customColors.textSecondary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.normal,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () => ref.invalidate(issueListProvider),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: customColors.primary,
-                          ),
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
+                  error: (error, stack) => GlobalError(
+                    message: 'Failed to load issues: $error',
+                    onRetry: () => ref.invalidate(issueListProvider),
                   ),
                 ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
+        error: (error, stack) => GlobalError(
+          message: 'Failed to check connectivity: $error',
+          onRetry: () => ref.invalidate(connectivityStatusProvider),
+        ),
+        loading: () => const GlobalLoader(message: 'Checking connection...'),
       ),
-      floatingActionButton: (userRole == "admin" || userRole == "super admin")
-          ? FloatingActionButton(
-              onPressed: () => _showAddIssueDialog(),
-              backgroundColor: customColors.primary,
-              shape: const CircleBorder(),
-              child: const Icon(Icons.add, color: Colors.white, size: 28),
-            )
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

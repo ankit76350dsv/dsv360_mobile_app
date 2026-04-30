@@ -1,5 +1,9 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/widgets/global_error.dart';
+import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
 import 'package:dsv360/features/sprints/model/sprints_model.dart';
@@ -883,7 +887,29 @@ if (_selectedSprintId != null) {
           drawer: const AppDrawer(),
           backgroundColor: background,
           body: SafeArea(
-            child: RefreshIndicator(
+            child: ref.watch(connectivityStatusProvider).when(
+              data: (results) {
+                if (results.contains(ConnectivityResult.none)) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TopBar(
+                        title: 'Sprints',
+                        onBack: () {
+                          if (Navigator.canPop(context)) Navigator.pop(context);
+                        },
+                      ),
+                      Expanded(
+                        child: GlobalError(
+                          message: 'Please check your internet connection.',
+                          isNetworkError: true,
+                          onRetry: () => ref.invalidate(connectivityStatusProvider),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return RefreshIndicator(
               onRefresh: _onRefresh,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1717,6 +1743,13 @@ if (_selectedSprintId != null) {
                   ),
                 ],
               ),
+                );
+              },
+              error: (error, stack) => GlobalError(
+                message: 'Failed to check connectivity: $error',
+                onRetry: () => ref.invalidate(connectivityStatusProvider),
+              ),
+              loading: () => const GlobalLoader(message: 'Checking connection...'),
             ),
           ),
         );

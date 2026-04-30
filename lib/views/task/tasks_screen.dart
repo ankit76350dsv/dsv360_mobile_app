@@ -1,5 +1,9 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
+import 'package:dsv360/core/widgets/global_error.dart';
+import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/time_entry/repositories/check_timer_status_repository.dart';
 import 'package:dsv360/features/time_entry/view/pages/timer_service.dart';
@@ -328,10 +332,56 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     final tasksAsync = ref.watch(tasksListRepositoryProvider(userId));
     final searchQuery = ref.watch(tasksSearchQueryProvider);
     final customColors = Theme.of(context).custom;
+    final connectivityStatus = ref.watch(connectivityStatusProvider);
 
     return Scaffold(
       drawer: const AppDrawer(),
-      body: Column(
+      floatingActionButton: connectivityStatus.valueOrNull?.contains(ConnectivityResult.none) != true
+          ? FloatingActionButton(
+              onPressed: () => _showAddTaskDialog(context: context),
+              backgroundColor: customColors.primary,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      body: connectivityStatus.when(
+        data: (results) {
+          if (results.contains(ConnectivityResult.none)) {
+            final title = widget.projectName != null && widget.projectName!.isNotEmpty
+                ? '${widget.projectName} - Tasks'
+                : 'Tasks';
+            return Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.only(top: 48, bottom: 12),
+                  child: TopBar(
+                    title: title,
+                    onBack: () {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const DashboardPage(),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: GlobalError(
+                    message: 'Please check your internet connection.',
+                    isNetworkError: true,
+                    onRetry: () => ref.invalidate(connectivityStatusProvider),
+                  ),
+                ),
+              ],
+            );
+          }
+          return Column(
         children: [
           // Header
           Container(
@@ -560,14 +610,14 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             ),
           ),
         ],
+          );
+        },
+        error: (error, stack) => GlobalError(
+          message: 'Failed to check connectivity: $error',
+          onRetry: () => ref.invalidate(connectivityStatusProvider),
+        ),
+        loading: () => const GlobalLoader(message: 'Checking connection...'),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddTaskDialog(context: context),
-        backgroundColor: customColors.primary,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }

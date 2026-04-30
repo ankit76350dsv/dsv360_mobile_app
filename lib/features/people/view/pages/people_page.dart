@@ -68,6 +68,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
+    final connectivityStatus = ref.watch(connectivityStatusProvider);
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -92,9 +93,6 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
           'People',
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
-        // if needed can add the icon as well here
-        // hook for info action
-        // you can open a dialog or screen here
         actions: [
           IconButton(
             icon: const Icon(Icons.calendar_month, size: 18),
@@ -107,82 +105,97 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
           ),
         ],
       ),
-      body: Column(
-        children: [
-          /// ️ TABS
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12.0,
-              vertical: 8.0,
-            ),
-            child: Container(
-              height: 52,
-              decoration: BoxDecoration(
-                color: customColors.tabbarBackground, // light grey background
-                borderRadius: BorderRadius.circular(14),
-              ),
-              padding: EdgeInsets.all(4.0),
-              child: TabBar(
-                controller: _tabController,
-                indicator: BoxDecoration(
-                  color: customColors.tabbarIndicator, // white pill
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+      body: connectivityStatus.when(
+        data: (results) {
+          if (results.contains(ConnectivityResult.none)) {
+            return GlobalError(
+              message: 'Please check your internet connection.',
+              isNetworkError: true,
+              onRetry: () => ref.invalidate(connectivityStatusProvider),
+            );
+          }
+
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12.0,
+                  vertical: 8.0,
+                ),
+                child: Container(
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: customColors.tabbarBackground,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  padding: EdgeInsets.all(4.0),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicator: BoxDecoration(
+                      color: customColors.tabbarIndicator,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    labelColor: customColors.textPrimary,
+                    unselectedLabelColor: customColors.textSecondary,
+                    labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+                    dividerColor: Colors.transparent,
+                    tabs: [
+                      const Tab(text: 'Check In'),
+                      if (!IsHaveAccess.instance.isAdmin ||
+                          IsHaveAccess.instance.isManager)
+                        const Tab(text: 'Activities'),
+                      const Tab(text: 'Leave'),
+                      if (!IsHaveAccess.instance.isAdmin ||
+                          IsHaveAccess.instance.isManager)
+                        const Tab(text: 'Attendance'),
+                      if (IsHaveAccess.instance.isAdmin ||
+                          IsHaveAccess.instance.isManager)
+                        const Tab(text: 'Attendance Tracker'),
+                      if (IsHaveAccess.instance.isAdmin ||
+                          IsHaveAccess.instance.isManager)
+                        const Tab(text: 'Leave Calendar'),
+                    ],
+                  ),
+                ),
+              ),
+
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    const _CheckInTab(),
+                    if (!IsHaveAccess.instance.isAdmin ||
+                        IsHaveAccess.instance.isManager)
+                      const _ActivitiesTab(),
+                    const _LeaveTab(),
+                    if (!IsHaveAccess.instance.isAdmin ||
+                        IsHaveAccess.instance.isManager)
+                      const _AttendanceTab(),
+                    if (IsHaveAccess.instance.isAdmin ||
+                        IsHaveAccess.instance.isManager)
+                      const _AttendanceTrackerTab(),
+                    if (IsHaveAccess.instance.isAdmin ||
+                        IsHaveAccess.instance.isManager)
+                      const _LeaveCalendarTab(),
                   ],
                 ),
-                indicatorSize: TabBarIndicatorSize.tab,
-                labelColor: customColors.textPrimary,
-                unselectedLabelColor: customColors.textSecondary,
-                labelStyle: const TextStyle(fontWeight: FontWeight.w600),
-                dividerColor: Colors.transparent,
-                tabs: [
-                  const Tab(text: 'Check In'),
-                  if (!IsHaveAccess.instance.isAdmin ||
-                      IsHaveAccess.instance.isManager)
-                    const Tab(text: 'Activities'),
-                  const Tab(text: 'Leave'),
-                  if (!IsHaveAccess.instance.isAdmin ||
-                      IsHaveAccess.instance.isManager)
-                    const Tab(text: 'Attendance'),
-                  if (IsHaveAccess.instance.isAdmin ||
-                      IsHaveAccess.instance.isManager)
-                    const Tab(text: 'Attendance Tracker'),
-                  if (IsHaveAccess.instance.isAdmin ||
-                      IsHaveAccess.instance.isManager)
-                    const Tab(text: 'Leave Calendar'),
-                ],
               ),
-            ),
-          ),
-
-          /// 📄 TAB CONTENT
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                const _CheckInTab(),
-                if (!IsHaveAccess.instance.isAdmin ||
-                    IsHaveAccess.instance.isManager)
-                  const _ActivitiesTab(),
-                const _LeaveTab(),
-                if (!IsHaveAccess.instance.isAdmin ||
-                    IsHaveAccess.instance.isManager)
-                  const _AttendanceTab(),
-                if (IsHaveAccess.instance.isAdmin ||
-                    IsHaveAccess.instance.isManager)
-                  const _AttendanceTrackerTab(),
-                if (IsHaveAccess.instance.isAdmin ||
-                    IsHaveAccess.instance.isManager)
-                  const _LeaveCalendarTab(),
-              ],
-            ),
-          ),
-        ],
+            ],
+          );
+        },
+        error: (error, stack) => GlobalError(
+          message: 'Failed to check connectivity: $error',
+          onRetry: () => ref.invalidate(connectivityStatusProvider),
+        ),
+        loading: () => const GlobalLoader(message: 'Checking connection...'),
       ),
     );
   }
