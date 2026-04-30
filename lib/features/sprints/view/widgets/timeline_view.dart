@@ -99,6 +99,8 @@ class TimelineView extends StatefulWidget {
   final String? sprintStartDate;
   final String? sprintEndDate;
   final String? sprintName;
+  final bool canManageSprints;
+  final String? currentUserId;
 
   const TimelineView({
     super.key,
@@ -113,6 +115,8 @@ class TimelineView extends StatefulWidget {
     this.sprintStartDate,
     this.sprintEndDate,
     this.sprintName,
+    this.canManageSprints = true,
+    this.currentUserId,
   });
 
   @override
@@ -144,9 +148,14 @@ class _TimelineViewState extends State<TimelineView> {
   // ── Derived data ─────────────────────────────────────────────────────────
 
   List<StoryModel> get _filteredStories {
-    final stories = widget.hierarchy.stories;
-    if (widget.sprintId == null || widget.sprintId!.isEmpty) return stories;
-    return stories.where((s) => s.sprintId == widget.sprintId).toList();
+    var stories = widget.hierarchy.stories;
+    if (widget.sprintId != null && widget.sprintId!.isNotEmpty) {
+      stories = stories.where((s) => s.sprintId == widget.sprintId).toList();
+    }
+    if (!widget.canManageSprints && widget.currentUserId != null) {
+      stories = stories.where((s) => s.assigneeId == widget.currentUserId).toList();
+    }
+    return stories;
   }
 
   List<_StoryBar> _buildStoryBars(DateTime chartStart, DateTime chartEnd) {
@@ -704,6 +713,8 @@ class _TimelineViewState extends State<TimelineView> {
           sprintStartDate: widget.sprintStartDate,
           sprintEndDate: widget.sprintEndDate,
           sprintName: widget.sprintName,
+          canManageSprints: widget.canManageSprints,
+          currentUserId: widget.currentUserId,
         ),
       ),
     );
@@ -1184,6 +1195,8 @@ class _FullscreenGantt extends StatefulWidget {
   final String? sprintStartDate;
   final String? sprintEndDate;
   final String? sprintName;
+  final bool canManageSprints;
+  final String? currentUserId;
 
   const _FullscreenGantt({
     required this.hierarchy,
@@ -1197,6 +1210,8 @@ class _FullscreenGantt extends StatefulWidget {
     this.sprintStartDate,
     this.sprintEndDate,
     this.sprintName,
+    this.canManageSprints = true,
+    this.currentUserId,
   });
 
   @override
@@ -1207,9 +1222,14 @@ class _FullscreenGanttState extends State<_FullscreenGantt> {
   String? _selectedStoryId;
 
   List<StoryModel> get _filteredStories {
-    final stories = widget.hierarchy.stories;
-    if (widget.sprintId == null || widget.sprintId!.isEmpty) return stories;
-    return stories.where((s) => s.sprintId == widget.sprintId).toList();
+    var stories = widget.hierarchy.stories;
+    if (widget.sprintId != null && widget.sprintId!.isNotEmpty) {
+      stories = stories.where((s) => s.sprintId == widget.sprintId).toList();
+    }
+    if (!widget.canManageSprints && widget.currentUserId != null) {
+      stories = stories.where((s) => s.assigneeId == widget.currentUserId).toList();
+    }
+    return stories;
   }
 
   ({DateTime start, DateTime end}) _chartRange() {

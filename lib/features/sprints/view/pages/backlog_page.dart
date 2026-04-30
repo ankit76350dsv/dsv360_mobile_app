@@ -5,6 +5,7 @@ import 'package:dsv360/features/sprints/model/story_model.dart';
 import 'package:dsv360/features/sprints/repositories/get_sprints_repository.dart';
 import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
 import 'package:dsv360/features/sprints/repositories/deploy_to_cycle_repository.dart';
+import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -289,6 +290,10 @@ class _BacklogPageState extends ConsumerState<BacklogPage> {
         final primary =
             customColors.primary ?? AppColorsDark.primary;
 
+        final activeUser = ref.watch(activeUserRepositoryProvider);
+        final roleName = (activeUser?.roleName ?? '').toLowerCase().trim();
+        final canManageSprints = roleName == 'admin' || roleName == 'super admin';
+
         final hierarchyAsync =
             ref.watch(_backlogHierarchyProvider(widget.projectId));
         final sprintsAsync =
@@ -322,7 +327,12 @@ class _BacklogPageState extends ConsumerState<BacklogPage> {
                   loading: () => const SizedBox.shrink(),
                   error: (_, __) => const SizedBox.shrink(),
                   data: (stories) {
-                    final count = _filtered(stories).length;
+                    final roleFiltered = canManageSprints
+                        ? stories
+                        : stories
+                            .where((s) => s.assigneeId == activeUser?.userId)
+                            .toList();
+                    final count = _filtered(roleFiltered).length;
                     return Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 4),
@@ -418,7 +428,12 @@ class _BacklogPageState extends ConsumerState<BacklogPage> {
                       ),
                     ),
                     data: (stories) {
-                      final filtered = _filtered(stories);
+                      final roleFiltered = canManageSprints
+                          ? stories
+                          : stories
+                              .where((s) => s.assigneeId == activeUser?.userId)
+                              .toList();
+                      final filtered = _filtered(roleFiltered);
                       if (filtered.isEmpty) {
                         return RefreshIndicator(
                           onRefresh: () async => ref.invalidate(

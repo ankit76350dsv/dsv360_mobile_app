@@ -12,7 +12,7 @@ import 'package:dsv360/features/sprints/view/pages/create_release_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_sprint_page.dart';
 import 'package:dsv360/features/sprints/view/pages/backlog_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_story_page.dart';
-import 'package:dsv360/providers/project_provider.dart';
+import 'package:dsv360/features/sprints/repositories/get_projects_repository.dart' as sprints_projects;
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +22,7 @@ import '../widgets/board_view.dart';
 import '../widgets/timeline_view.dart';
 
 final projectListProvider = FutureProvider((ref) async {
-  final repo = ref.read(projectRepositoryProvider);
+  final repo = ref.read(sprints_projects.projectRepositoryProvider);
   return repo.fetchProjects();
 });
 
@@ -65,6 +65,7 @@ final hierarchyProvider =
               status: s.status,
               totalTasks: totalTasksCount,
               completedTasks: completedTasksCount,
+              assigneeId: s.assigneeId,
             );
           })
           .toList();
@@ -1578,6 +1579,13 @@ if (_selectedSprintId != null) {
                                 ),
                               ),
                               data: (stories) {
+                                final visibleStories = canManageSprints
+                                    ? stories
+                                    : stories
+                                        .where((s) =>
+                                            s.assigneeId ==
+                                            activeUser?.userId)
+                                        .toList();
                                 String? sprintEndDate;
                                 if (_selectedSprintId != null) {
                                   sprintsAsync.whenData((sprints) {
@@ -1593,7 +1601,7 @@ if (_selectedSprintId != null) {
                                   });
                                 }
                                 return BoardView(
-                                  stories: stories,
+                                  stories: visibleStories,
                                   onMove: _moveStory,
                                   isDark: isDark,
                                   customColors: customColors,
@@ -1697,6 +1705,8 @@ if (_selectedSprintId != null) {
                                   sprintStartDate: sprintStart,
                                   sprintEndDate: sprintEnd,
                                   sprintName: _selectedSprintName,
+                                  canManageSprints: canManageSprints,
+                                  currentUserId: activeUser?.userId,
                                 );
                               },
                             );

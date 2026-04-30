@@ -10,7 +10,7 @@ import 'package:dsv360/features/sprints/view/pages/create_epic_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_release_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_story_page.dart';
 import 'package:dsv360/features/sprints/view/pages/story_details_page.dart';
-import 'package:dsv360/providers/project_provider.dart';
+import 'package:dsv360/features/sprints/repositories/get_projects_repository.dart' as sprints_projects;
 import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:dsv360/views/widgets/custom_search_bar.dart';
@@ -20,7 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 // ── Providers ─────────────────────────────────────────────────────────────────
 
 final _projectListProvider = FutureProvider((ref) async {
-  return ref.read(projectRepositoryProvider).fetchProjects();
+  return ref.read(sprints_projects.projectRepositoryProvider).fetchProjects();
 });
 
 final _hierarchyProvider =
@@ -695,14 +695,25 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                       style: TextStyle(color: textSecondary, fontSize: 13),
                     ),
                   ),
-                  data: (projects) => _buildProjectDropdown(
-                    projects: projects,
-                    cardBg: cardBackground,
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    greyBorder: greyBorder,
-                    primary: primary,
-                  ),
+                  data: (projects) {
+                    if (_selectedProjectId == null && projects.isNotEmpty) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!mounted || _selectedProjectId != null) return;
+                        setState(() {
+                          _selectedProjectId = projects.first.id;
+                          _selectedProjectName = projects.first.projectName;
+                        });
+                      });
+                    }
+                    return _buildProjectDropdown(
+                      projects: projects,
+                      cardBg: cardBackground,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      greyBorder: greyBorder,
+                      primary: primary,
+                    );
+                  },
                 ),
 
                 const SizedBox(height: 4),
@@ -723,6 +734,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                     primary,
                     isLightMode,
                     canManageSprints: canManageSprints,
+                    currentUserId: activeUser?.userId,
                   ),
           ),
         ],
@@ -775,16 +787,21 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
     Color textSecondary,
     Color primary,
     bool isLightMode,
-    {bool canManageSprints = false}
+    {bool canManageSprints = false, String? currentUserId}
   ) {
     final hierarchyAsync = ref.watch(_hierarchyProvider(projectId));
 
     return hierarchyAsync.when(
       data: (hierarchy) {
+  final visibleStories = canManageSprints
+      ? hierarchy.stories
+      : hierarchy.stories
+          .where((s) => s.assigneeId == currentUserId)
+          .toList();
   final milestones = _filterMilestones(
     hierarchy.milestones,
     hierarchy.epics,
-    hierarchy.stories,
+    visibleStories,
   );
 
   return RefreshIndicator(
@@ -816,7 +833,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
             itemBuilder: (context, index) => _buildMilestoneTile(
               milestones[index],
               hierarchy.epics,
-              hierarchy.stories,
+              visibleStories,
               cardBackground,
               border,
               textPrimary,
