@@ -1058,7 +1058,7 @@ if (_selectedSprintId != null) {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        if (canManageSprints)
+                        if (canManageSprints && _selectedSprintId != null)
                           GestureDetector(
                             onTap: _selectedSprintStatus == 'ACTIVE'
                                 ? () async {
@@ -1151,28 +1151,38 @@ if (_selectedSprintId != null) {
                             ),
                           ),
                           const SizedBox(width: 6),
-                          // Active badge
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF4CAF50,
-                              ).withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                             (_selectedSprintStatus ?? 'Active'),
-                              style: const TextStyle(
-                                color: Color(0xFF4CAF50),
-                                fontSize: 9,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.3,
+                          // Active badge or No Sprint message
+                          if (_selectedSprintId != null)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFF4CAF50,
+                                ).withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                               (_selectedSprintStatus ?? 'Active'),
+                                style: const TextStyle(
+                                  color: Color(0xFF4CAF50),
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                            )
+                          else
+                            Text(
+                              ': ',
+                              style: TextStyle(
+                                color: textSecondary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                          ),
                           const SizedBox(width: 6),
                           // Sprint dropdown
                           Consumer(

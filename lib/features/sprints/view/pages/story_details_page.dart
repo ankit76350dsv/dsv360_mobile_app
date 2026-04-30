@@ -8,7 +8,9 @@ import 'package:dsv360/features/sprints/model/task_model.dart';
 import 'package:dsv360/features/sprints/repositories/get_sprints_repository.dart';
 import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
 import 'package:dsv360/features/sprints/view/pages/add_task_page.dart';
+import 'package:dsv360/features/sprints/view/pages/edit_story_page.dart';
 import 'package:dsv360/features/sprints/view/pages/sub_task_page.dart';
+import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -172,13 +174,47 @@ class StoryDetailsPage extends ConsumerWidget {
                       // ── Story title ──────────────────────────────────
                       Padding(
                         padding: const EdgeInsets.only(bottom: 16),
-                        child: Text(
-                          story.title,
-                          style: TextStyle(
-                            color: textPrimary,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                story.title,
+                                style: TextStyle(
+                                  color: textPrimary,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: primary.withValues(alpha: 0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+
+                                  Text(
+                                    '${story.points.toString()} SP',
+                                    style: TextStyle(
+                                      color: primary,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ),
 
@@ -369,48 +405,98 @@ class StoryDetailsPage extends ConsumerWidget {
                             ),
                           ),
                           const Spacer(),
-                          GestureDetector(
-                                        onTap: (){
-                                          Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => AddTaskPage(
-                                    projectId: projectId,
-                                    storyId: story.id,
-                                    storyTitle: story.title,
-                                  ),
-                                ),
-                              );
-                                        },
-                                        child: Container(
-                                          padding: EdgeInsets.symmetric(
-                                            horizontal:12,
-                                            vertical: 8,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: customColors.primary,
-                                            borderRadius: BorderRadius.circular(10),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: (customColors.primary ??
-                                                        const Color(0xFF2563EB))
-                                                    .withValues(alpha: 0.3),
-                                                blurRadius: 3,
-                                                offset: const Offset(0, 3),
-                                              ),
-                                            ],
-                                          ),
-                                          child: Text(
-                                            '+ Add Task',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                              letterSpacing: 0.1,
-                                            ),
-                                          ),
+                          if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin')
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                GestureDetector(
+                                  onTap: () async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => EditStoryPage(
+                                          story: story,
+                                          projectName: projectName,
+                                          sprintName: sprintName,
+                                          epicName: null,
                                         ),
                                       ),
+                                    );
+                                    if (result == true) {
+                                      ref.invalidate(_storyDetailsProvider(
+                                          (projectId: projectId, storyId: storyId)));
+                                    }
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: customColors.cardBackground,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: (customColors.primary ?? const Color(0xFF2563EB))
+                                            .withValues(alpha: 0.5),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'Edit Story',
+                                      style: TextStyle(
+                                        color: customColors.primary,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.1,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => AddTaskPage(
+                                          projectId: projectId,
+                                          storyId: story.id,
+                                          storyTitle: story.title,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: customColors.primary,
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: (customColors.primary ??
+                                                  const Color(0xFF2563EB))
+                                              .withValues(alpha: 0.3),
+                                          blurRadius: 3,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Text(
+                                      '+ Add Task',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.1,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                         ],
                       ),
                       const SizedBox(height: 10),

@@ -125,25 +125,25 @@ class StoryCard extends StatelessWidget {
               
 
               // Avatar
-              Container(
-                width: 18,
-                height: 18,
-                decoration: BoxDecoration(
-                  color: primary.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Center(
-                  child: Text(
-                    story.memberAvatars.isNotEmpty
-                        ? story.memberAvatars.first
-                        : '?',
-                    style: TextStyle(
-                        color: primary,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
+              // Container(
+              //   width: 18,
+              //   height: 18,
+              //   decoration: BoxDecoration(
+              //     color: primary.withValues(alpha: 0.25),
+              //     borderRadius: BorderRadius.circular(9),
+              //   ),
+              //   child: Center(
+              //     child: Text(
+              //       story.memberAvatars.isNotEmpty
+              //           ? story.memberAvatars.first
+              //           : '?',
+              //       style: TextStyle(
+              //           color: primary,
+              //           fontSize: 9,
+              //           fontWeight: FontWeight.w700),
+              //     ),
+              //   ),
+              // ),
             ],
           ),
         ],

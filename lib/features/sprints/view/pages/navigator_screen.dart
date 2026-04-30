@@ -11,6 +11,7 @@ import 'package:dsv360/features/sprints/view/pages/create_release_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_story_page.dart';
 import 'package:dsv360/features/sprints/view/pages/story_details_page.dart';
 import 'package:dsv360/providers/project_provider.dart';
+import 'package:dsv360/repositories/active_user_repository.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:dsv360/views/widgets/custom_search_bar.dart';
 import 'package:flutter/material.dart';
@@ -323,6 +324,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
     Color textPrimary,
     Color textSecondary,
     bool isLightMode,
+    {bool canManageSprints = false}
   ) {
     final epicColor = _epicColor(epic);
     final epicStories = allStories.where((s) => s.epicId == epic.id).toList();
@@ -376,24 +378,25 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                       ),
                     ),
                   ),
-                  _AddButton(
-                    color: textSecondary,
-                    label: 'Story',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => CreateStoryPage(
-                            projectId: _selectedProjectId,
-                            epicId: epic.id,
-                            projectNameSelected: _selectedProjectName,
-                            //here
-                            epicName : epic.title,
+                  if (canManageSprints)
+                    _AddButton(
+                      color: textSecondary,
+                      label: 'Story',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CreateStoryPage(
+                              projectId: _selectedProjectId,
+                              epicId: epic.id,
+                              projectNameSelected: _selectedProjectName,
+                              //here
+                              epicName : epic.title,
+                            ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
+                        );
+                      },
+                    ),
                   const SizedBox(width: 6),
                   AnimatedRotation(
                     turns: isExpanded ? 0.5 : 0,
@@ -444,6 +447,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
     Color textPrimary,
     Color textSecondary,
     bool isLightMode,
+    {bool canManageSprints = false}
   ) {
     final milestoneEpics =
         allEpics.where((e) => e.milestoneId == milestone.id).toList();
@@ -484,21 +488,22 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                       ),
                     ),
                   ),
-                  _AddButton(
-                    color: textSecondary,
-                    label: 'Epic',
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => CreateEpicPage(
-                          projectId: _selectedProjectId!,
-                          milestoneId: milestone.id,
-                          projectName: _selectedProjectName,
-                         releaseName: milestone.title,
+                  if (canManageSprints)
+                    _AddButton(
+                      color: textSecondary,
+                      label: 'Epic',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => CreateEpicPage(
+                            projectId: _selectedProjectId!,
+                            milestoneId: milestone.id,
+                            projectName: _selectedProjectName,
+                           releaseName: milestone.title,
+                          ),
                         ),
                       ),
                     ),
-                  ),
                   const SizedBox(width: 6),
                   AnimatedRotation(
                     turns: isExpanded ? 0.5 : 0,
@@ -529,6 +534,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                             textPrimary,
                             textSecondary,
                             isLightMode,
+                            canManageSprints: canManageSprints,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -630,6 +636,9 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
     final isLightMode = Theme.of(context).brightness == Brightness.light;
 
     final projectsAsync = ref.watch(_projectListProvider);
+    final activeUser = ref.watch(activeUserRepositoryProvider);
+    final roleName = (activeUser?.roleName ?? '').toLowerCase().trim();
+    final canManageSprints = roleName == 'admin' || roleName == 'super admin';
 
     return Scaffold(
       body: Column(
@@ -713,26 +722,29 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                     textSecondary,
                     primary,
                     isLightMode,
+                    canManageSprints: canManageSprints,
                   ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => CreateReleasePage(
-                projectId: _selectedProjectId,
-                projectName: _selectedProjectName,
-              ),
-            ),
-          );
-        },
-        backgroundColor: primary,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
-      ),
+      floatingActionButton: canManageSprints
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => CreateReleasePage(
+                      projectId: _selectedProjectId,
+                      projectName: _selectedProjectName,
+                    ),
+                  ),
+                );
+              },
+              backgroundColor: primary,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            )
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
@@ -763,6 +775,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
     Color textSecondary,
     Color primary,
     bool isLightMode,
+    {bool canManageSprints = false}
   ) {
     final hierarchyAsync = ref.watch(_hierarchyProvider(projectId));
 
@@ -809,6 +822,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
               textPrimary,
               textSecondary,
               isLightMode,
+              canManageSprints: canManageSprints,
             ),
           ),
   );

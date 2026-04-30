@@ -11,6 +11,7 @@ import 'package:dsv360/features/sprints/repositories/time_entry_repository.dart'
 import 'package:dsv360/features/sprints/repositories/timer_info_repository.dart';
 import 'package:dsv360/features/sprints/repositories/update_subtask_status_repository.dart';
 import 'package:dsv360/features/sprints/repositories/update_task_status_repository.dart';
+import 'package:dsv360/repositories/active_user_repository.dart';
 
 import 'package:dsv360/features/sprints/view/pages/add_sub_task_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_time_entry_page.dart';
@@ -417,8 +418,10 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
               },
               actionIcon: Icons.refresh,
               onInfoTap: () {
-                ref.invalidate(_subTaskPageDataProvider(dataArgs));
-                ref.invalidate(_timeEntriesProvider(widget.task.id));
+                _taskStatusOverride = null;
+                _fetchTimerStatus();
+                final _ = ref.refresh(_subTaskPageDataProvider(dataArgs));
+                final _ = ref.refresh(_timeEntriesProvider(widget.task.id));
               },
             ),
           ),
@@ -668,87 +671,144 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
                         children: [
                           // progress row
-                          Row(
-                            children: [
-                              Expanded(
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: LinearProgressIndicator(
-                                    value: subTasks.isEmpty
-                                        ? 0
-                                        : completedCount / subTasks.length,
-                                    backgroundColor: Colors.grey.withValues(
-                                      alpha: 0.2,
-                                    ),
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      primary,
-                                    ),
-                                    minHeight: 6,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                '$completedCount/${subTasks.length}',
-                                style: TextStyle(
-                                  color: textSecondary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              GestureDetector(
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => AddSubTaskPage(
-                                        projectId: widget.projectId,
-                                        storyId: widget.task.storyId,
-                                        taskId: widget.task.id,
+                          if (subTasks.isNotEmpty)
+                            Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: LinearProgressIndicator(
+                                          value: subTasks.isEmpty
+                                              ? 0
+                                              : completedCount / subTasks.length,
+                                          backgroundColor: Colors.grey.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                          valueColor: AlwaysStoppedAnimation<Color>(
+                                            primary,
+                                          ),
+                                          minHeight: 6,
+                                        ),
                                       ),
                                     ),
-                                  ); //here
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 7,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: primary,
-                                    borderRadius: BorderRadius.circular(8),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: primary.withValues(alpha: 0.3),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      '$completedCount/${subTasks.length}',
+                                      style: TextStyle(
+                                        color: textSecondary,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
                                       ),
-                                    ],
-                                  ),
-                                  child: const Text(
-                                    '+ ADD SUB-TASK',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      letterSpacing: 0.3,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin')
+                                      GestureDetector(
+                                        onTap: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => AddSubTaskPage(
+                                                projectId: widget.projectId,
+                                                storyId: widget.task.storyId,
+                                                taskId: widget.task.id,
+                                              ),
+                                            ),
+                                          ); //here
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 7,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: primary,
+                                            borderRadius: BorderRadius.circular(8),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: primary.withValues(alpha: 0.3),
+                                                blurRadius: 4,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
+                                          ),
+                                          child: const Text(
+                                            '+ ADD SUB-TASK',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              letterSpacing: 0.3,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                              ],
+                            )
+                          else if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin')
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => AddSubTaskPage(
+                                            projectId: widget.projectId,
+                                            storyId: widget.task.storyId,
+                                            taskId: widget.task.id,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 7,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: primary,
+                                        borderRadius: BorderRadius.circular(8),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: primary.withValues(alpha: 0.3),
+                                            blurRadius: 4,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Text(
+                                        '+ ADD SUB-TASK',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.3,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
+                            ),
 
                           if (subTasks.isEmpty)
                             Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              child: Text(
-                                'No sub-tasks yet',
-                                style: TextStyle(
-                                  color: textSecondary,
-                                  fontSize: 13,
+                              padding: const EdgeInsets.symmetric(vertical: 32),
+                              child: Center(
+                                child: Text(
+                                  'No sub-tasks yet',
+                                  style: TextStyle(
+                                    color: textSecondary,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
                             )

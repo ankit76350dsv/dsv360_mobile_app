@@ -151,6 +151,7 @@ class _BoardViewState extends State<BoardView> {
 
   @override
   Widget build(BuildContext context) {
+    final hasStories = widget.stories.isNotEmpty;
     return Column(
       children: [
         // ── Kanban columns (horizontal scroll) ──
@@ -201,71 +202,73 @@ class _BoardViewState extends State<BoardView> {
         ),
 
         // ── Progress bar section ──
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: widget.cardBg,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: widget.greyBorder, width: 0.8),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(
-                    alpha: widget.isDark ? 0.25 : 0.06),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    '${(widget.progress * 100).toStringAsFixed(0)} %',
-                    style: TextStyle(
-                      color: widget.textPrimary.withValues(alpha: 0.8),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: LinearProgressIndicator(
-                  value: widget.progress,
-                  minHeight: 4,
-                  backgroundColor: widget.greyBorder,
-                  valueColor: const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
+        if (hasStories)
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: widget.cardBg,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: widget.greyBorder, width: 0.8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(
+                      alpha: widget.isDark ? 0.25 : 0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  ProgressStat(
-                    label:
-                        '${widget.completedPoints}/${widget.totalPoints} SP',
-                    color: widget.textSecondary,
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      '${(widget.progress * 100).toStringAsFixed(0)} %',
+                      style: TextStyle(
+                        color: widget.textPrimary.withValues(alpha: 0.8),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: widget.progress,
+                    minHeight: 4,
+                    backgroundColor: widget.greyBorder,
+                    valueColor:
+                        const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
                   ),
-                  const SizedBox(width: 16),
-                  ProgressStat(
-                    label:
-                        '${widget.completedStories}/${widget.totalStories} Stories',
-                    color: widget.textSecondary,
-                  ),
-                  const Spacer(),
-                  ProgressStat(
-                    label: _getDaysLabel(),
-                    color: _getDaysColor(),
-                  ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    ProgressStat(
+                      label:
+                          '${widget.completedPoints}/${widget.totalPoints} SP',
+                      color: widget.textSecondary,
+                    ),
+                    const SizedBox(width: 16),
+                    ProgressStat(
+                      label:
+                          '${widget.completedStories}/${widget.totalStories} Stories',
+                      color: widget.textSecondary,
+                    ),
+                    const Spacer(),
+                    ProgressStat(
+                      label: _getDaysLabel(),
+                      color: _getDaysColor(),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
 
         // ── Search + Navigator bottom bar ──
         Padding(
