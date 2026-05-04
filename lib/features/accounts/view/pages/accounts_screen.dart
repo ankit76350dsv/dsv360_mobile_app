@@ -23,7 +23,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
     final accountsListAsync = ref.watch(accountsListRepositoryProvider);
     final query = ref.watch(accountsSearchQueryProvider);
     final customColors = Theme.of(context).custom;
-    final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final connectivityStatus = ref.watch(checkConnectivityProvider);
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -57,15 +57,16 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
       floatingActionButton: connectivityStatus.when(
         data: (results) {
           if (results.contains(ConnectivityResult.none)) {
-            return null; // FAB hidden when no internet
+            return null;
+          }
+          if (accountsListAsync.hasError) {
+            return null;
           }
 
           return FloatingActionButton(
             shape: const CircleBorder(),
             backgroundColor: customColors.primary,
             onPressed: () async {
-              // Open the Add Account screen.
-              // Passing `account: null` means "create new" mode.
               final bool? result = await Navigator.push<bool>(
                 context,
                 MaterialPageRoute(
@@ -73,16 +74,15 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
                 ),
               );
 
-              // If the Add screen reports success, refresh the list.
               if (result == true && mounted) {
                 ref.invalidate(accountsListRepositoryProvider);
               }
             },
-            child: Icon(Icons.add, size: 28, color: Colors.white),
+            child: const Icon(Icons.add, size: 28, color: Colors.white),
           );
         },
-        loading: () => null, // hide FAB while checking
-        error: (_, __) => null, // hide FAB on error
+        loading: () => null,
+        error: (_, __) => null,
       ),
 
       body: SafeArea(
@@ -93,7 +93,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
                 message: 'Please check your internet connection.',
                 isNetworkError: true,
                 onRetry: () {
-                  ref.invalidate(connectivityStatusProvider);
+                  ref.invalidate(checkConnectivityProvider);
                 },
               );
             }
@@ -155,7 +155,7 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
                         message: 'Loading accounts info...',
                       ),
                       error: (error, stack) => GlobalError(
-                        message: 'Failed to load dashboard data: $error',
+                        message: 'Failed to load data. Please try again.',
                         onRetry: () =>
                             ref.refresh(accountsListRepositoryProvider),
                       ),
@@ -197,8 +197,8 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
             );
           },
           error: (error, stack) => GlobalError(
-            message: 'Failed to check connectivity: $error',
-            onRetry: () => ref.invalidate(connectivityStatusProvider),
+            message: 'Something went wrong. Please check your connection.',
+            onRetry: () => ref.invalidate(checkConnectivityProvider),
           ),
           loading: () => const GlobalLoader(message: 'Checking connection...'),
         ),

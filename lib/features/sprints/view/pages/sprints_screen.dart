@@ -70,6 +70,7 @@ final hierarchyProvider =
               totalTasks: totalTasksCount,
               completedTasks: completedTasksCount,
               assigneeId: s.assigneeId,
+              priority: s.priority,
             );
           })
           .toList();
@@ -197,7 +198,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
           story.columnId = previousColumnId;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update status: $e')),
+          SnackBar(content: const Text('Failed to update status. Please try again.')),
         );
       }
     });
@@ -838,7 +839,7 @@ if (_selectedSprintId != null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error completing sprint: $e'),
+            content: const Text('Failed to complete sprint. Please try again.'),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -887,7 +888,7 @@ if (_selectedSprintId != null) {
           drawer: const AppDrawer(),
           backgroundColor: background,
           body: SafeArea(
-            child: ref.watch(connectivityStatusProvider).when(
+            child: ref.watch(checkConnectivityProvider).when(
               data: (results) {
                 if (results.contains(ConnectivityResult.none)) {
                   return Column(
@@ -903,7 +904,7 @@ if (_selectedSprintId != null) {
                         child: GlobalError(
                           message: 'Please check your internet connection.',
                           isNetworkError: true,
-                          onRetry: () => ref.invalidate(connectivityStatusProvider),
+                          onRetry: () => ref.invalidate(checkConnectivityProvider),
                         ),
                       ),
                     ],
@@ -950,7 +951,7 @@ if (_selectedSprintId != null) {
                         debugPrint('Refresh error: $e');
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Refresh failed: $e')),
+                            SnackBar(content: const Text('Refresh failed. Please try again.')),
                           );
                         }
                       } finally {
@@ -1746,8 +1747,8 @@ if (_selectedSprintId != null) {
                 );
               },
               error: (error, stack) => GlobalError(
-                message: 'Failed to check connectivity: $error',
-                onRetry: () => ref.invalidate(connectivityStatusProvider),
+                message: 'Something went wrong. Please check your connection.',
+                onRetry: () => ref.invalidate(checkConnectivityProvider),
               ),
               loading: () => const GlobalLoader(message: 'Checking connection...'),
             ),

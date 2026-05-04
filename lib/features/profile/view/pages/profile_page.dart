@@ -133,7 +133,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Upload failed: $e'),
+            content: const Text('Upload failed. Please try again.'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -193,7 +193,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Banner upload failed: $e'),
+            content: const Text('Banner upload failed. Please try again.'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ),

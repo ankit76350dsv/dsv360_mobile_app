@@ -59,7 +59,7 @@ class AttachmentPickerWidgetState extends State<AttachmentPickerWidget> {
     } catch (e) {
       debugPrint('❌ Error picking files: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error picking files: $e')),
+        SnackBar(content: const Text('Failed to pick files. Please try again.')),
       );
     }
   }

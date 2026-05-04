@@ -249,7 +249,7 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Submission failed: $e'),
+          content: const Text('Submission failed. Please try again.'),
           backgroundColor: Colors.red,
         ),
       );

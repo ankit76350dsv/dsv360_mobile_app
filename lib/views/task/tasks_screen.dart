@@ -228,7 +228,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error saving task: $e'),
+              content: const Text('Failed to save task. Please try again.'),
               backgroundColor: customColors.error,
             ),
           );
@@ -332,18 +332,24 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     final tasksAsync = ref.watch(tasksListRepositoryProvider(userId));
     final searchQuery = ref.watch(tasksSearchQueryProvider);
     final customColors = Theme.of(context).custom;
-    final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final connectivityStatus = ref.watch(checkConnectivityProvider);
 
     return Scaffold(
       drawer: const AppDrawer(),
-      floatingActionButton: connectivityStatus.valueOrNull?.contains(ConnectivityResult.none) != true
-          ? FloatingActionButton(
-              onPressed: () => _showAddTaskDialog(context: context),
-              backgroundColor: customColors.primary,
-              shape: const CircleBorder(),
-              child: const Icon(Icons.add, color: Colors.white, size: 28),
-            )
-          : null,
+      floatingActionButton: connectivityStatus.when(
+        data: (results) {
+          if (results.contains(ConnectivityResult.none)) return null;
+          if (tasksAsync.hasError) return null;
+          return FloatingActionButton(
+            onPressed: () => _showAddTaskDialog(context: context),
+            backgroundColor: customColors.primary,
+            shape: const CircleBorder(),
+            child: const Icon(Icons.add, color: Colors.white, size: 28),
+          );
+        },
+        loading: () => null,
+        error: (_, __) => null,
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: connectivityStatus.when(
         data: (results) {
@@ -375,7 +381,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                   child: GlobalError(
                     message: 'Please check your internet connection.',
                     isNetworkError: true,
-                    onRetry: () => ref.invalidate(connectivityStatusProvider),
+                    onRetry: () => ref.invalidate(checkConnectivityProvider),
                   ),
                 ),
               ],
@@ -434,6 +440,16 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
               skipLoadingOnRefresh: true,
               
               data: (tasks) {
+                if (connectivityStatus.valueOrNull
+                        ?.contains(ConnectivityResult.none) ==
+                    true) {
+                  return GlobalError(
+                    message: 'Please check your internet connection.',
+                    isNetworkError: true,
+                    onRetry: () =>
+                        ref.invalidate(checkConnectivityProvider),
+                  );
+                }
                 // Filter by project first if projectId is provided
                 final projectFilteredTasks = widget.projectId != null && widget.projectId!.isNotEmpty
                     ? tasks.where((task) => task.projectId == widget.projectId).toList()
@@ -451,43 +467,49 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                             );
                       }).toList();
 
-                return filteredTasks.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.inbox_outlined,
-                              size: 64,
-                              color: customColors.textSecondary!.withValues(
-                                alpha: 0.5,
+                Future<void> doRefresh() async {
+                  await ref
+                      .read(tasksListRepositoryProvider(userId).notifier)
+                      .refresh(userId);
+                  await _fetchTimerStatus();
+                }
+
+                return RefreshIndicator(
+                    onRefresh: doRefresh,
+                    child: filteredTasks.isEmpty
+                        ? ListView(
+                            children: [
+                              SizedBox(
+                                height: MediaQuery.of(context).size.height * 0.5,
+                                child: Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.inbox_outlined,
+                                        size: 64,
+                                        color: customColors.textSecondary!.withValues(
+                                          alpha: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        searchQuery.isEmpty
+                                            ? 'No tasks yet'
+                                            : 'No tasks found',
+                                        style: TextStyle(
+                                          color: customColors.textPrimary,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.normal,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              searchQuery.isEmpty
-                                  ? 'No tasks yet'
-                                  : 'No tasks found',
-                              style: TextStyle(
-                                color: customColors.textPrimary,
-                                fontSize: 16,
-                                fontWeight: FontWeight.normal,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : RefreshIndicator(
-                        onRefresh: () async {
-                          
-                          await ref
-                              .read(
-                                tasksListRepositoryProvider(userId).notifier,
-                              )
-                              .refresh(userId);
-                              await _fetchTimerStatus();
-                        },
-                        child: ListView.builder(
+                            ],
+                          )
+                        : ListView.builder(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 8,
@@ -568,53 +590,32 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                             );
                           },
                         ),
-                      );
+                    );
               },
               loading: () => const Center(child: DsvLoader()),
-              error: (err, stack) => Center(
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: customColors.error!.withValues(alpha: 0.5),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Error loading tasks',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.normal,
-                          color: customColors.error,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          err.toString(),
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.normal,
-                            color: customColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              error: (err, stack) {
+                final isOffline = connectivityStatus.valueOrNull
+                        ?.contains(ConnectivityResult.none) ==
+                    true;
+                return GlobalError(
+                  message: isOffline
+                      ? 'Please check your internet connection.'
+                      : 'Failed to load tasks. Please try again.',
+                  isNetworkError: isOffline,
+                  onRetry: () {
+                    ref.invalidate(checkConnectivityProvider);
+                    ref.invalidate(tasksListRepositoryProvider(userId));
+                  },
+                );
+              },
             ),
           ),
         ],
           );
         },
         error: (error, stack) => GlobalError(
-          message: 'Failed to check connectivity: $error',
-          onRetry: () => ref.invalidate(connectivityStatusProvider),
+          message: 'Something went wrong. Please check your connection.',
+          onRetry: () => ref.invalidate(checkConnectivityProvider),
         ),
         loading: () => const GlobalLoader(message: 'Checking connection...'),
       ),

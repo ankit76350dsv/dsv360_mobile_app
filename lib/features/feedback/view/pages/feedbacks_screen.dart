@@ -73,7 +73,7 @@ class _FeedbacksScreenState extends ConsumerState<FeedbacksScreen> {
     final customColors = Theme.of(context).custom;
     final feedbackAsync = ref.watch(feedbackRepositoryProvider);
     final searchQuery = ref.watch(feedbackSearchQueryProvider);
-    final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final connectivityStatus = ref.watch(checkConnectivityProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -130,7 +130,7 @@ class _FeedbacksScreenState extends ConsumerState<FeedbacksScreen> {
                 message: 'Please check your internet connection.',
                 isNetworkError: true,
                 onRetry: () {
-                  ref.invalidate(connectivityStatusProvider);
+                  ref.invalidate(checkConnectivityProvider);
                 },
               );
             }
@@ -371,8 +371,8 @@ class _FeedbacksScreenState extends ConsumerState<FeedbacksScreen> {
           },
           loading: () => const GlobalLoader(message: 'Checking connection...'),
           error: (error, stack) => GlobalError(
-            message: 'Failed to check connectivity: $error',
-            onRetry: () => ref.invalidate(connectivityStatusProvider),
+            message: 'Something went wrong. Please check your connection.',
+            onRetry: () => ref.invalidate(checkConnectivityProvider),
           ),
         ),
       ),

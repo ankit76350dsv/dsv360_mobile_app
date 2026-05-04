@@ -9,6 +9,7 @@ import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
 import 'package:dsv360/features/worklogs/model/worklog_model.dart';
 import 'package:dsv360/features/worklogs/viewmodel/worklogs_viewmodel.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
+import 'package:dsv360/views/task/tasks_screen.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -181,7 +182,7 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
         final surfaceBg = customColors.surfaceBackground ??
             (isDark ? AppColorsDark.surfaceBackground : AppColorsLight.surfaceBackground);
 
-        final connectivityStatus = ref.watch(connectivityStatusProvider);
+        final connectivityStatus = ref.watch(checkConnectivityProvider);
 
         return Scaffold(
           drawer: const AppDrawer(),
@@ -203,7 +204,7 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
                         child: GlobalError(
                           message: 'Please check your internet connection.',
                           isNetworkError: true,
-                          onRetry: () => ref.invalidate(connectivityStatusProvider),
+                          onRetry: () => ref.invalidate(checkConnectivityProvider),
                         ),
                       ),
                     ],
@@ -246,8 +247,8 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
                 );
               },
               error: (error, stack) => GlobalError(
-                message: 'Failed to check connectivity: $error',
-                onRetry: () => ref.invalidate(connectivityStatusProvider),
+                message: 'Something went wrong. Please check your connection.',
+                onRetry: () => ref.invalidate(checkConnectivityProvider),
               ),
               loading: () => const GlobalLoader(message: 'Checking connection...'),
             ),
@@ -265,7 +266,7 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
         hintText: 'Search logs',
         hintStyle: const TextStyle(
           color: Colors.grey,
-          fontSize: 16,
+          fontSize: 18,
           fontWeight: FontWeight.w400,
         ),
         filled: true,
@@ -338,21 +339,29 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
         const SizedBox(width: 6),
         Text(
           'Timeline',
-          style: TextStyle(fontSize: 12, color: textSecondary),
+          style: TextStyle(fontSize: 14, color: textSecondary),
         ),
         const SizedBox(width: 4),
-        Text('— ', style: TextStyle(fontSize: 12, color: textSecondary)),
+        Text('— ', style: TextStyle(fontSize: 14, color: textSecondary)),
         Text(
           '$_activeSessions active sessions',
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 14,
             color: primary,
             fontWeight: FontWeight.w600,
           ),
         ),
         const Spacer(),
         GestureDetector(
-          onTap: _loadData,
+          onTap: (){
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Add Work Logs for tasks here'),
+                duration: Duration(seconds: 5),
+              ),
+            );
+            Navigator.push(context, MaterialPageRoute(builder: (context)=>TasksScreen()));
+          },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
@@ -363,7 +372,7 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
               '+ Add Log',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -381,8 +390,9 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
       return const Center(child: DsvLoader());
     }
     if (_error != null) {
-      return Center(
-        child: Text('Error: $_error', style: TextStyle(color: textSecondary)),
+      return GlobalError(
+        message: 'Failed to load work logs. Please try again.',
+        onRetry: () => _loadData(),
       );
     }
     if (!_loading && (_data == null || _filtered.isEmpty)) {
@@ -427,13 +437,13 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(label, style: TextStyle(fontSize: 9, color: textSecondary)),
+            Text(label, style: TextStyle(fontSize: 11, color: textSecondary)),
             SizedBox(width: 8,),
             
             Text(
               date,
               style: TextStyle(
-                fontSize: 11,
+                fontSize: 13,
                 color: textPrimary,
                 fontWeight: FontWeight.w500,
               ),
@@ -479,19 +489,19 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
                 Text(
                   _formatDayHeader(day.date),
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: 14,
                     color: textSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 Text(
                   'Daily Activity Summary',
-                  style: TextStyle(fontSize: 10, color: textSecondary),
+                  style: TextStyle(fontSize: 12, color: textSecondary),
                 ),
               ],
             ),
             const Spacer(),
-            Text('Total Effort', style: TextStyle(fontSize: 11, color: textSecondary)),
+            Text('Total Effort', style: TextStyle(fontSize: 13, color: textSecondary)),
             const SizedBox(width: 6),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -503,7 +513,7 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
                 '${day.totalHours}:00',
                 style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 12,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -532,13 +542,13 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
             // Task label + name
             Text(
               'Task Name',
-              style: TextStyle(fontSize: 10, color: textSecondary),
+              style: TextStyle(fontSize: 12, color: textSecondary),
             ),
             const SizedBox(height: 2),
             Text(
               entry.task,
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
                 color: textPrimary,
               ),
@@ -553,13 +563,13 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
                     children: [
                       Text(
                         'Project',
-                        style: TextStyle(fontSize: 10, color: textSecondary),
+                        style: TextStyle(fontSize: 12, color: textSecondary),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         entry.project,
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
                           color: textPrimary,
                         ),
@@ -601,7 +611,7 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
         _sourceTypeLabel(sourceType),
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 11,
+          fontSize: 13,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -638,12 +648,12 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
             Text(
               value,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: textPrimary,
               ),
             ),
-            Text(label, style: TextStyle(fontSize: 10, color: textSecondary)),
+            Text(label, style: TextStyle(fontSize: 12, color: textSecondary)),
           ],
         ),
       ),
@@ -666,12 +676,12 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
             Text(
               _parseHours(hours),
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: textPrimary,
               ),
             ),
-            Text('Total Time', style: TextStyle(fontSize: 10, color: textSecondary)),
+            Text('Total Time', style: TextStyle(fontSize: 12, color: textSecondary)),
           ],
         ),
       ),
@@ -713,10 +723,10 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
         children: [
           Text(
               'Note',
-              style: TextStyle(fontSize: 10, color: textSecondary),
+              style: TextStyle(fontSize: 12, color: textSecondary),
             ),
           const SizedBox(height: 4),
-          Text(note, style: TextStyle(fontSize: 13, color: textPrimary)),
+          Text(note, style: TextStyle(fontSize: 15, color: textPrimary)),
         ],
       ),
     );

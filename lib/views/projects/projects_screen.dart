@@ -190,13 +190,13 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
+    final connectivityStatus = ref.watch(checkConnectivityProvider);
 
     return Scaffold(
       backgroundColor: customColors.background,
       drawer: const AppDrawer(),
       body: Builder(
         builder: (context) {
-          final connectivityStatus = ref.watch(connectivityStatusProvider);
 
           return connectivityStatus.when(
             data: (results) {
@@ -226,7 +226,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                         message: 'Please check your internet connection.',
                         isNetworkError: true,
                         onRetry: () {
-                          ref.invalidate(connectivityStatusProvider);
+                          ref.invalidate(checkConnectivityProvider);
                         },
                       ),
                     ),
@@ -289,7 +289,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                               ),
                             ),
                             error: (err, stack) => GlobalError(
-                              message: 'Error loading projects: $err',
+                              message: 'Failed to load projects. Please try again.',
                               onRetry: () => ref.refresh(projectListProvider),
                             ),
                             data: (projects) {
@@ -373,24 +373,30 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
               );
             },
             error: (error, stack) => GlobalError(
-              message: 'Failed to check connectivity: $error',
+              message: 'Something went wrong. Please check your connection.',
               isNetworkError: true,
-              onRetry: () => ref.invalidate(connectivityStatusProvider),
+              onRetry: () => ref.invalidate(checkConnectivityProvider),
             ),
             loading: () =>
                 const GlobalLoader(message: 'Checking connection...'),
           );
         },
       ),
-      floatingActionButton: _isAdminUser() &&
-              ref.watch(connectivityStatusProvider).valueOrNull?.contains(ConnectivityResult.none) != true
-          ? FloatingActionButton(
-              onPressed: () => _showAddProjectDialog(context: context),
-              backgroundColor: customColors.primary,
-              shape: const CircleBorder(),
-              child: const Icon(Icons.add, color: Colors.white, size: 28),
-            )
-          : null,
+      floatingActionButton: connectivityStatus.when(
+        data: (results) {
+          if (results.contains(ConnectivityResult.none)) return null;
+          if (ref.watch(projectListProvider).hasError) return null;
+          if (!_isAdminUser()) return null;
+          return FloatingActionButton(
+            onPressed: () => _showAddProjectDialog(context: context),
+            backgroundColor: customColors.primary,
+            shape: const CircleBorder(),
+            child: const Icon(Icons.add, color: Colors.white, size: 28),
+          );
+        },
+        loading: () => null,
+        error: (_, __) => null,
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }

@@ -11,6 +11,7 @@ class SprintStory {
   final int totalTasks;
   final int completedTasks;
   final String assigneeId;
+  final String? priority;
 
   SprintStory({
     required this.id,
@@ -25,5 +26,6 @@ class SprintStory {
     this.totalTasks = 0,
     this.completedTasks = 0,
     this.assigneeId = '',
+    this.priority,
   });
 }

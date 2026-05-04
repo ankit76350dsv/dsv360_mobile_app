@@ -1,8 +1,10 @@
 import 'package:dsv360/features/sprints/view/pages/story_details_page.dart';
+import 'package:dsv360/features/teams/providers/batch_profile_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'sprint_story.dart';
 
-class StoryCard extends StatelessWidget {
+class StoryCard extends ConsumerWidget {
   final SprintStory story;
   final bool isDark;
   final Color cardBg;
@@ -25,8 +27,42 @@ class StoryCard extends StatelessWidget {
     this.projectName,
   });
 
+  Color _priorityColor(String? priority) {
+    switch ((priority ?? '').toUpperCase()) {
+      case 'HIGH':
+        return const Color(0xFFF44336);
+      case 'MEDIUM':
+        return const Color(0xFFFFC107);
+      case 'LOW':
+        return const Color(0xFF4CAF50);
+      default:
+        return const Color(0xFF9E9E9E);
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profilesAsync = ref.watch(batchProfilesProvider);
+
+    String? assigneeProfilePic;
+    String assigneeInitials = '?';
+
+    profilesAsync.whenData((profiles) {
+      if (story.assigneeId.isNotEmpty) {
+        final match = profiles.where((p) => p.userId == story.assigneeId);
+        if (match.isNotEmpty) {
+          final profile = match.first;
+          assigneeProfilePic = profile.profilePic.isNotEmpty ? profile.profilePic : null;
+          final first = profile.firstName.isNotEmpty ? profile.firstName[0] : '';
+          final last = profile.lastName.isNotEmpty ? profile.lastName[0] : '';
+          assigneeInitials = '$first$last'.toUpperCase();
+          if (assigneeInitials.isEmpty) assigneeInitials = '?';
+        }
+      }
+    });
+
+    final priorityColor = _priorityColor(story.priority);
+
     final card = Container(
       margin: const EdgeInsets.only(bottom: 6),
       padding: const EdgeInsets.all(10),
@@ -65,7 +101,7 @@ class StoryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 6),
-          // Progress bar with completed/total on same line - only show if tasks exist
+          // Progress bar — only shown if tasks exist
           if (story.totalTasks > 0)
             Row(
               children: [
@@ -73,9 +109,7 @@ class StoryCard extends StatelessWidget {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
-                      value: story.totalTasks > 0
-                          ? story.completedTasks / story.totalTasks
-                          : 0,
+                      value: story.completedTasks / story.totalTasks,
                       minHeight: 6,
                       backgroundColor: greyBorder,
                       valueColor: const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
@@ -85,27 +119,36 @@ class StoryCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   '${story.completedTasks}/${story.totalTasks}',
-                  style: TextStyle(
-                    color: textSecondary,
-                    fontSize: 10,
-                  ),
+                  style: TextStyle(color: textSecondary, fontSize: 10),
                 ),
               ],
-            )
-          else
-            const SizedBox(height: 0),
-          const SizedBox(height: 4),
-          // Bottom row: avatar + story label + points
+            ),
+          const SizedBox(height: 6),
+          // Bottom row: priority + story points + assignee avatar
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              
-              
-                 
+              // Priority badge
+              if (story.priority != null && story.priority!.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: priorityColor.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    story.priority!.toUpperCase(),
+                    style: TextStyle(
+                      color: priorityColor,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
+              const SizedBox(width: 4),
               // Story points badge
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                 decoration: BoxDecoration(
                   color: const Color(0xFF4CAF50).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(4),
@@ -119,31 +162,40 @@ class StoryCard extends StatelessWidget {
                   ),
                 ),
               ),
-              
-           
-              // Story label
-              
-
-              // Avatar
-              // Container(
-              //   width: 18,
-              //   height: 18,
-              //   decoration: BoxDecoration(
-              //     color: primary.withValues(alpha: 0.25),
-              //     borderRadius: BorderRadius.circular(9),
-              //   ),
-              //   child: Center(
-              //     child: Text(
-              //       story.memberAvatars.isNotEmpty
-              //           ? story.memberAvatars.first
-              //           : '?',
-              //       style: TextStyle(
-              //           color: primary,
-              //           fontSize: 9,
-              //           fontWeight: FontWeight.w700),
-              //     ),
-              //   ),
-              // ),
+              const Spacer(),
+              // Assignee avatar
+              if (story.assigneeId.isNotEmpty)
+                ClipOval(
+                  child: assigneeProfilePic != null
+                      ? Image.network(
+                          assigneeProfilePic!,
+                          width: 20,
+                          height: 20,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: Center(
+                                child: CircularProgressIndicator(strokeWidth: 1.2),
+                              ),
+                            );
+                          },
+                          errorBuilder: (_, __, ___) => Image.asset(
+                            'assets/images/profile.jpg',
+                            width: 20,
+                            height: 20,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      : Image.asset(
+                          'assets/images/profile.jpg',
+                          width: 20,
+                          height: 20,
+                          fit: BoxFit.cover,
+                        ),
+                ),
             ],
           ),
         ],

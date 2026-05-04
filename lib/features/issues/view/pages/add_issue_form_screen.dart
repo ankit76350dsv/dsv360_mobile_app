@@ -109,7 +109,7 @@ class _AddIssueFormScreenState extends ConsumerState<AddIssueFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading projects: $e')));
+        ).showSnackBar(const SnackBar(content: Text('Failed to load projects. Please try again.')));
       }
     }
   }
@@ -128,7 +128,7 @@ class _AddIssueFormScreenState extends ConsumerState<AddIssueFormScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading employees: $e')));
+        ).showSnackBar(const SnackBar(content: Text('Failed to load employees. Please try again.')));
       }
     }
   }

@@ -68,7 +68,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
-    final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final connectivityStatus = ref.watch(checkConnectivityProvider);
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -111,7 +111,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
             return GlobalError(
               message: 'Please check your internet connection.',
               isNetworkError: true,
-              onRetry: () => ref.invalidate(connectivityStatusProvider),
+              onRetry: () => ref.invalidate(checkConnectivityProvider),
             );
           }
 
@@ -192,8 +192,8 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
           );
         },
         error: (error, stack) => GlobalError(
-          message: 'Failed to check connectivity: $error',
-          onRetry: () => ref.invalidate(connectivityStatusProvider),
+          message: 'Something went wrong. Please check your connection.',
+          onRetry: () => ref.invalidate(checkConnectivityProvider),
         ),
         loading: () => const GlobalLoader(message: 'Checking connection...'),
       ),
@@ -480,7 +480,7 @@ class _TimeLogsCard extends ConsumerWidget {
       ),
       error: (error, _) => Padding(
         padding: const EdgeInsets.all(16),
-        child: Text('Error: $error', style: const TextStyle(color: Colors.red)),
+        child: const Text('Something went wrong. Please try again.', style: TextStyle(color: Colors.red)),
       ),
       data: (timeLogs) {
         return _TimeLogsContent(timeLogs: timeLogs);
@@ -689,7 +689,7 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
     );
 
     final customColors = Theme.of(context).custom;
-    final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final connectivityStatus = ref.watch(checkConnectivityProvider);
 
     return Scaffold(
       body: SafeArea(
@@ -700,7 +700,7 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
                 message: 'Please check your internet connection.',
                 isNetworkError: true,
                 onRetry: () {
-                  ref.invalidate(connectivityStatusProvider);
+                  ref.invalidate(checkConnectivityProvider);
                 },
               );
             }
@@ -993,7 +993,7 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
           },
           error: (error, stack) => GlobalError(
             message: 'Failed to check connectivity: Try Again',
-            onRetry: () => ref.invalidate(connectivityStatusProvider),
+            onRetry: () => ref.invalidate(checkConnectivityProvider),
           ),
           loading: () => const GlobalLoader(message: 'Checking connection...'),
         ),
@@ -2314,14 +2314,14 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
     final usersAsync = ref.watch(usersRepositoryProvider);
-    final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final connectivityStatus = ref.watch(checkConnectivityProvider);
 
     return connectivityStatus.when(
       loading: () => const GlobalLoader(message: 'Checking connection...'),
       error: (err, stack) => Center(
         child: GlobalError(
           message: 'Failed to check connectivity: Try Again',
-          onRetry: () => ref.invalidate(connectivityStatusProvider),
+          onRetry: () => ref.invalidate(checkConnectivityProvider),
         ),
       ),
       data: (results) {
@@ -2330,7 +2330,7 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
             message: 'Please check your internet connection.',
             isNetworkError: true,
             onRetry: () {
-              ref.invalidate(connectivityStatusProvider);
+              ref.invalidate(checkConnectivityProvider);
             },
           );
         }
@@ -2540,7 +2540,7 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
     final daysInMonth = lastDayOfMonth.day;
     final leadDays = firstDayOfMonth.weekday % 7; // Sunday start logic
 
-    final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final connectivityStatus = ref.watch(checkConnectivityProvider);
     final calendarAsync = ref.watch(leaveCalendarRepositoryProvider);
 
     return connectivityStatus.when(
@@ -2550,7 +2550,7 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
             message: 'Please check your internet connection.',
             isNetworkError: true,
             onRetry: () {
-              ref.invalidate(connectivityStatusProvider);
+              ref.invalidate(checkConnectivityProvider);
             },
           );
         }
@@ -2986,7 +2986,7 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
       error: (err, stack) => Center(
         child: GlobalError(
           message: 'Failed to check connectivity: Try Again',
-          onRetry: () => ref.invalidate(connectivityStatusProvider),
+          onRetry: () => ref.invalidate(checkConnectivityProvider),
         ),
       ),
     );

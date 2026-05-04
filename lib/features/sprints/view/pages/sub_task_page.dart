@@ -196,7 +196,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to start timer: $e'),
+          content: const Text('Failed to start timer. Please try again.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -1125,7 +1125,7 @@ class _SubTaskCardState extends State<_SubTaskCard> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to start timer: $e'),
+          content: const Text('Failed to start timer. Please try again.'),
           backgroundColor: Colors.red,
         ),
       );

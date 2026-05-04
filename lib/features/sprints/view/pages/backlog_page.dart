@@ -253,7 +253,7 @@ class _BacklogPageState extends ConsumerState<BacklogPage> {
     }).catchError((e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to deploy: $e')),
+          SnackBar(content: const Text('Failed to deploy. Please try again.')),
         );
       }
     });

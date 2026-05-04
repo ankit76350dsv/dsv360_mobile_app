@@ -302,13 +302,13 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
         ],
       ),
       body: SafeArea(
-        child: ref.watch(connectivityStatusProvider).when(
+        child: ref.watch(checkConnectivityProvider).when(
           data: (results) {
             if (results.contains(ConnectivityResult.none)) {
               return GlobalError(
                 message: 'Please check your internet connection.',
                 isNetworkError: true,
-                onRetry: () => ref.invalidate(connectivityStatusProvider),
+                onRetry: () => ref.invalidate(checkConnectivityProvider),
               );
             }
             return Column(
@@ -512,8 +512,8 @@ class _DsvAiPageState extends ConsumerState<DsvAiPage> {
             );
           },
           error: (error, stack) => GlobalError(
-            message: 'Failed to check connectivity: $error',
-            onRetry: () => ref.invalidate(connectivityStatusProvider),
+            message: 'Something went wrong. Please check your connection.',
+            onRetry: () => ref.invalidate(checkConnectivityProvider),
           ),
           loading: () => const GlobalLoader(message: 'Checking connection...'),
         ),

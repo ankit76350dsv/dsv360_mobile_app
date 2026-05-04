@@ -42,6 +42,7 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
   bool _isLoadingTeams = true;
   bool _isLoadingEmployees = true;
   String? _deletingTeamId;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -103,7 +104,7 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
         if (!connectivity.contains(ConnectivityResult.none)) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error loading employees: $e'),
+              content: const Text('Failed to load employees. Please try again.'),
               backgroundColor: Colors.red,
               duration: const Duration(seconds: 4),
             ),
@@ -111,6 +112,15 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
         }
       }
     }
+  }
+
+  Future<void> _refresh() async {
+    if (_isRefreshing) return;
+    setState(() => _isRefreshing = true);
+    ref.invalidate(teamsProvider);
+    ref.invalidate(batchProfilesProvider);
+    await Future.wait([_loadTeams(), _loadEmployees()]);
+    if (mounted) setState(() => _isRefreshing = false);
   }
 
   // ── Helpers ──
@@ -151,7 +161,7 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error saving team assignment: $e'),
+          content: const Text('Failed to save team assignment. Please try again.'),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 4),
         ),
@@ -259,7 +269,7 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Error deleting team: $e'),
+                content: const Text('Failed to delete team. Please try again.'),
                 backgroundColor: Colors.red,
                 duration: const Duration(seconds: 4),
               ),
@@ -293,7 +303,7 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
         final textPrimary = customColors.textPrimary ??
             (isDark ? AppColorsDark.textPrimary : AppColorsLight.textPrimary);
 
-        final connectivityStatus = ref.watch(connectivityStatusProvider);
+        final connectivityStatus = ref.watch(checkConnectivityProvider);
 
         return Scaffold(
           drawer: const AppDrawer(),
@@ -312,7 +322,7 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
                         child: GlobalError(
                           message: 'Please check your internet connection.',
                           isNetworkError: true,
-                          onRetry: () => ref.invalidate(connectivityStatusProvider),
+                          onRetry: () => ref.invalidate(checkConnectivityProvider),
                         ),
                       ),
                     ],
@@ -324,6 +334,8 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
                 TopBar(
                   title: 'Teams',
                   onBack: () => Navigator.pop(context),
+                  onInfoTap: _refresh,
+                  actionIcon: Icons.refresh_rounded,
                 ),
 
                 // ── Body (55 / 45 split) ──
@@ -637,8 +649,8 @@ class _TeamsPageState extends ConsumerState<TeamsPage> {
                 );
               },
               error: (error, stack) => GlobalError(
-                message: 'Failed to check connectivity: $error',
-                onRetry: () => ref.invalidate(connectivityStatusProvider),
+                message: 'Something went wrong. Please check your connection.',
+                onRetry: () => ref.invalidate(checkConnectivityProvider),
               ),
               loading: () => const GlobalLoader(message: 'Checking connection...'),
             ),

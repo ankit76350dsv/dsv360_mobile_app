@@ -28,7 +28,7 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
     final customColors = Theme.of(context).custom;
     final query = ref.watch(usersSearchQueryProvider);
     final usersAsync = ref.watch(usersRepositoryProvider);
-    final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final connectivityStatus = ref.watch(checkConnectivityProvider);
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -58,9 +58,8 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: connectivityStatus.when(
         data: (results) {
-          if (results.contains(ConnectivityResult.none)) {
-            return null;
-          }
+          if (results.contains(ConnectivityResult.none)) return null;
+          if (usersAsync.hasError) return null;
 
           return SpeedDial(
             backgroundColor: customColors.primary,
@@ -112,7 +111,7 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
                 message: 'Please check your internet connection.',
                 isNetworkError: true,
                 onRetry: () {
-                  ref.invalidate(connectivityStatusProvider);
+                  ref.invalidate(checkConnectivityProvider);
                 },
               );
             }
@@ -133,7 +132,7 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
                       loading: () =>
                           const GlobalLoader(message: 'Loading users badges...'),
                       error: (error, stack) => GlobalError(
-                        message: 'Failed to users badges data: $error',
+                        message: 'Failed to load badges. Please try again.',
                         onRetry: () => ref.refresh(usersRepositoryProvider),
                       ),
                       data: (users) {
@@ -172,8 +171,8 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
             );
           },
           error: (error, stack) => GlobalError(
-            message: 'Failed to check connectivity: $error',
-            onRetry: () => ref.invalidate(connectivityStatusProvider),
+            message: 'Something went wrong. Please check your connection.',
+            onRetry: () => ref.invalidate(checkConnectivityProvider),
           ),
           loading: () => const GlobalLoader(message: 'Checking connection...'),
         ),

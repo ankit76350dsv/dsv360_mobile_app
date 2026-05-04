@@ -324,7 +324,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                       ),
                       error: (error, st) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Text('Error loading projects: $error'),
+                        child: const Text('Failed to load projects. Please try again.'),
                       ),
                       data: (projects) {
                         final projectMap = {
@@ -536,7 +536,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
       ),
       error: (error, st) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Text('Error loading employees: $error'),
+        child: const Text('Failed to load employees. Please try again.'),
       ),
       data: (employees) {
         final activeEmployees = employees.where((e) => e.status == 'ACTIVE').toList();

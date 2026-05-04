@@ -31,7 +31,7 @@ class _DashboardScaffold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userProfile = UserManager.instance.userProfile;
-    final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final connectivityStatus = ref.watch(checkConnectivityProvider);
     final dashboardAsyncValue = ref.watch(dashboardDataProvider);
     final customColors = Theme.of(context).custom;
 
@@ -112,7 +112,7 @@ class _DashboardScaffold extends ConsumerWidget {
                 message: 'Please check your internet connection.',
                 isNetworkError: true,
                 onRetry: () {
-                  ref.invalidate(connectivityStatusProvider);
+                  ref.invalidate(checkConnectivityProvider);
                 },
               );
             }
@@ -217,7 +217,7 @@ class _DashboardScaffold extends ConsumerWidget {
                 );
               },
               error: (error, stack) => GlobalError(
-                message: 'Failed to load dashboard data: $error',
+                message: 'Failed to load data. Please try again.',
                 onRetry: () => ref.refresh(dashboardDataProvider),
               ),
               loading: () =>
@@ -225,8 +225,8 @@ class _DashboardScaffold extends ConsumerWidget {
             );
           },
           error: (error, stack) => GlobalError(
-            message: 'Failed to check connectivity: $error',
-            onRetry: () => ref.invalidate(connectivityStatusProvider),
+            message: 'Something went wrong. Please check your connection.',
+            onRetry: () => ref.invalidate(checkConnectivityProvider),
           ),
           loading: () => const GlobalLoader(message: 'Checking connection...'),
         ),

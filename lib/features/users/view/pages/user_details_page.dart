@@ -509,7 +509,7 @@ class _ProjectsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final projectsAsync = ref.watch(projectListProvider);
-    final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final connectivityStatus = ref.watch(checkConnectivityProvider);
 
     return connectivityStatus.when(
       data: (results) {
@@ -518,7 +518,7 @@ class _ProjectsTab extends ConsumerWidget {
             message: 'Please check your internet connection.',
             isNetworkError: true,
             onRetry: () {
-              ref.invalidate(connectivityStatusProvider);
+              ref.invalidate(checkConnectivityProvider);
             },
           );
         }
@@ -527,7 +527,7 @@ class _ProjectsTab extends ConsumerWidget {
           loading: () =>
               const GlobalLoader(message: 'Loading projects info...'),
           error: (error, stack) => GlobalError(
-            message: 'Failed to load projects data: $error',
+            message: 'Failed to load data. Please try again.',
             onRetry: () => ref.refresh(projectListProvider),
           ),
           data: (projects) {
@@ -557,8 +557,8 @@ class _ProjectsTab extends ConsumerWidget {
         );
       },
       error: (error, stack) => GlobalError(
-        message: 'Failed to check connectivity: $error',
-        onRetry: () => ref.invalidate(connectivityStatusProvider),
+        message: 'Something went wrong. Please check your connection.',
+        onRetry: () => ref.invalidate(checkConnectivityProvider),
       ),
       loading: () => const GlobalLoader(message: 'Checking connection...'),
     );
@@ -674,7 +674,7 @@ class _TasksTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tasksAsync = ref.watch(tasksListRepositoryProvider(user.userId));
-    final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final connectivityStatus = ref.watch(checkConnectivityProvider);
 
     return connectivityStatus.when(
       data: (results) {
@@ -683,7 +683,7 @@ class _TasksTab extends ConsumerWidget {
             message: 'Please check your internet connection.',
             isNetworkError: true,
             onRetry: () {
-              ref.invalidate(connectivityStatusProvider);
+              ref.invalidate(checkConnectivityProvider);
             },
           );
         }
@@ -725,8 +725,8 @@ class _TasksTab extends ConsumerWidget {
         );
       },
       error: (error, stack) => GlobalError(
-        message: 'Failed to check connectivity: $error',
-        onRetry: () => ref.invalidate(connectivityStatusProvider),
+        message: 'Something went wrong. Please check your connection.',
+        onRetry: () => ref.invalidate(checkConnectivityProvider),
       ),
       loading: () => const GlobalLoader(message: 'Checking connection...'),
     );

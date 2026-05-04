@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/features/accounts/repositories/accounts_list_repository.dart';
@@ -135,15 +134,8 @@ class ClientContactFormViewModel {
     } catch (e) {
       if (!context.mounted) return;
 
-      String errorMessage = 'Failed to save client contact';
-      if (e is DioException) {
-        errorMessage = 'Failed: ${e.response?.data ?? e.message}';
-      } else {
-        errorMessage = 'Failed: $e';
-      }
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage)),
+        const SnackBar(content: Text('Failed to save client contact. Please try again.')),
       );
     } finally {
       ref

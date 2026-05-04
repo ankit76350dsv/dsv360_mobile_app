@@ -857,7 +857,7 @@ class _TimelineViewState extends State<TimelineView> {
                       // Collapse / Expand pill
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                            horizontal: 10, vertical: 8),
                         decoration: BoxDecoration(
                           color: widget.greyBorder.withValues(alpha: 0.25),
                           borderRadius: BorderRadius.circular(20),

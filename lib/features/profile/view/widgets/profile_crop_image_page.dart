@@ -33,7 +33,7 @@ class _CropImagePageState extends State<CropImagePage> {
       debugPrint('Crop error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Crop failed: $e')),
+          SnackBar(content: const Text('Image crop failed. Please try again.')),
         );
       }
     } finally {

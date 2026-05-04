@@ -242,7 +242,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                               });
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: Text('Failed to update status: $e'),
+                                  content: const Text('Failed to update status. Please try again.'),
                                   backgroundColor: customColors.error,
                                 ),
                               );
@@ -340,18 +340,24 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
     final customColors = Theme.of(context).custom;
     final userRole =
         AuthManager.instance.currentUser?.role?.name.toLowerCase() ?? '';
-    final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final connectivityStatus = ref.watch(checkConnectivityProvider);
 
     return Scaffold(
-      floatingActionButton: (userRole == "admin" || userRole == "super admin") &&
-              connectivityStatus.valueOrNull?.contains(ConnectivityResult.none) != true
-          ? FloatingActionButton(
-              onPressed: () => _showAddIssueDialog(),
-              backgroundColor: customColors.primary,
-              shape: const CircleBorder(),
-              child: const Icon(Icons.add, color: Colors.white, size: 28),
-            )
-          : null,
+      floatingActionButton: connectivityStatus.when(
+        data: (results) {
+          if (results.contains(ConnectivityResult.none)) return null;
+          if (ref.watch(issueListProvider).hasError) return null;
+          if (userRole != "admin" && userRole != "super admin") return null;
+          return FloatingActionButton(
+            onPressed: () => _showAddIssueDialog(),
+            backgroundColor: customColors.primary,
+            shape: const CircleBorder(),
+            child: const Icon(Icons.add, color: Colors.white, size: 28),
+          );
+        },
+        loading: () => null,
+        error: (_, __) => null,
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       body: connectivityStatus.when(
         data: (results) {
@@ -381,7 +387,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                   child: GlobalError(
                     message: 'Please check your internet connection.',
                     isNetworkError: true,
-                    onRetry: () => ref.invalidate(connectivityStatusProvider),
+                    onRetry: () => ref.invalidate(checkConnectivityProvider),
                   ),
                 ),
               ],
@@ -624,7 +630,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                   },
                   loading: () => Center(child: DsvLoader()),
                   error: (error, stack) => GlobalError(
-                    message: 'Failed to load issues: $error',
+                    message: 'Failed to load issues. Please try again.',
                     onRetry: () => ref.invalidate(issueListProvider),
                   ),
                 ),
@@ -633,8 +639,8 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
           );
         },
         error: (error, stack) => GlobalError(
-          message: 'Failed to check connectivity: $error',
-          onRetry: () => ref.invalidate(connectivityStatusProvider),
+          message: 'Something went wrong. Please check your connection.',
+          onRetry: () => ref.invalidate(checkConnectivityProvider),
         ),
         loading: () => const GlobalLoader(message: 'Checking connection...'),
       ),

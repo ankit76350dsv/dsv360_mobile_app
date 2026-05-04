@@ -44,7 +44,7 @@ class _UsersPageState extends ConsumerState<UsersPage> {
   Widget build(BuildContext context) {
     final usersAsync = ref.watch(usersRepositoryProvider);
     final query = ref.watch(usersSearchQueryProvider);
-    final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final connectivityStatus = ref.watch(checkConnectivityProvider);
     final customColors = Theme.of(context).custom;
 
     final userRole = AuthManager.instance.currentUser?.role?.name
@@ -84,6 +84,7 @@ class _UsersPageState extends ConsumerState<UsersPage> {
           ? connectivityStatus.when(
               data: (results) {
                 if (results.contains(ConnectivityResult.none)) return null;
+                if (usersAsync.hasError) return null;
                 return FloatingActionButton(
                   backgroundColor: customColors.primary,
                   foregroundColor: Colors.white,
@@ -112,7 +113,7 @@ class _UsersPageState extends ConsumerState<UsersPage> {
                 message: 'Please check your internet connection.',
                 isNetworkError: true,
                 onRetry: () {
-                  ref.invalidate(connectivityStatusProvider);
+                  ref.invalidate(checkConnectivityProvider);
                 },
               );
             }
@@ -237,7 +238,7 @@ class _UsersPageState extends ConsumerState<UsersPage> {
           },
           error: (error, stack) => GlobalError(
             message: 'Failed to check connectivity: Try Again',
-            onRetry: () => ref.invalidate(connectivityStatusProvider),
+            onRetry: () => ref.invalidate(checkConnectivityProvider),
           ),
           loading: () => const GlobalLoader(message: 'Checking connection...'),
         ),

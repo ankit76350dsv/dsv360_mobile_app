@@ -260,7 +260,7 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
                             if (!mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Failed to save user: $e'),
+                                content: const Text('Failed to save user. Please try again.'),
                               ),
                             );
                           } finally {

@@ -300,7 +300,7 @@ class _EditStoryPageState extends ConsumerState<EditStoryPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update story: $e')),
+        SnackBar(content: const Text('Failed to update story. Please try again.')),
       );
     } finally {
       submitLoadingNotifier.state = false;

@@ -41,7 +41,7 @@ class _MultiSelectAssigneeWidgetState
       ),
       error: (error, st) => Padding(
         padding: const EdgeInsets.all(16),
-        child: Text('Error loading employees: $error'),
+        child: const Text('Failed to load employees. Please try again.'),
       ),
       data: (employees) {
         // Filter out inactive employees

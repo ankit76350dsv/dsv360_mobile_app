@@ -111,7 +111,7 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e')),
+            SnackBar(content: const Text('Something went wrong. Please try again.')),
           );
         }
       } finally {

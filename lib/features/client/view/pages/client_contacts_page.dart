@@ -26,7 +26,7 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
     );
     final query = ref.watch(clientContactsSearchQueryProvider);
     final customColors = Theme.of(context).custom;
-    final connectivityStatus = ref.watch(connectivityStatusProvider);
+    final connectivityStatus = ref.watch(checkConnectivityProvider);
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -84,7 +84,7 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
                 message: 'Please check your internet connection.',
                 isNetworkError: true,
                 onRetry: () {
-                  ref.invalidate(connectivityStatusProvider);
+                  ref.invalidate(checkConnectivityProvider);
                 },
               );
             }
@@ -108,7 +108,7 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
                         message: 'Loading client contacts info...',
                       ),
                       error: (error, stack) => GlobalError(
-                        message: 'Failed to load client contacts data: $error',
+                        message: 'Failed to load data. Please try again.',
                         onRetry: () =>
                             ref.refresh(clientContactsListRepositoryProvider),
                       ),
@@ -152,8 +152,8 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
             );
           },
           error: (error, stack) => GlobalError(
-            message: 'Failed to check connectivity: $error',
-            onRetry: () => ref.invalidate(connectivityStatusProvider),
+            message: 'Something went wrong. Please check your connection.',
+            onRetry: () => ref.invalidate(checkConnectivityProvider),
           ),
           loading: () =>
               const GlobalLoader(message: 'Checking connection...'),

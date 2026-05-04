@@ -135,7 +135,7 @@ class LeaveDetailsPage extends ConsumerWidget {
                         message: 'Loading leave summary...',
                       ),
                       error: (error, stack) => GlobalError(
-                        message: 'Failed to load leave summary data: $error',
+                        message: 'Failed to load data. Please try again.',
                         onRetry: () => ref.refresh(
                           leaveSummaryRepositoryProvider(
                             userId: leave.userId,

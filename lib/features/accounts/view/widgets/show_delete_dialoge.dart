@@ -30,7 +30,7 @@ void showDeleteDialoge({
 				Navigator.of(dialogContext).pop(false);
 
 				ScaffoldMessenger.of(context).showSnackBar(
-					SnackBar(content: Text('Failed to delete account: $e')),
+					SnackBar(content: const Text('Failed to delete account. Please try again.')),
 				);
 			}
 		},

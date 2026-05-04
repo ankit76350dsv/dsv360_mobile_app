@@ -96,7 +96,7 @@ class _StopTimerPageState extends ConsumerState<StopTimerPage> {
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to stop timer: $e'),
+          content: const Text('Failed to stop timer. Please try again.'),
           backgroundColor: Colors.red,
         ),
       );

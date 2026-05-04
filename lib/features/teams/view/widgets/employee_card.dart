@@ -23,19 +23,30 @@ class EmployeeCard extends StatelessWidget {
 
   Widget _buildAvatarImage(double avatarRadius) {
     final imageUrl = employee.profileImageUrl?.trim();
+    final size = avatarRadius * 2;
 
     if (imageUrl != null && imageUrl.isNotEmpty) {
       return ClipOval(
         child: Image.network(
           imageUrl,
-          width: avatarRadius * 2,
-          height: avatarRadius * 2,
+          width: size,
+          height: size,
           fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return SizedBox(
+              width: size,
+              height: size,
+              child: const Center(
+                child: CircularProgressIndicator(strokeWidth: 1.5),
+              ),
+            );
+          },
           errorBuilder: (context, error, stackTrace) {
             return Image.asset(
               'assets/images/profile.jpg',
-              width: avatarRadius * 2,
-              height: avatarRadius * 2,
+              width: size,
+              height: size,
               fit: BoxFit.cover,
             );
           },
@@ -46,8 +57,8 @@ class EmployeeCard extends StatelessWidget {
     return ClipOval(
       child: Image.asset(
         'assets/images/profile.jpg',
-        width: avatarRadius * 2,
-        height: avatarRadius * 2,
+        width: size,
+        height: size,
         fit: BoxFit.cover,
       ),
     );

@@ -299,7 +299,7 @@ void initState() {
       if (!mounted) return;
      
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create story $e')),
+        SnackBar(content: const Text('Failed to create story. Please try again.')),
       );
     } finally {
       submitLoadingNotifier.state = false;
