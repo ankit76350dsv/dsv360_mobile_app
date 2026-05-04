@@ -478,29 +478,37 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
   ) {
     return Column(
       children: [
-        SizedBox(height: 6,),
+        const SizedBox(height: 6),
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Icon(Icons.calendar_view_day_outlined, size: 20, color: textSecondary),
             const SizedBox(width: 6),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _formatDayHeader(day.date),
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: textSecondary,
-                    fontWeight: FontWeight.w500,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _formatDayHeader(day.date),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: textSecondary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                Text(
-                  'Daily Activity Summary',
-                  style: TextStyle(fontSize: 12, color: textSecondary),
-                ),
-              ],
+                  Text(
+                    'Daily Activity Summary',
+                    style: TextStyle(fontSize: 12, color: textSecondary),
+                  ),
+                ],
+              ),
             ),
-            const Spacer(),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
             Text('Total Effort', style: TextStyle(fontSize: 13, color: textSecondary)),
             const SizedBox(width: 6),
             Container(

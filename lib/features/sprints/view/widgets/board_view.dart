@@ -223,6 +223,7 @@ class _BoardViewState extends State<BoardView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       '${(widget.progress * 100).toStringAsFixed(0)} %',
@@ -231,6 +232,11 @@ class _BoardViewState extends State<BoardView> {
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
                       ),
+                    ),
+                    ProgressStat(
+                      label:
+                          '${widget.completedStories}/${widget.totalStories} Stories',
+                      color: widget.textSecondary,
                     ),
                   ],
                 ),
@@ -254,11 +260,6 @@ class _BoardViewState extends State<BoardView> {
                       color: widget.textSecondary,
                     ),
                     const SizedBox(width: 16),
-                    ProgressStat(
-                      label:
-                          '${widget.completedStories}/${widget.totalStories} Stories',
-                      color: widget.textSecondary,
-                    ),
                     const Spacer(),
                     ProgressStat(
                       label: _getDaysLabel(),

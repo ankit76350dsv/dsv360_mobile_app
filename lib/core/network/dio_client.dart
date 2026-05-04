@@ -94,16 +94,18 @@ class ApiClient {
         queryParameters: queryParameters,
         options: options,
       );
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response;
       } else {
-        throw Exception('Unexpected status code: ${response.statusCode}');
+        debugPrint('❌ GET $path — unexpected status ${response.statusCode}');
+        throw Exception(_statusMessage(response.statusCode));
       }
-    } on DioException catch (e, trace) {
-      throw Exception('Dio GET request failed: ${e.message} $trace');
-    } catch (e, trace) {
-      throw Exception('Unexpected error in GET request: $e $trace');
+    } on DioException catch (e) {
+      debugPrint('❌ GET $path — ${e.message}');
+      throw Exception(_dioMessage(e));
+    } catch (e) {
+      debugPrint('❌ GET $path — $e');
+      throw Exception('Something went wrong. Please try again.');
     }
   }
 
@@ -120,19 +122,18 @@ class ApiClient {
         queryParameters: queryParameters,
         options: options,
       );
-
-      debugPrint("ApiClientresponse: ${response.data}");
-      debugPrint("ApiClientresponse: ${response.statusCode}");
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response;
       } else {
-        throw Exception('Unexpected status code: ${response.statusCode}');
+        debugPrint('❌ PUT $path — unexpected status ${response.statusCode}');
+        throw Exception(_statusMessage(response.statusCode));
       }
-    } on DioException catch (e, trace) {
-      throw Exception('Dio PUT request failed: ${e.message} $trace');
-    } catch (e, trace) {
-      throw Exception('Unexpected error in PUT request: $e $trace');
+    } on DioException catch (e) {
+      debugPrint('❌ PUT $path — ${e.message}');
+      throw Exception(_dioMessage(e));
+    } catch (e) {
+      debugPrint('❌ PUT $path — $e');
+      throw Exception('Something went wrong. Please try again.');
     }
   }
 
@@ -149,23 +150,21 @@ class ApiClient {
         queryParameters: queryParameters,
         options: options,
       );
-
-      debugPrint("ApiClient patch response: ${response.data}");
-      debugPrint("ApiClient patch status: ${response.statusCode}");
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response;
       } else {
-        throw Exception('Unexpected status code: ${response.statusCode}');
+        debugPrint('❌ PATCH $path — unexpected status ${response.statusCode}');
+        throw Exception(_statusMessage(response.statusCode));
       }
-    } on DioException catch (e, trace) {
-      throw Exception('Dio PATCH request failed: ${e.message} $trace');
-    } catch (e, trace) {
-      throw Exception('Unexpected error in PATCH request: $e $trace');
+    } on DioException catch (e) {
+      debugPrint('❌ PATCH $path — ${e.message}');
+      throw Exception(_dioMessage(e));
+    } catch (e) {
+      debugPrint('❌ PATCH $path — $e');
+      throw Exception('Something went wrong. Please try again.');
     }
   }
 
-  // / Public method to make a POST request
   Future<Response> post(
     String path, {
     dynamic data,
@@ -174,46 +173,42 @@ class ApiClient {
     List<MultipartFile>? attachments,
   }) async {
     try {
-      
-
       final response = await _dio.post(
         path,
         data: data,
         options: options,
         queryParameters: queryParameters,
       );
-
-      // debugPrint("response:  $response");
-
-      // Check for HTTP 200
       if (response.statusCode == 200 || response.statusCode == 201) {
         return response;
       } else {
-        throw Exception('Unexpected status code: ${response.statusCode}');
+        debugPrint('❌ POST $path — unexpected status ${response.statusCode}');
+        throw Exception(_statusMessage(response.statusCode));
       }
-    } on DioException catch (e, trace) {
-      throw Exception('Dio POST request failed: ${e.message} \nResponse Data: ${e.response?.data} \n$trace');
+    } on DioException catch (e) {
+      debugPrint('❌ POST $path — ${e.message}');
+      throw Exception(_dioMessage(e));
     } catch (e) {
-      throw Exception('Unexpected error in POST request: $e');
+      debugPrint('❌ POST $path — $e');
+      throw Exception('Something went wrong. Please try again.');
     }
   }
 
-  /// Public method to make a GET request
   Future<Response> getWithoutSuccess(String path, {Options? options}) async {
     try {
-      //no need to add the token, parameters and options or cookie here
       final response = await _dio.get(path, options: options);
-
-      // Check for HTTP 200
       if (response.statusCode == 200) {
         return response;
       } else {
-        throw Exception('Unexpected status code: ${response.statusCode}');
+        debugPrint('❌ GET $path — unexpected status ${response.statusCode}');
+        throw Exception(_statusMessage(response.statusCode));
       }
     } on DioException catch (e) {
-      throw Exception('Dio GET request failed: ${e.message}');
+      debugPrint('❌ GET $path — ${e.message}');
+      throw Exception(_dioMessage(e));
     } catch (e) {
-      throw Exception('Unexpected error in GET request: $e');
+      debugPrint('❌ GET $path — $e');
+      throw Exception('Something went wrong. Please try again.');
     }
   }
 
@@ -224,32 +219,27 @@ class ApiClient {
     required CancelToken? cancelToken,
   }) async {
     try {
-      // debugPrint("entered downloadFile");
-
-      //no need to add the token, parameters and options or cookie here
       final response = await _dio.download(
         path,
         savePath,
         cancelToken: cancelToken,
         onReceiveProgress: onReceiveProgress,
       );
-      // debugPrint("response $response");
-      // debugPrint("response.data: ${response.data}");
-      // debugPrint("response.data: ${response.data}");
-
-      // Check for HTTP 200
       if (response.statusCode == 200) {
         return response;
       } else {
-        throw Exception('Unexpected status code: ${response.statusCode}');
+        debugPrint('❌ DOWNLOAD $path — unexpected status ${response.statusCode}');
+        throw Exception(_statusMessage(response.statusCode));
       }
+    } on DioException catch (e) {
+      debugPrint('❌ DOWNLOAD $path — ${e.message}');
+      throw Exception(_dioMessage(e));
     } catch (e) {
-      debugPrint('Unexpected error in GET request: $e');
-      throw Exception('Unexpected error in GET request: $e');
+      debugPrint('❌ DOWNLOAD $path — $e');
+      throw Exception('Something went wrong. Please try again.');
     }
   }
 
-  /// Public method to make a DELETE request
   Future<Response> delete(
     String path, {
     Map<String, dynamic>? queryParameters,
@@ -261,22 +251,45 @@ class ApiClient {
         path,
         queryParameters: queryParameters,
         options: options,
-        data: data, // optional body (some APIs need this)
+        data: data,
       );
-
-      // debugPrint("ApiClient response: ${response.data}");
-      // debugPrint("ApiClient response code: ${response.statusCode}");
-
       if (response.statusCode == 200 || response.statusCode == 204) {
         return response;
       } else {
-        throw Exception('Unexpected status code: ${response.statusCode}');
+        debugPrint('❌ DELETE $path — unexpected status ${response.statusCode}');
+        throw Exception(_statusMessage(response.statusCode));
       }
-    } on DioException catch (e, trace) {
-      throw Exception('Dio DELETE request failed: ${e.message} $trace');
-    } catch (e, trace) {
-      throw Exception('Unexpected error in DELETE request: $e $trace');
+    } on DioException catch (e) {
+      debugPrint('❌ DELETE $path — ${e.message}');
+      throw Exception(_dioMessage(e));
+    } catch (e) {
+      debugPrint('❌ DELETE $path — $e');
+      throw Exception('Something went wrong. Please try again.');
     }
+  }
+
+  String _dioMessage(DioException e) {
+    switch (e.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return 'Request timed out. Please check your connection and try again.';
+      case DioExceptionType.connectionError:
+        return 'No internet connection. Please check your network.';
+      case DioExceptionType.badResponse:
+        return _statusMessage(e.response?.statusCode);
+      default:
+        return 'Something went wrong. Please try again.';
+    }
+  }
+
+  String _statusMessage(int? statusCode) {
+    if (statusCode == null) return 'Something went wrong. Please try again.';
+    if (statusCode >= 500) return 'Server error. Please try again later.';
+    if (statusCode == 404) return 'The requested resource was not found.';
+    if (statusCode == 403) return 'You do not have permission to do this.';
+    if (statusCode == 400) return 'Invalid request. Please try again.';
+    return 'Something went wrong. Please try again.';
   }
 
   /// FIX (Solution E): called when a retried request also returns 401.

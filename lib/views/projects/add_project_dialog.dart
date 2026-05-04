@@ -128,7 +128,7 @@ class _AddProjectDialogState extends ConsumerState<AddProjectDialog> {
     } catch (e) {
       debugPrint('❌ Failed to load organizations: $e');
       if (mounted) {
-        _showError('Failed to load organizations: $e');
+        _showError('Error : Failed to load organization.');
       }
     } finally {
       setState(() => _isLoadingOrganizations = false);

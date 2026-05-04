@@ -1,5 +1,6 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
+import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/features/badges/repositories/badge_assignment_repository.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 import 'package:dsv360/features/sprints/model/sprints_model.dart';
@@ -108,35 +109,11 @@ class StoryDetailsPage extends ConsumerWidget {
           Expanded(
             child: dataAsync.when(
               loading: () => const Center(child: DsvLoader()),
-              error: (err, _) => Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.error_outline,
-                          size: 48, color: Colors.red.shade300),
-                      const SizedBox(height: 12),
-                      Text('Failed to load story',
-                          style:
-                              TextStyle(color: textPrimary, fontSize: 15)),
-                      const SizedBox(height: 6),
-                      Text(err.toString(),
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              color: textSecondary, fontSize: 13)),
-                      const SizedBox(height: 16),
-                      TextButton(
-                        onPressed: () => ref.invalidate(
-                          _storyDetailsProvider(
-                              (projectId: projectId, storyId: storyId)),
-                        ),
-                        child: Text('Retry',
-                            style: TextStyle(
-                                color: Colors.blue.shade400)),
-                      ),
-                    ],
-                  ),
+              error: (err, _) => GlobalError(
+                message: 'Something went wrong. Please check your connection.',
+                onRetry: () => ref.invalidate(
+                  _storyDetailsProvider(
+                      (projectId: projectId, storyId: storyId)),
                 ),
               ),
               data: (data) {

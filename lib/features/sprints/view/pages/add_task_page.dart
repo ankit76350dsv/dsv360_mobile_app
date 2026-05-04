@@ -28,8 +28,8 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _estimatedHoursController =
-      TextEditingController();
+  final TextEditingController _hoursController = TextEditingController();
+  final TextEditingController _minutesController = TextEditingController();
 
   final String _loadingKey = 'add_task_key';
 
@@ -126,9 +126,10 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
       return;
     }
 
-    if (_estimatedHoursController.text.trim().isEmpty) {
+    if (_hoursController.text.trim().isEmpty &&
+        _minutesController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter estimated hours')),
+        const SnackBar(content: Text('Please enter estimated time')),
       );
       return;
     }
@@ -138,8 +139,18 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
     submitLoadingNotifier.state = true;
 
     try {
-      final estimatedHours =
-          double.tryParse(_estimatedHoursController.text.trim()) ?? 0.0;
+      final hours = int.tryParse(_hoursController.text.trim()) ?? 0;
+      final minutes = int.tryParse(_minutesController.text.trim()) ?? 0;
+
+      if (minutes > 59) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Minutes must be between 0 and 59')),
+        );
+        submitLoadingNotifier.state = false;
+        return;
+      }
+
+      final estimatedHours = hours + (minutes / 60.0);
       final formattedDate = DateFormat('yyyy-MM-dd').format(_dueDate!);
 
       final repo = ref.read(createTaskRepositoryProvider);
@@ -175,7 +186,8 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
   @override
   void dispose() {
     _titleController.dispose();
-    _estimatedHoursController.dispose();
+    _hoursController.dispose();
+    _minutesController.dispose();
     super.dispose();
   }
 
@@ -286,23 +298,59 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
 
                       const SizedBox(height: 20),
 
-                      // Estimated Hours
-                      CustomInputField(
-                        controller: _estimatedHoursController,
-                        hintText: 'Estimated Hours',
-                        labelText: 'Estimated Hours *',
-                        prefixIcon: Icons.schedule_outlined,
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Enter estimated hours';
-                          }
-                          if (double.tryParse(value) == null) {
-                            return 'Enter valid number';
-                          }
-                          return null;
-                        },
+                      // Estimated Time
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Estimated Time *',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: CustomInputField(
+                                  controller: _hoursController,
+                                  hintText: 'Hours',
+                                  labelText: 'Hours',
+                                  prefixIcon: Icons.schedule_outlined,
+                                  keyboardType: TextInputType.number,
+                                  validator: (value) {
+                                    if ((value == null || value.isEmpty) &&
+                                        _minutesController.text.isEmpty) {
+                                      return 'Required';
+                                    }
+                                    if (value != null &&
+                                        value.isNotEmpty &&
+                                        int.tryParse(value) == null) {
+                                      return 'Numbers only';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: CustomInputField(
+                                  controller: _minutesController,
+                                  hintText: 'Minutes',
+                                  labelText: 'Minutes',
+                                  prefixIcon: Icons.timer_outlined,
+                                  keyboardType: TextInputType.number,
+                                  validator: (value) {
+                                    if (value != null && value.isNotEmpty) {
+                                      final mins = int.tryParse(value);
+                                      if (mins == null) return 'Numbers only';
+                                      if (mins > 59) return '0-59 only';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
 
                       const SizedBox(height: 20),

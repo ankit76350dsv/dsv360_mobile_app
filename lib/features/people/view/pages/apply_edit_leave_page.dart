@@ -1,7 +1,7 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/models/leave_details.dart';
 import 'package:dsv360/repositories/active_user_repository.dart';
-import 'package:dsv360/repositories/leaves_repository.dart';
+import 'package:dsv360/features/people/repositories/leaves_repository.dart';
 import 'package:dsv360/views/widgets/app_snackbar.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/custom_date_field.dart';

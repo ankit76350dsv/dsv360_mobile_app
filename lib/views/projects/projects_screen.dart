@@ -1,5 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/network/connectivity_provider.dart';
@@ -103,87 +104,66 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
 
   void _deleteProject(ProjectModel project, BuildContext context) {
     final customColors = Theme.of(context).custom;
-    showDialog(
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    showWarningDialogueBox(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: customColors.cardBackground,
-        title: Text(
-          'Delete Project',
-          style: TextStyle(color: customColors.textPrimary),
-        ),
-        content: Text(
-          'Are you sure you want to delete "${project.projectName}"?',
-          style: TextStyle(color: customColors.textPrimary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: customColors.textSecondary),
-            ),
-          ),
-          TextButton(
-            onPressed: () async {
-              // Capture the scaffold messenger before popping dialog
-              final scaffoldMessenger = ScaffoldMessenger.of(context);
-              Navigator.pop(context);
+      title: 'Delete Project',
+      subtitle: 'Are you sure you want to delete "${project.projectName}"?',
+      primaryText: 'Delete',
+      onPrimaryPressed: (dialogContext) async {
+        Navigator.of(dialogContext).pop();
 
-              try {
-                final projectRepository = ref.read(projectRepositoryProvider);
-                await projectRepository.deleteProject(project.id);
+        try {
+          final projectRepository = ref.read(projectRepositoryProvider);
+          await projectRepository.deleteProject(project.id);
 
-                if (mounted) {
-                  ref.invalidate(projectListProvider);
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          Icon(Icons.check_circle, color: Colors.white),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Project "${project.projectName}" deleted successfully',
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ],
+          if (mounted) {
+            ref.invalidate(projectListProvider);
+            scaffoldMessenger.showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Project "${project.projectName}" deleted successfully',
+                        style: const TextStyle(color: Colors.white),
                       ),
-                      backgroundColor: customColors.primary,
-                      behavior: SnackBarBehavior.floating,
-                      duration: const Duration(seconds: 3),
                     ),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(
-                      content: Row(
-                        children: [
-                          Icon(Icons.error_outline, color: Colors.white),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              'Failed to delete project: ${e.toString()}',
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ],
+                  ],
+                ),
+                backgroundColor: customColors.primary,
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            scaffoldMessenger.showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.white),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Failed to delete project: ${e.toString()}',
+                        style: const TextStyle(color: Colors.white),
                       ),
-                      backgroundColor: customColors.error,
-                      behavior: SnackBarBehavior.floating,
-                      duration: const Duration(seconds: 3),
                     ),
-                  );
-                }
-              }
-            },
-            style: TextButton.styleFrom(foregroundColor: customColors.error),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+                  ],
+                ),
+                backgroundColor: customColors.error,
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        }
+      },
     );
   }
 

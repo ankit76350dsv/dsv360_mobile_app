@@ -228,7 +228,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Failed to save task. Please try again.'),
+              content: const Text('Failed to add task. Please try again.'),
               backgroundColor: customColors.error,
             ),
           );

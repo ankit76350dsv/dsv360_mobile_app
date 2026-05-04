@@ -30,6 +30,7 @@ class StoryCard extends ConsumerWidget {
   Color _priorityColor(String? priority) {
     switch ((priority ?? '').toUpperCase()) {
       case 'HIGH':
+      case 'CRITICAL':
         return const Color(0xFFF44336);
       case 'MEDIUM':
         return const Color(0xFFFFC107);
