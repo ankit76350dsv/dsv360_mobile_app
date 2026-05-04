@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dsv360/models/project_model.dart';
-import 'package:dsv360/repositories/project_repository.dart';
+import 'package:dsv360/features/projects/model/project_model.dart';
+import 'package:dsv360/features/projects/repositories/project_repository.dart';
 import 'package:dsv360/repositories/task_repository.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 

@@ -11,7 +11,7 @@ import 'package:dsv360/features/sprints/repositories/time_entry_repository.dart'
 import 'package:dsv360/features/sprints/repositories/timer_info_repository.dart';
 import 'package:dsv360/features/sprints/repositories/update_subtask_status_repository.dart';
 import 'package:dsv360/features/sprints/repositories/update_task_status_repository.dart';
-import 'package:dsv360/repositories/active_user_repository.dart';
+import 'package:dsv360/core/constants/active_user_repository.dart';
 
 import 'package:dsv360/features/sprints/view/pages/add_sub_task_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_time_entry_page.dart';

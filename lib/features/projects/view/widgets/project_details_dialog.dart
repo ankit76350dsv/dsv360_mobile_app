@@ -1,7 +1,7 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../models/project_model.dart';
+import '../../model/project_model.dart';
 
 class ProjectDetailsDialog extends StatelessWidget {
   final ProjectModel project;

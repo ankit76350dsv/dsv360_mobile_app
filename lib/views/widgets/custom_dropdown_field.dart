@@ -254,7 +254,7 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
                                     child: rankedItems.isEmpty
                                         ? Center(
                                             child: Text(
-                                              'No matching results',
+                                              'No results found',
                                               style: TextStyle(color: cs.onSurfaceVariant),
                                             ),
                                           )

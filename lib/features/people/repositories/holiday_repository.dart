@@ -1,4 +1,4 @@
-import 'package:dsv360/models/holiday.dart';
+import 'package:dsv360/features/people/model/holiday.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class HolidayRepository extends AsyncNotifier<List<Holiday>> {

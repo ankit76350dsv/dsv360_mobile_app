@@ -5,7 +5,7 @@ import 'package:dsv360/features/sprints/model/story_model.dart';
 import 'package:dsv360/features/sprints/repositories/get_sprints_repository.dart';
 import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
 import 'package:dsv360/features/sprints/repositories/deploy_to_cycle_repository.dart';
-import 'package:dsv360/repositories/active_user_repository.dart';
+import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

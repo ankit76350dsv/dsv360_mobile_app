@@ -1,7 +1,7 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/features/sprints/repositories/create_release_repository.dart';
 import 'package:dsv360/features/sprints/repositories/get_projects_repository.dart';
-import 'package:dsv360/models/project_model.dart';
+import 'package:dsv360/features/projects/model/project_model.dart';
 import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/views/widgets/custom_input_field.dart';

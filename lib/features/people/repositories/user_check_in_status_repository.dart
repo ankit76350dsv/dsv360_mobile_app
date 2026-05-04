@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:dsv360/core/network/dio_client.dart';
-import 'package:dsv360/models/user_check_in_status.dart';
-import 'package:dsv360/repositories/active_user_repository.dart';
+import 'package:dsv360/features/people/model/user_check_in_status.dart';
+import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

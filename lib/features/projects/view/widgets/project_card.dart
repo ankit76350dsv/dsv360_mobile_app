@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../models/project_model.dart';
-import '../../core/constants/auth_manager.dart';
-import '../attachments/attachment_list_modal.dart';
+import '../../model/project_model.dart';
+import '../../../../core/constants/auth_manager.dart';
+import '../../../../views/attachments/attachment_list_modal.dart';
 // import '../../screens/tasks_screen.dart';
-import '../task/tasks_screen.dart';
-import '../../features/issues/view/pages/issues_screen.dart';
-import '../../features/time_entry/view/pages/time_entries_screen.dart';
-import '../widgets/generic_card.dart';
+import '../../../../views/task/tasks_screen.dart';
+import '../../../issues/view/pages/issues_screen.dart';
+import '../../../time_entry/view/pages/time_entries_screen.dart';
+import '../../../../views/widgets/generic_card.dart';
 
 class ProjectCard extends StatelessWidget {
   final ProjectModel project;

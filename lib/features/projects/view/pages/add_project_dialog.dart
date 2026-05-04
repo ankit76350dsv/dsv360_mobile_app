@@ -5,17 +5,17 @@ import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 // import '../../core/constants/app_colors.dart';
-import '../../models/project_model.dart';
-import '../../features/teams/model/employee_model.dart';
-import '../../models/attachment.dart';
-import '../../models/organization.dart';
+import '../../model/project_model.dart';
+import '../../../teams/model/employee_model.dart';
+import '../../../../models/attachment.dart';
+import '../../../../models/organization.dart';
 import '../../repositories/project_repository.dart';
-import '../../features/teams/repositories/employee_repository.dart';
-import '../../repositories/organization_repository.dart';
-import '../../repositories/active_user_repository.dart';
-import '../widgets/custom_input_field.dart';
-import '../widgets/custom_popup_dropdown.dart';
-import '../widgets/TopBar.dart';
+import '../../../teams/repositories/employee_repository.dart';
+import '../../../../repositories/organization_repository.dart';
+import '../../../../core/constants/active_user_repository.dart';
+import '../../../../views/widgets/custom_input_field.dart';
+import '../../../../views/widgets/custom_popup_dropdown.dart';
+import '../../../../views/widgets/TopBar.dart';
 
 class AddProjectDialog extends ConsumerStatefulWidget {
   final ProjectModel? project; // For edit mode

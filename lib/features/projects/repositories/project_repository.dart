@@ -2,7 +2,7 @@ import 'package:dio/dio.dart'; // needed only for FormData and MultipartFile (fi
 import 'package:dsv360/core/network/dio_client.dart'; // single import — no raw http, Dio, or TokenManager needed
 import 'package:flutter/foundation.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
-import 'package:dsv360/models/project_model.dart';
+import 'package:dsv360/features/projects/model/project_model.dart';
 import 'package:dsv360/models/attachment.dart';
 
 // ---------------------------------------------------------------------------

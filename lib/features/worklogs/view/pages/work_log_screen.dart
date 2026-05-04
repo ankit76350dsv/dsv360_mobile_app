@@ -8,7 +8,7 @@ import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
 import 'package:dsv360/features/worklogs/model/worklog_model.dart';
 import 'package:dsv360/features/worklogs/viewmodel/worklogs_viewmodel.dart';
-import 'package:dsv360/repositories/active_user_repository.dart';
+import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:dsv360/views/task/tasks_screen.dart';
 import 'package:dsv360/views/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
@@ -476,59 +476,77 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
   Widget _buildDayHeader(
     WorklogDaySummary day, Color textSecondary, bool isDark,
   ) {
-    return Column(
-      children: [
-        const SizedBox(height: 6),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.calendar_view_day_outlined, size: 20, color: textSecondary),
-            const SizedBox(width: 6),
-            Expanded(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Icon(Icons.calendar_view_day_outlined, size: 20, color: textSecondary),
+          const SizedBox(width: 6),
+          // Date and summary section
+          Expanded(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.5,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     _formatDayHeader(day.date),
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 13,
                       color: textSecondary,
                       fontWeight: FontWeight.w500,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     'Daily Activity Summary',
-                    style: TextStyle(fontSize: 12, color: textSecondary),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: textSecondary,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Text('Total Effort', style: TextStyle(fontSize: 13, color: textSecondary)),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E1E1E) : Colors.black,
-                borderRadius: BorderRadius.circular(4),
+          ),
+          
+          // Total effort section
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Total Effort:',
+                style: TextStyle(fontSize: 12, color: textSecondary),
               ),
-              child: Text(
-                '${day.totalHours}:00',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+              const SizedBox(width: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.black,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '${day.totalHours}:00',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 

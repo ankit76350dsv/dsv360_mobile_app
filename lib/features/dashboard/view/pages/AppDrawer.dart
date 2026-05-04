@@ -8,7 +8,7 @@ import 'package:dsv360/features/sprints/view/pages/sprints_screen.dart';
 import 'package:dsv360/features/worklogs/view/pages/work_log_screen.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
-import 'package:dsv360/views/projects/projects_screen.dart';
+import 'package:dsv360/features/projects/view/pages/projects_screen.dart';
 import 'package:dsv360/views/task/tasks_screen.dart';
 import 'package:dsv360/features/issues/view/pages/issues_screen.dart';
 import 'package:dsv360/features/accounts/view/pages/accounts_screen.dart';

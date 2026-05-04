@@ -4,7 +4,7 @@ import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
-import 'package:dsv360/models/project_model.dart';
+import 'package:dsv360/features/projects/model/project_model.dart';
 import 'package:dsv360/models/task.dart';
 import 'package:dsv360/models/users.dart';
 import 'package:dsv360/providers/project_provider.dart';

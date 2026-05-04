@@ -4,7 +4,7 @@ import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/models/active_user.dart';
-import 'package:dsv360/repositories/active_user_repository.dart';
+import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 import 'package:dsv360/views/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';

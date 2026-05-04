@@ -1,8 +1,8 @@
 import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/network/dio_client.dart';
-import 'package:dsv360/models/leave_calendar_event.dart';
-import 'package:dsv360/models/leave_details.dart';
-import 'package:dsv360/repositories/active_user_repository.dart';
+import 'package:dsv360/features/people/model/leave_calendar_event.dart';
+import 'package:dsv360/features/people/model/leave_details.dart';
+import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

@@ -1,5 +1,5 @@
 import 'package:dsv360/core/network/dio_client.dart';
-import 'package:dsv360/models/leave_summary.dart';
+import 'package:dsv360/features/people/model/leave_summary.dart';
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

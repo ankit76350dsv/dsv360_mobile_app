@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../model/issue_model.dart';
-import '../../../../models/project_model.dart';
+import '../../../projects/model/project_model.dart';
 import '../../../teams/model/employee_model.dart';
 import '../../repository/create_issue_repository.dart';
 import '../../repository/fetch_projects_repository.dart';

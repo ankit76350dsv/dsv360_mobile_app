@@ -72,9 +72,7 @@ class _KanbanColumnState extends State<KanbanColumn> {
           decoration: BoxDecoration(
             color: _isDragOver
                 ? widget.column.color.withValues(alpha: 0.1)
-                : widget.isDark
-                    ? const Color(0xFF1A1A1A)
-                    : const Color(0xFFF8F8F8),
+                : widget.cardBg,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: _isDragOver
