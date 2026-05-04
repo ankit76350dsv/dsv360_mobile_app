@@ -662,6 +662,13 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                       );
                     }
                   },
+                  actionIcon: Icons.refresh_rounded,
+                  onInfoTap: () {
+                    ref.invalidate(_projectListProvider);
+                    if (_selectedProjectId != null) {
+                      ref.invalidate(_hierarchyProvider(_selectedProjectId!));
+                    }
+                  },
                 ),
 
                 // Search bar
