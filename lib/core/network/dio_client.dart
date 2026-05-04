@@ -5,7 +5,7 @@ import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/core/constants/server_constant.dart';
 import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
-import 'package:dsv360/views/welcome/welcome_page.dart';
+import 'package:dsv360/core/welcome/welcome_page.dart';
 // import 'package:esd_mobile_app/core/constants/token_manager.dart';
 import 'package:flutter/material.dart';
 

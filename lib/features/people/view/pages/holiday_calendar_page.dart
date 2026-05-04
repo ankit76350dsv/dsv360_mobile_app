@@ -3,8 +3,8 @@ import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/features/people/model/holiday.dart';
 import 'package:dsv360/features/people/repositories/holiday_repository.dart';
-import 'package:dsv360/views/widgets/custom_chip.dart';
-import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
+import 'package:dsv360/core/widgets/custom_chip.dart';
+import 'package:dsv360/core/widgets/custom_dropdown_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

@@ -4,7 +4,7 @@ import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
-import 'package:dsv360/providers/dashboard_provider.dart';
+import 'package:dsv360/features/dashboard/providers/dashboard_provider.dart';
 import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
 import 'package:dsv360/features/dashboard/view/pages/DashboardTitle.dart';
 import 'package:dsv360/features/dashboard/view/pages/ProjectAnalyticsCard.dart';

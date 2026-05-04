@@ -10,7 +10,7 @@ import 'package:dsv360/features/badges/view/widgets/user_badge_card.dart';
 import 'package:dsv360/features/users/repositories/users_repository.dart';
 import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
-import 'package:dsv360/views/widgets/custom_input_search.dart';
+import 'package:dsv360/core/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';

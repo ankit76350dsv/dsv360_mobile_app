@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/core/network/dio_client.dart';
-import 'package:dsv360/models/users.dart';
+import 'package:dsv360/features/users/model/users.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

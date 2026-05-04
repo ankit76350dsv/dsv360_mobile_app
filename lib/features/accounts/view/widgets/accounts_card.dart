@@ -5,8 +5,8 @@ import 'package:dsv360/features/accounts/viewmodel/delete_account_viewmodel.dart
 import 'package:dsv360/features/accounts/view/widgets/account_row.dart';
 import 'package:dsv360/features/accounts/view/widgets/show_delete_dialoge.dart';
 import 'package:dsv360/features/accounts/view/widgets/website_row.dart';
-import 'package:dsv360/views/widgets/custom_card_button.dart';
-import 'package:dsv360/views/widgets/custom_chip.dart';
+import 'package:dsv360/core/widgets/custom_card_button.dart';
+import 'package:dsv360/core/widgets/custom_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

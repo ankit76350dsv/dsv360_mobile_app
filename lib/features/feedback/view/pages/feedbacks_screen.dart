@@ -8,8 +8,8 @@ import 'package:dsv360/features/feedback/view/pages/feedback_detail_screen.dart'
 import 'package:dsv360/features/feedback/view/pages/feedback_form_screen.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
-import 'package:dsv360/views/widgets/custom_input_search.dart';
-import 'package:dsv360/views/widgets/feedback_card.dart';
+import 'package:dsv360/core/widgets/custom_input_search.dart';
+import 'package:dsv360/core/widgets/feedback_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../model/feedback_model.dart';

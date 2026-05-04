@@ -2,8 +2,8 @@ import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/features/sprints/repositories/create_sprint_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dsv360/views/widgets/custom_input_field.dart';
-import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/core/widgets/custom_input_field.dart';
+import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
 import 'package:intl/intl.dart';
 
 class CreateSprintPage extends ConsumerStatefulWidget {

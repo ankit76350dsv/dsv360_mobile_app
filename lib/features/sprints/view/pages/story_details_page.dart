@@ -12,7 +12,7 @@ import 'package:dsv360/features/sprints/view/pages/add_task_page.dart';
 import 'package:dsv360/features/sprints/view/pages/edit_story_page.dart';
 import 'package:dsv360/features/sprints/view/pages/sub_task_page.dart';
 import 'package:dsv360/core/constants/active_user_repository.dart';
-import 'package:dsv360/views/widgets/TopBar.dart';
+import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

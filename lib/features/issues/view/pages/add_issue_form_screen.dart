@@ -12,9 +12,9 @@ import '../../repository/create_issue_repository.dart';
 import '../../repository/fetch_projects_repository.dart';
 import '../../repository/update_issue_repository.dart';
 import '../../../teams/repositories/employee_repository.dart';
-import '../../../../views/widgets/bottom_two_buttons.dart';
-import '../../../../views/widgets/custom_dropdown_field.dart';
-import '../../../../views/widgets/custom_input_field.dart';
+import '../../../../core/widgets/bottom_two_buttons.dart';
+import '../../../../core/widgets/custom_dropdown_field.dart';
+import '../../../../core/widgets/custom_input_field.dart';
 
 class AddIssueFormScreen extends ConsumerStatefulWidget {
   final IssueModel? issue;

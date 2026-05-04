@@ -6,9 +6,9 @@ import 'package:dsv360/features/feedback/repositories/create_feedback_repository
 import 'package:flutter/material.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/utils/form_validators.dart';
-import '../../../../views/widgets/custom_input_field.dart';
-import '../../../../views/widgets/primary_button.dart';
-import '../../../../views/widgets/TopBar.dart';
+import '../../../../core/widgets/custom_input_field.dart';
+import '../../../../core/widgets/primary_button.dart';
+import '../../../../core/widgets/TopBar.dart';
 import 'feedbacks_screen.dart';
 
 class FeedbackFormScreen extends StatefulWidget {

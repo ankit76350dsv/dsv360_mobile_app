@@ -4,8 +4,8 @@ import '../../../../core/constants/theme.dart';
 import '../../../../core/constants/auth_manager.dart';
 import '../../repositories/check_timer_status_repository.dart';
 import '../../repositories/end_timer_repository.dart';
-import '../../../../views/widgets/custom_input_field.dart';
-import '../../../../views/widgets/TopBar.dart';
+import '../../../../core/widgets/custom_input_field.dart';
+import '../../../../core/widgets/TopBar.dart';
 import 'timer_service.dart';
 
 class RunningTimerScreen extends StatefulWidget {

@@ -8,7 +8,7 @@ import 'package:dsv360/features/client/view/pages/add_client_contacts_page.dart'
 import 'package:dsv360/features/client/view/widgets/client_contacts_card.dart';
 import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
-import 'package:dsv360/views/widgets/custom_input_search.dart';
+import 'package:dsv360/core/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

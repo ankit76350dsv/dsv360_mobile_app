@@ -3,7 +3,7 @@ import 'package:dsv360/core/network/dio_client.dart'; // single import — no ra
 import 'package:flutter/foundation.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/features/projects/model/project_model.dart';
-import 'package:dsv360/models/attachment.dart';
+import 'package:dsv360/core/models/attachment.dart';
 
 // ---------------------------------------------------------------------------
 // How this repository uses ApiClient:

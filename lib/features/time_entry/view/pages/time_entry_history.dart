@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/features/time_entry/repositories/time_entry_history_repository.dart';
-import 'package:dsv360/views/widgets/TopBar.dart';
+import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 

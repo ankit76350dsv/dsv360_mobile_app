@@ -1,6 +1,6 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/features/client/model/client_contacts.dart';
-import 'package:dsv360/views/widgets/custom_card_button.dart';
+import 'package:dsv360/core/widgets/custom_card_button.dart';
 import 'package:flutter/material.dart';
 
 class ClientContactHeader extends StatelessWidget {

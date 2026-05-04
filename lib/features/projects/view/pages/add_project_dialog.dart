@@ -7,15 +7,15 @@ import 'dart:io';
 // import '../../core/constants/app_colors.dart';
 import '../../model/project_model.dart';
 import '../../../teams/model/employee_model.dart';
-import '../../../../models/attachment.dart';
-import '../../../../models/organization.dart';
+import '../../../../core/models/attachment.dart';
+import '../../../../core/models/organization.dart';
 import '../../repositories/project_repository.dart';
 import '../../../teams/repositories/employee_repository.dart';
-import '../../../../repositories/organization_repository.dart';
+import '../../repositories/organization_repository.dart';
 import '../../../../core/constants/active_user_repository.dart';
-import '../../../../views/widgets/custom_input_field.dart';
-import '../../../../views/widgets/custom_popup_dropdown.dart';
-import '../../../../views/widgets/TopBar.dart';
+import '../../../../core/widgets/custom_input_field.dart';
+import '../../../../core/widgets/custom_popup_dropdown.dart';
+import '../../../../core/widgets/TopBar.dart';
 
 class AddProjectDialog extends ConsumerStatefulWidget {
   final ProjectModel? project; // For edit mode

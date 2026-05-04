@@ -3,8 +3,8 @@
 import 'package:dsv360/core/constants/app_navigator_key.dart';
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/core/constants/theme.dart';
-import 'package:dsv360/views/splash/splash_screen.dart';
-import 'package:dsv360/views/settings/settings_page.dart';
+import 'package:dsv360/core/splash/splash_screen.dart';
+import 'package:dsv360/features/settings/views/pages/settings_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

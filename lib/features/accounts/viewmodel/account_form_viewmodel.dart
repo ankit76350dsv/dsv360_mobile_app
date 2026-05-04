@@ -1,6 +1,6 @@
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/features/accounts/repositories/accounts_list_repository.dart';
-import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

@@ -2,7 +2,7 @@ import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../model/feedback_model.dart';
-import '../../../../views/widgets/TopBar.dart';
+import '../../../../core/widgets/TopBar.dart';
 
 class FeedbackDetailScreen extends StatelessWidget {
   final FeedbackModel feedback;

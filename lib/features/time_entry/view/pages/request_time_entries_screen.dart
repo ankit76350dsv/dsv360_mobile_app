@@ -6,8 +6,8 @@ import 'package:dsv360/features/time_entry/model/time_entry_model.dart';
 import 'package:dsv360/features/time_entry/repositories/request_entry_repository.dart';
 import 'package:dsv360/features/time_entry/view/pages/time_entry_history.dart';
 import 'package:dsv360/features/time_entry/view/pages/timer_service.dart';
-import 'package:dsv360/views/widgets/TopBar.dart';
-import 'package:dsv360/views/widgets/custom_input_field.dart';
+import 'package:dsv360/core/widgets/TopBar.dart';
+import 'package:dsv360/core/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 

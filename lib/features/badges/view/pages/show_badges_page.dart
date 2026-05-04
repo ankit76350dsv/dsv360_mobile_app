@@ -5,7 +5,7 @@ import 'package:dsv360/features/badges/model/dsvbadge.dart';
 import 'package:dsv360/features/badges/view/pages/add_edit_badge_page.dart';
 import 'package:dsv360/features/badges/view/widgets/show_badge_list_tile.dart';
 import 'package:dsv360/features/badges/viewmodel/show_badges_viewmodel.dart';
-import 'package:dsv360/views/widgets/custom_input_search.dart';
+import 'package:dsv360/core/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

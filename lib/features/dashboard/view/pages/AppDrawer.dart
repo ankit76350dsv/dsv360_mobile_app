@@ -6,10 +6,10 @@ import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/sprints/view/pages/sprints_screen.dart';
 import 'package:dsv360/features/worklogs/view/pages/work_log_screen.dart';
-import 'package:dsv360/views/welcome/welcome_page.dart';
+import 'package:dsv360/core/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/features/projects/view/pages/projects_screen.dart';
-import 'package:dsv360/views/task/tasks_screen.dart';
+import 'package:dsv360/features/task/views/pages/tasks_screen.dart';
 import 'package:dsv360/features/issues/view/pages/issues_screen.dart';
 import 'package:dsv360/features/accounts/view/pages/accounts_screen.dart';
 import 'package:dsv360/features/client/view/pages/client_contacts_page.dart';
@@ -17,10 +17,10 @@ import 'package:dsv360/features/badges/view/pages/badges_page.dart';
 import 'package:dsv360/features/users/view/pages/users_page.dart';
 import 'package:dsv360/features/people/view/pages/people_page.dart';
 import 'package:dsv360/features/teams/view/pages/teams_page.dart';
-import 'package:dsv360/views/ai/dsv_ai_page.dart';
+import 'package:dsv360/features/ai/views/pages/dsv_ai_page.dart';
 import 'package:dsv360/features/feedback/view/pages/feedbacks_screen.dart';
 import 'package:dsv360/features/feedback/view/pages/feedback_form_screen.dart';
-import 'package:dsv360/views/settings/settings_page.dart';
+import 'package:dsv360/features/settings/views/pages/settings_page.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});

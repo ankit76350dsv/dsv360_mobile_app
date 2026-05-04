@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../../model/time_entry_model.dart';
 import '../../repositories/time_entry_repository.dart';
 import '../widgets/time_entry_card.dart';
-import '../../../../views/widgets/TopBar.dart';
+import '../../../../core/widgets/TopBar.dart';
 import 'add_time_entry_dialog.dart';
 
 class TimeEntriesScreen extends StatefulWidget {

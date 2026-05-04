@@ -3,7 +3,7 @@ import 'package:dsv360/core/widgets/circular_loader.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/badges/model/assigned_badge.dart';
 import 'package:dsv360/features/badges/viewmodel/user_badges_viewmodel.dart';
-import 'package:dsv360/models/users.dart';
+import 'package:dsv360/features/users/model/users.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

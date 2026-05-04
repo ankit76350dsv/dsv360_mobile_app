@@ -7,10 +7,10 @@ import 'package:dsv360/features/people/model/leave_summary.dart';
 import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:dsv360/features/people/repositories/leave_summary_repository.dart';
 import 'package:dsv360/features/people/repositories/leaves_repository.dart';
-import 'package:dsv360/views/widgets/app_snackbar.dart';
-import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
-import 'package:dsv360/views/widgets/custom_chip.dart';
-import 'package:dsv360/views/widgets/custom_input_field.dart';
+import 'package:dsv360/core/widgets/app_snackbar.dart';
+import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/core/widgets/custom_chip.dart';
+import 'package:dsv360/core/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

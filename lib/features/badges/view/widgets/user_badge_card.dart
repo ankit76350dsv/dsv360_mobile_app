@@ -1,5 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
-import 'package:dsv360/models/users.dart';
+import 'package:dsv360/features/users/model/users.dart';
 import 'package:dsv360/features/badges/view/widgets/user_badges_sheet.dart';
 import 'package:flutter/material.dart';
 

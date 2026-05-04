@@ -1,8 +1,8 @@
 import 'package:dsv360/features/accounts/model/accounts.dart';
 import 'package:dsv360/features/accounts/viewmodel/account_form_viewmodel.dart';
-import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
-import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
-import 'package:dsv360/views/widgets/custom_input_field.dart';
+import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/core/widgets/custom_dropdown_field.dart';
+import 'package:dsv360/core/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

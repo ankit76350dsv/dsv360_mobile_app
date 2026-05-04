@@ -8,10 +8,10 @@ import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/features/users/repositories/delete_user_repository.dart';
 
-import 'package:dsv360/models/task.dart';
-import 'package:dsv360/models/users.dart';
+import 'package:dsv360/core/models/task.dart';
+import 'package:dsv360/features/users/model/users.dart';
 
-import 'package:dsv360/repositories/pending_tasks_repository.dart';
+import 'package:dsv360/features/users/repositories/pending_tasks_repository.dart';
 
 import 'package:dsv360/features/users/repositories/users_repository.dart';
 import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
@@ -19,12 +19,12 @@ import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 
 import 'package:dsv360/features/users/view/pages/add_edit_user_page.dart';
 import 'package:dsv360/features/users/view/pages/user_details_page.dart';
-import 'package:dsv360/views/widgets/app_snackbar.dart';
-import 'package:dsv360/views/widgets/custom_card_button.dart';
-import 'package:dsv360/views/widgets/custom_chip.dart';
-import 'package:dsv360/views/widgets/bottom_two_buttons.dart';
-import 'package:dsv360/views/widgets/custom_dropdown_field.dart';
-import 'package:dsv360/views/widgets/custom_input_search.dart';
+import 'package:dsv360/core/widgets/app_snackbar.dart';
+import 'package:dsv360/core/widgets/custom_card_button.dart';
+import 'package:dsv360/core/widgets/custom_chip.dart';
+import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/core/widgets/custom_dropdown_field.dart';
+import 'package:dsv360/core/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

@@ -18,7 +18,7 @@ import 'package:dsv360/features/sprints/view/pages/backlog_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_story_page.dart';
 import 'package:dsv360/features/sprints/repositories/get_projects_repository.dart' as sprints_projects;
 import 'package:dsv360/core/constants/active_user_repository.dart';
-import 'package:dsv360/views/widgets/TopBar.dart';
+import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/sprint_story.dart';

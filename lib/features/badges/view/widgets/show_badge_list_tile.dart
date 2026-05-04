@@ -1,5 +1,5 @@
 import 'package:dsv360/features/badges/model/badge_summary.dart';
-import 'package:dsv360/views/widgets/custom_card_button.dart';
+import 'package:dsv360/core/widgets/custom_card_button.dart';
 import 'package:flutter/material.dart';
 
 class ShowBadgeListTile extends StatelessWidget {

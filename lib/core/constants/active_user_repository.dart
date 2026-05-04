@@ -1,4 +1,4 @@
-import 'package:dsv360/models/active_user.dart';
+import 'package:dsv360/core/models/active_user.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final activeUserRepositoryProvider =

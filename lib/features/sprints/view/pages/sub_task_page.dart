@@ -17,7 +17,7 @@ import 'package:dsv360/features/sprints/view/pages/add_sub_task_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_time_entry_page.dart';
 import 'package:dsv360/features/sprints/view/pages/stop_timer_page.dart';
 import 'package:dsv360/features/time_entry/model/time_entry_model.dart';
-import 'package:dsv360/views/widgets/TopBar.dart';
+import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';

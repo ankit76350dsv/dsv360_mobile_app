@@ -6,9 +6,9 @@ import 'package:dsv360/features/profile/view/widgets/profile_crop_image_page.dar
 import 'package:dsv360/features/profile/viewmodel/profile_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/features/profile/view/widgets/about_me.dart';
-import 'package:dsv360/views/welcome/welcome_page.dart';
+import 'package:dsv360/core/welcome/welcome_page.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
-import 'package:dsv360/views/widgets/TopBar.dart';
+import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:io';
