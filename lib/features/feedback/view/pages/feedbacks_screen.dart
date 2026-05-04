@@ -10,10 +10,10 @@ import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/widgets/custom_input_search.dart';
 import 'package:dsv360/core/widgets/feedback_card.dart';
+import 'package:dsv360/features/feedback/viewmodel/feedback_viewmodel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../model/feedback_model.dart';
-import '../../repositories/feedback_repository.dart';
 
 class FeedbacksScreen extends ConsumerStatefulWidget {
   final FeedbackModel? newFeedback;

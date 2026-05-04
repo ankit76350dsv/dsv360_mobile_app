@@ -32,9 +32,4 @@ class FeedbackRepository extends AsyncNotifier<List<FeedbackModel>> {
   }
 }
 
-final feedbackRepositoryProvider =
-    AsyncNotifierProvider<FeedbackRepository, List<FeedbackModel>>(
-      FeedbackRepository.new,
-    );
 
-final feedbackSearchQueryProvider = StateProvider.autoDispose<String>((ref) => '');

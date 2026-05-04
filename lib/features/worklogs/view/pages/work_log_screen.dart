@@ -5,7 +5,7 @@ import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
-import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
+import 'package:dsv360/features/dashboard/view/widgets/AppDrawer.dart';
 import 'package:dsv360/features/worklogs/model/worklog_model.dart';
 import 'package:dsv360/features/worklogs/viewmodel/worklogs_viewmodel.dart';
 import 'package:dsv360/core/constants/active_user_repository.dart';

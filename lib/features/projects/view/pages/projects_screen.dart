@@ -15,7 +15,7 @@ import '../widgets/project_card.dart';
 import 'add_project_dialog.dart';
 import '../widgets/project_details_dialog.dart';
 import 'package:dsv360/core/widgets/TopBar.dart';
-import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
+import 'package:dsv360/features/dashboard/view/widgets/AppDrawer.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 
 class ProjectsScreen extends ConsumerStatefulWidget {

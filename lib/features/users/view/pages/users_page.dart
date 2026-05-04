@@ -14,7 +14,7 @@ import 'package:dsv360/features/users/model/users.dart';
 import 'package:dsv360/features/users/repositories/pending_tasks_repository.dart';
 
 import 'package:dsv360/features/users/repositories/users_repository.dart';
-import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
+import 'package:dsv360/features/dashboard/view/widgets/AppDrawer.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 
 import 'package:dsv360/features/users/view/pages/add_edit_user_page.dart';

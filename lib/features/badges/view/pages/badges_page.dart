@@ -8,7 +8,7 @@ import 'package:dsv360/features/badges/view/pages/assign_badges_page.dart';
 import 'package:dsv360/features/badges/view/pages/show_badges_page.dart';
 import 'package:dsv360/features/badges/view/widgets/user_badge_card.dart';
 import 'package:dsv360/features/users/repositories/users_repository.dart';
-import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
+import 'package:dsv360/features/dashboard/view/widgets/AppDrawer.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 import 'package:dsv360/core/widgets/custom_input_search.dart';
 import 'package:flutter/material.dart';

@@ -22,7 +22,7 @@ import '../../../../core/widgets/generic_card.dart';
 import '../../../../core/models/attachment_list_modal.dart';
 import 'add_task_dialog.dart';
 import 'task_details_dialog.dart';
-import 'package:dsv360/features/dashboard/view/pages/AppDrawer.dart';
+import 'package:dsv360/features/dashboard/view/widgets/AppDrawer.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
   final String? projectId;
