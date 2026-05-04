@@ -426,7 +426,6 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
               },
               actionIcon: Icons.refresh,
               onInfoTap: () {
-                _taskStatusOverride = null;
                 _fetchTimerStatus();
                 final dataArgs = (projectId: widget.projectId, taskId: widget.task.id);
                 ref.invalidate(_subTaskPageDataProvider(dataArgs));
@@ -949,6 +948,14 @@ class _StatusButtonState extends State<_StatusButton> {
   void initState() {
     super.initState();
     _current = widget.current.toUpperCase();
+  }
+
+  @override
+  void didUpdateWidget(_StatusButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.current.toUpperCase() != widget.current.toUpperCase()) {
+      setState(() => _current = widget.current.toUpperCase());
+    }
   }
 
   String _label(String val) {
