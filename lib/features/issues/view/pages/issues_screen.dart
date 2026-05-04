@@ -10,14 +10,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../model/issue_model.dart';
-import '../../providers/issue_provider.dart';
+import '../../viewmodel/issue_viewmodel.dart';
 import '../../../../core/widgets/custom_search_bar.dart';
 import '../../../../core/widgets/generic_card.dart';
 import '../../../../core/widgets/TopBar.dart';
 import '../../../../core/models/attachment_list_modal.dart';
 import 'assignee_modal.dart';
 import 'add_issue_form_screen.dart';
-import 'issue_details_modal_sheet.dart';
+import '../widgets/issue_details_modal_sheet.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 
 class IssuesScreen extends ConsumerStatefulWidget {

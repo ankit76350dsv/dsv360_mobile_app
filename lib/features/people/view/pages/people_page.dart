@@ -35,6 +35,7 @@ import 'package:dsv360/core/widgets/custom_card_button.dart';
 import 'package:dsv360/core/widgets/custom_chip.dart';
 import 'package:dsv360/core/widgets/custom_date_field.dart';
 import 'package:dsv360/core/widgets/custom_dropdown_field.dart';
+import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -1416,30 +1417,69 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
   }
 
   Future<Position> _determinePosition() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    // Test if location services are enabled.
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      return Future.error('Location services are disabled.');
+      throw Exception('SERVICES_DISABLED');
     }
 
-    permission = await Geolocator.checkPermission();
+    LocationPermission permission = await Geolocator.checkPermission();
+    
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        return Future.error('Location permissions are denied');
+        throw Exception('PERMISSION_DENIED');
+      }
+      if (permission == LocationPermission.deniedForever) {
+        throw Exception('PERMISSION_DENIED_FOREVER');
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      return Future.error(
-        'Location permissions are permanently denied, we cannot request permissions.',
-      );
+      throw Exception('PERMISSION_DENIED_FOREVER');
     }
 
-    return await Geolocator.getCurrentPosition();
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        timeLimit: const Duration(seconds: 10),
+      );
+      return position;
+    } catch (e) {
+      throw Exception('LOCATION_FETCH_FAILED');
+    }
+  }
+
+  Future<void> _showLocationWarning(String errorCode) async {
+    String title = 'Location Error';
+    String subtitle = 'Unable to get location. Please try again.';
+
+    if (errorCode == 'SERVICES_DISABLED') {
+      title = 'Location Services Disabled';
+      subtitle = 'Please enable location services on your device settings to check in/out.';
+    } else if (errorCode == 'PERMISSION_DENIED') {
+      title = 'Location Permission Required';
+      subtitle = 'Location permission is required for check in/out. Please allow when prompted.';
+    } else if (errorCode == 'PERMISSION_DENIED_FOREVER') {
+      title = 'Location Permission Denied';
+      subtitle = 'Enable location permission in app settings to use check in/out feature.';
+    } else if (errorCode == 'LOCATION_FETCH_FAILED') {
+      title = 'Unable to Get Location';
+      subtitle = 'Could not retrieve your location. Please try again.';
+    }
+
+    if (!mounted) return;
+
+    await showWarningDialogueBox(
+      context: context,
+      title: title,
+      subtitle: subtitle,
+      primaryText: errorCode == 'PERMISSION_DENIED_FOREVER' || errorCode == 'SERVICES_DISABLED' ? 'Open Settings' : 'Try Again',
+      onPrimaryPressed: (dialogContext) {
+        Navigator.of(dialogContext).pop();
+        if (errorCode == 'PERMISSION_DENIED_FOREVER' || errorCode == 'SERVICES_DISABLED') {
+          Geolocator.openLocationSettings();
+        }
+      },
+    );
   }
 
   Future<void> _handleAction({
@@ -1455,7 +1495,18 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
     try {
       final now = DateTime.now();
       final dayDate = DateFormat('yyyy-MM-dd').format(now);
-      final position = await _determinePosition();
+      
+      Position position;
+      try {
+        position = await _determinePosition();
+      } catch (e) {
+        if (mounted) {
+          String errorCode = extractErrorCode(e.toString());
+          _showLocationWarning(errorCode);
+        }
+        return;
+      }
+
       final lat = position.latitude;
       final long = position.longitude;
 
@@ -1466,11 +1517,20 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
         await checkInRepo.checkIn(
           userId: userId,
           username: username,
-          device: 'test-phone', // device id
+          device: 'test-phone',
           lat: lat,
           long: long,
           dayDate: dayDate,
         );
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Successfully checked in!'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
       } else {
         // Check Out
         await checkInRepo.checkOut(
@@ -1481,6 +1541,15 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
               activeStatus.checkInTime?.millisecondsSinceEpoch ?? 0,
           rowId: activeStatus.rowId ?? '',
         );
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Successfully checked out!'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
       }
 
       // Invalidate both repositories to refresh UI
@@ -1488,13 +1557,30 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
       ref.invalidate(timeLogsRepositoryProvider);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Try Again later!')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: ${e.toString()}'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
       }
+      debugPrint('Check-in/out error: $e');
     } finally {
       loadingNotifier.state = false;
     }
+  }
+
+  String extractErrorCode(String errorMessage) {
+    if (errorMessage.contains('SERVICES_DISABLED')) {
+      return 'SERVICES_DISABLED';
+    } else if (errorMessage.contains('PERMISSION_DENIED_FOREVER')) {
+      return 'PERMISSION_DENIED_FOREVER';
+    } else if (errorMessage.contains('PERMISSION_DENIED')) {
+      return 'PERMISSION_DENIED';
+    } else if (errorMessage.contains('LOCATION_FETCH_FAILED')) {
+      return 'LOCATION_FETCH_FAILED';
+    }
+    return 'UNKNOWN_ERROR';
   }
 
   @override

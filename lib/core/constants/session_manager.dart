@@ -5,7 +5,7 @@ import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/features/dashboard/viewmodel/dashboard_viewmodel.dart';
 import 'package:dsv360/features/feedback/viewmodel/feedback_viewmodel.dart';
 import 'package:dsv360/features/projects/providers/project_provider.dart';
-import 'package:dsv360/features/issues/providers/issue_provider.dart';
+import 'package:dsv360/features/issues/viewmodel/issue_viewmodel.dart';
 import 'package:dsv360/features/task/providers/task_provider.dart';
 import 'package:dsv360/features/users/providers/employee_provider.dart';
 import 'package:dsv360/features/time_entry/providers/time_entry_provider.dart';
