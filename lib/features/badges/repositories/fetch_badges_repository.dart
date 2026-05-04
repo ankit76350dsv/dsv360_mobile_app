@@ -3,11 +3,11 @@ import 'package:dsv360/features/badges/model/badge_summary.dart';
 import 'package:dsv360/features/badges/model/dsvbadge.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final badgeCatalogRepositoryProvider = Provider<BadgeCatalogRepository>((ref) {
-  return BadgeCatalogRepository();
+final fetchBadgesRepositoryProvider = Provider<FetchBadgesRepository>((ref) {
+  return FetchBadgesRepository();
 });
 
-class BadgeCatalogRepository {
+class FetchBadgesRepository {
   Future<List<DSVBadge>> fetchAllBadgesForAssign() async {
     final response = await ApiClient.instance.get(
       'time_entry_management_application_function/badge',
@@ -48,28 +48,5 @@ class BadgeCatalogRepository {
         .whereType<Map>()
         .map((e) => BadgeSummary.fromJson(Map<String, dynamic>.from(e)))
         .toList();
-  }
-
-  Future<void> createBadge(Map<String, dynamic> body) async {
-    await ApiClient.instance.post(
-      'time_entry_management_application_function/badge',
-      data: body,
-    );
-  }
-
-  Future<void> updateBadge({
-    required String rowId,
-    required Map<String, dynamic> body,
-  }) async {
-    await ApiClient.instance.put(
-      'time_entry_management_application_function/badge/$rowId',
-      data: body,
-    );
-  }
-
-  Future<void> deleteBadge({required String deleteId}) async {
-    await ApiClient.instance.delete(
-      'time_entry_management_application_function/badge/$deleteId',
-    );
   }
 }

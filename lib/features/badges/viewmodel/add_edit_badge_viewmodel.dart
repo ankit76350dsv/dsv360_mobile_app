@@ -1,16 +1,24 @@
 import 'package:dsv360/features/badges/model/dsvbadge.dart';
-import 'package:dsv360/features/badges/repositories/badge_catalog_repository.dart';
+import 'package:dsv360/features/badges/repositories/create_badge_repository.dart';
+import 'package:dsv360/features/badges/repositories/update_badge_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final addEditBadgeViewModelProvider = Provider<AddEditBadgeViewModel>((ref) {
-  return AddEditBadgeViewModel(ref.read(badgeCatalogRepositoryProvider));
+  return AddEditBadgeViewModel(
+    createRepository: ref.read(createBadgeRepositoryProvider),
+    updateRepository: ref.read(updateBadgeRepositoryProvider),
+  );
 });
 
 class AddEditBadgeViewModel {
-  AddEditBadgeViewModel(this._catalogRepository);
+  AddEditBadgeViewModel({
+    required this.createRepository,
+    required this.updateRepository,
+  });
 
-  final BadgeCatalogRepository _catalogRepository;
+  final CreateBadgeRepository createRepository;
+  final UpdateBadgeRepository updateRepository;
 
   static const Map<String, String> badgeLevelLogoMap = {
     'Bronze': 'https://dsv365-development.zohostratus.in/dsv365/Badges/Bronze-min.png',
@@ -57,9 +65,9 @@ class AddEditBadgeViewModel {
     final isEditing = badge != null;
 
     if (isEditing) {
-      await _catalogRepository.updateBadge(rowId: badge.rowId, body: body);
+      await updateRepository.updateBadge(rowId: badge.rowId, body: body);
     } else {
-      await _catalogRepository.createBadge(body);
+      await createRepository.createBadge(body);
     }
 
     if (!context.mounted) return;

@@ -1,21 +1,29 @@
 import 'package:dsv360/features/badges/model/assigned_badge.dart';
-import 'package:dsv360/features/badges/repositories/badge_assignment_repository.dart';
+import 'package:dsv360/features/badges/repositories/delete_assigned_badges_repository.dart';
+import 'package:dsv360/features/badges/repositories/fetch_user_badges_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final userBadgesViewModelProvider = Provider<UserBadgesViewModel>((ref) {
-  return UserBadgesViewModel(ref.read(badgeAssignmentRepositoryProvider));
+  return UserBadgesViewModel(
+    fetchRepository: ref.read(fetchUserBadgesRepositoryProvider),
+    deleteRepository: ref.read(deleteAssignedBadgesRepositoryProvider),
+  );
 });
 
 class UserBadgesViewModel {
-  UserBadgesViewModel(this._assignmentRepository);
+  UserBadgesViewModel({
+    required this.fetchRepository,
+    required this.deleteRepository,
+  });
 
-  final BadgeAssignmentRepository _assignmentRepository;
+  final FetchUserBadgesRepository fetchRepository;
+  final DeleteAssignedBadgesRepository deleteRepository;
 
   Future<List<AssignedBadge>> fetchUserBadges(String userId) {
-    return _assignmentRepository.fetchUserBadges(userId);
+    return fetchRepository.fetchUserBadges(userId);
   }
 
   Future<void> deleteAssignedBadge(String rowId) {
-    return _assignmentRepository.deleteAssignedBadges([rowId]);
+    return deleteRepository.deleteAssignedBadges([rowId]);
   }
 }

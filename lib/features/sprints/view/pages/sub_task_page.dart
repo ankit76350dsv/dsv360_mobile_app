@@ -2,7 +2,7 @@ import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/features/badges/model/badge_user.dart';
-import 'package:dsv360/features/badges/repositories/badge_assignment_repository.dart';
+import 'package:dsv360/features/badges/repositories/fetch_badge_users_repository.dart';
 import 'package:dsv360/features/sprints/model/sub_task_model.dart';
 import 'package:dsv360/features/sprints/model/task_model.dart';
 import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
@@ -33,10 +33,10 @@ final _subTaskPageDataProvider =
           .read(hierarchyRepositoryProvider)
           .fetchHierarchy(projectId: args.projectId);
       final usersFuture = ref
-          .read(badgeAssignmentRepositoryProvider)
+          .read(fetchBadgeUsersRepositoryProvider)
           .fetchUsers();
 
-      final results = await Future.wait([hierarchyFuture, usersFuture]);
+      final results = await Future.wait<dynamic>([hierarchyFuture, usersFuture]);
       final hierarchy = results[0] as dynamic;
       final users = results[1] as List<BadgeUser>;
 

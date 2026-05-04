@@ -1,5 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
-import 'package:dsv360/features/badges/repositories/badge_assignment_repository.dart';
+import 'package:dsv360/features/badges/repositories/fetch_badge_users_repository.dart';
 import 'package:dsv360/features/sprints/repositories/add_sub_task_repository.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/core/widgets/custom_dropdown_field.dart';
@@ -67,7 +67,7 @@ class _AddSubTaskPageState extends ConsumerState<AddSubTaskPage> {
     });
     try {
       _users =
-          await ref.read(badgeAssignmentRepositoryProvider).fetchUsers();
+          await ref.read(fetchBadgeUsersRepositoryProvider).fetchUsers();
     } catch (_) {
       _hasUsersError = true;
       _users = [];

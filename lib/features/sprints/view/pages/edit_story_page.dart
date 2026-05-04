@@ -1,6 +1,6 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/features/badges/model/badge_user.dart';
-import 'package:dsv360/features/badges/repositories/badge_assignment_repository.dart';
+import 'package:dsv360/features/badges/repositories/fetch_badge_users_repository.dart';
 import 'package:dsv360/features/sprints/model/epic_model.dart';
 import 'package:dsv360/features/sprints/model/sprints_model.dart';
 import 'package:dsv360/features/sprints/model/story_model.dart';
@@ -224,7 +224,7 @@ class _EditStoryPageState extends ConsumerState<EditStoryPage> {
       _hasUsersError = false;
     });
     try {
-      _users = await ref.read(badgeAssignmentRepositoryProvider).fetchUsers();
+      _users = await ref.read(fetchBadgeUsersRepositoryProvider).fetchUsers();
     } catch (_) {
       _hasUsersError = true;
       _users = [];

@@ -1,7 +1,7 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
-import 'package:dsv360/features/badges/repositories/badge_assignment_repository.dart';
+import 'package:dsv360/features/badges/repositories/fetch_badge_users_repository.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 import 'package:dsv360/features/sprints/model/sprints_model.dart';
 import 'package:dsv360/features/sprints/model/story_model.dart';
@@ -30,10 +30,10 @@ final _storyDetailsProvider = FutureProvider.family<
       .fetchSprints(projectId: args.projectId);
 
   final usersFuture = ref
-      .read(badgeAssignmentRepositoryProvider)
+      .read(fetchBadgeUsersRepositoryProvider)
       .fetchUsers();
 
-  final results = await Future.wait([hierarchyFuture, sprintsFuture, usersFuture]);
+  final results = await Future.wait<dynamic>([hierarchyFuture, sprintsFuture, usersFuture]);
   final hierarchy = results[0] as dynamic;
   final sprints = results[1] as List<SprintModel>;
   final users = results[2] as dynamic;
