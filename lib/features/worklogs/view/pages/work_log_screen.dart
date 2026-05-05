@@ -11,6 +11,7 @@ import 'package:dsv360/features/worklogs/viewmodel/worklogs_viewmodel.dart';
 import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:dsv360/features/task/views/pages/tasks_screen.dart';
 import 'package:dsv360/core/widgets/TopBar.dart';
+import 'package:dsv360/core/widgets/custom_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -179,8 +180,6 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
         final greyBorder = customColors.greyBorder ??
             (isDark ? AppColorsDark.greyBorder : AppColorsLight.greyBorder);
         final primary = customColors.primary ?? const Color(0xFF004da7);
-        final surfaceBg = customColors.surfaceBackground ??
-            (isDark ? AppColorsDark.surfaceBackground : AppColorsLight.surfaceBackground);
 
         final connectivityStatus = ref.watch(checkConnectivityProvider);
 
@@ -223,7 +222,7 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
                     ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      child: _buildSearchBar(surfaceBg, textSecondary),
+                      child: _buildSearchBar(),
                     ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
@@ -258,43 +257,12 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
     );
   }
 
-  Widget _buildSearchBar(Color surfaceBg, Color textSecondary) {
-    return TextField(
+  Widget _buildSearchBar() {
+    return CustomSearchBar(
       controller: _searchController,
+      hintText: 'Search logs',
       onChanged: (value) => setState(() => _searchQuery = value.trim()),
-      decoration: InputDecoration(
-        hintText: 'Search logs',
-        hintStyle: const TextStyle(
-          color: Colors.grey,
-          fontSize: 18,
-          fontWeight: FontWeight.w400,
-        ),
-        filled: true,
-        fillColor: surfaceBg,
-        prefixIcon: const Icon(Icons.search, color: Colors.grey),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(200),
-          borderSide: BorderSide(
-            color: Colors.grey.withValues(alpha: 0.2),
-            width: 1.5,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(200),
-          borderSide: BorderSide(
-            color: Colors.grey.withValues(alpha: 0.2),
-            width: 1.5,
-          ),
-        ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 2),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(
-            color: Colors.grey.withValues(alpha: 0.2),
-            width: 1.5,
-          ),
-        ),
-      ),
+      onClear: () => setState(() => _searchQuery = ''),
     );
   }
 

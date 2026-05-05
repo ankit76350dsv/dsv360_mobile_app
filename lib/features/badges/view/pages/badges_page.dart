@@ -11,7 +11,7 @@ import 'package:dsv360/features/badges/view/widgets/user_badge_card.dart';
 import 'package:dsv360/features/users/repositories/users_repository.dart';
 import 'package:dsv360/features/dashboard/view/widgets/AppDrawer.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
-import 'package:dsv360/core/widgets/custom_input_search.dart';
+import 'package:dsv360/core/widgets/custom_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
@@ -25,6 +25,13 @@ class BadgesPage extends ConsumerStatefulWidget {
 
 class _BadgesPageState extends ConsumerState<BadgesPage> {
   bool _isRefreshingData = false;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -147,10 +154,16 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
             return Column(
               children: [
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                  child: CustomInputSearch(
-                    hint: 'Search users',
-                    searchProvider: usersSearchQueryProvider,
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                  child: CustomSearchBar(
+                    controller: _searchController,
+                    hintText: 'Search users',
+                    onChanged: (value) {
+                      ref.read(usersSearchQueryProvider.notifier).state = value.trim();
+                    },
+                    onClear: () {
+                      ref.read(usersSearchQueryProvider.notifier).state = '';
+                    },
                   ),
                 ),
                 Expanded(

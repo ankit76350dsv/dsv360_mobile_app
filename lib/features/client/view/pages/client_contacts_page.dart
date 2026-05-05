@@ -9,7 +9,7 @@ import 'package:dsv360/features/client/view/pages/add_client_contacts_page.dart'
 import 'package:dsv360/features/client/view/widgets/client_contacts_card.dart';
 import 'package:dsv360/features/dashboard/view/widgets/AppDrawer.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
-import 'package:dsv360/core/widgets/custom_input_search.dart';
+import 'package:dsv360/core/widgets/custom_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,6 +21,13 @@ class ClientContactsPage extends ConsumerStatefulWidget {
 
 class _ClientContactsState extends ConsumerState<ClientContactsPage> {
   bool _isRefreshingData = false;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,9 +133,17 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
                     horizontal: 16.0,
                     vertical: 12.0,
                   ),
-                  child: CustomInputSearch(
-                    hint: "Search client contacts",
-                    searchProvider: clientContactsSearchQueryProvider,
+                  child: CustomSearchBar(
+                    controller: _searchController,
+                    hintText: 'Search client contacts',
+                    onChanged: (value) {
+                      ref.read(clientContactsSearchQueryProvider.notifier).state =
+                          value.trim();
+                    },
+                    onClear: () {
+                      ref.read(clientContactsSearchQueryProvider.notifier).state =
+                          '';
+                    },
                   ),
                 ),
                 Expanded(

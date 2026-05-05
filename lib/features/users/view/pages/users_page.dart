@@ -25,7 +25,7 @@ import 'package:dsv360/core/widgets/custom_card_button.dart';
 import 'package:dsv360/core/widgets/custom_chip.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/core/widgets/custom_dropdown_field.dart';
-import 'package:dsv360/core/widgets/custom_input_search.dart';
+import 'package:dsv360/core/widgets/custom_search_bar.dart';
 import 'package:dsv360/features/teams/providers/batch_profile_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,10 +38,17 @@ class UsersPage extends ConsumerStatefulWidget {
 
 class _UsersPageState extends ConsumerState<UsersPage> {
   bool _isRefreshingData = false;
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -157,9 +164,16 @@ class _UsersPageState extends ConsumerState<UsersPage> {
                       horizontal: 16.0,
                       vertical: 8.0,
                     ),
-                    child: CustomInputSearch(
-                      searchProvider: usersSearchQueryProvider,
-                      hint: "Search users",
+                    child: CustomSearchBar(
+                      controller: _searchController,
+                      hintText: 'Search users',
+                      onChanged: (value) {
+                        ref.read(usersSearchQueryProvider.notifier).state =
+                            value.trim();
+                      },
+                      onClear: () {
+                        ref.read(usersSearchQueryProvider.notifier).state = '';
+                      },
                     ),
                   ),
                   Expanded(

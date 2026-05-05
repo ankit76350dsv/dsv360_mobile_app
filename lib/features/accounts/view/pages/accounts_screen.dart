@@ -9,6 +9,7 @@ import 'package:dsv360/features/accounts/view/pages/add_edit_accounts.dart';
 import 'package:dsv360/features/accounts/view/widgets/accounts_card.dart';
 import 'package:dsv360/features/dashboard/view/widgets/AppDrawer.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
+import 'package:dsv360/core/widgets/custom_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -20,6 +21,13 @@ class AccountsPage extends ConsumerStatefulWidget {
 
 class _AccountsPageState extends ConsumerState<AccountsPage> {
   bool _isRefreshingData = false;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,49 +138,17 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
             return Column(
               children: [
                 Padding(
-                  padding: EdgeInsetsGeometry.symmetric(
+                  padding: const EdgeInsets.symmetric(
                     horizontal: 16.0,
                     vertical: 12.0,
                   ),
-                  child: TextField(
-                    style: TextStyle(color: customColors.textPrimary),
+                  child: CustomSearchBar(
+                    controller: _searchController,
                     onChanged: (value) {
                       ref.read(accountsSearchQueryProvider.notifier).state =
                           value.trim();
                     },
-                    decoration: InputDecoration(
-                      hintText: "Search accounts",
-                      hintStyle: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                      ),
-                      filled: true,
-                      fillColor: customColors.surfaceBackground,
-                      prefixIcon: Icon(Icons.search, color: Colors.grey),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(
-                          color: Colors.grey.withOpacity(0.2),
-                          width: 1.5,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(
-                          color: Colors.grey.withOpacity(0.2),
-                          width: 1.5,
-                        ),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(
-                          color: Colors.grey.shade600,
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
+                    hintText: 'Search accounts',
                   ),
                 ),
                 Expanded(

@@ -12,12 +12,14 @@ import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/core/models/active_user.dart';
-import 'package:dsv360/features/people/model/leave_calendar_event.dart';
 import 'package:dsv360/features/people/model/leave_summary.dart';
 import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:dsv360/features/people/repositories/leave_summary_repository.dart';
 import 'package:dsv360/features/people/repositories/leaves_repository.dart';
-
+import 'package:dsv360/features/people/viewmodel/attendance_tracker_viewmodel.dart';
+import 'package:dsv360/features/people/viewmodel/attendance_viewmodel.dart';
+import 'package:dsv360/features/people/viewmodel/leave_calendar_viewmodel.dart';
+import 'package:dsv360/features/people/viewmodel/leave_viewmodel.dart';
 
 import 'package:dsv360/features/people/repositories/attendance_dashboard_repository.dart';
 import 'package:dsv360/features/people/model/attendance_dashboard.dart';
@@ -660,16 +662,6 @@ class _LeaveTab extends ConsumerStatefulWidget {
 }
 
 class _LeaveTabState extends ConsumerState<_LeaveTab> {
-  late final customColors = Theme.of(context).custom;
-  String _searchQuery = '';
-  String? _selectedLeaveType;
-
-  static const List<String> _leaveTypeOptions = [
-    'Paid Leave',
-    'Sick Leave',
-    'Unpaid Leave',
-  ];
-
   String _normalize(String value) {
     return value
         .toLowerCase()
@@ -684,6 +676,9 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
     final userId = activeUser?.userId ?? '';
     final username =
         "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}".trim();
+
+    final searchQuery = ref.watch(leaveSearchQueryProvider);
+    final selectedLeaveType = ref.watch(leaveTypeFilterProvider);
 
     final leaveDetailsListAsync = ref.watch(leaveDetailsListRepositoryProvider);
     final leaveSummaryAsync = ref.watch(
@@ -851,7 +846,7 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
                         child: CustomInputSearch(
                           hint: 'Search by name',
                           onChanged: (value) {
-                            setState(() => _searchQuery = value);
+                            ref.read(leaveSearchQueryProvider.notifier).state = value;
                           },
                         ),
                       ),
@@ -868,19 +863,19 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
                           ),
                         ),
                         child: PopupMenuButton<String?>(
-                          initialValue: _selectedLeaveType,
-                          tooltip: _selectedLeaveType == null
+                          initialValue: selectedLeaveType,
+                          tooltip: selectedLeaveType == null
                               ? 'Filter by leave type'
-                              : 'Filter: $_selectedLeaveType',
+                              : 'Filter: $selectedLeaveType',
                           onSelected: (value) {
-                            setState(() => _selectedLeaveType = value);
+                            ref.read(leaveTypeFilterProvider.notifier).state = value;
                           },
                           itemBuilder: (context) => [
                             const PopupMenuItem<String?>(
                               value: null,
                               child: Text('All Leave Types'),
                             ),
-                            ..._leaveTypeOptions.map(
+                            ...leaveTypeOptions.map(
                               (type) => PopupMenuItem<String?>(
                                 value: type,
                                 child: Text(type),
@@ -889,23 +884,23 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
                           ],
                           icon: Icon(
                             Icons.filter_list,
-                            color: _selectedLeaveType == null
+                            color: selectedLeaveType == null
                                 ? Colors.grey
-                                : customColors.primary, //here color for item
+                                : customColors.primary,
                           ),
                         ),
                       ),
                     ],
                   ),
 
-                  if (_selectedLeaveType != null) ...[
+                  if (selectedLeaveType != null) ...[
                     const SizedBox(height: 8),
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Chip(
-                        label: Text(_selectedLeaveType!),
+                        label: Text(selectedLeaveType),
                         onDeleted: () {
-                          setState(() => _selectedLeaveType = null);
+                          ref.read(leaveTypeFilterProvider.notifier).state = null;
                         },
                       ),
                     ),
@@ -922,10 +917,10 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
                           ref.invalidate(leaveDetailsListRepositoryProvider),
                     ),
                     data: (leaveList) {
-                      final q = _normalize(_searchQuery);
-                      final selectedType = _selectedLeaveType == null
+                      final q = _normalize(searchQuery);
+                      final selectedType = selectedLeaveType == null
                           ? null
-                          : _normalize(_selectedLeaveType!);
+                          : _normalize(selectedLeaveType);
 
                       final filteredLeaveList = leaveList.where((leave) {
                         final nameMatch =
@@ -1178,47 +1173,6 @@ class _AttendanceTab extends ConsumerStatefulWidget {
 }
 
 class _AttendanceTabState extends ConsumerState<_AttendanceTab> {
-  final List<String> options = [
-    'This Week',
-    'Previous Week',
-    'This Month',
-    'Last Month',
-  ];
-
-  String selected = 'This Week';
-
-  (DateTime, DateTime) _getDateRange(String selected) {
-    final now = DateTime.now();
-    DateTime start;
-    DateTime end;
-
-    if (selected == 'This Week') {
-      // Start on Sunday (7 becomes 0, 1 stays 1, ..., 6 stays 6)
-      int daysToSubtract = now.weekday % 7;
-      start = now.subtract(Duration(days: daysToSubtract));
-      end = start.add(const Duration(days: 6));
-    } else if (selected == 'Previous Week') {
-      int daysToSubtract = (now.weekday % 7) + 7;
-      start = now.subtract(Duration(days: daysToSubtract));
-      end = start.add(const Duration(days: 6));
-    } else if (selected == 'This Month') {
-      start = DateTime(now.year, now.month, 1);
-      end = DateTime(now.year, now.month + 1, 0);
-    } else if (selected == 'Last Month') {
-      start = DateTime(now.year, now.month - 1, 1);
-      end = DateTime(now.year, now.month, 0);
-    } else {
-      start = now;
-      end = now;
-    }
-
-    // Normalize to midnight
-    start = DateTime(start.year, start.month, start.day);
-    end = DateTime(end.year, end.month, end.day);
-
-    return (start, end);
-  }
-
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
@@ -1229,7 +1183,8 @@ class _AttendanceTabState extends ConsumerState<_AttendanceTab> {
       return const Center(child: GlobalLoader(message: 'Loading user info...'));
     }
 
-    final range = _getDateRange(selected);
+    final selected = ref.watch(attendancePeriodProvider);
+    final range = getAttendanceDateRange(selected);
     final startDate = range.$1;
     final endDate = range.$2;
     final formatter = DateFormat('yyyy-MM-dd');
@@ -1253,7 +1208,7 @@ class _AttendanceTabState extends ConsumerState<_AttendanceTab> {
                   final result = await showMenu<String>(
                     context: context,
                     position: const RelativeRect.fromLTRB(100, 100, 0, 0),
-                    items: options
+                    items: attendancePeriodOptions
                         .map(
                           (e) =>
                               PopupMenuItem<String>(value: e, child: Text(e)),
@@ -1262,7 +1217,7 @@ class _AttendanceTabState extends ConsumerState<_AttendanceTab> {
                   );
 
                   if (result != null) {
-                    setState(() => selected = result);
+                    ref.read(attendancePeriodProvider.notifier).state = result;
                   }
                 },
                 child: Container(
@@ -2380,31 +2335,21 @@ class _AttendanceTrackerTab extends ConsumerStatefulWidget {
 }
 
 class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
-  String? selectedEmployeeId;
-  DateTime? _startDate;
-  DateTime? _endDate;
-  String? _queryUserId;
-  String? _queryStartDate;
-  String? _queryEndDate;
-
-  final List<String> employees = ['Aman Jain', 'Abhay Singh', 'Ujjwal Mishra'];
-
   Future<void> _pickDate({required bool isStart}) async {
+    final tracker = ref.read(attendanceTrackerProvider);
     final picked = await showDatePicker(
       context: context,
-      initialDate: isStart ? _startDate : _endDate,
+      initialDate: isStart ? tracker.startDate : tracker.endDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
     );
 
     if (picked != null) {
-      setState(() {
-        if (isStart) {
-          _startDate = picked;
-        } else {
-          _endDate = picked;
-        }
-      });
+      if (isStart) {
+        ref.read(attendanceTrackerProvider.notifier).pickStartDate(picked);
+      } else {
+        ref.read(attendanceTrackerProvider.notifier).pickEndDate(picked);
+      }
     }
   }
 
@@ -2413,6 +2358,7 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
     final customColors = Theme.of(context).custom;
     final usersAsync = ref.watch(usersRepositoryProvider);
     final connectivityStatus = ref.watch(checkConnectivityProvider);
+    final tracker = ref.watch(attendanceTrackerProvider);
 
     return connectivityStatus.when(
       loading: () => const GlobalLoader(message: 'Checking connection...'),
@@ -2465,7 +2411,9 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                     }).toList(),
                     onChanged: users.isEmpty
                         ? (value) {}
-                        : (value) => setState(() => selectedEmployeeId = value),
+                        : (value) => ref
+                            .read(attendanceTrackerProvider.notifier)
+                            .selectEmployee(value),
                     hintText: 'Select Employee',
                     labelText: 'Select Employee',
                     prefixIcon: Icons.person_outline,
@@ -2477,9 +2425,9 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                   /// Date range + submit
                   CustomPickerField(
                     label: 'Start Date',
-                    valueText: _startDate == null
+                    valueText: tracker.startDate == null
                         ? null
-                        : DateFormat('dd/MM/yyyy').format(_startDate!),
+                        : DateFormat('dd/MM/yyyy').format(tracker.startDate!),
                     placeholder: 'dd/mm/yyyy',
                     onTap: () => _pickDate(isStart: true),
                   ),
@@ -2488,9 +2436,9 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                   /// End Date
                   CustomPickerField(
                     label: 'End Date',
-                    valueText: _endDate == null
+                    valueText: tracker.endDate == null
                         ? null
-                        : DateFormat('dd/MM/yyyy').format(_endDate!),
+                        : DateFormat('dd/MM/yyyy').format(tracker.endDate!),
                     placeholder: 'dd/mm/yyyy',
                     onTap: () => _pickDate(isStart: false),
                   ),
@@ -2503,9 +2451,9 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                       text: 'submit',
                       icon: Icons.assignment_turned_in_sharp,
                       onPressed: () {
-                        if (selectedEmployeeId == null ||
-                            _startDate == null ||
-                            _endDate == null) {
+                        if (tracker.selectedEmployeeId == null ||
+                            tracker.startDate == null ||
+                            tracker.endDate == null) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Please select employee and dates'),
@@ -2514,15 +2462,12 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                           return;
                         }
 
-                        setState(() {
-                          _queryUserId = selectedEmployeeId;
-                          _queryStartDate = DateFormat(
-                            'yyyy-MM-dd',
-                          ).format(_startDate!);
-                          _queryEndDate = DateFormat(
-                            'yyyy-MM-dd',
-                          ).format(_endDate!);
-                        });
+                        ref
+                            .read(attendanceTrackerProvider.notifier)
+                            .submitQuery(
+                              DateFormat('yyyy-MM-dd').format(tracker.startDate!),
+                              DateFormat('yyyy-MM-dd').format(tracker.endDate!),
+                            );
                       },
                     ),
                   ),
@@ -2532,9 +2477,9 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                   // Attendance List
                   Expanded(
                     child:
-                        (_queryUserId == null ||
-                            _queryStartDate == null ||
-                            _queryEndDate == null)
+                        (tracker.queryUserId == null ||
+                            tracker.queryStartDate == null ||
+                            tracker.queryEndDate == null)
                         ? const Center(
                             child: Text(
                               "Select employee and dates to view attendance",
@@ -2544,9 +2489,9 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                             future: ref
                                 .read(attendanceDashboardRepositoryProvider)
                                 .fetchAttendanceDashboard(
-                                  userId: _queryUserId!,
-                                  startDate: _queryStartDate!,
-                                  endDate: _queryEndDate!,
+                                  userId: tracker.queryUserId!,
+                                  startDate: tracker.queryStartDate!,
+                                  endDate: tracker.queryEndDate!,
                                 ),
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
@@ -2620,9 +2565,6 @@ class _LeaveCalendarTab extends ConsumerStatefulWidget {
 }
 
 class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
-  int? _selectedDay;
-  List<LeaveCalendarEvent>? _selectedLeaves;
-
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
@@ -2631,10 +2573,11 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
     final firstDayOfMonth = DateTime(year, month, 1);
     final lastDayOfMonth = DateTime(year, month + 1, 0);
     final daysInMonth = lastDayOfMonth.day;
-    final leadDays = firstDayOfMonth.weekday % 7; // Sunday start logic
+    final leadDays = firstDayOfMonth.weekday % 7;
 
     final connectivityStatus = ref.watch(checkConnectivityProvider);
     final calendarAsync = ref.watch(leaveCalendarRepositoryProvider);
+    final calendarVM = ref.watch(leaveCalendarViewModelProvider);
 
     return connectivityStatus.when(
       data: (results) {
@@ -2650,34 +2593,7 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
 
         return calendarAsync.when(
           data: (calendarEvents) {
-            // Transform API data to Calendar Map (Optimized)
-            final Map<int, List<LeaveCalendarEvent>> mappedLeaves = {};
-            for (var item in calendarEvents) {
-              final start = DateTime.tryParse(item.startDate);
-              final end = DateTime.tryParse(item.endDate);
-
-              if (start == null || end == null) continue;
-
-              // Calculate intersection with current month
-              final monthStart = DateTime(year, month, 1);
-              final monthEnd = DateTime(year, month + 1, 0);
-
-              // Skip if leave is entirely outside the current month
-              if (end.isBefore(monthStart) || start.isAfter(monthEnd)) continue;
-
-              // Start from the later of leave start or month start
-              var current = start.isBefore(monthStart) ? monthStart : start;
-              // End at the earlier of leave end or month end
-              final loopEnd = end.isAfter(monthEnd) ? monthEnd : end;
-
-              while (current.isBefore(loopEnd) ||
-                  current.isAtSameMomentAs(loopEnd)) {
-                if (current.month == month && current.year == year) {
-                  mappedLeaves.putIfAbsent(current.day, () => []).add(item);
-                }
-                current = current.add(const Duration(days: 1));
-              }
-            }
+            final mappedLeaves = buildMonthLeaveMap(calendarEvents, year, month);
 
             final theme = Theme.of(context);
 
@@ -2764,14 +2680,13 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
                           day == now.day &&
                           month == now.month &&
                           year == now.year;
-                      final isSelected = _selectedDay == day;
+                      final isSelected = calendarVM.selectedDay == day;
 
                       return InkWell(
                         onTap: () {
-                          setState(() {
-                            _selectedDay = day;
-                            _selectedLeaves = leaves;
-                          });
+                          ref
+                              .read(leaveCalendarViewModelProvider.notifier)
+                              .selectDay(day, leaves);
                         },
                         borderRadius: BorderRadius.circular(12),
                         child: Container(
@@ -2872,7 +2787,7 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
                                   children: leaves
                                       .map(
                                         (l) =>
-                                            _Dot(_getLeaveColor(l.leaveType)),
+                                            _Dot(getLeaveColor(l.leaveType)),
                                       )
                                       .toList(),
                                 ),
@@ -2886,7 +2801,7 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
 
                   // show the leave list details here the day
                   const SizedBox(height: 24),
-                  if (_selectedDay != null) ...[
+                  if (calendarVM.selectedDay != null) ...[
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4.0),
                       child: Column(
@@ -2904,7 +2819,7 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                'Leaves on day $_selectedDay',
+                                'Leaves on day ${calendarVM.selectedDay}',
                                 style: theme.textTheme.titleMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -2912,8 +2827,8 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          if (_selectedLeaves == null ||
-                              _selectedLeaves!.isEmpty)
+                          if (calendarVM.selectedLeaves == null ||
+                              calendarVM.selectedLeaves!.isEmpty)
                             Container(
                               width: double.infinity,
                               padding: const EdgeInsets.all(24),
@@ -2949,12 +2864,12 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
                             ListView.separated(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _selectedLeaves!.length,
+                              itemCount: calendarVM.selectedLeaves!.length,
                               separatorBuilder: (context, index) =>
                                   const SizedBox(height: 12),
                               itemBuilder: (context, index) {
-                                final leaf = _selectedLeaves![index];
-                                final color = _getLeaveColor(leaf.leaveType);
+                                final leaf = calendarVM.selectedLeaves![index];
+                                final color = getLeaveColor(leaf.leaveType);
                                 return Container(
                                   decoration: BoxDecoration(
                                     color: theme.colorScheme.surface,
@@ -3085,18 +3000,6 @@ class _LeaveCalendarTabState extends ConsumerState<_LeaveCalendarTab> {
     );
   }
 
-  Color _getLeaveColor(String type) {
-    final typeLower = type.toLowerCase();
-    if (typeLower.contains('sick')) {
-      return const Color(0xFFFACC15);
-    } else if (typeLower.contains('paid')) {
-      return const Color(0xFF2DD4BF);
-    } else if (typeLower.contains('unpaid')) {
-      return const Color(0xFFF87171);
-    } else {
-      return const Color(0xFF94A3B8);
-    }
-  }
 }
 
 class _LegendChip extends StatelessWidget {
