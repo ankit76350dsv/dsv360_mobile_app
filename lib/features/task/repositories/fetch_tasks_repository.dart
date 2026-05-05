@@ -96,8 +96,8 @@ class FetchTasksRepository
       }
     } catch (e) {
       developer.log("Error fetching tasks: $e", name: "FetchTasksRepository");
-      debugPrint("⚠️ Tasks endpoint not available. Returning empty list.");
-      return [];
+      debugPrint("❌ Error fetching tasks: $e");
+      rethrow;
     }
   }
 

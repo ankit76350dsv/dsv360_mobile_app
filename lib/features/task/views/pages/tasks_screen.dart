@@ -334,8 +334,225 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     final customColors = Theme.of(context).custom;
     final connectivityStatus = ref.watch(checkConnectivityProvider);
 
+    final title = widget.projectName != null && widget.projectName!.isNotEmpty
+        ? '${widget.projectName} - Tasks'
+        : 'Tasks';
+
+    void onBack() {
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const DashboardPage()),
+        );
+      }
+    }
+
     return Scaffold(
+      backgroundColor: customColors.background,
       drawer: const AppDrawer(),
+      body: Builder(
+        builder: (context) {
+          return connectivityStatus.when(
+            data: (results) {
+              if (results.contains(ConnectivityResult.none)) {
+                return Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.only(top: 48, bottom: 12),
+                      child: TopBar(title: title, onBack: onBack),
+                    ),
+                    Expanded(
+                      child: GlobalError(
+                        message: 'Please check your internet connection.',
+                        isNetworkError: true,
+                        onRetry: () {
+                          ref.invalidate(checkConnectivityProvider);
+                          ref.invalidate(tasksListRepositoryProvider(userId));
+                          _fetchTimerStatus();
+                        },
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              return RefreshIndicator(
+                onRefresh: () async {
+                  await ref
+                      .read(tasksListRepositoryProvider(userId).notifier)
+                      .refresh(userId);
+                  await _fetchTimerStatus();
+                },
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.only(top: 48, bottom: 12),
+                      child: Column(
+                        children: [
+                          TopBar(title: title, onBack: onBack),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: CustomSearchBar(
+                              controller: _searchController,
+                              onChanged: (value) {
+                                ref.read(tasksSearchQueryProvider.notifier).state = value;
+                              },
+                              hintText: 'Search task',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: tasksAsync.when(
+                        skipLoadingOnRefresh: true,
+                        data: (tasks) {
+                          final projectFilteredTasks = widget.projectId != null && widget.projectId!.isNotEmpty
+                              ? tasks.where((task) => task.projectId == widget.projectId).toList()
+                              : tasks;
+
+                          final filteredTasks = searchQuery.isEmpty
+                              ? projectFilteredTasks
+                              : projectFilteredTasks.where((task) {
+                                  return task.taskName.toLowerCase().contains(searchQuery.toLowerCase()) ||
+                                      task.taskId.toLowerCase().contains(searchQuery.toLowerCase());
+                                }).toList();
+
+                          if (filteredTasks.isEmpty) {
+                            return Stack(
+                              children: [
+                                ListView(),
+                                Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.inbox_outlined,
+                                        size: 64,
+                                        color: customColors.textSecondary!.withValues(alpha: 0.5),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        searchQuery.isEmpty ? 'No tasks yet' : 'No tasks found',
+                                        style: TextStyle(
+                                          color: customColors.textPrimary,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.normal,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+
+                          return ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            itemCount: filteredTasks.length,
+                            itemBuilder: (context, index) {
+                              final task = filteredTasks[index];
+                              final dateFormat = DateFormat('dd/MM/yy');
+                              final dateRange =
+                                  '${dateFormat.format(task.startDate ?? DateTime.now())} - ${dateFormat.format(task.endDate ?? DateTime.now())}';
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: GenericCard(
+                                  id: task.taskId.length > 4
+                                      ? 'T${task.taskId.substring(task.taskId.length - 4)}'
+                                      : 'T${task.taskId}',
+                                  name: task.taskName,
+                                  status: task.status,
+                                  isTimerRunning: _runningTaskId != null && _runningTaskId == task.taskId,
+                                  subtitleIcon: 'person',
+                                  subtitleText: task.assignedTo,
+                                  dateRange: dateRange,
+                                  chips: [
+                                    CardChip(
+                                      icon: Icons.attach_file,
+                                      count: task.attachments.length.toString(),
+                                      isActive: task.attachments.isNotEmpty,
+                                      onTap: () {
+                                        FocusScope.of(context).unfocus();
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (context) => AttachmentListModal(
+                                            attachments: task.attachments,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    CardChip(
+                                      icon: Icons.access_time,
+                                      count: '0',
+                                      isActive: false,
+                                      onTap: () {
+                                        FocusScope.of(context).unfocus();
+                                        Navigator.of(context).push<List>(
+                                          MaterialPageRoute(
+                                            builder: (context) => AddTimeEntryDialog(
+                                              taskId: task.taskId,
+                                              projectId: task.projectId,
+                                              taskName: task.taskName,
+                                              projectName: task.projectName,
+                                              currentUser: task.assignedTo,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                  onTap: () {
+                                    FocusScope.of(context).unfocus();
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (context) => TaskDetailsDialog(task: task),
+                                    );
+                                  },
+                                  onEdit: () => _showAddTaskDialog(task: task, context: context),
+                                  onDelete: () => _deleteTask(task, context),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                        loading: () => const Center(child: DsvLoader()),
+                        error: (err, stack) => GlobalError(
+                          message: 'Failed to load tasks. Please try again.',
+                          onRetry: () {
+                            ref.invalidate(tasksListRepositoryProvider(userId));
+                            _fetchTimerStatus();
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+            error: (error, stack) => GlobalError(
+              message: 'Something went wrong. Please check your connection.',
+              isNetworkError: true,
+              onRetry: () {
+                ref.invalidate(checkConnectivityProvider);
+                ref.invalidate(tasksListRepositoryProvider(userId));
+                _fetchTimerStatus();
+              },
+            ),
+            loading: () => const GlobalLoader(message: 'Checking connection...'),
+          );
+        },
+      ),
       floatingActionButton: connectivityStatus.when(
         data: (results) {
           if (results.contains(ConnectivityResult.none)) return null;
@@ -351,274 +568,6 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         error: (_, __) => null,
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      body: connectivityStatus.when(
-        data: (results) {
-          if (results.contains(ConnectivityResult.none)) {
-            final title = widget.projectName != null && widget.projectName!.isNotEmpty
-                ? '${widget.projectName} - Tasks'
-                : 'Tasks';
-            return Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.only(top: 48, bottom: 12),
-                  child: TopBar(
-                    title: title,
-                    onBack: () {
-                      if (Navigator.canPop(context)) {
-                        Navigator.pop(context);
-                      } else {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const DashboardPage(),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: GlobalError(
-                    message: 'Please check your internet connection.',
-                    isNetworkError: true,
-                    onRetry: () => ref.invalidate(checkConnectivityProvider),
-                  ),
-                ),
-              ],
-            );
-          }
-          return Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.only(top: 48, bottom: 12),
-            child: Column(
-              children: [
-                // ---------- Top bar ----------
-                TopBar(
-                  title: widget.projectName != null && widget.projectName!.isNotEmpty
-                      ? '${widget.projectName} - Tasks'
-                      : 'Tasks',
-                  onBack: () {
-                    if (Navigator.canPop(context)) {
-                      Navigator.pop(context);
-                    } else {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const DashboardPage(),
-                        ),
-                      );
-                    }
-                  },
-                  // onInfoTap: () {
-                  //   // hook for info action
-                  // },
-                ),
-
-                // Search Bar
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: CustomSearchBar(
-                    controller: _searchController,
-                    onChanged: (value) {
-                      ref.read(tasksSearchQueryProvider.notifier).state = value;
-                    },
-                    hintText: 'Search task',
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Task List
-          Expanded(
-            child: tasksAsync.when(
-              skipLoadingOnRefresh: true,
-              
-              data: (tasks) {
-                if (connectivityStatus.valueOrNull
-                        ?.contains(ConnectivityResult.none) ==
-                    true) {
-                  return GlobalError(
-                    message: 'Please check your internet connection.',
-                    isNetworkError: true,
-                    onRetry: () =>
-                        ref.invalidate(checkConnectivityProvider),
-                  );
-                }
-                // Filter by project first if projectId is provided
-                final projectFilteredTasks = widget.projectId != null && widget.projectId!.isNotEmpty
-                    ? tasks.where((task) => task.projectId == widget.projectId).toList()
-                    : tasks;
-
-                // Then filter based on search query
-                final filteredTasks = searchQuery.isEmpty
-                    ? projectFilteredTasks
-                    : projectFilteredTasks.where((task) {
-                        return task.taskName.toLowerCase().contains(
-                              searchQuery.toLowerCase(),
-                            ) ||
-                            task.taskId.toLowerCase().contains(
-                              searchQuery.toLowerCase(),
-                            );
-                      }).toList();
-
-                Future<void> doRefresh() async {
-                  await ref
-                      .read(tasksListRepositoryProvider(userId).notifier)
-                      .refresh(userId);
-                  await _fetchTimerStatus();
-                }
-
-                return RefreshIndicator(
-                    onRefresh: doRefresh,
-                    child: filteredTasks.isEmpty
-                        ? ListView(
-                            children: [
-                              SizedBox(
-                                height: MediaQuery.of(context).size.height * 0.5,
-                                child: Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.inbox_outlined,
-                                        size: 64,
-                                        color: customColors.textSecondary!.withValues(
-                                          alpha: 0.5,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                        searchQuery.isEmpty
-                                            ? 'No tasks yet'
-                                            : 'No tasks found',
-                                        style: TextStyle(
-                                          color: customColors.textPrimary,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.normal,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          )
-                        : ListView.builder(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          itemCount: filteredTasks.length,
-                          itemBuilder: (context, index) {
-                            final task = filteredTasks[index];
-                            final dateFormat = DateFormat('dd/MM/yy');
-                            final dateRange =
-                                '${dateFormat.format(task.startDate ?? DateTime.now())} - ${dateFormat.format(task.endDate ?? DateTime.now())}';
-
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: GenericCard(
-                                id: task.taskId.length > 4
-                                    ? 'T${task.taskId.substring(task.taskId.length - 4)}'
-                                    : 'T${task.taskId}',
-                                name: task.taskName,
-                                status: task.status,
-                                isTimerRunning: _runningTaskId != null && _runningTaskId == task.taskId,
-                                subtitleIcon: 'person',
-                                subtitleText: task.assignedTo,
-                                dateRange: dateRange,
-                                chips: [
-                                  CardChip(
-                                    icon: Icons.attach_file,
-                                    count: task.attachments.length.toString(),
-                                    isActive: task.attachments.isNotEmpty,
-                                    onTap: () {
-                                      FocusScope.of(context).unfocus();
-                                      showModalBottomSheet(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        backgroundColor: Colors.transparent,
-                                        builder: (context) => AttachmentListModal(
-                                          attachments: task.attachments,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                  CardChip(
-                                    icon: Icons.access_time,
-                                    count: '0',
-                                    isActive: false,
-                                    onTap: () {
-                                      FocusScope.of(context).unfocus();
-                                      Navigator.of(context).push<List>(
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              AddTimeEntryDialog(
-                                            taskId: task.taskId,
-                                            projectId: task.projectId,
-                                            taskName: task.taskName,
-                                            projectName: task.projectName,
-                                            currentUser: task.assignedTo,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                                onTap: () {
-                                  FocusScope.of(context).unfocus();
-                                  showModalBottomSheet(
-                                    context: context,
-                                    isScrollControlled: true,
-                                    backgroundColor: Colors.transparent,
-                                    builder: (context) =>
-                                        TaskDetailsDialog(task: task),
-                                  );
-                                },
-                                onEdit: () => _showAddTaskDialog(
-                                  task: task,
-                                  context: context,
-                                ),
-                                onDelete: () => _deleteTask(task, context),
-                              ),
-                            );
-                          },
-                        ),
-                    );
-              },
-              loading: () => const Center(child: DsvLoader()),
-              error: (err, stack) {
-                final isOffline = connectivityStatus.valueOrNull
-                        ?.contains(ConnectivityResult.none) ==
-                    true;
-                return GlobalError(
-                  message: isOffline
-                      ? 'Please check your internet connection.'
-                      : 'Failed to load tasks. Please try again.',
-                  isNetworkError: isOffline,
-                  onRetry: () {
-                    ref.invalidate(checkConnectivityProvider);
-                    ref.invalidate(tasksListRepositoryProvider(userId));
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-          );
-        },
-        error: (error, stack) => GlobalError(
-          message: 'Something went wrong. Please check your connection.',
-          onRetry: () => ref.invalidate(checkConnectivityProvider),
-        ),
-        loading: () => const GlobalLoader(message: 'Checking connection...'),
-      ),
     );
   }
 }
