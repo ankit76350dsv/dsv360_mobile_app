@@ -43,14 +43,18 @@ class _DsvLoaderState extends State<DsvLoader>
   @override
   Widget build(BuildContext context) {
     // Use the exact dark blue from CustomColors.primary (seed 0xFF004da7)
-    final color = 
-       //original color// const Color.fromARGB(255, 0, 87, 164);
-       const Color.fromARGB(255, 20, 91, 167);
+    final color =
+        //original color// const Color.fromARGB(255, 0, 87, 164);
+        const Color.fromARGB(255, 20, 91, 167);
     return AnimatedBuilder(
       animation: _controller,
       builder: (_, __) => CustomPaint(
         size: const Size(220, 64),
-        painter: _MorphPainter(progress: _controller.value, color: color, label: widget.label),
+        painter: _MorphPainter(
+          progress: _controller.value,
+          color: color,
+          label: widget.label,
+        ),
       ),
     );
   }
@@ -61,7 +65,11 @@ class _MorphPainter extends CustomPainter {
   final Color color;
   final String label;
 
-  _MorphPainter({required this.progress, required this.color, required this.label});
+  _MorphPainter({
+    required this.progress,
+    required this.color,
+    required this.label,
+  });
 
   // Clamp t into [0,1] within segment [from, to]
   static double _seg(double t, double from, double to) =>
@@ -87,14 +95,15 @@ class _MorphPainter extends CustomPainter {
 
     // ── Dimension constants ──────────────────────────────────────────────────
     final pad = W * 0.045;
-    final dotD = H * 0.28;        // dot diameter      ≈ 18 px @ H=64
-    final lineH = H * 0.17;       // line (pill) height ≈ 11 px
+    final dotD = H * 0.28; // dot diameter      ≈ 18 px @ H=64
+    final lineH = H * 0.17; // line (pill) height ≈ 11 px
+    final progressBarH = H * 0.16; // slightly thicker progress-bar height
     // baseRectH tracks canvas proportion; _kExtraPadding expands the rect on all sides
-    final baseRectH = H * 0.60;   // core rect height   ≈ 38 px @ H=64
+    final baseRectH = H * 0.60; // core rect height   ≈ 38 px @ H=64
     final rectH = baseRectH + 2.0 * _kExtraPadding;
     // Measure text to derive responsive rectangle width
     final rectW = _computeRectWidth(label, rectH, W - 2.0 * pad);
-    final circleD = rectH;        // circle diameter = rectH → perfect circle
+    final circleD = rectH; // circle diameter = rectH → perfect circle
 
     // ── Anchor X positions ───────────────────────────────────────────────────
     final dotLeft = pad;
@@ -114,11 +123,11 @@ class _MorphPainter extends CustomPainter {
       final hProg = _easeOut(_seg(t, 0.00, 0.06)); // proportionally faster
       left = dotLeft;
       w = _lerp(dotD, W - 2.0 * pad, wProg);
-      h = _lerp(dotD, lineH, hProg);
-      r = h / 2.0;        // always pill-rounded
+      h = _lerp(dotD, progressBarH, hProg);
+      r = h / 2.0; // always pill-rounded
 
-    // Phase 3 (0.40 – 0.60): pill line → centred rounded rectangle
-    //   line contracts to rectW while spreading taller; centering simultaneously
+      // Phase 3 (0.40 – 0.60): pill line → centred rounded rectangle
+      //   line contracts to rectW while spreading taller; centering simultaneously
     } else if (t <= 0.60) {
       opacity = 1.0;
       final p = _smooth(_seg(t, 0.40, 0.60));
@@ -127,8 +136,8 @@ class _MorphPainter extends CustomPainter {
       h = _lerp(lineH, rectH, p);
       r = _lerp(lineH / 2.0, 14.0, p);
 
-    // Phase 4 (0.60 – 0.72): rectangle → circle
-    //   width contracts to match circleD, corner radius rises to full
+      // Phase 4 (0.60 – 0.72): rectangle → circle
+      //   width contracts to match circleD, corner radius rises to full
     } else if (t <= 0.72) {
       opacity = 1.0;
       final p = _smooth(_seg(t, 0.60, 0.72));
@@ -137,7 +146,7 @@ class _MorphPainter extends CustomPainter {
       h = _lerp(rectH, circleD, p);
       r = _lerp(14.0, circleD / 2.0, p);
 
-    // Phase 5 (0.72 – 0.82): circle shrinks to a dot at centre
+      // Phase 5 (0.72 – 0.82): circle shrinks to a dot at centre
     } else if (t <= 0.82) {
       opacity = 1.0;
       final p = _smooth(_seg(t, 0.72, 0.82));
@@ -146,7 +155,7 @@ class _MorphPainter extends CustomPainter {
       h = _lerp(circleD, dotD, p);
       r = w / 2.0;
 
-    // Phase 6 (0.82 – 1.00): dot accelerates left and holds — no fade
+      // Phase 6 (0.82 – 1.00): dot accelerates left and holds — no fade
     } else {
       opacity = 1.0;
       final p = _smooth(_seg(t, 0.82, 1.00));
@@ -212,8 +221,9 @@ class _MorphPainter extends CustomPainter {
   ///
   /// Tip: only want more padding?  →  raise [_kExtraPadding]
   ///      only want bigger text?    →  raise [_kTextFillRatio]
-  static const double _kExtraPadding  = 6.0;   // ← extra px per side  (rect grows)
-  static const double _kTextFillRatio = 0.50;  // ← text fill ratio    (0.50 = original size)
+  static const double _kExtraPadding = 6.0; // ← extra px per side  (rect grows)
+  static const double _kTextFillRatio =
+      0.50; // ← text fill ratio    (0.50 = original size)
   double _computeRectWidth(String text, double rectH, double maxW) {
     final ref = TextPainter(
       text: TextSpan(
@@ -245,7 +255,14 @@ class _MorphPainter extends CustomPainter {
   ///   targetTextW = rW - 2*p    (horizontal constraint must match)
   ///   letterSpacing = (targetTextW - naturalTextW) / charCount
   /// This stretches "D   S   V" horizontally to fill the shape symmetrically.
-  void _drawDSV(Canvas canvas, Offset center, double rW, double rH, double alpha, [double textScale = 1.0]) {
+  void _drawDSV(
+    Canvas canvas,
+    Offset center,
+    double rW,
+    double rH,
+    double alpha, [
+    double textScale = 1.0,
+  ]) {
     final text = label;
 
     // ── Step 1: measure natural dimensions at a reference font size ──────────
@@ -272,7 +289,7 @@ class _MorphPainter extends CustomPainter {
 
     // ── Step 3: derive equal padding and required text width ─────────────────
     final p = (rH - scaledH) / 2; // equal vertical padding
-    final targetW = rW - 2.0 * p;   // matching horizontal constraint
+    final targetW = rW - 2.0 * p; // matching horizontal constraint
 
     // Distribute any extra width as letter spacing across all characters
     final extraPerChar = max(0.0, (targetW - scaledWnatural) / text.length);

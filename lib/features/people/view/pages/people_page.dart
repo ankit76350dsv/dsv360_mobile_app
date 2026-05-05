@@ -5,7 +5,7 @@ import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/features/people/repositories/people_summary_repository.dart';
 import 'package:dsv360/features/dashboard/viewmodel/dashboard_viewmodel.dart';
-import 'package:dsv360/core/widgets/custom_input_search.dart';
+import 'package:dsv360/core/widgets/custom_search_bar.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
@@ -662,6 +662,20 @@ class _LeaveTab extends ConsumerStatefulWidget {
 }
 
 class _LeaveTabState extends ConsumerState<_LeaveTab> {
+  late final TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   String _normalize(String value) {
     return value
         .toLowerCase()
@@ -843,10 +857,14 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
                   Row(
                     children: [
                       Expanded(
-                        child: CustomInputSearch(
-                          hint: 'Search by name',
+                        child: CustomSearchBar(
+                          controller: _searchController,
+                          hintText: 'Search by name',
                           onChanged: (value) {
                             ref.read(leaveSearchQueryProvider.notifier).state = value;
+                          },
+                          onClear: () {
+                            ref.read(leaveSearchQueryProvider.notifier).state = '';
                           },
                         ),
                       ),

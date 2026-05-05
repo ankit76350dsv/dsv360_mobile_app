@@ -5,7 +5,7 @@ import 'package:dsv360/features/badges/model/dsvbadge.dart';
 import 'package:dsv360/features/badges/view/pages/add_edit_badge_page.dart';
 import 'package:dsv360/features/badges/view/widgets/show_badge_list_tile.dart';
 import 'package:dsv360/features/badges/viewmodel/show_badges_viewmodel.dart';
-import 'package:dsv360/core/widgets/custom_input_search.dart';
+import 'package:dsv360/core/widgets/custom_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,17 +18,20 @@ class ShowBadgesPage extends ConsumerStatefulWidget {
 
 class _ShowBadgesPageState extends ConsumerState<ShowBadgesPage> {
   late Future<List<BadgeSummary>> _badgesFuture;
+  late final TextEditingController _searchController;
   String? _deletingBadgeKey;
 
   @override
   void initState() {
     super.initState();
+    _searchController = TextEditingController();
     ref.read(showBadgesSearchQueryProvider.notifier).state = '';
     _badgesFuture = _fetchBadges();
   }
 
   @override
   void dispose() {
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -85,9 +88,15 @@ class _ShowBadgesPageState extends ConsumerState<ShowBadgesPage> {
         children: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
-            child: CustomInputSearch(
-              hint: 'Search badges',
-              searchProvider: showBadgesSearchQueryProvider,
+            child: CustomSearchBar(
+              controller: _searchController,
+              hintText: 'Search badges',
+              onChanged: (value) {
+                ref.read(showBadgesSearchQueryProvider.notifier).state = value;
+              },
+              onClear: () {
+                ref.read(showBadgesSearchQueryProvider.notifier).state = '';
+              },
             ),
           ),
           Expanded(
@@ -106,7 +115,7 @@ class _ShowBadgesPageState extends ConsumerState<ShowBadgesPage> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'Failed to load badges: ${snapshot.error}',
+                            snapshot.error.toString().replaceFirst('Exception: ', ''),
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 12),

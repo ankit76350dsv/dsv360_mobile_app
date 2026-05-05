@@ -7,8 +7,11 @@ class WelcomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -29,10 +32,15 @@ class WelcomePage extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Manage your projects, tasks, and issues all in one place.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isDarkMode
+                      ? colorScheme.onSurfaceVariant.withValues(alpha: 0.7)
+                      : Colors.grey,
+                ),
               ),
               const Spacer(flex: 3),
               // Login Button
@@ -64,16 +72,16 @@ class WelcomePage extends StatelessWidget {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2857A4),
-                    foregroundColor: Colors.white,
+                    backgroundColor: Color(0xFF0450BA),
+              
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 2,
                   ),
-                  child: const Text(
+                  child:  Text(
                     'Login',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
