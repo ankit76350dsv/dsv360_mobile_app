@@ -1,0 +1,1404 @@
+# Profile and Banner Image Upload Documentation
+
+## Table of Contents
+1. [Overview](#overview)
+2. [Architecture & Components](#architecture--components)
+3. [Files Involved](#files-involved)
+4. [API Endpoints](#api-endpoints)
+5. [Profile Image Upload Flow](#profile-image-upload-flow)
+6. [Banner/Cover Image Upload Flow](#bannercover-image-upload-flow)
+7. [HTTP Request & Response Details](#http-request--response-details)
+8. [State Management](#state-management)
+9. [Image Display Logic](#image-display-logic)
+10. [Error Handling](#error-handling)
+11. [Integration Points](#integration-points)
+
+---
+
+## Overview
+
+The profile page implements a complete image upload system with two independent features:
+- **Profile Image Upload**: User avatar/profile picture displayed in the circular avatar
+- **Banner Image Upload**: Cover/header image displayed at the top of the profile page
+
+Both features follow identical patterns but target different backend endpoints and handle different response formats. The implementation uses `image_picker` for gallery selection, `dio` for HTTP multipart uploads, and local state management to preview images immediately while syncing with server data.
+
+---
+
+## Architecture & Components
+
+### Key Components in Profile Page
+
+#### 1. **State Variables**
+```dart
+bool _isUploading = false;           // Tracks profile image upload progress
+bool _isBannerUploading = false;     // Tracks banner/cover image upload progress
+String? _profileImageUrl;             // Local cache of profile image URL
+String? _bannerImageUrl;              // Local cache of banner/cover image URL
+```
+
+**Purpose**: These variables maintain:
+- Upload state to disable buttons and show loading spinners
+- Local URLs to optimize UI updates without waiting for server response
+- Separate states for profile and banner to allow concurrent display of both
+
+#### 2. **Helper Methods**
+
+##### `_resolveUserId()`
+- **Purpose**: Safely retrieves the current user's ID from AuthManager
+- **Returns**: User ID as String
+- **Error Handling**: Throws exception if user is null or ID is empty
+- **Usage**: Called before every upload to validate user session
+
+##### `_refreshProfileAndSyncImages(String userId)`
+- **Purpose**: Fetches fresh profile data from server and updates local image URLs
+- **Process**:
+  1. Calls `UserManager.instance.fetchUserProfile(userId)` to GET latest profile
+  2. Checks if component is still mounted (prevents state update on disposed widget)
+  3. Updates `_profileImageUrl` if `refreshed.profileLink` is not empty
+  4. Updates `_bannerImageUrl` if `refreshed.coverLink` is not empty
+- **Why Needed**: Ensures UI displays server-persisted image URLs, not just local file paths
+- **Called After**: Both profile and banner uploads complete
+
+---
+
+## Files Involved
+
+### Primary Files
+
+#### 1. **lib/views/profile/profile_page.dart**
+- **Role**: Main UI component and upload logic
+- **Contains**:
+  - ProfilePage ConsumerStatefulWidget
+  - _ProfilePageState implementation
+  - `_pickAndUploadImage()` method
+  - `_pickAndUploadBannerImage()` method
+  - Build method with UI rendering
+  - Helper widgets for contact rows and skill chips
+
+#### 2. **lib/core/constants/user_manager.dart**
+- **Role**: Singleton that manages user profile data cache
+- **Key Method**: `fetchUserProfile(String userId)`
+  - Makes GET request to fetch fresh profile data
+  - Parses response supporting multiple formats
+  - Caches result in `userProfile` property
+  - Returns `UserProfileModel` or null
+
+#### 3. **lib/core/network/dio_client.dart**
+- **Role**: Centralized HTTP client for all API requests
+- **Key Method**: `post(String path, {dynamic data, ...})`
+  - Handles multipart form data
+  - Validates HTTP 200/201 responses
+  - Throws DioException with details on failure
+  - Used for both profile and banner uploads
+
+#### 4. **lib/models/user_profile_model.dart**
+- **Role**: Data model representing user profile information
+- **Fields**:
+  - `profileLink`: URL of user's profile image
+  - `coverLink`: URL of user's banner/cover image
+  - Other fields: address, aboutMe, phone, skills, etc.
+- **Factory Method**: `fromJson()` parses API response into model
+
+#### 5. **lib/core/constants/auth_manager.dart**
+- **Role**: Manages user authentication and current user state
+- **Property**: `currentUser` returns ZCatalystUser
+  - Has `id` property for user ID
+  - Has `firstName`, `lastName`, `emailId` properties
+
+---
+
+## API Endpoints
+
+### Endpoint 1: Profile Image Upload
+**Endpoint**: `POST time_entry_management_application_function/userprofile/{userId}`
+
+**Purpose**: Upload user's profile picture (avatar)
+
+**Path Parameter**:
+- `{userId}`: Current user's ID from AuthManager.instance.currentUser.id
+
+**Request Details**:
+- **Method**: POST
+- **Content-Type**: multipart/form-data
+- **Field Name**: `profile` (binary file field)
+- **File Type**: JPEG, PNG, or other image formats
+- **Boundary**: Auto-generated by Dio (e.g., `----WebKitFormBoundaryXXXXXXX`)
+
+**Response Format**:
+```json
+{
+  "success": true,
+  "message": "Profile updated successfully.",
+  "profileURL": "https://dsv365-development.zohostratus.in/dsv365/profile/1774266459036_18.jpg",
+  "result": [{
+    "Users": {
+      "Profile_Link": "https://dsv365-development.zohostratus.in/dsv365/profile/1774266459036_18.jpg",
+      "Cover_Link": "https://dsv365-development.zohostratus.in/dsv365/cover/1774266511245_profile.jpg",
+      ... (other user fields)
+    }
+  }]
+}
+```
+
+**Response Fields Used**:
+- `profileURL`: Directly displayed after upload (immediate feedback)
+- `result[0].Users.Profile_Link`: Synced into UserProfileModel
+
+---
+
+### Endpoint 2: Banner/Cover Image Upload
+**Endpoint**: `POST time_entry_management_application_function/usercover/{userId}`
+
+**Purpose**: Upload user's banner/cover image
+
+**Path Parameter**:
+- `{userId}`: Current user's ID from AuthManager.instance.currentUser.id
+
+**Request Details**:
+- **Method**: POST
+- **Content-Type**: multipart/form-data
+- **Field Name**: `cover` (binary file field - NOTE: Different from profile!)
+- **File Type**: JPEG, PNG, or other image formats
+
+**Response Format**:
+```json
+{
+  "success": "true",
+  "coverURL": "https://dsv365-development.zohostratus.in/dsv365/cover/1774266511245_profile.jpg",
+  "data": [{
+    "Users": {
+      "Profile_Link": "https://dsv365-development.zohostratus.in/dsv365/profile/1774266459036_18.jpg",
+      "Cover_Link": "https://dsv365-development.zohostratus.in/dsv365/cover/1774266511245_profile.jpg",
+      ... (other user fields)
+    }
+  }]
+}
+```
+
+**Response Fields Used**:
+- `coverURL`: Directly displayed after upload (immediate feedback)
+- `data[0].Users.Cover_Link`: Synced into UserProfileModel
+
+---
+
+## Profile Image Upload Flow
+
+### Step 1: User Initiates Upload
+**Trigger**: User taps on profile avatar or edit button on avatar
+
+**Code Entry Point**:
+```dart
+onTap: _isUploading ? null : _pickAndUploadImage,
+```
+
+**Action**: Calls `_pickAndUploadImage()` method
+
+### Step 2: Image Picker Opens
+**Method**: `_pickAndUploadImage()` - Line 56
+
+**Code Section**:
+```dart
+final ImagePicker picker = ImagePicker();
+final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+```
+
+**What Happens**:
+1. Creates ImagePicker instance
+2. Opens device gallery/photo picker
+3. User selects one image from device
+4. Returns `XFile` object containing:
+   - `path`: File system path (e.g., `/var/mobile/..../image.jpg`)
+   - `name`: Original filename (e.g., `image.jpg`)
+   - `mimeType`: File type
+
+**Null Check**:
+```dart
+if (image == null) {
+  debugPrint('📸 No image selected');
+  return;
+}
+```
+- If user cancels, function exits without upload
+
+### Step 3: Set Upload State
+**Code**:
+```dart
+setState(() => _isUploading = true);
+```
+
+**Effect**:
+- Disables upload buttons (changes `onTap: null`)
+- Shows loading spinner in edit button
+- Prevents duplicate uploads
+
+### Step 4: Resolve User ID
+**Code**:
+```dart
+final userId = await _resolveUserId();
+```
+
+**What `_resolveUserId()` Does**:
+```dart
+Future<String> _resolveUserId() async {
+  final user = AuthManager.instance.currentUser;
+  if (user == null || user.id.isEmpty) {
+    throw Exception('User not found. Please login again.');
+  }
+  return user.id;
+}
+```
+
+- Gets current user from AuthManager singleton
+- Validates user exists and has ID
+- Throws exception if not (caught in outer try-catch)
+- Returns user ID string
+
+### Step 5: Create FormData
+**Code**:
+```dart
+final formData = FormData.fromMap({
+  'profile': await MultipartFile.fromFile(
+    image.path,
+    filename: image.name,
+  ),
+});
+```
+
+**Process**:
+1. `FormData.fromMap()`: Creates multipart form-data object
+2. `MultipartFile.fromFile()`:
+   - Reads binary image file from device storage
+   - Uses original filename for server reference
+   - Automatically detects MIME type
+3. Field key `'profile'`: Backend expects images in field named "profile"
+
+**Resulting Request Body (Conceptual)**:
+```
+----WebKitFormBoundaryXXXXXXXXXX
+Content-Disposition: form-data; name="profile"; filename="image.jpg"
+Content-Type: image/jpeg
+
+[Binary JPEG data here]
+----WebKitFormBoundaryXXXXXXXXXX--
+```
+
+### Step 6: POST to Server
+**Code**:
+```dart
+final response = await ApiClient.instance.post(
+  'time_entry_management_application_function/userprofile/$userId',
+  data: formData,
+);
+```
+
+**What Happens**:
+1. ApiClient.post() in dio_client.dart:
+   - Sets Content-Type header to `multipart/form-data`
+   - Includes cookies and auth headers automatically
+   - Sends POST request to endpoint
+   - Validates response status is 200 or 201
+   - Returns Response object
+
+2. Full URL Constructed:
+   - Base URL: `https://project-management-60040289923.development.catalystserverless.in/server/`
+   - Endpoint: `time_entry_management_application_function/userprofile/{userId}`
+   - Example: `https://.../userprofile/17682000000114004`
+
+### Step 7: Extract Response URL
+**Code**:
+```dart
+final responseUrl = (response.data is Map)
+    ? (response.data['profileURL'] ?? '').toString()
+    : '';
+```
+
+**Logic**:
+- Checks if response is a Map (not null/error)
+- Accesses `profileURL` field from response JSON
+- Converts to string (handles null with `??`)
+- Provides immediate feedback by reading response body
+
+### Step 8: Update Local State
+**Code**:
+```dart
+setState(() {
+  _profileImageUrl = responseUrl.isNotEmpty ? responseUrl : image.path;
+});
+```
+
+**Effect**:
+- **If `responseUrl` exists**: Use server URL (uploaded image available immediately)
+- **If `responseUrl` empty**: Use local file path (fallback, will sync on refresh)
+- **Triggers rebuild**: UI CircleAvatar immediately shows new image
+
+### Step 9: Sync with Server Data
+**Code**:
+```dart
+await _refreshProfileAndSyncImages(userId);
+```
+
+**What `_refreshProfileAndSyncImages()` Does**:
+1. Calls `UserManager.instance.fetchUserProfile(userId)`:
+   - Makes GET request to `/userprofile/{userId}`
+   - Parses response into UserProfileModel
+   - Caches in UserManager singleton
+   
+2. Updates local URLs:
+   ```dart
+   setState(() {
+     if (refreshed.profileLink.isNotEmpty) {
+       _profileImageUrl = refreshed.profileLink;
+     }
+   });
+   ```
+   - Ensures `_profileImageUrl` now contains server URL
+   - Overwrites any local file path with official server URL
+
+**Why This Step**:
+- Server might store image with different URL than response
+- Ensures consistency between local state and server state
+- Prepares for next page refresh (images load from server, not local cache)
+
+### Step 10: Show Success Message
+**Code**:
+```dart
+ScaffoldMessenger.of(context).showSnackBar(
+  const SnackBar(
+    content: Text('Profile image updated successfully!'),
+    backgroundColor: Colors.green,
+    duration: Duration(seconds: 2),
+  ),
+);
+```
+
+**Effect**: Displays green toast notification for 2 seconds
+
+### Step 11: Reset Upload State
+**Code** (in finally block):
+```dart
+finally {
+  if (mounted) {
+    setState(() => _isUploading = false);
+  }
+}
+```
+
+**Effect**:
+- Re-enables upload buttons
+- Hides loading spinner
+- Allows user to upload again if needed
+- Runs regardless of success/failure
+
+### Step 12: Error Handling
+**Catch Block**:
+```dart
+catch (e) {
+  debugPrint('Image upload error: $e');
+  debugPrint('Stack: ${StackTrace.current}');
+
+  if (mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Upload failed: $e'),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+}
+```
+
+**Error Scenarios Caught**:
+- User not found (from `_resolveUserId()`)
+- Image picker cancelled (handled by null check)
+- Network error (DioException from ApiClient)
+- Invalid response format
+- File permission errors
+
+**Feedback to User**:
+- Prints detailed error to console for debugging
+- Shows red snackbar with error message
+- Allows retry (button re-enabled in finally block)
+
+---
+
+## Banner/Cover Image Upload Flow
+
+### Overview
+Banner upload follows identical pattern to profile upload but with key differences:
+1. **Different endpoint**: `/usercover/{userId}` instead of `/userprofile/{userId}`
+2. **Different field name**: `cover` instead of `profile`
+3. **Different response field**: `coverURL` instead of `profileURL`
+
+### Key Differences from Profile Upload
+
+#### Difference 1: Entry Point
+**Profile**: User taps avatar or edit button on avatar
+**Banner**: User taps edit button (top-right corner) on banner image
+
+**Code**:
+```dart
+child: InkWell(
+  onTap: (_isUploading || _isBannerUploading)
+      ? null
+      : _pickAndUploadBannerImage,  // Different method
+  ...
+)
+```
+
+#### Difference 2: Method Name
+**Profile**: `_pickAndUploadImage()`
+**Banner**: `_pickAndUploadBannerImage()`
+
+#### Difference 3: State Variable
+**Profile**: Uses `_isUploading`
+**Banner**: Uses `_isBannerUploading`
+
+**Reason**: Allows both uploads to happen independently without blocking each other
+
+#### Difference 4: Image State Variable
+**Profile**: Stores in `_profileImageUrl`
+**Banner**: Stores in `_bannerImageUrl`
+
+#### Difference 5: Endpoint
+**Code**:
+```dart
+final endpoint =
+    'time_entry_management_application_function/usercover/$userId';
+```
+
+**Different Path**: `/usercover/` instead of `/userprofile/`
+**Server Configuration**: Backend has separate route for cover images
+
+#### Difference 6: FormData Field Name
+**Code**:
+```dart
+final formData = FormData.fromMap({
+  'cover': await MultipartFile.fromFile(
+    image.path,
+    filename: image.name,
+  ),
+});
+```
+
+**Field Name**: `'cover'` instead of `'profile'`
+**Backend Expectation**: Server route `/usercover/` expects field named "cover"
+
+#### Difference 7: Response Field
+**Code**:
+```dart
+final responseCoverUrl = (response.data is Map)
+    ? (response.data['coverURL'] ?? '').toString()
+    : '';
+```
+
+**Field Name**: Reads `'coverURL'` instead of `'profileURL'`
+**Response Format**: `/usercover/` endpoint returns `coverURL`
+
+#### Difference 8: Local URL Update
+**Code**:
+```dart
+setState(() {
+  _bannerImageUrl = responseCoverUrl.isNotEmpty
+      ? responseCoverUrl
+      : image.path;
+});
+```
+
+**Updates**: `_bannerImageUrl` instead of `_profileImageUrl`
+
+### Complete Banner Upload Sequence
+1. User taps pencil icon on banner (top-right)
+2. `_pickAndUploadBannerImage()` called
+3. Gallery picker opens
+4. User selects image
+5. Upload state set: `_isBannerUploading = true`
+6. User ID resolved
+7. FormData created with field name `'cover'`
+8. POST to `/usercover/{userId}`
+9. Response `coverURL` extracted
+10. `_bannerImageUrl` updated in setState
+11. UI rebuilds, banner preview updated
+12. `_refreshProfileAndSyncImages()` fetches fresh data
+13. UserManager cache updated with new `coverLink`
+14. `_bannerImageUrl` synced to server URL
+15. Success snackbar shown
+16. `_isBannerUploading` reset to false
+17. Button re-enabled
+
+---
+
+## HTTP Request & Response Details
+
+### Profile Upload Request
+
+#### Request Headers
+```
+POST /server/time_entry_management_application_function/userprofile/17682000000114004 HTTP/1.1
+Host: project-management-60040289923.development.catalystserverless.in
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryDZrBigYfCqlWi8MQ
+Content-Length: 8491
+Accept: application/json, text/plain, */*
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: en-GB,en-US;q=0.9,en;q=0.8
+Connection: keep-alive
+Cookie: [Authentication and session cookies]
+JSESSIONID: 34ECDC3E04C4EA07CE8B23829745BF6E
+ZD_CSRF_TOKEN: [CSRF token for security]
+User-Agent: Mozilla/5.0... (Flutter on macOS)
+```
+
+#### Request Body Structure
+```
+----WebKitFormBoundaryDZrBigYfCqlWi8MQ
+Content-Disposition: form-data; name="profile"; filename="selected_image.jpg"
+Content-Type: image/jpeg
+
+[Binary JPEG data - up to 8491 bytes]
+----WebKitFormBoundaryDZrBigYfCqlWi8MQ--
+```
+
+**Body Components**:
+- **Boundary Markers**: `----WebKitFormBoundaryXXX` delimit form fields
+- **Content-Disposition**: Specifies field name (`profile`) and filename
+- **Content-Type**: Declares MIME type (`image/jpeg`, `image/png`, etc.)
+- **Binary Data**: Actual image bytes from selected file
+- **Closing Boundary**: Marks end of form data
+
+#### Request Flow in Code
+```
+User taps avatar
+↓
+_pickAndUploadImage() called
+↓
+ImagePicker.pickImage() opens gallery
+↓
+User selects image → returns XFile
+↓
+_isUploading = true (UI locks)
+↓
+_resolveUserId() gets user ID
+↓
+FormData.fromMap({
+  'profile': MultipartFile.fromFile(imagePath)
+})
+↓
+ApiClient.post(endpoint, data: formData)
+  ↓
+  Dio serializes FormData
+  ↓
+  HTTP POST request sent with headers and body
+  ↓
+  Server receives multipart form data
+```
+
+### Profile Upload Response
+
+#### Response Headers
+```
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+Content-Length: 2847
+Server: Apache
+Date: Sun, 23 Mar 2026 17:18:31 GMT
+Cache-Control: no-cache, no-store, must-revalidate
+```
+
+#### Response Body (JSON)
+```json
+{
+  "success": true,
+  "message": "Profile updated successfully.",
+  "profileURL": "https://dsv365-development.zohostratus.in/dsv365/profile/1774266459036_18.jpg",
+  "result": [
+    {
+      "Users": {
+        "Address": "Orai , Uttar Pradesh",
+        "AboutME": "Full-stack developer passionate...",
+        "Resume_id": "123",
+        "TeamName": null,
+        "Skills": "React.js, Next.js, AWS",
+        "Phone": "9984237401",
+        "Profile_Link": "https://dsv365-development.zohostratus.in/dsv365/profile/1774266459036_18.jpg",
+        "Cover_Link": "https://dsv365-development.zohostratus.in/dsv365/cover/1774266511245_profile.jpg",
+        "User_Id": "17682000000114004",
+        ... (other fields)
+      }
+    }
+  ]
+}
+```
+
+#### Response Parsing
+```dart
+// Extract immediate preview URL
+final responseUrl = response.data['profileURL']
+// Result: "https://dsv365.../profile/1774266459036_18.jpg"
+
+// Parse full user data
+final resultData = response.data['result'][0]['Users']
+// Contains: Profile_Link, Cover_Link, Address, Skills, etc.
+
+// UserManager creates UserProfileModel from this data:
+UserProfileModel.fromJson(resultData)
+// Maps:
+// - 'Profile_Link' → profileLink property
+// - 'Cover_Link' → coverLink property
+```
+
+### Banner Upload Request
+
+#### Request Headers
+```
+POST /server/time_entry_management_application_function/usercover/17682000000114004 HTTP/1.1
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryoOrqzVYikmhpqRvm
+Content-Length: 8489
+[Same auth/cookie headers as profile]
+```
+
+#### Request Body
+```
+----WebKitFormBoundaryoOrqzVYikmhpqRvm
+Content-Disposition: form-data; name="cover"; filename="banner_image.jpg"
+Content-Type: image/jpeg
+
+[Binary image data]
+----WebKitFormBoundaryoOrqzVYikmhpqRvm--
+```
+
+**Key Difference**: Field name is `"cover"` instead of `"profile"`
+
+### Banner Upload Response
+
+#### Response Headers
+```
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=UTF-8
+```
+
+#### Response Body
+```json
+{
+  "success": "true",
+  "coverURL": "https://dsv365-development.zohostratus.in/dsv365/cover/1774266511245_profile.jpg",
+  "data": [
+    {
+      "Users": {
+        "Address": "Orai , Uttar Pradesh",
+        "Profile_Link": "https://dsv365-development.zohostratus.in/dsv365/profile/1774266459036_18.jpg",
+        "Cover_Link": "https://dsv365-development.zohostratus.in/dsv365/cover/1774266511245_profile.jpg",
+        ... (other user fields)
+      }
+    }
+  ]
+}
+```
+
+**Key Differences from Profile Response**:
+- `success` is string `"true"` not boolean (both handled in code)
+- Contains `coverURL` (not `profileURL`)
+- Data nested under `data` key (not `result`)
+- Still includes full user profile in `Users` object
+
+#### Response Parsing
+```dart
+// Check success
+final isSuccess = response.data['success'] == "true" 
+                  || response.data['success'] == true
+
+// Extract cover URL
+final responseCoverUrl = response.data['coverURL']
+// Result: "https://dsv365.../cover/1774266511245_profile.jpg"
+
+// Parse user data from data[0].Users
+final userData = response.data['data'][0]['Users']
+// Contains: Cover_Link, Profile_Link, etc.
+```
+
+---
+
+## State Management
+
+### Flutter StatefulWidget Approach
+
+#### State Variables Organization
+```dart
+class _ProfilePageState extends ConsumerState<ProfilePage> {
+  // Upload Progress Tracking
+  bool _isUploading = false;           // Line 25
+  bool _isBannerUploading = false;     // Line 26
+  
+  // Image URL Caching
+  String? _profileImageUrl;            // Line 27
+  String? _bannerImageUrl;             // Line 28
+}
+```
+
+#### Initialization (initState)
+```dart
+@override
+void initState() {
+  super.initState();
+  final userProfile = UserManager.instance.userProfile;
+  _profileImageUrl = userProfile?.profileLink;
+  _bannerImageUrl = userProfile?.coverLink;
+}
+```
+
+**What Happens**:
+1. When ProfilePage first loads, initState runs
+2. Retrieves cached profile from UserManager singleton
+3. Seeds local image URLs with server URLs from profile
+4. Ensures UI shows correct images from previous session
+
+**Why This Matters**:
+- User doesn't see blank/placeholder until new upload
+- Page loads quickly with cached images
+- Server URLs (not local paths) used for persistence
+
+### setState() Call Pattern
+
+#### During Upload
+```dart
+setState(() => _isUploading = true);
+```
+**Effect**: Triggers rebuild
+- Buttons become disabled (onTap: null)
+- Loading spinner shows in edit button
+- Prevents accidental double-uploads
+
+#### After Upload
+```dart
+setState(() {
+  _profileImageUrl = responseUrl.isNotEmpty ? responseUrl : image.path;
+});
+```
+**Effect**: Triggers rebuild
+- CircleAvatar shows new image immediately
+- Uses response URL for immediate feedback
+
+#### After Sync
+```dart
+setState(() {
+  if (refreshed.profileLink.isNotEmpty) {
+    _profileImageUrl = refreshed.profileLink;
+  }
+});
+```
+**Effect**: Triggers rebuild
+- Updates image URL to confirmed server URL
+- Ensures consistency with UserManager cache
+
+#### After Upload Completes
+```dart
+setState(() => _isUploading = false);  // In finally block
+```
+**Effect**: Triggers rebuild
+- Re-enables buttons
+- Hides loading spinner
+- Runs even if error occurred
+
+---
+
+## Image Display Logic
+
+### CircleAvatar Image Source Priority
+
+The CircleAvatar uses a cascading image provider pattern:
+
+```dart
+CircleAvatar(
+  radius: 50,
+  backgroundImage: _profileImageUrl != null
+      // Priority 1: Use local cache if available
+      ? (_profileImageUrl!.startsWith('http')
+          // If it's a URL (from server), load as NetworkImage
+          ? NetworkImage(_profileImageUrl!)
+          // If it's a file path (recent upload), load as FileImage
+          : FileImage(File(_profileImageUrl!)))
+          as ImageProvider
+      // Priority 2: Fall back to UserProfile data
+      : (userProfile?.profileLink != null
+          ? NetworkImage(userProfile!.profileLink)
+          // Priority 3: Fall back to default asset
+          : const AssetImage('assets/images/profile.jpg')
+              as ImageProvider),
+)
+```
+
+#### Logic Breakdown
+
+**Priority 1 - Local Cache (`_profileImageUrl`)**
+- Used immediately after upload
+- Checked with `.startsWith('http')` to determine source:
+  - **If URL**: Use `NetworkImage()` to load from server
+  - **If local path**: Use `FileImage()` to load from device storage
+
+**Why Double-Check**:
+- During upload, `_profileImageUrl` contains local file path
+- After sync, `_profileImageUrl` contains server URL
+- Single variable handles both states seamlessly
+
+**Priority 2 - UserProfile Cache**
+- Fallback if local variable is null
+- Loads from `UserManager.instance.userProfile`
+- Used when user reopens page (initState populates from here)
+
+**Priority 3 - Default Asset**
+- Final fallback if no image available
+- Shows `assets/images/profile.jpg` placeholder
+- Prevents blank avatar if all other sources fail
+
+### Banner Image Display
+
+Same pattern applied to banner:
+
+```dart
+DecorationImage(
+  image: _bannerImageUrl != null
+      ? (_bannerImageUrl!.startsWith('http')
+          ? NetworkImage(_bannerImageUrl!)
+          : FileImage(File(_bannerImageUrl!)))
+          as ImageProvider
+      : (userProfile?.coverLink != null
+          ? NetworkImage(userProfile!.coverLink)
+          : const AssetImage('assets/images/banner.jpg')
+              as ImageProvider),
+  fit: BoxFit.cover,
+)
+```
+
+**Differences from Avatar**:
+- Applies `fit: BoxFit.cover` to fill banner space
+- Uses `DecorationImage` (for container) instead of CircleAvatar
+- Same fallback chain: local → userProfile → asset
+
+---
+
+## Error Handling
+
+### Error Catch Mechanism
+
+#### Try Block
+```dart
+try {
+  // Steps 1-11 of upload process
+  // Each step can throw exceptions
+}
+```
+
+**Operations That Can Throw**:
+1. `await picker.pickImage()` - File system error
+2. `await _resolveUserId()` - User auth error
+3. `await MultipartFile.fromFile()` - File permission error
+4. `await ApiClient.instance.post()` - Network/server error
+5. Response parsing - Invalid JSON
+
+#### Catch Block
+```dart
+catch (e) {
+  debugPrint('Image upload error: $e');
+  debugPrint('Stack: ${StackTrace.current}');
+
+  if (mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Upload failed: $e'),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+}
+```
+
+**Error Handling Steps**:
+1. **Console Logging**: Captures full error message and stack trace
+   - Helps developers debug issues
+   - Shows in IDE console when running
+   
+2. **Mounted Check**: Prevents crashes on disposed widget
+   - App state changed while upload was pending
+   - SafeArea: Only show snackbar if page still visible
+
+3. **User Notification**: Red snackbar shows error
+   - Displays exception message to user
+   - 3-second duration for review
+   - Helps user understand what went wrong
+
+#### Finally Block
+```dart
+finally {
+  if (mounted) {
+    setState(() => _isUploading = false);
+  }
+}
+```
+
+**Critical Behavior**:
+- Runs regardless of success or failure
+- Re-enables upload buttons even on error
+- Allows user to retry upload
+- Prevents stuck loading state
+
+**Without Finally**:
+- If error occurs, buttons remain disabled forever
+- User cannot retry upload
+- Poor UX: appears app is broken
+
+### Error Scenarios and Handling
+
+#### Scenario 1: User Not Found
+**Exception Thrown By**: `_resolveUserId()`
+
+**Code**:
+```dart
+if (user == null || user.id.isEmpty) {
+  throw Exception('User not found. Please login again.');
+}
+```
+
+**Result**:
+- Caught in outer catch block
+- Shows red snackbar: "Upload failed: User not found..."
+- Button re-enabled for retry
+- User prompt suggests logging in again
+
+#### Scenario 2: Image Picker Cancelled
+**Exception Thrown By**: None (graceful handling)
+
+**Code**:
+```dart
+if (image == null) {
+  debugPrint('📸 No image selected');
+  return;
+}
+```
+
+**Result**:
+- Exits function early before upload attempt
+- No error message shown
+- No state changes
+- User can retry
+
+#### Scenario 3: Network Unavailable
+**Exception Thrown By**: `ApiClient.instance.post()` as DioException
+
+**Server Response**:
+```
+No connection / Timeout
+```
+
+**Caught As**:
+```dart
+catch (e) {
+  // e is DioException with message like:
+  // "The Internet connection appears to be offline"
+}
+```
+
+**Result**:
+- Shows snackbar: "Upload failed: The Internet connection..."
+- Button re-enabled
+- User can retry when connection restored
+
+#### Scenario 4: Server Error (e.g., 400 Bad Request)
+**Server Response Example**:
+```
+Status: 400
+Body: {
+  "success": false,
+  "message": "No profile file uploaded."
+}
+```
+
+**How Caught**:
+```dart
+// ApiClient checks:
+if (response.statusCode == 200 || response.statusCode == 201) {
+  return response;
+} else {
+  throw Exception('Unexpected status code: 400');
+}
+// Throws, caught in outer catch block
+```
+
+**Result**:
+- Shows snackbar: "Upload failed: Unexpected status code: 400"
+- Code suggests client review field name/format
+
+#### Scenario 5: File Too Large
+**Operating System**: Device storage pressure
+
+**Exception Type**: Permission/IO error from `MultipartFile.fromFile()`
+
+**Result**:
+- Caught as generic exception
+- Shows snackbar explaining file issue
+- User can choose different smaller file
+
+#### Scenario 6: Widget Disposed
+**Scenario**: User navigates away during upload
+
+**Code Protection**:
+```dart
+if (!mounted || refreshed == null) return;
+
+if (mounted) {
+  ScaffoldMessenger.of(context).showSnackBar(...);
+}
+```
+
+**Why Critical**:
+- If upload completes after user leaves page
+- Calling setState() on disposed widget = crash
+- `mounted` check prevents this
+
+---
+
+## Integration Points
+
+### 1. AuthManager Integration
+
+#### Usage
+```dart
+final user = AuthManager.instance.currentUser;
+final userId = user.id;
+```
+
+#### What It Provides
+- Single source of truth for current user
+- Persists across app navigation
+- Cleared on logout
+
+#### Location
+- Initialized during app startup (main.dart)
+- Populated by login page
+- Cleared by logout (ProfilePage has logout button)
+
+### 2. UserManager Integration
+
+#### Usage
+```dart
+final userProfile = UserManager.instance.userProfile;
+_profileImageUrl = userProfile?.profileLink;
+_bannerImageUrl = userProfile?.coverLink;
+
+// And after upload:
+await _refreshProfileAndSyncImages(userId);
+```
+
+#### What It Provides
+- Caches user profile data across app
+- `fetchUserProfile()` method handles GET + parsing
+- Singleton pattern ensures single cache instance
+
+#### Data Flow
+1. First page load: initState reads cached profile
+2. After upload: ProfilePage calls fetchUserProfile()
+3. UserManager makes GET request, updates cache
+4. All other pages see updated userProfile
+
+#### Location
+```
+lib/core/constants/user_manager.dart
+```
+
+### 3. ApiClient Integration
+
+#### Usage
+```dart
+final response = await ApiClient.instance.post(
+  'time_entry_management_application_function/userprofile/$userId',
+  data: formData,
+);
+```
+
+#### What It Provides
+- Centralized HTTP client (Dio)
+- Automatic headers (auth, cookies)
+- Error handling and response validation
+- Multipart form-data support
+
+#### Configuration
+- Base URL and interceptors set in ApiClient singleton
+- Authentication headers added before each request
+- Validates all responses for HTTP 200/201
+
+#### Location
+```
+lib/core/network/dio_client.dart
+```
+
+### 4. UserProfileModel Integration
+
+#### Usage
+```dart
+final profile = UserProfileModel.fromJson(data['result'][0]['Users']);
+UserManager.instance.userProfile = profile;
+```
+
+#### What It Provides
+- Type-safe user data representation
+- Parsing from JSON with null handling
+- Field mapping (e.g., 'Profile_Link' → profileLink)
+
+#### Fields Used in ProfilePage
+- `profileLink`: Profile image URL
+- `coverLink`: Banner/cover image URL
+- `profileLink`: First name, last name, email
+- `phone`, `address`, `skills`: Displayed in contact sections
+
+#### Location
+```
+lib/models/user_profile_model.dart
+```
+
+### 5. Theme Integration
+
+#### Usage
+```dart
+final customColors = Theme.of(context).custom;
+
+// In widgets:
+backgroundColor: Colors.green,  // Green for success
+backgroundColor: Colors.red,     // Red for error
+color: customColors.primary,     // Primary theme color for buttons
+```
+
+#### What It Provides
+- Consistent color theming across app
+- Dark/light mode support
+- Custom colors extension
+
+#### Location
+```
+lib/core/constants/theme.dart
+```
+
+---
+
+## Complete Request-Response Cycle Sequence
+
+### Profile Image Upload - Full Sequence
+
+```
+1. USER ACTION
+   └─ Taps avatar or pencil icon on profile picture
+
+2. METHOD INVOCATION
+   └─ _pickAndUploadImage() called
+
+3. IMAGE SELECTION
+   └─ ImagePicker.pickImage(source: ImageSource.gallery)
+      └─ Device gallery opens
+      └─ User selects image
+      └─ Returns XFile object with {path, name, mimeType}
+
+4. INPUT VALIDATION
+   └─ if (image == null) { return; }
+      └─ User cancelled picker = exit gracefully
+
+5. STATE UPDATE #1
+   └─ setState(() => _isUploading = true)
+      └─ UI disabled, loading spinner shown
+      └─ Widget tree rebuilt
+
+6. USER ID RESOLUTION
+   └─ userId = await _resolveUserId()
+      ├─ Gets AuthManager.instance.currentUser
+      ├─ Validates user not null and ID not empty
+      └─ Returns user.id as String
+
+7. ERROR HANDLING (Step 6)
+   └─ If user null: throws Exception
+      └─ Caught in outer catch block
+      └─ Snackbar shown: "Upload failed: User not found..."
+
+8. FORMDATA CREATION
+   └─ FormData.fromMap({'profile': MultipartFile})
+      ├─ MultipartFile.fromFile(imagePath)
+      │  ├─ Reads binary file from device storage
+      │  ├─ Detects MIME type automatically  
+      │  └─ Uses original filename
+      └─ Returns FormData with boundary encoding
+
+9. FORMDATA SERIALIZATION
+   └─ Dio serializes FormData to binary
+      ├─ Adds Content-Type: multipart/form-data; boundary=---
+      ├─ Encodes file field with proper headers
+      └─ Creates HTTP request body
+
+10. HTTP POST REQUEST
+    └─ ApiClient.post('time_entry_management.../$userId', data: formData)
+       ├─ Dio client makes POST request
+       ├─ URL: https://...server/time_entry.../userprofile/17682000...
+       ├─ Headers: {Content-Type: multipart/form-data, Auth, Cookies}
+       ├─ Body: [binary form data]
+       └─ Awaits response
+
+11. SERVER PROCESSING
+    └─ Backend receives multipart form data
+       ├─ Extracts 'profile' field binary data
+       ├─ Saves image to file storage with unique name
+       ├─ Updates Users record with new Profile_Link
+       ├─ Returns 200 OK with response JSON
+       └─ Includes: success, message, profileURL, result
+
+12. RESPONSE RECEIPT
+    └─ Dio validates status code
+       ├─ Checks: statusCode == 200 || statusCode == 201
+       └─ If yes: returns Response object
+       └─ If no: throws Exception
+
+13. URL EXTRACTION
+    └─ responseUrl = response.data['profileURL']
+       ├─ Accesses response JSON
+       ├─ Gets profileURL field
+       └─ Result: "https://dsv365.../profile/1774266459036_18.jpg"
+
+14. STATE UPDATE #2
+    └─ setState(() { _profileImageUrl = responseUrl; })
+       ├─ Updates local image URL cache
+       ├─ Widget rebuilds
+       └─ CircleAvatar now displays new image immediately
+
+   VISUAL EFFECT: User sees uploaded image in avatar instantly
+
+15. PROFILE DATA SYNC
+    └─ await _refreshProfileAndSyncImages(userId)
+       ├─ Calls UserManager.fetchUserProfile(userId)
+       │  ├─ Makes GET /userprofile/{userId}
+       │  ├─ Parses response into UserProfileModel
+       │  ├─ Updates UserManager.userProfile cache
+       │  └─ Returns refreshed model
+       └─ Updates state if refreshed not null
+          ├─ if (refreshed.profileLink.isNotEmpty)
+          └─ SET _profileImageUrl = refreshed.profileLink
+
+   VISUAL EFFECT: Avatar URL updated to official server URL
+
+16. USER FEEDBACK
+    └─ ScaffoldMessenger.showSnackBar
+       ├─ Shows green snackbar
+       ├─ Text: "Profile image updated successfully!"
+       ├─ Duration: 2 seconds
+       └─ Auto-dismisses
+
+17. STATE RESET
+    └─ finally { setState(() => _isUploading = false); }
+       ├─ Runs regardless of success/failure
+       ├─ Re-enables buttons
+       ├─ Hides loading spinner
+       └─ Widget rebuilds
+
+18. COMPLETION
+    └─ User can upload another image if desired
+       ├─ Buttons enabled
+       ├─ Loading spinner hidden
+       └─ All state variables updated
+```
+
+### Banner Image Upload - Abbreviated Sequence
+
+Same as above with these replacements at steps where they differ:
+
+```
+2. METHOD INVOCATION
+   └─ _pickAndUploadBannerImage() called (not _pickAndUploadImage)
+
+5. STATE UPDATE #1
+   └─ _isBannerUploading = true (not _isUploading)
+
+7. FORMDATA CREATION
+   └─ FormData.fromMap({'cover': MultipartFile})  (field: 'cover', not 'profile')
+
+10. HTTP POST REQUEST
+    └─ endpoint: /usercover/{userId}  (not /userprofile/)
+
+11. SERVER RESPONSE INCLUDES
+    └─ coverURL (not profileURL)
+    └─ success: "true" as string (not boolean)
+    └─ data key (not result key)
+
+13. URL EXTRACTION
+    └─ responseCoverUrl = response.data['coverURL']
+
+14. STATE UPDATE #2
+    └─ setState(() { _bannerImageUrl = responseCoverUrl; })
+
+15. PROFILE SYNC - USES SAME METHOD
+    └─ await _refreshProfileAndSyncImages(userId)
+       └─ Refreshes both profileLink AND coverLink from UserProfile
+
+16. USER FEEDBACK
+    └─ "Banner image updated successfully!"
+
+17. STATE RESET
+    └─ _isBannerUploading = false
+```
+
+---
+
+## Summary Architecture
+
+### Components Interaction Diagram
+
+```
+ProfilePage (profile_page.dart)
+├─ Calls: ImagePicker.pickImage()
+├─ Calls: AuthManager.instance.currentUser → gets userId
+├─ Calls: ApiClient.instance.post()
+│  └─ HTTP request to backend
+├─ Receives: Response with profileURL / coverURL
+├─ Updates: Local state (_profileImageUrl, _bannerImageUrl)
+├─ Calls: UserManager.instance.fetchUserProfile()
+│  ├─ HTTP request to GET /userprofile/{userId}
+│  └─ Parses into UserProfileModel
+├─ Updates: _profileImageUrl / _bannerImageUrl from synced data
+└─ Displays: Updated images in CircleAvatar and DecorationImage
+
+UserManager (user_manager.dart)
+├─ Singleton instance
+├─ Caches: UserProfileModel
+└─ Method: fetchUserProfile(userId)
+   ├─ HTTP GET /userprofile/{userId}
+   ├─ Parses JSON → UserProfileModel using fromJson()
+   └─ Updates cache
+
+ApiClient (dio_client.dart)
+├─ Singleton instance
+├─ Configures Dio HTTP client
+├─ Adds auth headers automatically
+└─ Methods: post(), get()
+   ├─ Validates response status
+   └─ Throws on non-200/201
+
+UserProfileModel (user_profile_model.dart)
+├─ Fields: profileLink, coverLink, address, phone, skills, etc.
+└─ Factory: fromJson(Map<String, dynamic>)
+   └─ Parses API response with null handling
+
+AuthManager (auth_manager.dart)
+├─ Singleton instance
+├─ Property: currentUser (ZCatalystUser)
+└─ Provides: user.id, user.firstName, user.emailId, etc.
+```
+
+---
+
+## Conclusion
+
+The profile and banner image upload system in ProfilePage implements a production-grade image upload workflow with:
+
+1. **Dual upload capability**: Profile and banner images handled independently
+2. **Immediate UI feedback**: Images displayed locally before sync
+3. **Server synchronization**: Fresh data fetched after upload
+4. **Robust error handling**: Try-catch-finally with user feedback
+5. **State isolation**: Separate variables prevent mutual blocking
+6. **Proper integration**: Leverages existing singletons (AuthManager, UserManager, ApiClient)
+7. **Responsive UX**: Loading states, disabled buttons, error messages
+8. **Fallback hierarchy**: Multiple image sources with cascading fallbacks
+
+The implementation demonstrates Flutter best practices including StatefulWidget lifecycle, multipart form uploads, Dio HTTP client usage, and singleton pattern for app-wide data management.

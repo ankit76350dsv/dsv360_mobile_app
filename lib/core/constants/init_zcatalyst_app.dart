@@ -34,7 +34,7 @@ class AppInitManager {
   ZCatalystApp get catalystApp {
     if (!_isInitialized) {
       throw Exception(
-        "Catalyst SDK not initialized. Call initCatalyst() first.",
+        "Something went wrong. Try again later.",
       );
     }
     return app;
