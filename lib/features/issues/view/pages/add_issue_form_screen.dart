@@ -241,7 +241,7 @@ class _AddIssueFormScreenState extends ConsumerState<AddIssueFormScreen> {
       } catch (e) {
         if (mounted) {
           _showError(
-            'Failed to ${widget.issue == null ? 'create' : 'update'} issue: $e',
+            'Failed to ${widget.issue == null ? 'create' : 'update'} issue. Try again later.',
           );
         }
       } finally {

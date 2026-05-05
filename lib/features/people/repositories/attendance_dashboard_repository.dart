@@ -21,7 +21,7 @@ class AttendanceDashboardRepository {
 
       return AttendanceDashboardResponse.fromJson(response.data);
     } catch (e) {
-      throw Exception('Failed to fetch attendance dashboard: $e');
+      throw Exception('Something went wrong. Please try again.');
     }
   }
 }

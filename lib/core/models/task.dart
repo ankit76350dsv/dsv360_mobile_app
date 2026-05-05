@@ -9,7 +9,8 @@ class Task {
   final String assignedToId;
   final DateTime? startDate;
   final DateTime? endDate;
-  
+  final List<String> attachments;
+
   // Temporary field for passing attachments through dialog
   // Not part of API response, only used internally
   final List<dynamic>? _attachmentsForCreation;
@@ -25,6 +26,7 @@ class Task {
     required this.assignedToId,
     this.startDate,
     this.endDate,
+    this.attachments = const [],
     List<dynamic>? attachmentsForCreation,
   }) : _attachmentsForCreation = attachmentsForCreation;
 
@@ -43,6 +45,7 @@ class Task {
       assignedToId: json['Assign_To_ID']?.toString() ?? "",
       startDate: _parseDate(json['Start_Date']),
       endDate: _parseDate(json['End_Date']),
+      attachments: _parseAttachments(json['Files'] ?? json['attachments']),
       attachmentsForCreation: null,
     );
   }
@@ -51,5 +54,14 @@ class Task {
     if (value == null) return null;
     if (value is String && value.isEmpty) return null;
     return DateTime.tryParse(value.toString());
+  }
+
+  static List<String> _parseAttachments(dynamic files) {
+    if (files == null) return [];
+    if (files is List) return List<String>.from(files);
+    if (files is String && files.isNotEmpty) {
+      return files.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+    }
+    return [];
   }
 }

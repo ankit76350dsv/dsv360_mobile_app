@@ -120,14 +120,14 @@ class _AttachmentViewScreenState extends State<AttachmentViewScreen> {
           children: [
             const Icon(
               Icons.error_outline,
-              size: 80,
+              size: 48,
               color: Colors.red,
             ),
             const SizedBox(height: 16),
             const Text(
               'Error loading PDF',
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 color: Colors.white,
               ),
             ),

@@ -69,7 +69,7 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
     } catch (e) {
       debugPrint('❌ Error fetching time entries: $e');
       setState(() {
-        _error = 'Failed to load time entries: $e';
+        _error = e.toString().replaceFirst('Exception: ', '');
         _isLoading = false;
       });
     }
@@ -325,16 +325,19 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
                           children: [
                             Icon(
                               Icons.error_outline,
-                              size: 64,
-                              color: customColors.error,
+                              size: 48,
+                              color: customColors.textSecondary,
                             ),
                             const SizedBox(height: 16),
-                            Text(
-                              _error!,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: customColors.error,
-                                fontSize: 18, // bodyLarge equivalent
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: Text(
+                                _error!,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: customColors.textSecondary,
+                                  fontSize: 15, // bodyLarge equivalent
+                                ),
                               ),
                             ),
                             const SizedBox(height: 24),

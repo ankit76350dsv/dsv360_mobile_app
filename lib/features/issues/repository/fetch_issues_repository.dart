@@ -52,7 +52,7 @@ class FetchIssuesRepository {
       throw Exception('Failed to load issues: ${response.statusCode}');
     } catch (e) {
       debugPrint('Error fetching issues: $e');
-      throw Exception('Error fetching issues: $e');
+      throw Exception('Something went wrong. Please try again.');
     }
   }
 }

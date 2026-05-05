@@ -35,7 +35,7 @@ class UpdateIssueRepository {
       throw Exception('Failed to update status: ${response.statusCode}');
     } catch (e) {
       debugPrint('Error updating issue status: $e');
-      throw Exception('Error updating issue status: $e');
+      throw Exception('Error updating issue status. Try again later');
     }
   }
 
@@ -101,7 +101,7 @@ class UpdateIssueRepository {
       throw Exception('Failed to update issue: ${response.statusCode}');
     } catch (e) {
       debugPrint('Error updating issue: $e');
-      throw Exception('Error updating issue: $e');
+      throw Exception('Error updating issue. Try again later.');
     }
   }
 }

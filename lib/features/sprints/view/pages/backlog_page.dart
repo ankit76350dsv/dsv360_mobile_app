@@ -400,16 +400,16 @@ class _BacklogPageState extends ConsumerState<BacklogPage> {
                           children: [
                             Icon(Icons.error_outline,
                                 size: 48,
-                                color: Colors.red.shade300),
+                                color: customColors.textSecondary),
                             const SizedBox(height: 12),
                             Text(
                               'Failed to load backlog',
                               style: TextStyle(
-                                  color: textPrimary, fontSize: 15),
+                                  color: textSecondary, fontSize: 15),
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              e.toString(),
+                              e.toString().replaceFirst('Exception: ', ''),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                   color: textSecondary, fontSize: 13),

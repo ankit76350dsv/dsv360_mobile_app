@@ -80,7 +80,7 @@ class CreateIssueRepository {
       throw Exception('Failed to create issue: ${response.statusCode}');
     } catch (e) {
       debugPrint('Error creating issue: $e');
-      throw Exception('Error creating issue: $e');
+      throw Exception('Error creating issue. Please try again.');
     }
   }
 }

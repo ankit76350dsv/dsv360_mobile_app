@@ -318,7 +318,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Failed to delete issue: $e',
+                        'Failed to delete issue. Try again later.',
                         style: const TextStyle(color: Colors.white),
                       ),
                     ),

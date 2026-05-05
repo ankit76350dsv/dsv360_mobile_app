@@ -34,7 +34,7 @@ class FetchProjectsRepository {
       throw Exception('Failed to load projects: ${response.statusCode}');
     } catch (e) {
       debugPrint('Error fetching projects: $e');
-      throw Exception('Error fetching projects: $e');
+      throw Exception('Something went wrong. Please try again.');
     }
   }
 }

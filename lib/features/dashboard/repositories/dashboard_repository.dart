@@ -46,7 +46,7 @@ class DashboardRepository {
 
     } catch (e) {
       debugPrint('Error fetching dashboard data: $e');
-      throw Exception('Error fetching dashboard data: $e');
+      throw Exception('Something went wrong. Please try again.');
     }
   }
 }

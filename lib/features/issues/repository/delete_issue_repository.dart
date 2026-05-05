@@ -23,7 +23,7 @@ class DeleteIssueRepository {
       throw Exception('Failed to delete issue: ${response.statusCode}');
     } catch (e) {
       debugPrint('Error deleting issue: $e');
-      throw Exception('Error deleting issue: $e');
+      throw Exception('Error deleting issue. Try again later.');
     }
   }
 }

@@ -1596,9 +1596,40 @@ if (_selectedSprintId != null) {
                                 child: CircularProgressIndicator(),
                               ),
                               error: (e, _) => Center(
-                                child: Text(
-                                  'Error loading stories: $e',
-                                  style: TextStyle(color: textSecondary),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.error_outline,
+                                          size: 48,
+                                          color: customColors.textSecondary),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'Failed to load board',
+                                        style: TextStyle(
+                                            color: textSecondary, fontSize: 15),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        e.toString().replaceFirst('Exception: ', ''),
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            color: textSecondary, fontSize: 13),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      TextButton(
+                                        onPressed: () => ref.invalidate(
+                                            hierarchyProvider((
+                                              projectId: projectId,
+                                              sprintId: _selectedSprintId,
+                                            ))),
+                                        child: Text('Retry',
+                                            style: TextStyle(
+                                                color: Colors.blue.shade400)),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                               data: (stories) {
@@ -1699,9 +1730,37 @@ if (_selectedSprintId != null) {
                                 child: CircularProgressIndicator(),
                               ),
                               error: (e, _) => Center(
-                                child: Text(
-                                  'Error loading timeline: $e',
-                                  style: TextStyle(color: textSecondary),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(24),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.error_outline,
+                                          size: 48,
+                                          color: customColors.textSecondary),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        'Failed to load timeline',
+                                        style: TextStyle(
+                                            color: textSecondary, fontSize: 15),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        e.toString().replaceFirst('Exception: ', ''),
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                            color: textSecondary, fontSize: 13),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      TextButton(
+                                        onPressed: () => ref.invalidate(
+                                            rawHierarchyProvider(projectId)),
+                                        child: Text('Retry',
+                                            style: TextStyle(
+                                                color: Colors.blue.shade400)),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                               data: (hierarchy) {

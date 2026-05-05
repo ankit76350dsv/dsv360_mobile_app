@@ -536,8 +536,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                 chips: [
                                   CardChip(
                                     icon: Icons.attach_file,
-                                    count: '0',
-                                    isActive: false,
+                                    count: task.attachments.length.toString(),
+                                    isActive: task.attachments.isNotEmpty,
                                     onTap: () {
                                       FocusScope.of(context).unfocus();
                                       showModalBottomSheet(
@@ -545,7 +545,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                         isScrollControlled: true,
                                         backgroundColor: Colors.transparent,
                                         builder: (context) => AttachmentListModal(
-                                          attachments: [],
+                                          attachments: task.attachments,
                                         ),
                                       );
                                     },
