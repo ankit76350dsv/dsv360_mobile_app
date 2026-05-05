@@ -1,7 +1,8 @@
 import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:dsv360/core/constants/theme.dart';
-import 'package:dsv360/features/people/model/attendance_detail.dart';
-import 'package:dsv360/features/people/repositories/time_logs_repository.dart';
+import 'package:dsv360/features/people/model/attendance_dashboard.dart';
+import 'package:dsv360/features/people/repositories/attendance_dashboard_repository.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -21,40 +22,43 @@ class TimeLogsCard extends ConsumerWidget {
     final now = DateTime.now();
     final todayStr = DateFormat('yyyy-MM-dd').format(now);
 
-    final timeLogsAsync = ref.watch(
-      timeLogsRepositoryProvider(
-        userId: userId,
-        startDate: todayStr,
-        endDate: todayStr,
-      ),
-    );
+    return FutureBuilder<AttendanceDashboardResponse>(
+      future: ref
+          .read(attendanceDashboardRepositoryProvider)
+          .fetchAttendanceDashboard(
+            userId: userId,
+            startDate: todayStr,
+            endDate: todayStr,
+          ),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-    return timeLogsAsync.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.all(16),
-        child: Center(child: CircularProgressIndicator()),
-      ),
-      error: (error, _) => const Padding(
-        padding: EdgeInsets.all(16),
-        child: Text(
-          'Something went wrong. Please try again.',
-          style: TextStyle(color: Colors.red),
-        ),
-      ),
-      data: (timeLogs) => _TimeLogsContent(timeLogs: timeLogs),
+        if (snapshot.hasError) {
+          return const Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              'Something went wrong. Please try again.',
+              style: TextStyle(color: Colors.red),
+            ),
+          );
+        }
+
+        final response = snapshot.data;
+        return _TimeLogsContent(response: response);
+      },
     );
   }
 }
 
 class _TimeLogsContent extends StatelessWidget {
-  final List<AttendanceDetail> timeLogs;
+  final AttendanceDashboardResponse? response;
 
-  const _TimeLogsContent({required this.timeLogs});
-
-  String _formatTime(DateTime? dateTime) {
-    if (dateTime == null) return '--:--:--';
-    return DateFormat('HH:mm:ss').format(dateTime);
-  }
+  const _TimeLogsContent({required this.response});
 
   String _formatTotalTime(String? totalTime) {
     if (totalTime == null || totalTime.isEmpty) return '0 m';
@@ -69,6 +73,7 @@ class _TimeLogsContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
+    final timeLogs = response?.data ?? [];
 
     return Card(
       child: Container(
@@ -134,7 +139,7 @@ class _TimeLogsContent extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          _formatTime(log.checkIn),
+                          log.checkIn,
                           style: TextStyle(
                             color: customColors.primary,
                             fontWeight: FontWeight.w500,
@@ -143,11 +148,11 @@ class _TimeLogsContent extends StatelessWidget {
                       ),
                       Expanded(
                         child: Text(
-                          log.checkOut != null
-                              ? _formatTime(log.checkOut)
+                          log.checkOut.isNotEmpty
+                              ? log.checkOut
                               : '--:--:--',
                           style: TextStyle(
-                            color: log.checkOut != null
+                            color: log.checkOut.isNotEmpty
                                 ? customColors.error
                                 : customColors.textSecondary,
                           ),
