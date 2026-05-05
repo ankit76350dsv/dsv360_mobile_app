@@ -45,7 +45,7 @@ class _AccountsCardState extends ConsumerState<AccountsCard> {
               child: Expanded(
                 child: Text(
                   widget.account.orgName,
-                  style: theme.textTheme.cardTitle, 
+                  style: theme.textTheme.titleMedium,
                   softWrap: true,
                   
                   

@@ -40,7 +40,7 @@ class UserBadgeCard extends StatelessWidget {
                           children: [
                             Text(
                               '${user.firstName} ${user.lastName}',
-                              style: theme.textTheme.cardTitle,
+                              style: theme.textTheme.titleMedium,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
