@@ -1,5 +1,6 @@
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/features/badges/model/badge_user.dart';
 import 'package:dsv360/features/badges/repositories/fetch_badge_users_repository.dart';
@@ -200,12 +201,8 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
     } catch (e) {
       setState(() => _taskTimerFetching = false);
       if (!mounted) return;
-      _showSnackBar(
-        SnackBar(
-          content: const Text('Failed to start timer. Please try again.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+     
+      showErrorSnackBar(context, 'Failed to start timer. Please try again.');
     }
   }
 

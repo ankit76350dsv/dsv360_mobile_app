@@ -1155,15 +1155,16 @@ if (_selectedSprintId != null) {
 
                   // ── Cycle status + Sprint dropdown + Sprint/Issue buttons ──
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
+                    padding: const EdgeInsets.only(
+                    
+                      top: 4,bottom: 4
                     ),
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
+                          SizedBox(width: 16,),
                           // CYCLE label
                           Text(
                             'CYCLE',

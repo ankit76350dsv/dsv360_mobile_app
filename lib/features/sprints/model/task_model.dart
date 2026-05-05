@@ -5,6 +5,7 @@ class TaskModel {
   final String storyId;
   final String status;
   final String dueDate;
+  final String startDate;
   final int estimatedHours;
 
   TaskModel({
@@ -14,6 +15,7 @@ class TaskModel {
     required this.storyId,
     required this.status,
     required this.dueDate,
+    required this.startDate,
     required this.estimatedHours,
   });
 
@@ -32,6 +34,7 @@ class TaskModel {
       storyId: storyId,
       status: json['Status'] ?? '',
       dueDate: json['DueDate'] ?? '',
+      startDate: json['CREATEDTIME']?.toString() ?? '',
       estimatedHours: int.tryParse(json['EstimatedHours'] ?? '0') ?? 0,
     );
   }

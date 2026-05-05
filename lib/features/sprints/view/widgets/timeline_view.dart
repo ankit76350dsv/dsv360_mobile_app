@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const double _kRowHeight = 36.0;
+const double _kRowHeight = 44.0;
 const double _kDayWidth = 32.0;
 const double _kHeaderMonthH = 22.0;
 const double _kHeaderDayH = 20.0;
@@ -72,6 +72,7 @@ class _TaskBar {
   final String storyId;
   final String label;
   final Color color;
+  final DateTime start;
   final DateTime due;
   final int rowIndex;
 
@@ -80,6 +81,27 @@ class _TaskBar {
     required this.storyId,
     required this.label,
     required this.color,
+    required this.start,
+    required this.due,
+    required this.rowIndex,
+  });
+}
+
+class _SubTaskBar {
+  final String subTaskId;
+  final String taskId;
+  final String label;
+  final Color color;
+  final DateTime start;
+  final DateTime due;
+  final int rowIndex;
+
+  const _SubTaskBar({
+    required this.subTaskId,
+    required this.taskId,
+    required this.label,
+    required this.color,
+    required this.start,
     required this.due,
     required this.rowIndex,
   });
@@ -189,7 +211,7 @@ class _TimelineViewState extends State<TimelineView> {
     return bars;
   }
 
-  List<_TaskBar> _buildTaskBarsForStory(
+  List<_ChartRow> _buildTaskRowsForStory(
     String storyId,
     int storyRowIndex,
     DateTime chartStart,
@@ -198,9 +220,8 @@ class _TimelineViewState extends State<TimelineView> {
     final tasks = widget.hierarchy.tasks
         .where((t) => t.storyId == storyId)
         .toList();
-    final bars = <_TaskBar>[];
+    final rows = <_ChartRow>[];
 
-    // Find parent story bar for fallback positioning
     final range = _chartRange();
     final storyBars = _buildStoryBars(range.start, range.end);
     _StoryBar? parentBar;
@@ -208,11 +229,12 @@ class _TimelineViewState extends State<TimelineView> {
       parentBar = storyBars.firstWhere((b) => b.storyId == storyId);
     } catch (_) {}
 
+    int rowOffset = 1;
     for (int i = 0; i < tasks.length; i++) {
       final task = tasks[i];
       DateTime? due = _parseDate(task.dueDate);
+      DateTime? start = _parseDate(task.startDate);
 
-      // Fallback: spread tasks evenly within parent story bar span
       if (due == null && parentBar != null) {
         final parentSpan = math.max(
             1, parentBar.end.difference(parentBar.start).inDays + 1);
@@ -221,21 +243,57 @@ class _TimelineViewState extends State<TimelineView> {
         due = parentBar.start.add(Duration(days: offset));
       }
       if (due == null) continue;
-
-      // Clamp to chart bounds
+      // start defaults to 1 day before due if not available
+      start ??= due.subtract(const Duration(days: 1));
+      // clamp both to chart bounds
+      if (start.isAfter(chartEnd)) start = chartEnd;
+      if (start.isBefore(chartStart)) start = chartStart;
       if (due.isAfter(chartEnd)) due = chartEnd;
       if (due.isBefore(chartStart)) due = chartStart;
+      // ensure start is never after due
+      if (start.isAfter(due)) start = due;
 
-      bars.add(_TaskBar(
+      final taskBar = _TaskBar(
         taskId: task.id,
         storyId: storyId,
         label: task.title.isNotEmpty ? task.title : 'Task ${i + 1}',
         color: _storyColor(storyRowIndex).withValues(alpha: 0.7),
+        start: start,
         due: due,
-        rowIndex: storyRowIndex + i + 1,
-      ));
+        rowIndex: storyRowIndex + rowOffset,
+      );
+      rows.add(_ChartRow(type: _RowType.task, storyIndex: storyRowIndex, taskBar: taskBar));
+      rowOffset++;
+
+      // Subtask rows for this task
+      final subtasks = widget.hierarchy.subtasks
+          .where((st) => st.taskId == task.id)
+          .toList();
+      for (int j = 0; j < subtasks.length; j++) {
+        final st = subtasks[j];
+        DateTime stDue = st.dueDate ?? due;
+        DateTime stStart = DateTime.tryParse(st.createdTime) ?? stDue.subtract(const Duration(days: 1));
+        stStart = DateTime(stStart.year, stStart.month, stStart.day);
+        if (stStart.isAfter(chartEnd)) stStart = chartEnd;
+        if (stStart.isBefore(chartStart)) stStart = chartStart;
+        if (stDue.isAfter(chartEnd)) stDue = chartEnd;
+        if (stDue.isBefore(chartStart)) stDue = chartStart;
+        if (stStart.isAfter(stDue)) stStart = stDue;
+
+        final subBar = _SubTaskBar(
+          subTaskId: st.rowId,
+          taskId: task.id,
+          label: st.title.isNotEmpty ? st.title : 'Sub ${j + 1}',
+          color: _storyColor(storyRowIndex).withValues(alpha: 0.45),
+          start: stStart,
+          due: stDue,
+          rowIndex: storyRowIndex + rowOffset,
+        );
+        rows.add(_ChartRow(type: _RowType.subtask, storyIndex: storyRowIndex, subTaskBar: subBar));
+        rowOffset++;
+      }
     }
-    return bars;
+    return rows;
   }
 
   // ── Date range for chart ──────────────────────────────────────────────────
@@ -281,19 +339,45 @@ class _TimelineViewState extends State<TimelineView> {
       rows.add(_ChartRow(type: _RowType.story, storyIndex: i, bar: bar));
 
       if (_selectedStoryId == story.id) {
-        final taskBars = _buildTaskBarsForStory(story.id, i, chartStart, chartEnd);
-        for (final tb in taskBars) {
-          rows.add(_ChartRow(type: _RowType.task, storyIndex: i, taskBar: tb));
-        }
-        if (taskBars.isEmpty) {
+        final taskRows = _buildTaskRowsForStory(story.id, i, chartStart, chartEnd);
+        if (taskRows.isEmpty) {
           rows.add(_ChartRow(type: _RowType.empty, storyIndex: i));
+        } else {
+          rows.addAll(taskRows);
         }
       }
     }
 
     final totalRowCount = rows.length;
     final chartHeight = totalRowCount * _kRowHeight + _kHeaderTotalH;
-    final chartWidth = totalDays * _kDayWidth.toDouble();
+
+    // Extend chart width when any bar's text overflows the date-span columns.
+    const hPad = 8.0;
+    const leftPad = 16.0;
+    double maxBarRight = totalDays * _kDayWidth.toDouble();
+    for (final row in rows) {
+      if (row.type == _RowType.task && row.taskBar != null) {
+        final b = row.taskBar!;
+        final dueOff = b.due.difference(chartStart).inDays;
+        final tp = TextPainter(
+          text: TextSpan(text: b.label, style: const TextStyle(fontSize: 9)),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        final barRight = leftPad + dueOff * _kDayWidth + math.max(_kDayWidth * 2.5, tp.width + hPad * 2);
+        if (barRight > maxBarRight) maxBarRight = barRight;
+      } else if (row.type == _RowType.subtask && row.subTaskBar != null) {
+        final b = row.subTaskBar!;
+        final dueOff = b.due.difference(chartStart).inDays;
+        final tp = TextPainter(
+          text: TextSpan(text: b.label, style: const TextStyle(fontSize: 8)),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        final barRight = leftPad + dueOff * _kDayWidth + math.max(_kDayWidth * 2.0, tp.width + hPad * 2);
+        if (barRight > maxBarRight) maxBarRight = barRight;
+      }
+    }
+    // Add right breathing room
+    final chartWidth = maxBarRight + 16.0;
 
     return InteractiveViewer(
       transformationController: _transformController,
@@ -309,6 +393,7 @@ class _TimelineViewState extends State<TimelineView> {
             rows: rows,
             chartStart: chartStart,
             totalDays: totalDays,
+            leftPad: leftPad,
             isDark: widget.isDark,
             greyBorder: widget.greyBorder,
             textPrimary: widget.textPrimary,
@@ -922,19 +1007,21 @@ class _TimelineViewState extends State<TimelineView> {
 
 // ── Row model for gantt painter ───────────────────────────────────────────────
 
-enum _RowType { story, task, empty }
+enum _RowType { story, task, subtask, empty }
 
 class _ChartRow {
   final _RowType type;
   final int storyIndex;
   final _StoryBar? bar;
   final _TaskBar? taskBar;
+  final _SubTaskBar? subTaskBar;
 
   const _ChartRow({
     required this.type,
     required this.storyIndex,
     this.bar,
     this.taskBar,
+    this.subTaskBar,
   });
 }
 
@@ -944,6 +1031,7 @@ class _GanttPainter extends CustomPainter {
   final List<_ChartRow> rows;
   final DateTime chartStart;
   final int totalDays;
+  final double leftPad;
   final bool isDark;
   final Color greyBorder;
   final Color textPrimary;
@@ -954,6 +1042,7 @@ class _GanttPainter extends CustomPainter {
     required this.rows,
     required this.chartStart,
     required this.totalDays,
+    required this.leftPad,
     required this.isDark,
     required this.greyBorder,
     required this.textPrimary,
@@ -963,8 +1052,11 @@ class _GanttPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.translate(leftPad, 0);
     _drawGrid(canvas, size);
     _drawBars(canvas, size);
+    canvas.restore();
   }
 
   void _drawGrid(Canvas canvas, Size size) {
@@ -1092,6 +1184,8 @@ class _GanttPainter extends CustomPainter {
         _drawStoryBar(canvas, row.bar!, top);
       } else if (row.type == _RowType.task && row.taskBar != null) {
         _drawTaskBar(canvas, row.taskBar!, top);
+      } else if (row.type == _RowType.subtask && row.subTaskBar != null) {
+        _drawSubTaskBar(canvas, row.subTaskBar!, top);
       } else if (row.type == _RowType.empty) {
         final tp = TextPainter(
           text: TextSpan(
@@ -1109,61 +1203,124 @@ class _GanttPainter extends CustomPainter {
     }
   }
 
-  void _drawStoryBar(Canvas canvas, _StoryBar bar, double top) {
-    final startOffset = bar.start.difference(chartStart).inDays;
-    final endOffset = bar.end.difference(chartStart).inDays + 1;
-    final left = startOffset * _kDayWidth;
-    final width = (endOffset - startOffset) * _kDayWidth;
-    final barTop = top + 4;
-    final barBottom = top + _kRowHeight - 4;
-
-    final bgPaint = Paint()..color = bar.color;
-    final rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(left, barTop, width, barBottom - barTop),
-      const Radius.circular(4),
-    );
-    canvas.drawRRect(rrect, bgPaint);
-
-    final tp = TextPainter(
-      text: TextSpan(
-        text: '  ${bar.label}',
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout(maxWidth: width - 8);
-    tp.paint(canvas, Offset(left + 4, barTop + (barBottom - barTop - tp.height) / 2));
+  // Draws a rotated-square (diamond) marker at [cx, cy] with half-size [r].
+  void _drawDiamond(Canvas canvas, double cx, double cy, double r, Paint paint) {
+    final path = Path()
+      ..moveTo(cx, cy - r)
+      ..lineTo(cx + r, cy)
+      ..lineTo(cx, cy + r)
+      ..lineTo(cx - r, cy)
+      ..close();
+    canvas.drawPath(path, paint);
   }
 
-  void _drawTaskBar(Canvas canvas, _TaskBar bar, double top) {
-    final dueOffset = bar.due.difference(chartStart).inDays;
-    final left = dueOffset * _kDayWidth;
-    const width = _kDayWidth * 2.5;
-    final barTop = top + 5;
-    final barBottom = top + _kRowHeight - 5;
+  // Draws a short date label below [cx] at [y].
+  void _drawDateLabel(Canvas canvas, DateTime date, double cx, double y) {
+    final label = '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}';
+    final tp = TextPainter(
+      text: TextSpan(
+        text: label,
+        style: TextStyle(color: textSecondary, fontSize: 8, fontWeight: FontWeight.w500),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, Offset(cx - tp.width / 2, y));
+  }
 
-    final bgPaint = Paint()..color = bar.color;
-    final rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(left, barTop, width, barBottom - barTop),
-      const Radius.circular(3),
-    );
-    canvas.drawRRect(rrect, bgPaint);
+  void _drawStoryBar(Canvas canvas, _StoryBar bar, double top) {
+    const hPad = 8.0;
+    const vPad = 6.0;
+    final startOffset = bar.start.difference(chartStart).inDays;
+    final endOffset = bar.end.difference(chartStart).inDays + 1;
+    final dateSpanWidth = (endOffset - startOffset) * _kDayWidth;
+    final left = startOffset * _kDayWidth;
+    final barTop = top + vPad;
+    final barBottom = top + _kRowHeight - vPad;
+    final barMidY = (barTop + barBottom) / 2;
 
     final tp = TextPainter(
       text: TextSpan(
         text: bar.label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 9,
-          fontWeight: FontWeight.w500,
-        ),
+        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
       ),
       textDirection: TextDirection.ltr,
-    )..layout(maxWidth: width - 4);
-    tp.paint(canvas, Offset(left + 2, barTop + (barBottom - barTop - tp.height) / 2));
+    )..layout();
+
+    final width = math.max(dateSpanWidth, tp.width + hPad * 2);
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTWH(left, barTop, width, barBottom - barTop), const Radius.circular(4)),
+      Paint()..color = bar.color,
+    );
+    tp.paint(canvas, Offset(left + hPad, barMidY - tp.height / 2));
+  }
+
+  void _drawTaskBar(Canvas canvas, _TaskBar bar, double top) {
+    const hPad = 8.0;
+    const vPad = 7.0;
+    final startOffset = bar.start.difference(chartStart).inDays;
+    final dueOffset  = bar.due.difference(chartStart).inDays;
+    final left       = startOffset * _kDayWidth;
+    final dueX       = dueOffset * _kDayWidth + _kDayWidth / 2; // centre of due column
+    final barTop     = top + vPad;
+    final barBottom  = top + _kRowHeight - vPad;
+    final barMidY    = (barTop + barBottom) / 2;
+
+    final tp = TextPainter(
+      text: TextSpan(
+        text: bar.label,
+        style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w500),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    // Bar spans from start to due; grows wider if label is longer than that span
+    final spanWidth = (dueOffset - startOffset + 1) * _kDayWidth;
+    final width = math.max(spanWidth, tp.width + hPad * 2);
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTWH(left, barTop, width, barBottom - barTop), const Radius.circular(3)),
+      Paint()..color = bar.color,
+    );
+    tp.paint(canvas, Offset(left + hPad, barMidY - tp.height / 2));
+
+    // Diamond at exact due-date column centre (above the bar)
+    _drawDiamond(canvas, dueX, barTop - 4, 4.5, Paint()..color = Colors.white);
+    // Date label below the bar at due-date column
+    _drawDateLabel(canvas, bar.due, dueX, barBottom + 1);
+  }
+
+  void _drawSubTaskBar(Canvas canvas, _SubTaskBar bar, double top) {
+    const hPad = 6.0;
+    const vPad = 9.0;
+    final startOffset = bar.start.difference(chartStart).inDays;
+    final dueOffset   = bar.due.difference(chartStart).inDays;
+    final left        = startOffset * _kDayWidth;
+    final dueX        = dueOffset * _kDayWidth + _kDayWidth / 2;
+    final barTop      = top + vPad;
+    final barBottom   = top + _kRowHeight - vPad;
+    final barMidY     = (barTop + barBottom) / 2;
+
+    final tp = TextPainter(
+      text: TextSpan(
+        text: bar.label,
+        style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w400),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    final spanWidth = (dueOffset - startOffset + 1) * _kDayWidth;
+    final width = math.max(spanWidth, tp.width + hPad * 2);
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(Rect.fromLTWH(left, barTop, width, barBottom - barTop), const Radius.circular(3)),
+      Paint()..color = bar.color,
+    );
+    tp.paint(canvas, Offset(left + hPad, barMidY - tp.height / 2));
+
+    // Circle at exact due-date column centre (above the bar)
+    canvas.drawCircle(Offset(dueX, barTop - 4), 3.5, Paint()..color = Colors.white);
+    _drawDateLabel(canvas, bar.due, dueX, barBottom + 1);
   }
 
   String _monthName(int month) {
@@ -1301,9 +1458,11 @@ class _FullscreenGanttState extends State<_FullscreenGantt> {
             .where((t) => t.storyId == story.id)
             .toList();
         final parentBar = bar;
+        int rowOffset = 1;
         for (int ti = 0; ti < tasks.length; ti++) {
           final task = tasks[ti];
           DateTime? due = _parseDate(task.dueDate);
+          DateTime? start = _parseDate(task.startDate);
           if (due == null) {
             final parentSpan = math.max(
                 1, parentBar.end.difference(parentBar.start).inDays + 1);
@@ -1311,8 +1470,12 @@ class _FullscreenGanttState extends State<_FullscreenGantt> {
                 (parentSpan / math.max(1, tasks.length) * ti).round();
             due = parentBar.start.add(Duration(days: offset));
           }
+          start ??= due.subtract(const Duration(days: 1));
+          if (start.isAfter(chartEnd)) start = chartEnd;
+          if (start.isBefore(chartStart)) start = chartStart;
           if (due.isAfter(chartEnd)) due = chartEnd;
           if (due.isBefore(chartStart)) due = chartStart;
+          if (start.isAfter(due)) start = due;
           rows.add(_ChartRow(
             type: _RowType.task,
             storyIndex: i,
@@ -1321,10 +1484,42 @@ class _FullscreenGanttState extends State<_FullscreenGantt> {
               storyId: story.id,
               label: task.title.isNotEmpty ? task.title : 'Task ${ti + 1}',
               color: _storyColor(i).withValues(alpha: 0.7),
+              start: start,
               due: due,
-              rowIndex: i + ti + 1,
+              rowIndex: i + rowOffset,
             ),
           ));
+          rowOffset++;
+
+          // Subtask rows
+          final subtasks = widget.hierarchy.subtasks
+              .where((st) => st.taskId == task.id)
+              .toList();
+          for (int si = 0; si < subtasks.length; si++) {
+            final st = subtasks[si];
+            DateTime stDue = st.dueDate ?? due;
+            DateTime stStart = DateTime.tryParse(st.createdTime) ?? stDue.subtract(const Duration(days: 1));
+            stStart = DateTime(stStart.year, stStart.month, stStart.day);
+            if (stStart.isAfter(chartEnd)) stStart = chartEnd;
+            if (stStart.isBefore(chartStart)) stStart = chartStart;
+            if (stDue.isAfter(chartEnd)) stDue = chartEnd;
+            if (stDue.isBefore(chartStart)) stDue = chartStart;
+            if (stStart.isAfter(stDue)) stStart = stDue;
+            rows.add(_ChartRow(
+              type: _RowType.subtask,
+              storyIndex: i,
+              subTaskBar: _SubTaskBar(
+                subTaskId: st.rowId,
+                taskId: task.id,
+                label: st.title.isNotEmpty ? st.title : 'Sub ${si + 1}',
+                color: _storyColor(i).withValues(alpha: 0.45),
+                start: stStart,
+                due: stDue,
+                rowIndex: i + rowOffset,
+              ),
+            ));
+            rowOffset++;
+          }
         }
         if (tasks.isEmpty) {
           rows.add(_ChartRow(type: _RowType.empty, storyIndex: i));
@@ -1400,6 +1595,7 @@ class _FullscreenGanttState extends State<_FullscreenGantt> {
                   rows: rows,
                   chartStart: chartStart,
                   totalDays: totalDays,
+                  leftPad: 0,
                   isDark: widget.isDark,
                   greyBorder: widget.greyBorder,
                   textPrimary: widget.textPrimary,

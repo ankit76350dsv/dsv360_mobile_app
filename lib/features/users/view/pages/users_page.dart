@@ -26,6 +26,7 @@ import 'package:dsv360/core/widgets/custom_chip.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/core/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/core/widgets/custom_input_search.dart';
+import 'package:dsv360/features/teams/providers/batch_profile_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -81,7 +82,7 @@ class _UsersPageState extends ConsumerState<UsersPage> {
         // you can open a dialog or screen here
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded),
+            icon: const Icon(Icons.refresh_rounded, size: 20,),
             onPressed: () async {
               if (_isRefreshingData) return;
               setState(() => _isRefreshingData = true);
@@ -371,20 +372,24 @@ class _UserCardState extends ConsumerState<UserCard> {
 
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Column(
+              child: Row(
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "${widget.user.firstName} ${widget.user.lastName}",
-                        style: theme.textTheme.bodyLarge,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2.0),
-                      _userInfoRow(Icons.email, widget.user.emailAddress),
-                    ],
+                  _buildAvatar(42),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "${widget.user.firstName} ${widget.user.lastName}",
+                          style: theme.textTheme.bodyLarge,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2.0),
+                        _userInfoRow(Icons.email, widget.user.emailAddress),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -564,6 +569,62 @@ class _UserCardState extends ConsumerState<UserCard> {
       builder: (_) {
         return _DeleteUserBottomSheet(user: user, usersList: usersList);
       },
+    );
+  }
+
+  Widget _buildAvatar(double size) {
+    final profilesAsync = ref.watch(batchProfilesProvider);
+
+    String? imageUrl;
+    profilesAsync.whenData((profiles) {
+      final match = profiles.where((p) => p.userId == widget.user.userId);
+      if (match.isNotEmpty && match.first.profilePic.isNotEmpty) {
+        imageUrl = match.first.profilePic.trim();
+      }
+    });
+
+    if (imageUrl == null || imageUrl!.isEmpty) return _avatarFallback(size);
+
+    return ClipOval(
+      child: Image.network(
+        imageUrl!,
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return SizedBox(
+            width: size,
+            height: size,
+            child: const Center(child: CircularProgressIndicator(strokeWidth: 1.5)),
+          );
+        },
+        errorBuilder: (_, __, ___) => _avatarFallback(size),
+      ),
+    );
+  }
+
+  Widget _avatarFallback(double size) {
+    final customColors = Theme.of(context).custom;
+    final initials =
+        '${widget.user.firstName.isNotEmpty ? widget.user.firstName[0] : ''}${widget.user.lastName.isNotEmpty ? widget.user.lastName[0] : ''}'
+            .toUpperCase();
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: (customColors.primary ?? Colors.blue).withValues(alpha: 0.15),
+        shape: BoxShape.circle,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        initials,
+        style: TextStyle(
+          fontSize: size * 0.38,
+          fontWeight: FontWeight.w600,
+          color: customColors.primary ?? Colors.blue,
+        ),
+      ),
     );
   }
 
