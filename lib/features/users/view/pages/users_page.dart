@@ -3,6 +3,7 @@ import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
@@ -35,6 +36,8 @@ class UsersPage extends ConsumerStatefulWidget {
 }
 
 class _UsersPageState extends ConsumerState<UsersPage> {
+  bool _isRefreshingData = false;
+
   @override
   void initState() {
     super.initState();
@@ -76,7 +79,30 @@ class _UsersPageState extends ConsumerState<UsersPage> {
         // if needed can add the icon as well here
         // hook for info action
         // you can open a dialog or screen here
-        actions: [],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            onPressed: () async {
+              if (_isRefreshingData) return;
+              setState(() => _isRefreshingData = true);
+              try {
+                final _ = await ref.refresh(usersRepositoryProvider.future);
+                if (mounted) {
+                  showSuccessSnackBar(context, 'Users refreshed successfully');
+                }
+              } catch (e) {
+                debugPrint('Refresh error: $e');
+                if (mounted) {
+                  showErrorSnackBar(context, 'Refresh failed. Please try again.');
+                }
+              } finally {
+                if (mounted) {
+                  setState(() => _isRefreshingData = false);
+                }
+              }
+            },
+          ),
+        ],
       ),
       floatingActionButtonLocation:
           FloatingActionButtonLocation.centerFloat, //add fab logic here

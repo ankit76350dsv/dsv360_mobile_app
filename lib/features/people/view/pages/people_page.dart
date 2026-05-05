@@ -2052,9 +2052,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                             summaryAsync.when(
                               loading: () => const Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 16),
-                                child: GlobalLoader(
-                                  message: 'Loading summary...',
-                                ),
+                                child: CircularProgressIndicator(),
                               ),
                               error: (_, __) => Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -2553,9 +2551,7 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
                                   ConnectionState.waiting) {
-                                return const GlobalLoader(
-                                  message: 'Loading attendance info...',
-                                );
+                                return Center(child: const CircularProgressIndicator());
                               }
 
                               if (snapshot.hasError) {

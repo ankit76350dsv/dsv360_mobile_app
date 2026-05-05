@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
@@ -27,6 +28,7 @@ class FeedbacksScreen extends ConsumerStatefulWidget {
 class _FeedbacksScreenState extends ConsumerState<FeedbacksScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedFilter = 'All'; // 'All', 'Fixed', or 'Will Fix Soon'
+  bool _isRefreshingData = false;
   final List<String> _filterOptions = const ['All', 'Fixed', 'Will Fix Soon'];
 
   final userRole = AuthManager.instance.currentUser?.role?.name.toLowerCase();
@@ -97,7 +99,31 @@ class _FeedbacksScreenState extends ConsumerState<FeedbacksScreen> {
           'Feedbacks',
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
-        actions: [],
+        
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, size: 20,),
+            onPressed: () async {
+              if (_isRefreshingData) return;
+              setState(() => _isRefreshingData = true);
+              try {
+                final _ = await ref.refresh(feedbackRepositoryProvider.future);
+                if (mounted) {
+                  showSuccessSnackBar(context, 'Feedbacks refreshed successfully');
+                }
+              } catch (e) {
+                debugPrint('Refresh error: $e');
+                if (mounted) {
+                  showErrorSnackBar(context, 'Refresh failed. Please try again.');
+                }
+              } finally {
+                if (mounted) {
+                  setState(() => _isRefreshingData = false);
+                }
+              }
+            },
+          ),
+        ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: (userRole != 'admin' || userRole != 'admin') ? connectivityStatus.when(

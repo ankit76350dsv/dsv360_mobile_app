@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
@@ -30,6 +31,7 @@ class IssuesScreen extends ConsumerStatefulWidget {
 class _IssuesScreenState extends ConsumerState<IssuesScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _isRefreshingData = false;
   final List<String> _statusOptions = const [
     'Open',
     'Work In Progress',
@@ -381,6 +383,28 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                         );
                       }
                     },
+                    onInfoTap: () async {
+                      if (_isRefreshingData) return;
+                      setState(() => _isRefreshingData = true);
+                      try {
+                        final _ = await ref.refresh(issueListProvider.future);
+                        if (mounted) {
+                         
+                          showSuccessSnackBar(context, 'Issues refreshed successfully');
+                        }
+                      } catch (e) {
+                        debugPrint('Refresh error: $e');
+                        if (mounted) {
+                          
+                          showErrorSnackBar(context, 'Refresh failed. Please try again.');
+                        }
+                      } finally {
+                        if (mounted) {
+                          setState(() => _isRefreshingData = false);
+                        }
+                      }
+                    },
+                    actionIcon: Icons.refresh_rounded,
                   ),
                 ),
                 Expanded(
@@ -415,6 +439,28 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                           );
                         }
                       },
+                      onInfoTap: () async {
+                        if (_isRefreshingData) return;
+                        setState(() => _isRefreshingData = true);
+                        try {
+                          final _ = await ref.refresh(issueListProvider.future);
+                          if (mounted) {
+                            
+                            showSuccessSnackBar(context, 'Issues refreshed successfully');
+                          }
+                        } catch (e) {
+                          debugPrint('Refresh error: $e');
+                          if (mounted) {
+                            
+                            showErrorSnackBar(context, 'Refresh failed. Please try again.');
+                          }
+                        } finally {
+                          if (mounted) {
+                            setState(() => _isRefreshingData = false);
+                          }
+                        }
+                      },
+                      actionIcon: Icons.refresh_rounded,
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),

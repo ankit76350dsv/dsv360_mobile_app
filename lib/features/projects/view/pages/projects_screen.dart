@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/connectivity_provider.dart';
@@ -30,6 +31,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   // We don't need a local _projects list anymore as it comes from the provider.
   // We might keep a query string to trigger rebuilds if we want, or just read controller.
   String _searchQuery = '';
+  bool _isRefreshingData = false;
 
   @override
   void initState() {
@@ -199,6 +201,26 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                             );
                           }
                         },
+                        onInfoTap: () async {
+                          if (_isRefreshingData) return;
+                          setState(() => _isRefreshingData = true);
+                          try {
+                            final _ = await ref.refresh(projectListProvider.future);
+                            if (mounted) {
+                              showSuccessSnackBar(context, 'Projects refreshed successfully');
+                            }
+                          } catch (e) {
+                            debugPrint('Refresh error: $e');
+                            if (mounted) {
+                              showErrorSnackBar(context, 'Refresh failed. Please try again.');
+                            }
+                          } finally {
+                            if (mounted) {
+                              setState(() => _isRefreshingData = false);
+                            }
+                          }
+                        },
+                        actionIcon: Icons.refresh_rounded,
                       ),
                     ),
                     Expanded(
@@ -240,9 +262,26 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                                 );
                               }
                             },
-                            onInfoTap: () {
-                              // hook for info action
+                            onInfoTap: () async {
+                              if (_isRefreshingData) return;
+                              setState(() => _isRefreshingData = true);
+                              try {
+                                final _ = await ref.refresh(projectListProvider.future);
+                                if (mounted) {
+                                  showSuccessSnackBar(context, 'Projects refreshed successfully');
+                                }
+                              } catch (e) {
+                                debugPrint('Refresh error: $e');
+                                if (mounted) {
+                                  showErrorSnackBar(context, 'Refresh failed. Please try again.');
+                                }
+                              } finally {
+                                if (mounted) {
+                                  setState(() => _isRefreshingData = false);
+                                }
+                              }
                             },
+                            actionIcon: Icons.refresh_rounded,
                           ),
 
                           // Search Bar

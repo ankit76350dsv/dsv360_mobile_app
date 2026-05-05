@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/features/badges/view/pages/add_edit_badge_page.dart';
@@ -23,6 +24,8 @@ class BadgesPage extends ConsumerStatefulWidget {
 }
 
 class _BadgesPageState extends ConsumerState<BadgesPage> {
+  bool _isRefreshingData = false;
+
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
@@ -53,7 +56,32 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
           'Badges',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
-        actions: const [],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded,size: 20,),
+            onPressed: () async {
+              if (_isRefreshingData) return;
+              setState(() => _isRefreshingData = true);
+              try {
+                final _ = await ref.refresh(usersRepositoryProvider.future);
+                if (mounted) {
+                  
+                  showSuccessSnackBar(context, 'Badges refreshed successfully');
+                }
+              } catch (e) {
+                debugPrint('Refresh error: $e');
+                if (mounted) {
+                 
+                  showErrorSnackBar(context, 'Refresh failed. Please try again.');
+                }
+              } finally {
+                if (mounted) {
+                  setState(() => _isRefreshingData = false);
+                }
+              }
+            },
+          ),
+        ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: connectivityStatus.when(

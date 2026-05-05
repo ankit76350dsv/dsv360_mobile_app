@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
@@ -38,6 +39,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
   late TextEditingController _searchController;
   // taskId of the task that currently has a running timer (null = no timer running)
   String? _runningTaskId;
+  bool _isRefreshingData = false;
 
   @override
   void initState() {
@@ -361,7 +363,32 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                   children: [
                     Container(
                       padding: const EdgeInsets.only(top: 48, bottom: 12),
-                      child: TopBar(title: title, onBack: onBack),
+                      child: TopBar(
+                        title: title,
+                        onBack: onBack,
+                        onInfoTap: () async {
+                          if (_isRefreshingData) return;
+                          setState(() => _isRefreshingData = true);
+                          try {
+                            final _ = await ref.refresh(
+                              tasksListRepositoryProvider(userId).future,
+                            );
+                            if (mounted) {
+                              showSuccessSnackBar(context, 'Tasks refreshed successfully');
+                            }
+                          } catch (e) {
+                            debugPrint('Refresh error: $e');
+                            if (mounted) {
+                              showErrorSnackBar(context, 'Refresh failed. Please try again.');
+                            }
+                          } finally {
+                            if (mounted) {
+                              setState(() => _isRefreshingData = false);
+                            }
+                          }
+                        },
+                        actionIcon: Icons.refresh_rounded,
+                      ),
                     ),
                     Expanded(
                       child: GlobalError(
@@ -391,7 +418,32 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                       padding: const EdgeInsets.only(top: 48, bottom: 12),
                       child: Column(
                         children: [
-                          TopBar(title: title, onBack: onBack),
+                          TopBar(
+                            title: title,
+                            onBack: onBack,
+                            onInfoTap: () async {
+                              if (_isRefreshingData) return;
+                              setState(() => _isRefreshingData = true);
+                              try {
+                                final _ = await ref.refresh(
+                                  tasksListRepositoryProvider(userId).future,
+                                );
+                                if (mounted) {
+                                  showSuccessSnackBar(context, 'Tasks refreshed successfully');
+                                }
+                              } catch (e) {
+                                debugPrint('Refresh error: $e');
+                                if (mounted) {
+                                  showErrorSnackBar(context, 'Refresh failed. Please try again.');
+                                }
+                              } finally {
+                                if (mounted) {
+                                  setState(() => _isRefreshingData = false);
+                                }
+                              }
+                            },
+                            actionIcon: Icons.refresh_rounded,
+                          ),
                           Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,

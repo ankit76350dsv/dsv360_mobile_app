@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/features/client/repositories/client_contacts_repository.dart';
@@ -19,6 +20,8 @@ class ClientContactsPage extends ConsumerStatefulWidget {
 }
 
 class _ClientContactsState extends ConsumerState<ClientContactsPage> {
+  bool _isRefreshingData = false;
+
   @override
   Widget build(BuildContext context) {
     final clientContactsListAsync = ref.watch(
@@ -51,12 +54,40 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
           'Clients Contacts',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
-        actions: const [],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, size: 20,),
+            onPressed: () async {
+              if (_isRefreshingData) return;
+              setState(() => _isRefreshingData = true);
+              try {
+                final _ = await ref.refresh(clientContactsListRepositoryProvider.future);
+                if (mounted) {
+                  
+                  showSuccessSnackBar(context, 'Client contacts refreshed successfully');
+                }
+              } catch (e) {
+                debugPrint('Refresh error: $e');
+                if (mounted) {
+                  
+                  showErrorSnackBar(context, 'Refresh failed. Please try again.');
+                }
+              } finally {
+                if (mounted) {
+                  setState(() => _isRefreshingData = false);
+                }
+              }
+            },
+          ),
+        ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: connectivityStatus.when(
         data: (results) {
           if (results.contains(ConnectivityResult.none)) {
+            return null;
+          }
+          if (clientContactsListAsync.hasError) {
             return null;
           }
           return FloatingActionButton(
