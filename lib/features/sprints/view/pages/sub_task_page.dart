@@ -119,6 +119,12 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
     super.dispose();
   }
 
+  /// Show a snackbar and dismiss any previously shown snackbars
+  void _showSnackBar(SnackBar snackbar) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(snackbar);
+  }
+
   Future<void> _fetchTimerStatus() async {
     setState(() => _taskTimerFetching = true);
     try {
@@ -194,7 +200,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
     } catch (e) {
       setState(() => _taskTimerFetching = false);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      _showSnackBar(
         SnackBar(
           content: const Text('Failed to start timer. Please try again.'),
           backgroundColor: Colors.red,
@@ -252,7 +258,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
 
       setState(() => _isUpdatingStatus = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      _showSnackBar(
         SnackBar(
           content: Text(
             'Task status updated to ${_statusLabel(updatedStatus)}',
@@ -273,7 +279,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
 
       setState(() => _isUpdatingStatus = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      _showSnackBar(
         SnackBar(
           content: Text(
             'Failed to update task status: $e',
@@ -1091,6 +1097,12 @@ class _SubTaskCardState extends State<_SubTaskCard> {
     _status = widget.subTask.status.toUpperCase();
   }
 
+  /// Show a snackbar and dismiss any previously shown snackbars
+  void _showSnackBar(SnackBar snackbar) {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(snackbar);
+  }
+
   Future<void> _startSubTaskTimer() async {
     setState(() => _timerFetching = true);
     try {
@@ -1130,7 +1142,7 @@ class _SubTaskCardState extends State<_SubTaskCard> {
     } catch (e) {
       setState(() => _timerFetching = false);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      _showSnackBar(
         SnackBar(
           content: const Text('Failed to start timer. Please try again.'),
           backgroundColor: Colors.red,
@@ -1220,7 +1232,7 @@ class _SubTaskCardState extends State<_SubTaskCard> {
       // Refresh all data without showing loading
       await widget.onStatusChanged();
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      _showSnackBar(
         SnackBar(
           content: Text(
             'Status updated to ${_statusLabel(newStatus)}',
@@ -1239,7 +1251,7 @@ class _SubTaskCardState extends State<_SubTaskCard> {
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      _showSnackBar(
         SnackBar(
           content: Text(
             'Failed to update status: $e',

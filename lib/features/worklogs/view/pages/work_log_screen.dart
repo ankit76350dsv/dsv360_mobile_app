@@ -356,7 +356,7 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
           onTap: (){
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Add Work Logs for tasks here'),
+                content: Text('Add Work Logs through Tasks'),
                 duration: Duration(seconds: 5),
               ),
             );

@@ -19,8 +19,9 @@ import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:dsv360/features/people/repositories/leave_summary_repository.dart';
 import 'package:dsv360/features/people/repositories/leaves_repository.dart';
 import 'package:dsv360/features/people/repositories/time_logs_repository.dart';
-import 'package:dsv360/features/people/repositories/attendance_tracker_list.dart';
-import 'package:dsv360/features/people/repositories/attendance_list_repository.dart';
+
+import 'package:dsv360/features/people/repositories/attendance_dashboard_repository.dart';
+import 'package:dsv360/features/people/model/attendance_dashboard.dart';
 import 'package:dsv360/features/people/repositories/check_in_repository.dart';
 import 'package:dsv360/features/users/repositories/users_repository.dart';
 import 'package:dsv360/features/people/repositories/user_check_in_status_repository.dart';
@@ -1233,14 +1234,6 @@ class _AttendanceTabState extends ConsumerState<_AttendanceTab> {
     final endDate = range.$2;
     final formatter = DateFormat('yyyy-MM-dd');
 
-    final attendanceAsync = ref.watch(
-      attendanceDetailListRepositoryProvider(
-        userId: userId,
-        startDate: formatter.format(startDate),
-        endDate: formatter.format(endDate),
-      ),
-    );
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1297,24 +1290,40 @@ class _AttendanceTabState extends ConsumerState<_AttendanceTab> {
 
         // Attendance List
         Expanded(
-          child: attendanceAsync.when(
-            loading: () => const Center(
-              child: GlobalLoader(message: 'Fetching attendance...'),
-            ),
-            error: (err, st) => Center(
-              child: GlobalError(
-                message: 'Failed to load attendance: Try Again',
-                onRetry: () => ref.refresh(
-                  attendanceDetailListRepositoryProvider(
-                    userId: userId,
-                    startDate: formatter.format(startDate),
-                    endDate: formatter.format(endDate),
-                  ),
+          child: FutureBuilder<AttendanceDashboardResponse>(
+            future: ref
+                .read(attendanceDashboardRepositoryProvider)
+                .fetchAttendanceDashboard(
+                  userId: userId,
+                  startDate: formatter.format(startDate),
+                  endDate: formatter.format(endDate),
                 ),
-              ),
-            ),
-            data: (data) {
-              final presentDates = data.map((e) => e.dayDate).toSet();
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: GlobalLoader(message: 'Fetching attendance...'),
+                );
+              }
+
+              if (snapshot.hasError) {
+                return Center(
+                  child: GlobalError(
+                    message: 'Failed to load attendance: Try Again',
+                    onRetry: () => setState(() {}),
+                  ),
+                );
+              }
+
+              final response = snapshot.data;
+              if (response == null || response.data.isEmpty) {
+                return const Center(
+                  child: Text('No attendance records found'),
+                );
+              }
+
+              final presentDates = response.data
+                  .map((e) => e.dayDate)
+                  .toSet();
 
               final List<Widget> children = [];
               DateTime current = startDate;
@@ -1359,9 +1368,14 @@ class _AttendanceTabState extends ConsumerState<_AttendanceTab> {
                 current = current.add(const Duration(days: 1));
               }
 
-              return ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                children: children.toList(), // Most recent first
+              return RefreshIndicator(
+                onRefresh: () async {
+                  setState(() {});
+                },
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  children: children.toList(),
+                ),
               );
             },
           ),
@@ -2447,7 +2461,7 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                   CustomDropDownField(
                     options: users.map((u) {
                       return DropdownMenuItem<String>(
-                        value: u.firstName + " " + u.lastName,
+                        value: u.userId,
                         child: Text('${u.firstName} ${u.lastName}'.trim()),
                       );
                     }).toList(),
@@ -2528,72 +2542,69 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                               "Select employee and dates to view attendance",
                             ),
                           )
-                        : ref
-                              .watch(
-                                attendanceTrackerListRepositoryProvider(
+                        : FutureBuilder<AttendanceDashboardResponse>(
+                            future: ref
+                                .read(attendanceDashboardRepositoryProvider)
+                                .fetchAttendanceDashboard(
                                   userId: _queryUserId!,
                                   startDate: _queryStartDate!,
                                   endDate: _queryEndDate!,
                                 ),
-                              )
-                              .when(
-                                data: (attendanceList) {
-                                  if (attendanceList.isEmpty) {
-                                    return const Center(
-                                      child: Text(
-                                        "No attendance records found",
-                                      ),
-                                    );
-                                  }
-                                  return RefreshIndicator(
-                                    onRefresh: () async {
-                                      ref.invalidate(
-                                        attendanceTrackerListRepositoryProvider(
-                                          userId: _queryUserId!,
-                                          startDate: _queryStartDate!,
-                                          endDate: _queryEndDate!,
-                                        ),
-                                      );
-                                    },
-                                    child: ListView.builder(
-                                      itemCount: attendanceList.length,
-                                      itemBuilder: (context, index) {
-                                        final detail = attendanceList[index];
-                                        final date =
-                                            DateTime.tryParse(detail.dayDate) ??
-                                            detail.checkIn;
-
-                                        return AttendanceTile(
-                                          day: DateFormat('EEE').format(date),
-                                          date: DateFormat(
-                                            'd MMM',
-                                          ).format(date),
-                                          status: detail.checkOut != null
-                                              ? "Present"
-                                              : "P (In)",
-                                          statusColor: detail.checkOut != null
-                                              ? Colors.green
-                                              : Colors.orange,
-                                        );
-                                      },
-                                    ),
-                                  );
-                                },
-                                loading: () => const GlobalLoader(
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const GlobalLoader(
                                   message: 'Loading attendance info...',
-                                ),
-                                error: (error, stack) => GlobalError(
+                                );
+                              }
+
+                              if (snapshot.hasError) {
+                                return GlobalError(
                                   message:
                                       'Failed to load attendance data: Try Again',
-                                  onRetry: () => ref.refresh(
-                                    attendanceTrackerListRepositoryProvider(
-                                      userId: _queryUserId!,
-                                      startDate: _queryStartDate!,
-                                      endDate: _queryEndDate!,
-                                    ),
+                                  onRetry: () => setState(() {}),
+                                );
+                              }
+
+                              final response = snapshot.data;
+                              if (response == null || response.data.isEmpty) {
+                                return const Center(
+                                  child: Text(
+                                    "No attendance records found",
                                   ),
+                                );
+                              }
+
+                              return RefreshIndicator(
+                                onRefresh: () async {
+                                  setState(() {});
+                                },
+                                child: ListView.builder(
+                                  itemCount: response.data.length,
+                                  itemBuilder: (context, index) {
+                                    final detail = response.data[index];
+                                    final date =
+                                        DateTime.tryParse(detail.dayDate) ??
+                                        DateTime.now();
+
+                                    final hasCheckOut =
+                                        detail.checkOut.isNotEmpty;
+
+                                    return AttendanceTile(
+                                      day: DateFormat('EEE').format(date),
+                                      date: DateFormat('d MMM').format(date),
+                                      status: hasCheckOut
+                                          ? "Present"
+                                          : "P (In)",
+                                      statusColor: hasCheckOut
+                                          ? Colors.green
+                                          : Colors.orange,
+                                    );
+                                  },
                                 ),
-                              ),
+                              );
+                            },
+                          ),
                   ),
                 ],
               ),

@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
@@ -940,19 +941,14 @@ if (_selectedSprintId != null) {
                           );
                         }
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Data refreshed successfully'),
-                              duration: Duration(seconds: 1),
-                            ),
-                          );
+                          
+                          showSuccessSnackBar(context, 'Data refreshed successfully');
                         }
                       } catch (e) {
                         debugPrint('Refresh error: $e');
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: const Text('Refresh failed. Please try again.')),
-                          );
+                          
+                          showErrorSnackBar(context, 'Refresh failed. Please try again.');
                         }
                       } finally {
                         if (mounted) {
