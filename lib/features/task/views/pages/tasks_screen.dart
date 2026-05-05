@@ -8,7 +8,7 @@ import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/time_entry/repositories/check_timer_status_repository.dart';
 import 'package:dsv360/features/time_entry/view/pages/timer_service.dart';
 import 'package:dsv360/features/task/providers/task_provider.dart';
-import 'package:dsv360/features/task/repositories/task_repository.dart';
+import 'package:dsv360/features/task/repositories/fetch_tasks_repository.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:flutter/material.dart';

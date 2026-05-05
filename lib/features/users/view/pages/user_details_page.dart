@@ -8,7 +8,7 @@ import 'package:dsv360/features/projects/model/project_model.dart';
 import 'package:dsv360/core/models/task.dart';
 import 'package:dsv360/features/users/model/users.dart';
 import 'package:dsv360/features/projects/providers/project_provider.dart';
-import 'package:dsv360/features/task/repositories/task_repository.dart';
+import 'package:dsv360/features/task/repositories/fetch_tasks_repository.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/core/widgets/custom_chip.dart';
 import 'package:dsv360/core/widgets/custom_dropdown_field.dart';
