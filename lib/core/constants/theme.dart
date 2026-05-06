@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'app_colors.dart';
 
 extension ThemeDataExtension on ThemeData {
@@ -7,11 +8,27 @@ extension ThemeDataExtension on ThemeData {
 }
 
 class ThemeController {
-  final ValueNotifier<ThemeMode> themeMode = ValueNotifier(ThemeMode.light);
+  static const _themeModeKey = 'app_theme_mode';
 
-  final ValueNotifier<Color> seedColor = ValueNotifier(
-    const Color(0xFF004da7),
-  ); // fallback
+  final ValueNotifier<ThemeMode> themeMode = ValueNotifier(ThemeMode.light);
+  final ValueNotifier<Color> seedColor = ValueNotifier(const Color(0xFF004da7));
+
+  Future<void> loadThemeMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_themeModeKey);
+
+    if (raw == 'dark') {
+      themeMode.value = ThemeMode.dark;
+    } else {
+      themeMode.value = ThemeMode.light;
+    }
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    themeMode.value = mode;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_themeModeKey, mode == ThemeMode.dark ? 'dark' : 'light');
+  }
 }
 
 final themeController = ThemeController();
@@ -43,6 +60,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
   final Color? tabbarBackground;
   final Color? tabbarIndicator;
   final Color? chatBubbleBot;
+  final Color? timerTaskColor;
 
   const CustomColors({
     required this.primary,
@@ -70,6 +88,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
     required this.tabbarBackground,
     required this.tabbarIndicator,
     required this.chatBubbleBot,
+    required this.timerTaskColor,
   });
 
   @override
@@ -99,6 +118,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
     Color? tabbarBackground,
     Color? tabbarIndicator,
     Color? chatBubbleBot,
+    Color? timerTaskColor,
   }) {
     return CustomColors(
       primary: primary ?? this.primary,
@@ -126,6 +146,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
       tabbarBackground: tabbarBackground ?? this.tabbarBackground,
       tabbarIndicator: tabbarIndicator ?? this.tabbarIndicator,
       chatBubbleBot: chatBubbleBot ?? this.chatBubbleBot,
+      timerTaskColor: timerTaskColor ?? this.timerTaskColor,
     );
   }
 
@@ -162,6 +183,7 @@ class CustomColors extends ThemeExtension<CustomColors> {
       tabbarBackground: Color.lerp(tabbarBackground, other.tabbarBackground, t),
       tabbarIndicator: Color.lerp(tabbarIndicator, other.tabbarIndicator, t),
       chatBubbleBot: Color.lerp(chatBubbleBot, other.chatBubbleBot, t),
+      timerTaskColor: Color.lerp(timerTaskColor, other.timerTaskColor, t),
     );
   }
 }
@@ -186,7 +208,7 @@ ThemeData buildLightTheme(Color seedColor) {
         inputFocused: AppColorsLight.inputFocused,
         greyBorder: AppColorsLight.greyBorder,
         divider: AppColorsLight.divider,
-        avatarBackground: AppColorsLight.avatarBackground,
+        avatarBackground: const Color.fromARGB(255, 147, 147, 147),
         statusInProgress: AppColorsLight.statusInProgress,
         statusCompleted: AppColorsLight.statusCompleted,
         statusPending: AppColorsLight.statusPending,
@@ -197,6 +219,7 @@ ThemeData buildLightTheme(Color seedColor) {
         tabbarBackground: AppColorsLight.tabbarBackground,
         tabbarIndicator: AppColorsLight.tabbarIndicator,
         chatBubbleBot: AppColorsLight.chatBubbleBot,
+        timerTaskColor: const Color.fromARGB(255, 252, 255, 215),
       ),
     ],
 
@@ -302,6 +325,7 @@ ThemeData buildDarkTheme(Color seedColor) {
         tabbarBackground: AppColorsDark.tabbarBackground,
         tabbarIndicator: AppColorsDark.tabbarIndicator,
         chatBubbleBot: AppColorsDark.chatBubbleBot,
+        timerTaskColor: const Color.fromARGB(45, 255, 243, 68),
       ),
     ],
 

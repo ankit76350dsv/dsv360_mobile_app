@@ -1,0 +1,44 @@
+import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
+import 'package:dsv360/features/accounts/repositories/accounts_list_repository.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+void showDeleteDialoge({
+	required BuildContext context,
+	required WidgetRef ref,
+	required String orgName,
+	required String rowId,
+	required Future<void> Function(String rowId) onDelete,
+}) {
+	showWarningDialogueBox<bool>(
+		context: context,
+		title: 'Delete Account',
+		subtitle: 'Are you sure you want to delete Account "$orgName" ?',
+		primaryText: 'DELETE',
+		onPrimaryPressed: (dialogContext) async {
+			try {
+				await onDelete(rowId);
+
+				if (!context.mounted) return;
+				Navigator.of(dialogContext).pop(true);
+				ref.invalidate(accountsListRepositoryProvider);
+				ScaffoldMessenger.of(context).showSnackBar(
+					const SnackBar(content: Text('Account deleted successfully')),
+				);
+			} catch (e) {
+				if (!context.mounted) return;
+				Navigator.of(dialogContext).pop(false);
+
+				ScaffoldMessenger.of(context).showSnackBar(
+					SnackBar(content: const Text('Failed to delete account. Please try again.')),
+				);
+			}
+		},
+	).then((confirmed) {
+		if (confirmed != true) {
+			try {
+				ref.invalidate(accountsListRepositoryProvider);
+			} catch (e) {}
+		}
+	});
+}

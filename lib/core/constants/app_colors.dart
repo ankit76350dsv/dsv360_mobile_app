@@ -53,6 +53,9 @@ class AppColorsDark {
   
   // chat bubble
   static const Color chatBubbleBot = Color(0xFF1F1F1F);
+
+  // Timer Task Background
+  static const Color timerTaskColor = Color(0xFF4D4A00); // Dark amber/gold
 }
 
 // ==================== LIGHT THEME COLORS ====================
@@ -102,4 +105,7 @@ class AppColorsLight {
 
   // chat bubble
   static const Color chatBubbleBot = Color(0xFFEAE8E8);
+
+  // Timer Task Background
+  static const Color timerTaskColor = Color(0xFFFFF7A1); // Light yellow
 }
