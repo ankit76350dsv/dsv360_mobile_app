@@ -1,6 +1,7 @@
 import 'package:dsv360/features/badges/model/badge_summary.dart';
-import 'package:dsv360/features/badges/repositories/delete_badge_repository.dart';
-import 'package:dsv360/features/badges/repositories/fetch_badges_repository.dart';
+import 'package:dsv360/features/badges/repositories/badge_repository.dart';
+
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final showBadgesSearchQueryProvider = StateProvider.autoDispose<String>((ref) => '');
@@ -18,8 +19,8 @@ class ShowBadgesViewModel {
     required this.deleteRepository,
   });
 
-  final FetchBadgesRepository fetchRepository;
-  final DeleteBadgeRepository deleteRepository;
+  final BadgeRepository fetchRepository;
+  final BadgeRepository deleteRepository;
 
   Future<List<BadgeSummary>> fetchBadges() {
     return fetchRepository.fetchAllBadgesForList();

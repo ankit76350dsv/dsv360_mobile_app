@@ -1,6 +1,6 @@
 import 'package:dsv360/features/badges/model/dsvbadge.dart';
-import 'package:dsv360/features/badges/repositories/create_badge_repository.dart';
-import 'package:dsv360/features/badges/repositories/update_badge_repository.dart';
+import 'package:dsv360/features/badges/repositories/badge_repository.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,8 +17,8 @@ class AddEditBadgeViewModel {
     required this.updateRepository,
   });
 
-  final CreateBadgeRepository createRepository;
-  final UpdateBadgeRepository updateRepository;
+  final BadgeRepository createRepository;
+  final BadgeRepository updateRepository;
 
   static const Map<String, String> badgeLevelLogoMap = {
     'Bronze': 'https://dsv365-development.zohostratus.in/dsv365/Badges/Bronze-min.png',

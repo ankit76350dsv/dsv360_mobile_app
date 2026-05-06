@@ -7,7 +7,6 @@ import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
-import 'package:dsv360/features/users/repositories/delete_user_repository.dart';
 
 import 'package:dsv360/core/models/task.dart';
 import 'package:dsv360/features/users/model/users.dart';

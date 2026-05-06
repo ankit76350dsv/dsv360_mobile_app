@@ -1,17 +1,16 @@
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/features/badges/repositories/badge_repository.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/features/badges/model/badge_user.dart';
-import 'package:dsv360/features/badges/repositories/fetch_badge_users_repository.dart';
+
 import 'package:dsv360/features/sprints/model/sub_task_model.dart';
 import 'package:dsv360/features/sprints/model/task_model.dart';
-import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
-import 'package:dsv360/features/sprints/repositories/start_timer_repository.dart';
-import 'package:dsv360/features/sprints/repositories/time_entry_repository.dart';
-import 'package:dsv360/features/sprints/repositories/timer_info_repository.dart';
-import 'package:dsv360/features/sprints/repositories/update_subtask_status_repository.dart';
-import 'package:dsv360/features/sprints/repositories/update_task_status_repository.dart';
+import 'package:dsv360/features/sprints/repositories/timer_repository.dart';
+import 'package:dsv360/features/sprints/repositories/task_subtask_repository.dart';
+import 'package:dsv360/features/sprints/viewmodel/hierarchy_viewmodel.dart';
+import 'package:dsv360/features/sprints/viewmodel/timer_viewmodel.dart';
 import 'package:dsv360/core/constants/active_user_repository.dart';
 
 import 'package:dsv360/features/sprints/view/pages/add_sub_task_page.dart';

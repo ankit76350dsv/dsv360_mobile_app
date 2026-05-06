@@ -8,16 +8,15 @@ import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/dashboard/view/widgets/AppDrawer.dart';
 import 'package:dsv360/features/sprints/model/sprints_model.dart';
-import 'package:dsv360/features/sprints/repositories/get_sprints_repository.dart';
-import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
-import 'package:dsv360/features/sprints/repositories/update_story_status_repository.dart';
-import 'package:dsv360/features/sprints/repositories/complete_sprint_repository.dart';
+import 'package:dsv360/features/sprints/viewmodel/sprint_viewmodel.dart';
+import 'package:dsv360/features/sprints/viewmodel/hierarchy_viewmodel.dart';
+import 'package:dsv360/features/sprints/viewmodel/story_viewmodel.dart';
 import 'package:dsv360/features/sprints/view/pages/create_epic_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_release_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_sprint_page.dart';
 import 'package:dsv360/features/sprints/view/pages/backlog_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_story_page.dart';
-import 'package:dsv360/features/sprints/repositories/get_projects_repository.dart' as sprints_projects;
+import 'package:dsv360/features/sprints/viewmodel/sprints_project_viewmodel.dart' as sprints_projects_vm;
 import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
@@ -27,7 +26,7 @@ import '../widgets/board_view.dart';
 import '../widgets/timeline_view.dart';
 
 final projectListProvider = FutureProvider((ref) async {
-  final repo = ref.read(sprints_projects.projectRepositoryProvider);
+  final repo = ref.read(sprints_projects_vm.projectRepositoryProvider);
   return repo.fetchProjects();
 });
 

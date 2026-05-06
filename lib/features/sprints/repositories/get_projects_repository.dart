@@ -1,10 +1,5 @@
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/features/projects/model/project_model.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-final projectRepositoryProvider = Provider<ProjectRepository>((ref) {
-  return ProjectRepository();
-});
 
 class ProjectRepository {
   Future<List<ProjectModel>> fetchProjects() async {

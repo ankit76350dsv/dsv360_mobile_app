@@ -1,13 +1,14 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/features/badges/repositories/badge_repository.dart';
 import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/badges/model/badge_user.dart';
-import 'package:dsv360/features/badges/repositories/fetch_badge_users_repository.dart';
+
 import 'package:dsv360/features/sprints/model/epic_model.dart';
 import 'package:dsv360/features/sprints/model/sprints_model.dart';
-import 'package:dsv360/features/sprints/repositories/create_story_repository.dart';
-import 'package:dsv360/features/sprints/repositories/get_projects_repository.dart';
-import 'package:dsv360/features/sprints/repositories/get_sprints_repository.dart';
-import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
+import 'package:dsv360/features/sprints/viewmodel/story_viewmodel.dart';
+import 'package:dsv360/features/sprints/viewmodel/sprints_project_viewmodel.dart';
+import 'package:dsv360/features/sprints/viewmodel/sprint_viewmodel.dart';
+import 'package:dsv360/features/sprints/viewmodel/hierarchy_viewmodel.dart';
 import 'package:dsv360/features/projects/model/project_model.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/core/widgets/custom_dropdown_field.dart';

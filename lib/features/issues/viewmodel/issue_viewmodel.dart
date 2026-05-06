@@ -1,30 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dsv360/features/issues/model/issue_model.dart';
-import 'package:dsv360/features/issues/repository/create_issue_repository.dart';
-import 'package:dsv360/features/issues/repository/delete_issue_repository.dart';
-import 'package:dsv360/features/issues/repository/fetch_issues_repository.dart';
-import 'package:dsv360/features/issues/repository/update_issue_repository.dart';
+import 'package:dsv360/features/issues/repository/issue_repository.dart';
 
-final fetchIssuesRepositoryProvider = Provider<FetchIssuesRepository>((ref) {
-  return FetchIssuesRepository();
+final issueRepositoryProvider = Provider<IssueRepository>((ref) {
+  return IssueRepository();
 });
 
-final createIssueRepositoryProvider = Provider<CreateIssueRepository>((ref) {
-  return CreateIssueRepository();
-});
+// Legacy aliases kept for existing consumers.
+final fetchIssuesRepositoryProvider = Provider<IssueRepository>((ref) => ref.read(issueRepositoryProvider));
+final createIssueRepositoryProvider = Provider<IssueRepository>((ref) => ref.read(issueRepositoryProvider));
+final updateIssueRepositoryProvider = Provider<IssueRepository>((ref) => ref.read(issueRepositoryProvider));
+final deleteIssueRepositoryProvider = Provider<IssueRepository>((ref) => ref.read(issueRepositoryProvider));
 
-final updateIssueRepositoryProvider = Provider<UpdateIssueRepository>((ref) {
-  return UpdateIssueRepository();
-});
-
-final deleteIssueRepositoryProvider = Provider<DeleteIssueRepository>((ref) {
-  return DeleteIssueRepository();
-});
-
-// Issue List Provider
-final issueListProvider = FutureProvider.autoDispose<List<IssueModel>>((
-  ref,
-) async {
-  final repository = ref.watch(fetchIssuesRepositoryProvider);
-  return repository.fetchIssues();
+final issueListProvider = FutureProvider.autoDispose<List<IssueModel>>((ref) async {
+  return ref.watch(issueRepositoryProvider).fetchIssues();
 });

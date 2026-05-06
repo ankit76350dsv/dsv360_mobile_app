@@ -8,9 +8,7 @@ import 'package:intl/intl.dart';
 import '../../model/issue_model.dart';
 import '../../../projects/model/project_model.dart';
 import '../../../teams/model/employee_model.dart';
-import '../../repository/create_issue_repository.dart';
-import '../../repository/fetch_projects_repository.dart';
-import '../../repository/update_issue_repository.dart';
+import '../../repository/issue_repository.dart';
 import '../../../teams/repositories/employee_repository.dart';
 import '../../../../core/widgets/bottom_two_buttons.dart';
 import '../../../../core/widgets/custom_dropdown_field.dart';
@@ -18,8 +16,8 @@ import '../../../../core/widgets/custom_input_field.dart';
 
 class AddIssueFormScreen extends ConsumerStatefulWidget {
   final IssueModel? issue;
-  final CreateIssueRepository createIssueRepository;
-  final UpdateIssueRepository updateIssueRepository;
+  final IssueRepository createIssueRepository;
+  final IssueRepository updateIssueRepository;
 
   const AddIssueFormScreen({
     super.key,
@@ -98,7 +96,7 @@ class _AddIssueFormScreenState extends ConsumerState<AddIssueFormScreen> {
   Future<void> _loadProjects() async {
     setState(() => _isLoadingProjects = true);
     try {
-      final projectRepo = FetchProjectsRepository();
+      final projectRepo = IssueRepository();
       final projects = await projectRepo.fetchProjects();
       setState(() {
         _projectList = projects;

@@ -1,7 +1,8 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/features/badges/repositories/badge_repository.dart';
 import 'package:dsv360/core/utils/snackbar_utils.dart';
-import 'package:dsv360/features/badges/repositories/fetch_badge_users_repository.dart';
-import 'package:dsv360/features/sprints/repositories/add_sub_task_repository.dart';
+
+import 'package:dsv360/features/sprints/viewmodel/task_subtask_viewmodel.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/core/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/core/widgets/custom_input_field.dart';
@@ -67,8 +68,7 @@ class _AddSubTaskPageState extends ConsumerState<AddSubTaskPage> {
       _hasUsersError = false;
     });
     try {
-      _users =
-          await ref.read(fetchBadgeUsersRepositoryProvider).fetchUsers();
+      _users = await ref.read(fetchBadgeUsersRepositoryProvider).fetchUsers();
     } catch (_) {
       _hasUsersError = true;
       _users = [];
@@ -95,7 +95,8 @@ class _AddSubTaskPageState extends ConsumerState<AddSubTaskPage> {
               onSurface: customColors.textPrimary!,
             ),
             dialogTheme: DialogThemeData(
-                backgroundColor: customColors.cardBackground!),
+              backgroundColor: customColors.cardBackground!,
+            ),
           ),
           child: child!,
         );
@@ -116,45 +117,46 @@ class _AddSubTaskPageState extends ConsumerState<AddSubTaskPage> {
     }
 
     if (_selectedAssigneeId == null || _selectedAssigneeId!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select assignee')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select assignee')));
       return;
     }
 
     if (_dueDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select due date')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select due date')));
       return;
     }
 
     if (_hoursController.text.trim().isEmpty &&
-    _minutesController.text.trim().isEmpty) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Please enter estimated time')),
-  );
-  return;
-}
+        _minutesController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter estimated time')),
+      );
+      return;
+    }
 
-    final submitLoadingNotifier =
-        ref.read(submitLoadingProvider(_loadingKey).notifier);
+    final submitLoadingNotifier = ref.read(
+      submitLoadingProvider(_loadingKey).notifier,
+    );
     submitLoadingNotifier.state = true;
 
     try {
       final hours = int.tryParse(_hoursController.text.trim()) ?? 0;
-final minutes = int.tryParse(_minutesController.text.trim()) ?? 0;
+      final minutes = int.tryParse(_minutesController.text.trim()) ?? 0;
 
-// Optional guard
-if (minutes > 59) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Minutes must be between 0 and 59')),
-  );
-  submitLoadingNotifier.state = false;
-  return;
-}
+      // Optional guard
+      if (minutes > 59) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Minutes must be between 0 and 59')),
+        );
+        submitLoadingNotifier.state = false;
+        return;
+      }
 
-final estimatedHours = hours + (minutes / 60.0);
+      final estimatedHours = hours + (minutes / 60.0);
       final formattedDate = DateFormat('yyyy-MM-dd').format(_dueDate!);
 
       final repo = ref.read(addSubTaskRepositoryProvider);
@@ -180,9 +182,9 @@ final estimatedHours = hours + (minutes / 60.0);
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to create subtask')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to create subtask')));
       final errorText = e.toString();
       debugPrint("error here");
       debugPrint(e.toString());
@@ -190,7 +192,6 @@ final estimatedHours = hours + (minutes / 60.0);
           ? 'Permission denied from server, please try again.'
           : 'Failed to create Subtask. Please try again.';
 
-      
       showErrorSnackBar(context, message);
     } finally {
       submitLoadingNotifier.state = false;
@@ -211,21 +212,20 @@ final estimatedHours = hours + (minutes / 60.0);
     final customColors = Theme.of(context).custom;
 
     final statusItems = _statusOptions
-        .map((s) => DropdownMenuItem<String>(
-              value: s['value']!,
-              child: Text(s['label']!),
-            ))
+        .map(
+          (s) => DropdownMenuItem<String>(
+            value: s['value']!,
+            child: Text(s['label']!),
+          ),
+        )
         .toList();
 
     final assigneeItems = [
-      const DropdownMenuItem<String>(
-        value: '',
-        child: Text('Unassigned'),
+      const DropdownMenuItem<String>(value: '', child: Text('Unassigned')),
+      ..._users.map(
+        (u) =>
+            DropdownMenuItem<String>(value: u.userId, child: Text(u.fullName)),
       ),
-      ..._users.map((u) => DropdownMenuItem<String>(
-            value: u.userId,
-            child: Text(u.fullName),
-          )),
     ];
 
     return Scaffold(
@@ -245,9 +245,9 @@ final estimatedHours = hours + (minutes / 60.0);
               child: Text(
                 'Subtask Details',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: colors.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: colors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             Expanded(
@@ -278,8 +278,8 @@ final estimatedHours = hours + (minutes / 60.0);
                         hintText: _isUsersLoading
                             ? 'Loading users...'
                             : _hasUsersError
-                                ? 'Failed to load users'
-                                : 'Select assignee',
+                            ? 'Failed to load users'
+                            : 'Select assignee',
                         labelText: 'Assignee *',
                         prefixIcon: Icons.person_outline,
                         searchable: true,
@@ -290,8 +290,9 @@ final estimatedHours = hours + (minutes / 60.0);
                             ? (_) {}
                             : (val) {
                                 setState(
-                                  () => _selectedAssigneeId =
-                                      val == '' ? null : val,
+                                  () => _selectedAssigneeId = val == ''
+                                      ? null
+                                      : val,
                                 );
                               },
                       ),
@@ -306,78 +307,79 @@ final estimatedHours = hours + (minutes / 60.0);
                         options: statusItems,
                         selectedOption: _selectedStatus,
                         onChanged: (val) {
-                          if (val != null) setState(() => _selectedStatus = val);
+                          if (val != null)
+                            setState(() => _selectedStatus = val);
                         },
                       ),
 
                       const SizedBox(height: 20),
 
                       Column(
-  crossAxisAlignment: CrossAxisAlignment.start,
-  children: [
-    Text(
-      'Estimated Time *',
-      style: Theme.of(context).textTheme.bodyMedium,
-    ),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Estimated Time *',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
 
-    const SizedBox(height: 10),
+                          const SizedBox(height: 10),
 
-    Row(
-      children: [
-        Expanded(
-          child: CustomInputField(
-            controller: _hoursController,
-            hintText: 'Hours',
-            labelText: 'Hours',
-            prefixIcon: Icons.schedule_outlined,
-            keyboardType: TextInputType.number,
-            validator: (value) {
-              if ((value == null || value.isEmpty) &&
-                  _minutesController.text.isEmpty) {
-                return 'Required';
-              }
+                          Row(
+                            children: [
+                              Expanded(
+                                child: CustomInputField(
+                                  controller: _hoursController,
+                                  hintText: 'Hours',
+                                  labelText: 'Hours',
+                                  prefixIcon: Icons.schedule_outlined,
+                                  keyboardType: TextInputType.number,
+                                  validator: (value) {
+                                    if ((value == null || value.isEmpty) &&
+                                        _minutesController.text.isEmpty) {
+                                      return 'Required';
+                                    }
 
-              if (value != null &&
-                  value.isNotEmpty &&
-                  int.tryParse(value) == null) {
-                return 'Numbers only';
-              }
+                                    if (value != null &&
+                                        value.isNotEmpty &&
+                                        int.tryParse(value) == null) {
+                                      return 'Numbers only';
+                                    }
 
-              return null;
-            },
-          ),
-        ),
+                                    return null;
+                                  },
+                                ),
+                              ),
 
-        const SizedBox(width: 12),
+                              const SizedBox(width: 12),
 
-        Expanded(
-          child: CustomInputField(
-            controller: _minutesController,
-            hintText: 'Minutes',
-            labelText: 'Minutes',
-            prefixIcon: Icons.timer_outlined,
-            keyboardType: TextInputType.number,
-            validator: (value) {
-              if (value != null && value.isNotEmpty) {
-                final mins = int.tryParse(value);
+                              Expanded(
+                                child: CustomInputField(
+                                  controller: _minutesController,
+                                  hintText: 'Minutes',
+                                  labelText: 'Minutes',
+                                  prefixIcon: Icons.timer_outlined,
+                                  keyboardType: TextInputType.number,
+                                  validator: (value) {
+                                    if (value != null && value.isNotEmpty) {
+                                      final mins = int.tryParse(value);
 
-                if (mins == null) {
-                  return 'Numbers only';
-                }
+                                      if (mins == null) {
+                                        return 'Numbers only';
+                                      }
 
-                if (mins > 59) {
-                  return '0-59 only';
-                }
-              }
+                                      if (mins > 59) {
+                                        return '0-59 only';
+                                      }
+                                    }
 
-              return null;
-            },
-          ),
-        ),
-      ],
-    ),
-  ],
-),
+                                    return null;
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
 
                       const SizedBox(height: 20),
 
@@ -416,7 +418,9 @@ final estimatedHours = hours + (minutes / 60.0);
                                 child: Text(
                                   _dueDate == null
                                       ? 'Due Date *'
-                                      : DateFormat('dd-MM-yyyy').format(_dueDate!),
+                                      : DateFormat(
+                                          'dd-MM-yyyy',
+                                        ).format(_dueDate!),
                                   style: TextStyle(
                                     color: _dueDate == null
                                         ? customColors.textHint

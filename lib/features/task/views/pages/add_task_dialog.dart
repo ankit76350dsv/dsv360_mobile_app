@@ -8,7 +8,7 @@ import 'package:file_picker/file_picker.dart';
 import '../../../../core/models/task.dart';
 import '../../../teams/model/employee_model.dart';
 import '../../../../core/models/attachment.dart';
-import '../../../projects/providers/project_provider.dart';
+import '../../../projects/viewmodel/project_viewmodel.dart';
 import '../../../projects/model/project_model.dart';
 import '../../../users/providers/employee_provider.dart';
 import '../../../../core/widgets/custom_input_field.dart';

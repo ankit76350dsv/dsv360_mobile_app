@@ -244,7 +244,9 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                               });
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
-                                  content: const Text('Failed to update status. Please try again.'),
+                                  content: const Text(
+                                    'Failed to update status. Please try again.',
+                                  ),
                                   backgroundColor: customColors.error,
                                 ),
                               );
@@ -364,12 +366,11 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
       body: connectivityStatus.when(
         data: (results) {
           if (results.contains(ConnectivityResult.none)) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  padding: const EdgeInsets.only(top: 48, bottom: 12),
-                  child: TopBar(
+            return SafeArea(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TopBar(
                     title: 'Issues',
                     onBack: () {
                       if (Navigator.canPop(context)) {
@@ -389,14 +390,18 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                       try {
                         final _ = await ref.refresh(issueListProvider.future);
                         if (mounted) {
-                         
-                          showSuccessSnackBar(context, 'Issues refreshed successfully');
+                          showSuccessSnackBar(
+                            context,
+                            'Issues refreshed successfully',
+                          );
                         }
                       } catch (e) {
                         debugPrint('Refresh error: $e');
                         if (mounted) {
-                          
-                          showErrorSnackBar(context, 'Refresh failed. Please try again.');
+                          showErrorSnackBar(
+                            context,
+                            'Refresh failed. Please try again.',
+                          );
                         }
                       } finally {
                         if (mounted) {
@@ -406,24 +411,24 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                     },
                     actionIcon: Icons.refresh_rounded,
                   ),
-                ),
-                Expanded(
-                  child: GlobalError(
-                    message: 'Please check your internet connection.',
-                    isNetworkError: true,
-                    onRetry: () => ref.invalidate(checkConnectivityProvider),
+
+                  Expanded(
+                    child: GlobalError(
+                      message: 'Please check your internet connection.',
+                      isNetworkError: true,
+                      onRetry: () => ref.invalidate(checkConnectivityProvider),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             );
           }
 
-          return Column(
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.only(top: 48, bottom: 12),
-                child: Column(
+          return SafeArea(
+            child: Column(
+              children: [
+                // Header
+                Column(
                   children: [
                     TopBar(
                       title: 'Issues',
@@ -445,14 +450,18 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                         try {
                           final _ = await ref.refresh(issueListProvider.future);
                           if (mounted) {
-                            
-                            showSuccessSnackBar(context, 'Issues refreshed successfully');
+                            showSuccessSnackBar(
+                              context,
+                              'Issues refreshed successfully',
+                            );
                           }
                         } catch (e) {
                           debugPrint('Refresh error: $e');
                           if (mounted) {
-                            
-                            showErrorSnackBar(context, 'Refresh failed. Please try again.');
+                            showErrorSnackBar(
+                              context,
+                              'Refresh failed. Please try again.',
+                            );
                           }
                         } finally {
                           if (mounted) {
@@ -478,7 +487,8 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                             Container(
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                    color: customColors.inputBorder!),
+                                  color: customColors.inputBorder!,
+                                ),
                                 borderRadius: BorderRadius.circular(12),
                                 color: customColors.inputFill,
                               ),
@@ -497,7 +507,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                                               _selectedFilter == option
                                                   ? Icons.radio_button_checked
                                                   : Icons
-                                                      .radio_button_unchecked,
+                                                        .radio_button_unchecked,
                                               color: customColors.primary,
                                               size: 18,
                                             ),
@@ -508,8 +518,8 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                                                 color: customColors.textPrimary,
                                                 fontWeight:
                                                     _selectedFilter == option
-                                                        ? FontWeight.w600
-                                                        : FontWeight.w400,
+                                                    ? FontWeight.w600
+                                                    : FontWeight.w400,
                                               ),
                                             ),
                                           ],
@@ -535,153 +545,166 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                     ),
                   ],
                 ),
-              ),
 
-              // Issues List
-              Expanded(
-                child: ref.watch(issueListProvider).when(
-                  data: (issues) {
-                    final filteredIssues = _filterIssues(issues);
+                // Issues List
+                Expanded(
+                  child: ref
+                      .watch(issueListProvider)
+                      .when(
+                        data: (issues) {
+                          final filteredIssues = _filterIssues(issues);
 
-                    if (filteredIssues.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.inbox_outlined,
-                              size: 64,
-                              color: customColors.textSecondary!
-                                  .withValues(alpha: 0.5),
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              _searchQuery.isEmpty
-                                  ? 'No issues yet'
-                                  : 'No issues found',
-                              style: TextStyle(
-                                color: customColors.textPrimary,
-                                fontSize: 16,
-                                fontWeight: FontWeight.normal,
+                          if (filteredIssues.isEmpty) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.inbox_outlined,
+                                    size: 64,
+                                    color: customColors.textSecondary!
+                                        .withValues(alpha: 0.5),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    _searchQuery.isEmpty
+                                        ? 'No issues yet'
+                                        : 'No issues found',
+                                    style: TextStyle(
+                                      color: customColors.textPrimary,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.normal,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
+                            );
+                          }
 
-                    return RefreshIndicator(
-                      onRefresh: () async {
-                        ref.invalidate(issueListProvider);
-                        await ref.read(issueListProvider.future);
-                      },
-                      color: customColors.primary,
-                      child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        itemCount: filteredIssues.length,
-                        itemBuilder: (context, index) {
-                          final issue = filteredIssues[index];
-                          final dateFormat = DateFormat('dd/MM/yy');
-                          final createdDate =
-                              dateFormat.format(issue.createdDate);
-                          final dueDate = issue.dueDate != null
-                              ? dateFormat.format(issue.dueDate!)
-                              : 'N/A';
+                          return RefreshIndicator(
+                            onRefresh: () async {
+                              ref.invalidate(issueListProvider);
+                              await ref.read(issueListProvider.future);
+                            },
+                            color: customColors.primary,
+                            child: ListView.builder(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              itemCount: filteredIssues.length,
+                              itemBuilder: (context, index) {
+                                final issue = filteredIssues[index];
+                                final dateFormat = DateFormat('dd/MM/yy');
+                                final createdDate = dateFormat.format(
+                                  issue.createdDate,
+                                );
+                                final dueDate = issue.dueDate != null
+                                    ? dateFormat.format(issue.dueDate!)
+                                    : 'N/A';
 
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: GenericCard(
-                              id: issue.id.length > 4
-                                  ? 'I${issue.id.substring(issue.id.length - 4)}'
-                                  : 'I${issue.id}',
-                              name: issue.issueName,
-                              status: issue.status,
-                              subtitleIcon: 'business',
-                              subtitleText: issue.projectName ?? 'N/A',
-                              dateRange: 'Created: $createdDate',
-                              dueDate: 'Due: $dueDate',
-                              chips: [
-                                CardChip(
-                                  icon: Icons.person_outline,
-                                  count: (issue.assignedTo == null ||
-                                          issue.assignedTo!.trim().isEmpty)
-                                      ? "0"
-                                      : (issue.assignedTo!.split(',').length)
-                                          .toString(),
-                                  isActive: true,
-                                  onTap: () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      isScrollControlled: true,
-                                      backgroundColor: Colors.transparent,
-                                      builder: (context) => AssigneeModal(
-                                        assignedTo:
-                                            issue.assignedTo ?? 'Unassigned',
-                                        owner: issue.owner ?? 'N/A',
-                                      ),
-                                    );
-                                  },
-                                ),
-                                CardChip(
-                                  icon: Icons.attach_file,
-                                  count:
-                                      issue.attachments.length.toString(),
-                                  isActive: issue.attachments.isNotEmpty,
-                                  onTap: issue.attachments.isNotEmpty
-                                      ? () {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: GenericCard(
+                                    id: issue.id.length > 4
+                                        ? 'I${issue.id.substring(issue.id.length - 4)}'
+                                        : 'I${issue.id}',
+                                    name: issue.issueName,
+                                    status: issue.status,
+                                    subtitleIcon: 'business',
+                                    subtitleText: issue.projectName ?? 'N/A',
+                                    dateRange: 'Created: $createdDate',
+                                    dueDate: 'Due: $dueDate',
+                                    chips: [
+                                      CardChip(
+                                        icon: Icons.person_outline,
+                                        count:
+                                            (issue.assignedTo == null ||
+                                                issue.assignedTo!
+                                                    .trim()
+                                                    .isEmpty)
+                                            ? "0"
+                                            : (issue.assignedTo!
+                                                      .split(',')
+                                                      .length)
+                                                  .toString(),
+                                        isActive: true,
+                                        onTap: () {
                                           showModalBottomSheet(
                                             context: context,
                                             isScrollControlled: true,
-                                            backgroundColor:
-                                                Colors.transparent,
-                                            builder: (context) =>
-                                                AttachmentListModal(
-                                              attachments: issue.attachments,
+                                            backgroundColor: Colors.transparent,
+                                            builder: (context) => AssigneeModal(
+                                              assignedTo:
+                                                  issue.assignedTo ??
+                                                  'Unassigned',
+                                              owner: issue.owner ?? 'N/A',
                                             ),
                                           );
-                                        }
-                                      : null,
-                                ),
-                              ],
-                              onTap: () {
-                                FocusScope.of(context).unfocus();
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  backgroundColor: Colors.transparent,
-                                  builder: (context) =>
-                                      IssueDetailsModalSheet(issue: issue),
+                                        },
+                                      ),
+                                      CardChip(
+                                        icon: Icons.attach_file,
+                                        count: issue.attachments.length
+                                            .toString(),
+                                        isActive: issue.attachments.isNotEmpty,
+                                        onTap: issue.attachments.isNotEmpty
+                                            ? () {
+                                                showModalBottomSheet(
+                                                  context: context,
+                                                  isScrollControlled: true,
+                                                  backgroundColor:
+                                                      Colors.transparent,
+                                                  builder: (context) =>
+                                                      AttachmentListModal(
+                                                        attachments:
+                                                            issue.attachments,
+                                                      ),
+                                                );
+                                              }
+                                            : null,
+                                      ),
+                                    ],
+                                    onTap: () {
+                                      FocusScope.of(context).unfocus();
+                                      showModalBottomSheet(
+                                        context: context,
+                                        isScrollControlled: true,
+                                        backgroundColor: Colors.transparent,
+                                        builder: (context) =>
+                                            IssueDetailsModalSheet(
+                                              issue: issue,
+                                            ),
+                                      );
+                                    },
+                                    onEdit: () {
+                                      if (userRole == 'admin' ||
+                                          userRole == 'super admin') {
+                                        _showAddIssueDialog(issue: issue);
+                                        return;
+                                      }
+                                      _showStatusUpdateDialog(issue);
+                                    },
+                                    onDelete:
+                                        (userRole == 'admin' ||
+                                            userRole == 'super admin')
+                                        ? () => _deleteIssue(issue)
+                                        : null,
+                                  ),
                                 );
                               },
-                              onEdit: () {
-                                if (userRole == 'admin' ||
-                                    userRole == 'super admin') {
-                                  _showAddIssueDialog(issue: issue);
-                                  return;
-                                }
-                                _showStatusUpdateDialog(issue);
-                              },
-                              onDelete: (userRole == 'admin' ||
-                                      userRole == 'super admin')
-                                  ? () => _deleteIssue(issue)
-                                  : null,
                             ),
                           );
                         },
+                        loading: () => Center(child: DsvLoader()),
+                        error: (error, stack) => GlobalError(
+                          message: 'Failed to load issues. Please try again.',
+                          onRetry: () => ref.invalidate(issueListProvider),
+                        ),
                       ),
-                    );
-                  },
-                  loading: () => Center(child: DsvLoader()),
-                  error: (error, stack) => GlobalError(
-                    message: 'Failed to load issues. Please try again.',
-                    onRetry: () => ref.invalidate(issueListProvider),
-                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
         error: (error, stack) => GlobalError(

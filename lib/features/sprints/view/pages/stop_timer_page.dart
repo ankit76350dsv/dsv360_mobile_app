@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:dsv360/core/constants/theme.dart';
-import 'package:dsv360/features/sprints/repositories/stop_timer_repository.dart';
+import 'package:dsv360/features/sprints/viewmodel/timer_viewmodel.dart';
 import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

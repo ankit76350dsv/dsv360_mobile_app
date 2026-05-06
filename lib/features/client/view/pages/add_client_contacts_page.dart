@@ -1,4 +1,4 @@
-import 'package:dsv360/features/accounts/repositories/accounts_list_repository.dart';
+import 'package:dsv360/features/accounts/viewmodel/accounts_list_viewmodel.dart';
 import 'package:dsv360/features/client/model/client_contacts.dart';
 import 'package:dsv360/features/client/viewmodel/client_contact_form_viewmodel.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';

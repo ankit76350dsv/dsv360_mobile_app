@@ -1,6 +1,5 @@
-import 'package:dsv360/features/accounts/repositories/accounts_list_repository.dart';
-import 'package:dsv360/features/accounts/repositories/create_account_repository.dart';
-import 'package:dsv360/features/accounts/repositories/update_account_repository.dart';
+import 'package:dsv360/features/accounts/viewmodel/accounts_list_viewmodel.dart';
+import 'package:dsv360/features/accounts/repositories/account_repository.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,8 +20,8 @@ class AccountFormViewModel {
   });
 
   final Ref ref;
-  final CreateAccountRepository createRepository;
-  final UpdateAccountRepository updateRepository;
+  final AccountRepository createRepository;
+  final AccountRepository updateRepository;
 
   Map<String, dynamic> buildRequestBody({
     required String email,

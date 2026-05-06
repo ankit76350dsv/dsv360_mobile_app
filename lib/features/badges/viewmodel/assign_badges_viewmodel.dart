@@ -1,8 +1,9 @@
 import 'package:dsv360/features/badges/model/badge_user.dart';
+import 'package:dsv360/features/badges/repositories/badge_repository.dart';
 import 'package:dsv360/features/badges/model/dsvbadge.dart';
-import 'package:dsv360/features/badges/repositories/assign_badge_repository.dart';
-import 'package:dsv360/features/badges/repositories/fetch_badge_users_repository.dart';
-import 'package:dsv360/features/badges/repositories/fetch_badges_repository.dart';
+
+
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,9 +22,9 @@ class AssignBadgesViewModel {
     required this.assignRepository,
   });
 
-  final FetchBadgeUsersRepository fetchUsersRepository;
-  final FetchBadgesRepository fetchBadgesRepository;
-  final AssignBadgeRepository assignRepository;
+  final BadgeRepository fetchUsersRepository;
+  final BadgeRepository fetchBadgesRepository;
+  final BadgeRepository assignRepository;
 
   Future<List<BadgeUser>> fetchUsers() {
     return fetchUsersRepository.fetchUsers();

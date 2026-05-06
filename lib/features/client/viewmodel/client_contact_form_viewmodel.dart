@@ -1,6 +1,6 @@
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/core/network/dio_client.dart';
-import 'package:dsv360/features/accounts/repositories/accounts_list_repository.dart';
+import 'package:dsv360/features/accounts/viewmodel/accounts_list_viewmodel.dart';
 import 'package:dsv360/features/client/repositories/client_contacts_repository.dart';
 import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';

@@ -1,4 +1,4 @@
-import 'package:dsv360/features/accounts/repositories/delete_account_repository.dart';
+import 'package:dsv360/features/accounts/repositories/account_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,7 +9,7 @@ final deleteAccountViewModelProvider = Provider<DeleteAccountViewModel>((ref) {
 class DeleteAccountViewModel {
   DeleteAccountViewModel(this._deleteRepository);
 
-  final DeleteAccountRepository _deleteRepository;
+  final AccountRepository _deleteRepository;
 
   Future<void> deleteAccountWithFallback({
     required BuildContext context,

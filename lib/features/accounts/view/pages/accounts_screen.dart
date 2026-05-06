@@ -4,7 +4,7 @@ import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
-import 'package:dsv360/features/accounts/repositories/accounts_list_repository.dart';
+import 'package:dsv360/features/accounts/viewmodel/accounts_list_viewmodel.dart';
 import 'package:dsv360/features/accounts/view/pages/add_edit_accounts.dart';
 import 'package:dsv360/features/accounts/view/widgets/accounts_card.dart';
 import 'package:dsv360/features/dashboard/view/widgets/AppDrawer.dart';

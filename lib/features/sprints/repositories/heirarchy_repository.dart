@@ -1,10 +1,5 @@
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/features/sprints/model/heirarchy_model.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-final hierarchyRepositoryProvider = Provider<HierarchyRepository>((ref) {
-  return HierarchyRepository();
-});
 
 class HierarchyRepository {
   Future<HierarchyModel> fetchHierarchy({

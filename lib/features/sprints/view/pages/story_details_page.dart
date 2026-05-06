@@ -1,13 +1,14 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/features/badges/repositories/badge_repository.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
-import 'package:dsv360/features/badges/repositories/fetch_badge_users_repository.dart';
+
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 import 'package:dsv360/features/sprints/model/sprints_model.dart';
 import 'package:dsv360/features/sprints/model/story_model.dart';
 import 'package:dsv360/features/sprints/model/task_model.dart';
-import 'package:dsv360/features/sprints/repositories/get_sprints_repository.dart';
-import 'package:dsv360/features/sprints/repositories/heirarchy_repository.dart';
+import 'package:dsv360/features/sprints/viewmodel/sprint_viewmodel.dart';
+import 'package:dsv360/features/sprints/viewmodel/hierarchy_viewmodel.dart';
 import 'package:dsv360/features/sprints/view/pages/add_task_page.dart';
 import 'package:dsv360/features/sprints/view/pages/edit_story_page.dart';
 import 'package:dsv360/features/sprints/view/pages/sub_task_page.dart';

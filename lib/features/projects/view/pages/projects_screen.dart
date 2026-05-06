@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/network/connectivity_provider.dart';
 import '../../../../core/widgets/global_error.dart';
 import '../../../../core/widgets/global_loader.dart';
-import '../../providers/project_provider.dart';
+import '../../viewmodel/project_viewmodel.dart';
 import '../../../users/providers/employee_provider.dart';
 import '../../../../core/constants/auth_manager.dart';
 import '../../model/project_model.dart';
@@ -183,56 +183,58 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           return connectivityStatus.when(
             data: (results) {
               if (results.contains(ConnectivityResult.none)) {
-                return Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.only(top: 48, bottom: 12),
-                      child: TopBar(
-                        title: 'Projects',
-                        onBack: () {
-                          if (Navigator.canPop(context)) {
-                            Navigator.pop(context);
-                          } else {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const DashboardPage(),
-                              ),
-                            );
-                          }
-                        },
-                        onInfoTap: () async {
-                          if (_isRefreshingData) return;
-                          setState(() => _isRefreshingData = true);
-                          try {
-                            final _ = await ref.refresh(projectListProvider.future);
-                            if (mounted) {
-                              showSuccessSnackBar(context, 'Projects refreshed successfully');
+                return SafeArea(
+                  child: Column(
+                    children: [
+                      
+                        
+                       TopBar(
+                          title: 'Projects',
+                          onBack: () {
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            } else {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const DashboardPage(),
+                                ),
+                              );
                             }
-                          } catch (e) {
-                            debugPrint('Refresh error: $e');
-                            if (mounted) {
-                              showErrorSnackBar(context, 'Refresh failed. Please try again.');
+                          },
+                          onInfoTap: () async {
+                            if (_isRefreshingData) return;
+                            setState(() => _isRefreshingData = true);
+                            try {
+                              final _ = await ref.refresh(projectListProvider.future);
+                              if (mounted) {
+                                showSuccessSnackBar(context, 'Projects refreshed successfully');
+                              }
+                            } catch (e) {
+                              debugPrint('Refresh error: $e');
+                              if (mounted) {
+                                showErrorSnackBar(context, 'Refresh failed. Please try again.');
+                              }
+                            } finally {
+                              if (mounted) {
+                                setState(() => _isRefreshingData = false);
+                              }
                             }
-                          } finally {
-                            if (mounted) {
-                              setState(() => _isRefreshingData = false);
-                            }
-                          }
-                        },
-                        actionIcon: Icons.refresh_rounded,
+                          },
+                          actionIcon: Icons.refresh_rounded,
+                        ),
+                      
+                      Expanded(
+                        child: GlobalError(
+                          message: 'Please check your internet connection.',
+                          isNetworkError: true,
+                          onRetry: () {
+                            ref.invalidate(checkConnectivityProvider);
+                          },
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: GlobalError(
-                        message: 'Please check your internet connection.',
-                        isNetworkError: true,
-                        onRetry: () {
-                          ref.invalidate(checkConnectivityProvider);
-                        },
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 );
               }
 
@@ -240,154 +242,156 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                 onRefresh: () async {
                   return await ref.refresh(projectListProvider.future);
                 },
-                child: Column(
-                  children: [
-                    // Header Section
-                    Container(
-                      padding: const EdgeInsets.only(top: 48, bottom: 12),
-                      child: Column(
-                        children: [
-                          // ---------- Top bar ----------
-                          TopBar(
-                            title: 'Projects',
-                            onBack: () {
-                              if (Navigator.canPop(context)) {
-                                Navigator.pop(context);
-                              } else {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const DashboardPage(),
-                                  ),
-                                );
-                              }
-                            },
-                            onInfoTap: () async {
-                              if (_isRefreshingData) return;
-                              setState(() => _isRefreshingData = true);
-                              try {
-                                final _ = await ref.refresh(projectListProvider.future);
-                                if (mounted) {
-                                  showSuccessSnackBar(context, 'Projects refreshed successfully');
+                child: SafeArea(
+                  child: Column(
+                    children: [
+                      // Header Section
+                      
+                        
+                       Column(
+                          children: [
+                            // ---------- Top bar ----------
+                            TopBar(
+                              title: 'Projects',
+                              onBack: () {
+                                if (Navigator.canPop(context)) {
+                                  Navigator.pop(context);
+                                } else {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const DashboardPage(),
+                                    ),
+                                  );
                                 }
-                              } catch (e) {
-                                debugPrint('Refresh error: $e');
-                                if (mounted) {
-                                  showErrorSnackBar(context, 'Refresh failed. Please try again.');
+                              },
+                              onInfoTap: () async {
+                                if (_isRefreshingData) return;
+                                setState(() => _isRefreshingData = true);
+                                try {
+                                  final _ = await ref.refresh(projectListProvider.future);
+                                  if (mounted) {
+                                    showSuccessSnackBar(context, 'Projects refreshed successfully');
+                                  }
+                                } catch (e) {
+                                  debugPrint('Refresh error: $e');
+                                  if (mounted) {
+                                    showErrorSnackBar(context, 'Refresh failed. Please try again.');
+                                  }
+                                } finally {
+                                  if (mounted) {
+                                    setState(() => _isRefreshingData = false);
+                                  }
                                 }
-                              } finally {
-                                if (mounted) {
-                                  setState(() => _isRefreshingData = false);
-                                }
-                              }
-                            },
-                            actionIcon: Icons.refresh_rounded,
-                          ),
-
-                          // Search Bar
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: CustomSearchBar(
-                              controller: _searchController,
-                              hintText: 'Search Projects',
-                              onChanged: (val) {},
+                              },
+                              actionIcon: Icons.refresh_rounded,
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Mobile-Friendly Card List
-                    Expanded(
-                      child: ref
-                          .watch(projectListProvider)
-                          .when(
-                            loading: () => const Center(
-                              child: GlobalLoader(
-                                message: 'Loading projects...',
+                  
+                            // Search Bar
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: CustomSearchBar(
+                                controller: _searchController,
+                                hintText: 'Search Projects',
+                                onChanged: (val) {},
                               ),
                             ),
-                            error: (err, stack) => GlobalError(
-                              message: 'Failed to load projects. Please try again.',
-                              onRetry: () => ref.refresh(projectListProvider),
-                            ),
-                            data: (projects) {
-                              final filteredProjects = _filterProjects(
-                                projects,
-                              );
-
-                              if (filteredProjects.isEmpty) {
-                                // Add Stack to allow refresh even when list is empty
-                                return Stack(
-                                  children: [
-                                    ListView(), // Empty list for Pull-to-Refresh
-                                    Center(
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            Icons.folder_open,
-                                            size: 80,
-                                            color: customColors.textSecondary!
-                                                .withValues(alpha: 0.3),
-                                          ),
-                                          const SizedBox(height: 16),
-                                          Text(
-                                            'No projects found',
-                                            style: TextStyle(
-                                              color: customColors.textSecondary,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.normal,
-                                            )
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
+                          ],
+                        ),
+                     
+                  
+                      // Mobile-Friendly Card List
+                      Expanded(
+                        child: ref
+                            .watch(projectListProvider)
+                            .when(
+                              loading: () => const Center(
+                                child: GlobalLoader(
+                                  message: 'Loading projects...',
+                                ),
+                              ),
+                              error: (err, stack) => GlobalError(
+                                message: 'Failed to load projects. Please try again.',
+                                onRetry: () => ref.refresh(projectListProvider),
+                              ),
+                              data: (projects) {
+                                final filteredProjects = _filterProjects(
+                                  projects,
                                 );
-                              }
-
-                              return ListView.builder(
-                                padding: const EdgeInsets.all(16),
-                                itemCount: filteredProjects.length,
-                                itemBuilder: (context, index) {
-                                  final project = filteredProjects[index];
-                                  final user = AuthManager.instance.currentUser;
-                                  final roleName = user?.role?.name ?? '';
-                                  final isAdminOrManager = roleName == 'Admin' ||
-                                                           roleName == 'Admin (Default)' || 
-                                                           roleName == 'Super Admin' || 
-                                                           roleName == 'App Administrator' ||
-                                                           roleName == 'Manager/Team Lead';
-                                  debugPrint('👤 ProjectCard Permission Check - Role: "$roleName" | isAdminOrManager: $isAdminOrManager | User: ${user?.firstName}');
-                                  return ProjectCard(
-                                    project: project,
-                                    onTap: () {
-                                      FocusScope.of(context).unfocus();
-                                      showModalBottomSheet(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        backgroundColor: Colors.transparent,
-                                        builder: (context) =>
-                                            ProjectDetailsDialog(
-                                              project: project,
+                  
+                                if (filteredProjects.isEmpty) {
+                                  // Add Stack to allow refresh even when list is empty
+                                  return Stack(
+                                    children: [
+                                      ListView(), // Empty list for Pull-to-Refresh
+                                      Center(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.folder_open,
+                                              size: 80,
+                                              color: customColors.textSecondary!
+                                                  .withValues(alpha: 0.3),
                                             ),
-                                      );
-                                    },
-                                    onEdit: isAdminOrManager
-                                        ? () => _showAddProjectDialog(project: project, context: context)
-                                        : null,
-                                    onDelete: isAdminOrManager
-                                        ? () => _deleteProject(project, context)
-                                        : null,
+                                            const SizedBox(height: 16),
+                                            Text(
+                                              'No projects found',
+                                              style: TextStyle(
+                                                color: customColors.textSecondary,
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.normal,
+                                              )
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   );
-                                },
-                              );
-                            },
-                          ),
-                    ),
-                  ],
+                                }
+                  
+                                return ListView.builder(
+                                  padding: const EdgeInsets.all(16),
+                                  itemCount: filteredProjects.length,
+                                  itemBuilder: (context, index) {
+                                    final project = filteredProjects[index];
+                                    final user = AuthManager.instance.currentUser;
+                                    final roleName = user?.role?.name ?? '';
+                                    final isAdminOrManager = roleName == 'Admin' ||
+                                                             roleName == 'Admin (Default)' || 
+                                                             roleName == 'Super Admin' || 
+                                                             roleName == 'App Administrator' ||
+                                                             roleName == 'Manager/Team Lead';
+                                    debugPrint('👤 ProjectCard Permission Check - Role: "$roleName" | isAdminOrManager: $isAdminOrManager | User: ${user?.firstName}');
+                                    return ProjectCard(
+                                      project: project,
+                                      onTap: () {
+                                        FocusScope.of(context).unfocus();
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder: (context) =>
+                                              ProjectDetailsDialog(
+                                                project: project,
+                                              ),
+                                        );
+                                      },
+                                      onEdit: isAdminOrManager
+                                          ? () => _showAddProjectDialog(project: project, context: context)
+                                          : null,
+                                      onDelete: isAdminOrManager
+                                          ? () => _deleteProject(project, context)
+                                          : null,
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
