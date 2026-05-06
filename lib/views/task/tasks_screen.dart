@@ -1,21 +1,20 @@
 import 'package:dsv360/core/constants/theme.dart';
-import 'package:dsv360/providers/task_provider.dart';
-import 'package:dsv360/repositories/task_repository.dart';
-import 'package:dsv360/views/dashboard/dashboard_page.dart';
-import 'package:dsv360/views/widgets/TopBar.dart';
+import 'package:dsv360/features/task/providers/task_provider.dart';
+import 'package:dsv360/features/task/repositories/fetch_tasks_repository.dart';
+import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
+import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../models/task.dart';
-import '../../models/attachment.dart';
-import '../../core/constants/auth_manager.dart';
-import '../time_entry/add_time_entry_dialog.dart';
-import '../widgets/custom_search_bar.dart';
-import '../widgets/generic_card.dart';
-import '../attachments/attachment_list_modal.dart';
-import 'add_task_dialog.dart';
-import 'task_details_dialog.dart';
-import 'package:dsv360/views/dashboard/AppDrawer.dart';
+import '../../core/models/task.dart';
+import '../../core/models/attachment.dart';
+import 'package:dsv360/features/time_entry/view/pages/add_time_entry_dialog.dart';
+import 'package:dsv360/core/widgets/custom_search_bar.dart';
+import 'package:dsv360/core/widgets/generic_card.dart';
+import 'package:dsv360/core/models/attachment_list_modal.dart';
+import 'package:dsv360/features/task/views/pages/add_task_dialog.dart';
+import 'package:dsv360/features/task/views/pages/task_details_dialog.dart';
+import 'package:dsv360/features/dashboard/view/widgets/AppDrawer.dart';
 
 class TasksScreen extends ConsumerStatefulWidget {
   final String? projectId;
@@ -199,7 +198,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       debugPrint('🔄 Refreshing tasks for user: $userId');
 
       if (mounted) {
-        ref.refresh(tasksListRepositoryProvider(userId));
+        ref.invalidate(tasksListRepositoryProvider(userId));
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -254,7 +253,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 
                 // Refresh the tasks list
                 if (mounted) {
-                  ref.refresh(tasksListRepositoryProvider(userId));
+                  ref.invalidate(tasksListRepositoryProvider(userId));
                   scaffoldMessenger.showSnackBar(
                     SnackBar(
                       content: Row(
@@ -471,7 +470,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                             taskId: task.taskId,
                                             projectId: task.projectId,
                                             taskName: task.taskName,
-                                            projectName: task.projectName ?? 'Project',
+                                            projectName: task.projectName,
                                             currentUser: task.assignedTo,
                                           ),
                                         ),
