@@ -348,7 +348,7 @@ class AppDrawer extends StatelessWidget {
                       const SizedBox(height: 20),
                       Text(
                         textAlign: TextAlign.center,
-                        'v1.0.5',
+                        'v2.0.6',
                         style: textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurface,
                         ),
