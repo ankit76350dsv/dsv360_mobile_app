@@ -25,7 +25,7 @@ import 'package:dsv360/core/widgets/custom_chip.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/core/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/core/widgets/custom_search_bar.dart';
-import 'package:dsv360/features/teams/providers/batch_profile_provider.dart';
+import 'package:dsv360/features/teams/viewmodel/batch_profile_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

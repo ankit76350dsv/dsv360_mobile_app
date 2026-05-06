@@ -1,5 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
-import 'package:dsv360/features/badges/repositories/badge_repository.dart';
+import 'package:dsv360/features/badges/viewmodel/badge_image_viewmodel.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 

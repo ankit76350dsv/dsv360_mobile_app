@@ -1,5 +1,5 @@
 import 'package:dsv360/core/constants/auth_manager.dart';
-import 'package:dsv360/features/badges/repositories/badge_repository.dart';
+import 'package:dsv360/features/badges/viewmodel/badge_image_viewmodel.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
@@ -418,499 +418,501 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
     final timeEntriesAsync = ref.watch(_timeEntriesProvider(widget.task.id));
 
     return Scaffold(
-      body: Column(
-        children: [
-          // ── Top Bar ──────────────────────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.only(top: 48, bottom: 8),
-            child: TopBar(
-              title: 'SubTasks',
-              onBack: () {
-                if (Navigator.canPop(context)) Navigator.pop(context);
-              },
-              actionIcon: Icons.refresh,
-              onInfoTap: () {
-                _fetchTimerStatus();
-                final dataArgs = (projectId: widget.projectId, taskId: widget.task.id);
-                ref.invalidate(_subTaskPageDataProvider(dataArgs));
-                ref.invalidate(_timeEntriesProvider(widget.task.id));
-              },
-            ),
-          ),
-
-          // ── Task title + status badge ─────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.task.title,
-                    style: TextStyle(
-                      color: textPrimary,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: taskStatusColor.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    _statusLabel(taskStatus),
-                    style: TextStyle(
-                      color: taskStatusColor,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // ── Log Time / Start Timer ────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final result = await Navigator.push<bool>(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => CreateTimeEntryPage(
-                            task: widget.task,
-                            projectId: widget.projectId,
-                            projectName: widget.projectName,
-                            storyId: widget.task.storyId,
-                            sprintId: widget.sprintId,
-                          ),
-                        ),
-                      );
-                      if (result == true) {
-                        ref.invalidate(_timeEntriesProvider(widget.task.id));
-                      }
-                      // Re-fetch timer status on return
-                      await _fetchTimerStatus();
-                    },
-                    icon: Icon(Icons.add, size: 16, color: textPrimary),
-                    label: Text(
-                      'Log Time (Task)',
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ── Top Bar ──────────────────────────────────────────────────────
+           
+             
+              TopBar(
+                title: 'SubTasks',
+                onBack: () {
+                  if (Navigator.canPop(context)) Navigator.pop(context);
+                },
+                actionIcon: Icons.refresh,
+                onInfoTap: () {
+                  _fetchTimerStatus();
+                  final dataArgs = (projectId: widget.projectId, taskId: widget.task.id);
+                  ref.invalidate(_subTaskPageDataProvider(dataArgs));
+                  ref.invalidate(_timeEntriesProvider(widget.task.id));
+                },
+              ),
+           
+        
+            // ── Task title + status badge ─────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.task.title,
                       style: TextStyle(
                         color: textPrimary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      side: BorderSide(color: greyBorder),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: (_taskTimerFetching || _isUpdatingStatus)
-                        ? null
-                        : _taskTimerRunning
-                        ? _openStopTaskTimer
-                        : _startTaskTimer,
-                    icon: _taskTimerFetching
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                        : Icon(
-                            _taskTimerRunning ? Icons.pause : Icons.play_arrow,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                    label: Text(
-                      _taskTimerFetching
-                          ? 'Loading...'
-                          : _taskTimerRunning
-                          ? 'Pause Timer'
-                          : 'Start Timer',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _taskTimerRunning
-                          ? const Color(0xFFD32F2F)
-                          : const Color(0xFF2E7D32),
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                    decoration: BoxDecoration(
+                      color: taskStatusColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      _statusLabel(taskStatus),
+                      style: TextStyle(
+                        color: taskStatusColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-
-          // ── Status row ────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: Row(
-              children: [
-                Text(
-                  '  Status   ',
-                  style: TextStyle(
-                    color: textSecondary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+        
+            // ── Log Time / Start Timer ────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () async {
+                        final result = await Navigator.push<bool>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CreateTimeEntryPage(
+                              task: widget.task,
+                              projectId: widget.projectId,
+                              projectName: widget.projectName,
+                              storyId: widget.task.storyId,
+                              sprintId: widget.sprintId,
+                            ),
+                          ),
+                        );
+                        if (result == true) {
+                          ref.invalidate(_timeEntriesProvider(widget.task.id));
+                        }
+                        // Re-fetch timer status on return
+                        await _fetchTimerStatus();
+                      },
+                      icon: Icon(Icons.add, size: 16, color: textPrimary),
+                      label: Text(
+                        'Log Time (Task)',
+                        style: TextStyle(
+                          color: textPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        side: BorderSide(color: greyBorder),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: _StatusButton(
-                    current: taskStatus,
-                    statusOptions: _statusOptions,
-                    cardBg: cardBg,
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    greyBorder: greyBorder,
-                    primary: primary,
-                    onShowSelector: (ctx, cur) => _showStatusSelector(
-                      context: ctx,
-                      current: cur,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: (_taskTimerFetching || _isUpdatingStatus)
+                          ? null
+                          : _taskTimerRunning
+                          ? _openStopTaskTimer
+                          : _startTaskTimer,
+                      icon: _taskTimerFetching
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            )
+                          : Icon(
+                              _taskTimerRunning ? Icons.pause : Icons.play_arrow,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                      label: Text(
+                        _taskTimerFetching
+                            ? 'Loading...'
+                            : _taskTimerRunning
+                            ? 'Pause Timer'
+                            : 'Start Timer',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _taskTimerRunning
+                            ? const Color(0xFFD32F2F)
+                            : const Color(0xFF2E7D32),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        
+            // ── Status row ────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Row(
+                children: [
+                  Text(
+                    '  Status   ',
+                    style: TextStyle(
+                      color: textSecondary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Expanded(
+                    child: _StatusButton(
+                      current: taskStatus,
+                      statusOptions: _statusOptions,
                       cardBg: cardBg,
                       textPrimary: textPrimary,
                       textSecondary: textSecondary,
                       greyBorder: greyBorder,
                       primary: primary,
+                      onShowSelector: (ctx, cur) => _showStatusSelector(
+                        context: ctx,
+                        current: cur,
+                        cardBg: cardBg,
+                        textPrimary: textPrimary,
+                        textSecondary: textSecondary,
+                        greyBorder: greyBorder,
+                        primary: primary,
+                      ),
+                      onStatusChanged: _updateTaskStatus,
                     ),
-                    onStatusChanged: _updateTaskStatus,
                   ),
+                  const SizedBox(width: 10),
+                ],
+              ),
+            ),
+        
+            // ── Tab Bar ───────────────────────────────────────────────────
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              decoration: BoxDecoration(
+                color:
+                    customColors.tabbarBackground ??
+                    Colors.grey.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: TabBar(
+                controller: _tabController,
+                physics: const NeverScrollableScrollPhysics(),
+                isScrollable: false,
+                indicator: BoxDecoration(
+                  color: primary,
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                const SizedBox(width: 10),
-              ],
-            ),
-          ),
-
-          // ── Tab Bar ───────────────────────────────────────────────────
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: BoxDecoration(
-              color:
-                  customColors.tabbarBackground ??
-                  Colors.grey.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: TabBar(
-              controller: _tabController,
-              physics: const NeverScrollableScrollPhysics(),
-              isScrollable: false,
-              indicator: BoxDecoration(
-                color: primary,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              dividerColor: Colors.transparent,
-              labelColor: Colors.white,
-              unselectedLabelColor: textSecondary,
-              labelStyle: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-              unselectedLabelStyle: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-              tabs: [
-                Tab(
-                  child: dataAsync.when(
-                    data: (d) => Text('SUB-TASKS (${d.subTasks.length})'),
-                    loading: () => const Text('SUB-TASKS'),
-                    error: (_, __) => const Text('SUB-TASKS'),
-                  ),
+                indicatorSize: TabBarIndicatorSize.tab,
+                dividerColor: Colors.transparent,
+                labelColor: Colors.white,
+                unselectedLabelColor: textSecondary,
+                labelStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
                 ),
-                const Tab(child: Text('TIME ENTRIES')),
-              ],
-            ),
-          ),
-
-          // ── Tab Views ─────────────────────────────────────────────────
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                // ── Sub-tasks tab ──────────────────────────────────
-                dataAsync.when(
-                  loading: () => const Center(child: DsvLoader()),
-                  error: (err, _) => _ErrorRetry(
-                    message: 'Failed to load sub-tasks',
-                    detail: err.toString(),
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    onRetry: () =>
-                        ref.invalidate(_subTaskPageDataProvider(dataArgs)),
+                unselectedLabelStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+                tabs: [
+                  Tab(
+                    child: dataAsync.when(
+                      data: (d) => Text('SUB-TASKS (${d.subTasks.length})'),
+                      loading: () => const Text('SUB-TASKS'),
+                      error: (_, __) => const Text('SUB-TASKS'),
+                    ),
                   ),
-                  data: (data) {
-                    final subTasks = data.subTasks;
-                    final userIdToName = data.userIdToName;
-                    final completedCount = subTasks
-                        .where((s) => s.status.toLowerCase() == 'closed')
-                        .length;
-
-                    return RefreshIndicator(
-                      onRefresh: () async =>
+                  const Tab(child: Text('TIME ENTRIES')),
+                ],
+              ),
+            ),
+        
+            // ── Tab Views ─────────────────────────────────────────────────
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  // ── Sub-tasks tab ──────────────────────────────────
+                  dataAsync.when(
+                    loading: () => const Center(child: DsvLoader()),
+                    error: (err, _) => _ErrorRetry(
+                      message: 'Failed to load sub-tasks',
+                      detail: err.toString(),
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      onRetry: () =>
                           ref.invalidate(_subTaskPageDataProvider(dataArgs)),
-                      child: ListView(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                        children: [
-                          // progress row
-                          if (subTasks.isNotEmpty)
-                            Column(
-                              children: [
-                                Row(
+                    ),
+                    data: (data) {
+                      final subTasks = data.subTasks;
+                      final userIdToName = data.userIdToName;
+                      final completedCount = subTasks
+                          .where((s) => s.status.toLowerCase() == 'closed')
+                          .length;
+        
+                      return RefreshIndicator(
+                        onRefresh: () async =>
+                            ref.invalidate(_subTaskPageDataProvider(dataArgs)),
+                        child: ListView(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                          children: [
+                            // progress row
+                            if (subTasks.isNotEmpty)
+                              Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ClipRRect(
+                                          borderRadius: BorderRadius.circular(4),
+                                          child: LinearProgressIndicator(
+                                            value: subTasks.isEmpty
+                                                ? 0
+                                                : completedCount / subTasks.length,
+                                            backgroundColor: Colors.grey.withValues(
+                                              alpha: 0.2,
+                                            ),
+                                            valueColor: AlwaysStoppedAnimation<Color>(
+                                              primary,
+                                            ),
+                                            minHeight: 6,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        '$completedCount/${subTasks.length}',
+                                        style: TextStyle(
+                                          color: textSecondary,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().contains('manager'))
+                                        GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => AddSubTaskPage(
+                                                  projectId: widget.projectId,
+                                                  storyId: widget.task.storyId,
+                                                  taskId: widget.task.id,
+                                                ),
+                                              ),
+                                            ); //here
+                                          },
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 7,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: primary,
+                                              borderRadius: BorderRadius.circular(8),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: primary.withValues(alpha: 0.3),
+                                                  blurRadius: 4,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                            child: const Text(
+                                              '+ ADD SUB-TASK',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: 0.3,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+                              )
+                            else if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().contains('manager'))
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
-                                    Expanded(
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(4),
-                                        child: LinearProgressIndicator(
-                                          value: subTasks.isEmpty
-                                              ? 0
-                                              : completedCount / subTasks.length,
-                                          backgroundColor: Colors.grey.withValues(
-                                            alpha: 0.2,
+                                    GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => AddSubTaskPage(
+                                              projectId: widget.projectId,
+                                              storyId: widget.task.storyId,
+                                              taskId: widget.task.id,
+                                            ),
                                           ),
-                                          valueColor: AlwaysStoppedAnimation<Color>(
-                                            primary,
+                                        );
+                                      },
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 7,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: primary,
+                                          borderRadius: BorderRadius.circular(8),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: primary.withValues(alpha: 0.3),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Text(
+                                          '+ ADD SUB-TASK',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 0.3,
                                           ),
-                                          minHeight: 6,
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      '$completedCount/${subTasks.length}',
-                                      style: TextStyle(
-                                        color: textSecondary,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().contains('manager'))
-                                      GestureDetector(
-                                        onTap: () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => AddSubTaskPage(
-                                                projectId: widget.projectId,
-                                                storyId: widget.task.storyId,
-                                                taskId: widget.task.id,
-                                              ),
-                                            ),
-                                          ); //here
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 7,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: primary,
-                                            borderRadius: BorderRadius.circular(8),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: primary.withValues(alpha: 0.3),
-                                                blurRadius: 4,
-                                                offset: const Offset(0, 2),
-                                              ),
-                                            ],
-                                          ),
-                                          child: const Text(
-                                            '+ ADD SUB-TASK',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
-                                              letterSpacing: 0.3,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
                                   ],
                                 ),
-                                const SizedBox(height: 12),
-                              ],
-                            )
-                          else if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().contains('manager'))
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  GestureDetector(
-                                    onTap: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => AddSubTaskPage(
-                                            projectId: widget.projectId,
-                                            storyId: widget.task.storyId,
-                                            taskId: widget.task.id,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 7,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: primary,
-                                        borderRadius: BorderRadius.circular(8),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: primary.withValues(alpha: 0.3),
-                                            blurRadius: 4,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: const Text(
-                                        '+ ADD SUB-TASK',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 0.3,
-                                        ),
-                                      ),
+                              ),
+        
+                            if (subTasks.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 32),
+                                child: Center(
+                                  child: Text(
+                                    'No sub-tasks yet',
+                                    style: TextStyle(
+                                      color: textSecondary,
+                                      fontSize: 13,
                                     ),
                                   ),
-                                ],
-                              ),
+                                ),
+                              )
+                            else
+                              ...subTasks.asMap().entries.map((entry) {
+                                final idx = entry.key;
+                                final sub = entry.value;
+                                final assigneeName = sub.assigneeId.isEmpty
+                                    ? 'Unassigned'
+                                    : userIdToName[sub.assigneeId] ??
+                                          sub.assigneeId;
+                                return _SubTaskCard(
+                                  subTask: sub,
+                                  index: idx + 1,
+                                  assigneeName: assigneeName,
+                                  statusOptions: _statusOptions,
+                                  cardBg: cardBg,
+                                  textPrimary: textPrimary,
+                                  textSecondary: textSecondary,
+                                  greyBorder: greyBorder,
+                                  primary: primary,
+                                  onShowSelector: (ctx, cur) =>
+                                      _showStatusSelector(
+                                        context: ctx,
+                                        current: cur,
+                                        cardBg: cardBg,
+                                        textPrimary: textPrimary,
+                                        textSecondary: textSecondary,
+                                        greyBorder: greyBorder,
+                                        primary: primary,
+                                      ),
+                                  task: widget.task,
+                                  projectId: widget.projectId,
+                                  projectName: widget.projectName,
+                                  sprintId: widget.sprintId,
+                                  onTimeEntryAdded: () => ref.invalidate(
+                                    _timeEntriesProvider(widget.task.id),
+                                  ),
+                                  onReturnFromPage: _fetchTimerStatus,
+                                  onStatusChanged: () async {
+                                    final dataArgs = (
+                                      projectId: widget.projectId,
+                                      taskId: widget.task.id,
+                                    );
+                                    ref.invalidate(
+                                      _subTaskPageDataProvider(dataArgs),
+                                    );
+                                    await _fetchTimerStatus();
+                                  },
+                                );
+                              }),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+        
+                  // ── Time Entries tab ───────────────────────────────
+                  RefreshIndicator(
+                    onRefresh: () async =>
+                        ref.invalidate(_timeEntriesProvider(widget.task.id)),
+                    child: timeEntriesAsync.when(
+                      loading: () => const Center(child: DsvLoader()),
+                      error: (err, _) => ListView(
+                        children: [
+                          _ErrorRetry(
+                            message: 'Failed to load time entries',
+                            detail: err.toString(),
+                            textPrimary: textPrimary,
+                            textSecondary: textSecondary,
+                            onRetry: () => ref.invalidate(
+                              _timeEntriesProvider(widget.task.id),
                             ),
-
-                          if (subTasks.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 32),
-                              child: Center(
-                                child: Text(
-                                  'No sub-tasks yet',
-                                  style: TextStyle(
-                                    color: textSecondary,
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ),
-                            )
-                          else
-                            ...subTasks.asMap().entries.map((entry) {
-                              final idx = entry.key;
-                              final sub = entry.value;
-                              final assigneeName = sub.assigneeId.isEmpty
-                                  ? 'Unassigned'
-                                  : userIdToName[sub.assigneeId] ??
-                                        sub.assigneeId;
-                              return _SubTaskCard(
-                                subTask: sub,
-                                index: idx + 1,
-                                assigneeName: assigneeName,
-                                statusOptions: _statusOptions,
-                                cardBg: cardBg,
-                                textPrimary: textPrimary,
-                                textSecondary: textSecondary,
-                                greyBorder: greyBorder,
-                                primary: primary,
-                                onShowSelector: (ctx, cur) =>
-                                    _showStatusSelector(
-                                      context: ctx,
-                                      current: cur,
-                                      cardBg: cardBg,
-                                      textPrimary: textPrimary,
-                                      textSecondary: textSecondary,
-                                      greyBorder: greyBorder,
-                                      primary: primary,
-                                    ),
-                                task: widget.task,
-                                projectId: widget.projectId,
-                                projectName: widget.projectName,
-                                sprintId: widget.sprintId,
-                                onTimeEntryAdded: () => ref.invalidate(
-                                  _timeEntriesProvider(widget.task.id),
-                                ),
-                                onReturnFromPage: _fetchTimerStatus,
-                                onStatusChanged: () async {
-                                  final dataArgs = (
-                                    projectId: widget.projectId,
-                                    taskId: widget.task.id,
-                                  );
-                                  ref.invalidate(
-                                    _subTaskPageDataProvider(dataArgs),
-                                  );
-                                  await _fetchTimerStatus();
-                                },
-                              );
-                            }),
+                          ),
                         ],
                       ),
-                    );
-                  },
-                ),
-
-                // ── Time Entries tab ───────────────────────────────
-                RefreshIndicator(
-                  onRefresh: () async =>
-                      ref.invalidate(_timeEntriesProvider(widget.task.id)),
-                  child: timeEntriesAsync.when(
-                    loading: () => const Center(child: DsvLoader()),
-                    error: (err, _) => ListView(
-                      children: [
-                        _ErrorRetry(
-                          message: 'Failed to load time entries',
-                          detail: err.toString(),
-                          textPrimary: textPrimary,
-                          textSecondary: textSecondary,
-                          onRetry: () => ref.invalidate(
-                            _timeEntriesProvider(widget.task.id),
-                          ),
-                        ),
-                      ],
-                    ),
-                    data: (entries) => _TimeEntriesTab(
-                      entries: entries,
-                      textPrimary: textPrimary,
-                      textSecondary: textSecondary,
-                      cardBg: cardBg,
-                      greyBorder: greyBorder,
-                      primary: primary,
+                      data: (entries) => _TimeEntriesTab(
+                        entries: entries,
+                        textPrimary: textPrimary,
+                        textSecondary: textSecondary,
+                        cardBg: cardBg,
+                        greyBorder: greyBorder,
+                        primary: primary,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

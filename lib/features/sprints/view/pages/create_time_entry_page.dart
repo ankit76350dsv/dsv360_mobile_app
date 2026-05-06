@@ -232,251 +232,253 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
     final primary = customColors.primary ?? const Color(0xFF1A56DB);
 
     return Scaffold(
-      body: Column(
-        children: [
-          // ── Top Bar ────────────────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.only(top: 48, bottom: 8),
-            child: TopBar(
-              title: 'Log Time',
-              onBack: () {
-                if (Navigator.canPop(context)) Navigator.pop(context);
-              },
-            ),
-          ),
-
-          // ── Task info pill ─────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: primary.withValues(alpha: 0.2),
-                  width: 1,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ── Top Bar ────────────────────────────────────────────────
+            
+              
+              TopBar(
+                title: 'Log Time',
+                onBack: () {
+                  if (Navigator.canPop(context)) Navigator.pop(context);
+                },
+              ),
+           
+        
+            // ── Task info pill ─────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: primary.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.task_alt_outlined, color: primary, size: 16),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        widget.task.title,
+                        style: TextStyle(
+                          color: textPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
-                children: [
-                  Icon(Icons.task_alt_outlined, color: primary, size: 16),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      widget.task.title,
-                      style: TextStyle(
-                        color: textPrimary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
             ),
-          ),
-
-          // ── Form ──────────────────────────────────────────────────
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Date picker ──────────────────────────────────
-                  _FieldLabel(label: 'Date *', textSecondary: textSecondary),
-                  const SizedBox(height: 6),
-                  _PickerTile(
-                    icon: Icons.calendar_today_outlined,
-                    placeholder: 'Select date',
-                    value: _selectedDate != null
-                        ? _formatDate(_selectedDate!)
-                        : null,
-                    inputFill: inputFill,
-                    inputBorder: inputBorder,
-                    greyBorder: greyBorder,
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    primary: primary,
-                    onTap: () => _pickDate(context, customColors),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // ── Start / End time row ─────────────────────────
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _FieldLabel(
-                              label: 'Start Time *',
-                              textSecondary: textSecondary,
-                            ),
-                            const SizedBox(height: 6),
-                            _PickerTile(
-                              icon: Icons.access_time_outlined,
-                              placeholder: 'Select',
-                              value: _startTime != null
-                                  ? _formatTime(_startTime!)
-                                  : null,
-                              inputFill: inputFill,
-                              inputBorder: inputBorder,
-                              greyBorder: greyBorder,
-                              textPrimary: textPrimary,
-                              textSecondary: textSecondary,
-                              primary: primary,
-                              onTap: () =>
-                                  _pickTime(context, customColors, true),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _FieldLabel(
-                              label: 'End Time *',
-                              textSecondary: textSecondary,
-                            ),
-                            const SizedBox(height: 6),
-                            _PickerTile(
-                              icon: Icons.access_time_filled_outlined,
-                              placeholder: 'Select',
-                              value: _endTime != null
-                                  ? _formatTime(_endTime!)
-                                  : null,
-                              inputFill: inputFill,
-                              inputBorder: inputBorder,
-                              greyBorder: greyBorder,
-                              textPrimary: textPrimary,
-                              textSecondary: textSecondary,
-                              primary: primary,
-                              onTap: () =>
-                                  _pickTime(context, customColors, false),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // duration preview
-                  if (_startTime != null && _endTime != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: () {
-                        final mins = _totalMinutes();
-                        final h = mins ~/ 60;
-                        final m = mins % 60;
-                        final label = mins <= 0
-                            ? 'End time must be after start time'
-                            : 'Duration: ${h > 0 ? '${h}h ' : ''}${m}m';
-                        return Text(
-                          label,
-                          style: TextStyle(
-                            color: mins <= 0
-                                ? customColors.error ?? Colors.red
-                                : textSecondary,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        );
-                      }(),
+        
+            // ── Form ──────────────────────────────────────────────────
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Date picker ──────────────────────────────────
+                    _FieldLabel(label: 'Date *', textSecondary: textSecondary),
+                    const SizedBox(height: 6),
+                    _PickerTile(
+                      icon: Icons.calendar_today_outlined,
+                      placeholder: 'Select date',
+                      value: _selectedDate != null
+                          ? _formatDate(_selectedDate!)
+                          : null,
+                      inputFill: inputFill,
+                      inputBorder: inputBorder,
+                      greyBorder: greyBorder,
+                      textPrimary: textPrimary,
+                      textSecondary: textSecondary,
+                      primary: primary,
+                      onTap: () => _pickDate(context, customColors),
                     ),
-
-                  const SizedBox(height: 16),
-
-                  // ── Type selector (Dropdown) ─────────────────────
-                  _FieldLabel(label: 'Type *', textSecondary: textSecondary),
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    decoration: BoxDecoration(
-                      color: inputFill,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: inputBorder, width: 1.5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
+                    const SizedBox(height: 16),
+        
+                    // ── Start / End time row ─────────────────────────
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _FieldLabel(
+                                label: 'Start Time *',
+                                textSecondary: textSecondary,
+                              ),
+                              const SizedBox(height: 6),
+                              _PickerTile(
+                                icon: Icons.access_time_outlined,
+                                placeholder: 'Select',
+                                value: _startTime != null
+                                    ? _formatTime(_startTime!)
+                                    : null,
+                                inputFill: inputFill,
+                                inputBorder: inputBorder,
+                                greyBorder: greyBorder,
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                                primary: primary,
+                                onTap: () =>
+                                    _pickTime(context, customColors, true),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _FieldLabel(
+                                label: 'End Time *',
+                                textSecondary: textSecondary,
+                              ),
+                              const SizedBox(height: 6),
+                              _PickerTile(
+                                icon: Icons.access_time_filled_outlined,
+                                placeholder: 'Select',
+                                value: _endTime != null
+                                    ? _formatTime(_endTime!)
+                                    : null,
+                                inputFill: inputFill,
+                                inputBorder: inputBorder,
+                                greyBorder: greyBorder,
+                                textPrimary: textPrimary,
+                                textSecondary: textSecondary,
+                                primary: primary,
+                                onTap: () =>
+                                    _pickTime(context, customColors, false),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
-                    child: DropdownButton<String>(
-                      value: _type,
-                      isExpanded: true,
-                      underline: const SizedBox(),
-                      style: TextStyle(
-                        color: textPrimary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+        
+                    // duration preview
+                    if (_startTime != null && _endTime != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: () {
+                          final mins = _totalMinutes();
+                          final h = mins ~/ 60;
+                          final m = mins % 60;
+                          final label = mins <= 0
+                              ? 'End time must be after start time'
+                              : 'Duration: ${h > 0 ? '${h}h ' : ''}${m}m';
+                          return Text(
+                            label,
+                            style: TextStyle(
+                              color: mins <= 0
+                                  ? customColors.error ?? Colors.red
+                                  : textSecondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          );
+                        }(),
                       ),
-                      dropdownColor: cardBg,
-                      items: _typeOptions.map((option) {
-                        return DropdownMenuItem<String>(
-                          value: option,
-                          child: Row(
-                            children: [
-                              Icon(
-                                option == 'Billable'
-                                    ? Icons.attach_money_rounded
-                                    : Icons.money_off_rounded,
-                                size: 16,
-                                color: primary,
-                              ),
-                              const SizedBox(width: 10),
-                              Text(option),
-                            ],
+        
+                    const SizedBox(height: 16),
+        
+                    // ── Type selector (Dropdown) ─────────────────────
+                    _FieldLabel(label: 'Type *', textSecondary: textSecondary),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: inputFill,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: inputBorder, width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) setState(() => _type = value);
-                      },
+                        ],
+                      ),
+                      child: DropdownButton<String>(
+                        value: _type,
+                        isExpanded: true,
+                        underline: const SizedBox(),
+                        style: TextStyle(
+                          color: textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        dropdownColor: cardBg,
+                        items: _typeOptions.map((option) {
+                          return DropdownMenuItem<String>(
+                            value: option,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  option == 'Billable'
+                                      ? Icons.attach_money_rounded
+                                      : Icons.money_off_rounded,
+                                  size: 16,
+                                  color: primary,
+                                ),
+                                const SizedBox(width: 10),
+                                Text(option),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          if (value != null) setState(() => _type = value);
+                        },
+                      ),
                     ),
-                  ),
-                   const SizedBox(height: 16),
-
-                  // ── Note ────────────────────────────────────────
-                  _FieldLabel(label: 'Note *', textSecondary: textSecondary),
-                  const SizedBox(height: 6),
-                  CustomInputField(
-                    controller: _noteController,
-                    hintText: 'Add a note...',
-                    isMultiline: true,
-                    maxLines: 4,
-                    minLines: 3,
-                  ),
-                 
-
-                 
-
-                  const SizedBox(height: 32),
-
-                  // ── Buttons ──────────────────────────────────────
-                  BottomTwoButtons(
-                    loadingKey: _loadingKey,
-                    button1Text: 'Cancel',
-                    button2Text: 'Save Entry',
-                    button1Function: () {
-                      if (Navigator.canPop(context)) Navigator.pop(context);
-                    },
-                    button2Function: _submit,
-                  ),
-
-                  const SizedBox(height: 24),
-                ],
+                     const SizedBox(height: 16),
+        
+                    // ── Note ────────────────────────────────────────
+                    _FieldLabel(label: 'Note *', textSecondary: textSecondary),
+                    const SizedBox(height: 6),
+                    CustomInputField(
+                      controller: _noteController,
+                      hintText: 'Add a note...',
+                      isMultiline: true,
+                      maxLines: 4,
+                      minLines: 3,
+                    ),
+                   
+        
+                   
+        
+                    const SizedBox(height: 32),
+        
+                    // ── Buttons ──────────────────────────────────────
+                    BottomTwoButtons(
+                      loadingKey: _loadingKey,
+                      button1Text: 'Cancel',
+                      button2Text: 'Save Entry',
+                      button1Function: () {
+                        if (Navigator.canPop(context)) Navigator.pop(context);
+                      },
+                      button2Function: _submit,
+                    ),
+        
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,7 +1,7 @@
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/badges/model/badge_user.dart';
-import 'package:dsv360/features/badges/repositories/badge_repository.dart';
+import 'package:dsv360/features/badges/viewmodel/badge_image_viewmodel.dart';
 
 import 'package:dsv360/features/sprints/model/epic_model.dart';
 import 'package:dsv360/features/sprints/model/sprints_model.dart';

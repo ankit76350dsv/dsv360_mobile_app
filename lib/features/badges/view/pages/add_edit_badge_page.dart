@@ -1,5 +1,5 @@
 import 'package:dsv360/features/badges/model/dsvbadge.dart';
-import 'package:dsv360/features/badges/viewmodel/add_edit_badge_viewmodel.dart';
+import 'package:dsv360/features/badges/viewmodel/badges_viewmodel.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/core/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/core/widgets/custom_input_field.dart';

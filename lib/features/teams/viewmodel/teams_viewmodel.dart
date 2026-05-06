@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dsv360/features/teams/providers/teams_provider.dart';
-import 'package:dsv360/features/teams/providers/batch_profile_provider.dart';
+import 'package:dsv360/features/teams/viewmodel/teams_provider.dart';
+import 'package:dsv360/features/teams/viewmodel/batch_profile_provider.dart';
 
 // ╔══════════════════════════════════════════════════════════════╗
 // ║              DATA MODELS                                    ║

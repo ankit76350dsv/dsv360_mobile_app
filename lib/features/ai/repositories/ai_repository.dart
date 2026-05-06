@@ -72,7 +72,3 @@ class AiRepository {
     }
   }
 }
-
-final aiRepositoryProvider = Provider<AiRepository>((ref) {
-  return AiRepository(ref);
-});

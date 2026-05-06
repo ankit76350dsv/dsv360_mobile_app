@@ -6,7 +6,7 @@ import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/teams/view/pages/add_edit_team.dart';
-import 'package:dsv360/features/teams/providers/teams_provider.dart';
+import 'package:dsv360/features/teams/viewmodel/teams_provider.dart';
 import 'package:dsv360/features/teams/viewmodel/teams_viewmodel.dart';
 import 'package:dsv360/features/teams/view/widgets/responsive_scale_helper.dart';
 import 'package:dsv360/features/teams/view/widgets/team_board.dart';
@@ -18,7 +18,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:dsv360/features/dashboard/view/widgets/AppDrawer.dart';
-import 'package:dsv360/features/teams/providers/batch_profile_provider.dart';
+import 'package:dsv360/features/teams/viewmodel/batch_profile_provider.dart';
 
 // ── Alias for responsive scale class ──
 typedef _RS = ResponsiveScale;

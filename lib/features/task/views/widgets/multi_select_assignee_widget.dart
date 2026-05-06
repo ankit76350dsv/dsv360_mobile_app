@@ -2,7 +2,7 @@ import 'package:dsv360/core/constants/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../teams/model/employee_model.dart';
-import '../../../users/providers/employee_provider.dart';
+import '../../../users/viewmodel/employee_viewmodel.dart';
 
 class MultiSelectAssigneeWidget extends ConsumerStatefulWidget {
   final List<Employee> selectedEmployees;

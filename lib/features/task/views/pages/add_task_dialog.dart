@@ -10,7 +10,7 @@ import '../../../teams/model/employee_model.dart';
 import '../../../../core/models/attachment.dart';
 import '../../../projects/viewmodel/project_viewmodel.dart';
 import '../../../projects/model/project_model.dart';
-import '../../../users/providers/employee_provider.dart';
+import '../../../users/viewmodel/employee_viewmodel.dart';
 import '../../../../core/widgets/custom_input_field.dart';
 import '../../../../core/widgets/custom_popup_dropdown.dart';
 import '../../../../core/widgets/TopBar.dart';
@@ -309,621 +309,622 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
         isAdmin || role.toLowerCase().contains('manager');
 
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(120),
-        child: Padding(
-          padding: const EdgeInsets.only(top: 48),
-          child: TopBar(
+     
+      body: SingleChildScrollView(
+        
+        child: SafeArea(
+          child: Column(
+            children: [
+              TopBar(
             title: widget.task == null ? 'Add New Task' : 'Edit Task',
             onBack: () => Navigator.of(context).pop(),
-            onInfoTap: () {},
+           
           ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Project Dropdown with dynamic projects
-                Consumer(
-                  builder: (context, ref, child) {
-                    final projectsAsync = ref.watch(projectListProvider);
-
-                    return projectsAsync.when(
-                      loading: () => Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 16,
-                        ),
-                        decoration: BoxDecoration(
-                          color: customColors.inputFill,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: customColors.inputBorder!,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.folder_outlined,
-                              color: customColors.textSecondary,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Loading projects...',
-                              style: TextStyle(
-                                color: customColors.textHint,
-                                fontSize: 16,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Project Dropdown with dynamic projects
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final projectsAsync = ref.watch(projectListProvider);
+              
+                          return projectsAsync.when(
+                            loading: () => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color: customColors.inputFill,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: customColors.inputBorder!,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.folder_outlined,
+                                    color: customColors.textSecondary,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    'Loading projects...',
+                                    style: TextStyle(
+                                      color: customColors.textHint,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      error: (error, st) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: const Text(
-                          'Failed to load projects. Please try again.',
-                        ),
-                      ),
-                      data: (projects) {
-                        final projectMap = {
-                          for (var p in projects) p.id: p.projectName,
-                        };
-                        final projectIdList = projects
-                            .map((p) => p.id)
-                            .toList();
-                        final projectNameList = projects
-                            .map((p) => p.projectName)
-                            .toList();
-
-                        debugPrint(
-                          '📦 Projects loaded: ${projectNameList.length} projects',
-                        );
-                        projectNameList.forEach(
-                          (name) => debugPrint('  - $name'),
-                        );
-
-                        return CustomPopupDropdown(
-                          value: _selectedProjectName ?? (_selectedProjectId != null
-                              ? projectMap[_selectedProjectId!]
-                              : null),
-                          hint: 'Select Project',
-                          items: projectNameList,
-                          icon: Icons.folder_outlined,
-                          onChanged: (value) {
-                            if (value != null) {
-                              final selectedId =
-                                  projectIdList[projectNameList.indexOf(value)];
-                              setState(() {
-                                _selectedProjectId = selectedId;
-                                _selectedProjectName = value;
-                              });
+                            error: (error, st) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: const Text(
+                                'Failed to load projects. Please try again.',
+                              ),
+                            ),
+                            data: (projects) {
+                              final projectMap = {
+                                for (var p in projects) p.id: p.projectName,
+                              };
+                              final projectIdList = projects
+                                  .map((p) => p.id)
+                                  .toList();
+                              final projectNameList = projects
+                                  .map((p) => p.projectName)
+                                  .toList();
+              
                               debugPrint(
-                                '✅ Project selected: $value (ID: $selectedId)',
+                                '📦 Projects loaded: ${projectNameList.length} projects',
                               );
-                            }
-                          },
-                        );
-                      },
-                    );
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Task Name
-                CustomInputField(
-                  controller: _taskNameController,
-                  hintText: 'Task Name',
-                  labelText: 'Task Name',
-                  prefixIcon: Icons.task_outlined,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter task name';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Status Dropdown
-                CustomPopupDropdown(
-                  value: _selectedStatus,
-                  hint: 'Status',
-                  items: _statusOptions,
-                  icon: Icons.assignment_outlined,
-                  onChanged: (value) => setState(() => _selectedStatus = value),
-                ),
-                const SizedBox(height: 20),
-
-                // Start Date and End Date Row
-                Row(
-                  children: [
-                    // Start Date
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => _selectDate(context, true),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: customColors.inputFill,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: customColors.inputBorder!,
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today_outlined,
-                                color: customColors.textSecondary,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  _startDate == null
-                                      ? 'Start Date'
-                                      : DateFormat(
-                                          'dd-MM-yyyy',
-                                        ).format(_startDate!),
-                                  style: TextStyle(
-                                    color: _startDate == null
-                                        ? customColors.textHint
-                                        : customColors.textPrimary,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // End Date
-                    Expanded(
-                      child: InkWell(
-                        onTap: () => _selectDate(context, false),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: customColors.inputFill,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: customColors.inputBorder!,
-                              width: 1.5,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today_outlined,
-                                color: customColors.textSecondary,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  _endDate == null
-                                      ? 'End Date'
-                                      : DateFormat(
-                                          'dd-MM-yyyy',
-                                        ).format(_endDate!),
-                                  style: TextStyle(
-                                    color: _endDate == null
-                                        ? customColors.textHint
-                                        : customColors.textPrimary,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                // Assignee Multi-Select Dropdown
-                Consumer(
-                  builder: (context, ref, child) {
-                    final employeesAsync = ref.watch(employeeListProvider);
-
-                    return employeesAsync.when(
-                      loading: () => Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 16,
-                        ),
-                        decoration: BoxDecoration(
-                          color: customColors.inputFill,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: customColors.inputBorder!,
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.person_outline,
-                              color: customColors.textSecondary,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Loading assignees...',
-                              style: TextStyle(
-                                color: customColors.textHint,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      error: (error, st) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: const Text(
-                          'Failed to load employees. Please try again.',
-                        ),
-                      ),
-                      data: (employees) {
-                        final activeEmployees = employees
-                            .where((e) => e.status == 'ACTIVE')
-                            .toList();
-                        final employeeMap = {
-                          for (var e in activeEmployees) e.fullName: e,
-                        };
-                        final employeeNameList = activeEmployees
-                            .map((e) => e.fullName)
-                            .toList();
-
-                        if (!canManageAssignees && user != null) {
-                          Employee? currentEmployee;
-                          for (final e in activeEmployees) {
-                            if (e.userId == user.id) {
-                              currentEmployee = e;
-                              break;
-                            }
-                          }
-
-                          if (currentEmployee != null) {
-                            final alreadyOnlyCurrent =
-                                _selectedAssignees.length == 1 &&
-                                _selectedAssignees.first.userId ==
-                                    currentEmployee.userId;
-
-                            if (!alreadyOnlyCurrent) {
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (!mounted) return;
-                                setState(() {
-                                  _selectedAssignees = [currentEmployee!];
-                                });
-                              });
-                            }
-                          }
-                        }
-
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            AbsorbPointer(
-                              absorbing: !canManageAssignees,
-                              child: Opacity(
-                                opacity: canManageAssignees ? 1 : 0.6,
-                                child: CustomPopupDropdown(
-                                  value: null,
-                                  hint: 'Select Assignees',
-                                  items: employeeNameList,
-                                  icon: Icons.person_outline,
-                                  onChanged: (value) {
-                                    if (!canManageAssignees || value == null)
-                                      return;
-                                    final employee = employeeMap[value];
-                                    if (employee != null) {
-                                      setState(() {
-                                        if (!_selectedAssignees.any(
-                                          (e) => e.userId == employee.userId,
-                                        )) {
-                                          _selectedAssignees.add(employee);
-                                        }
-                                      });
-                                    }
-                                  },
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            if (_selectedAssignees.isNotEmpty)
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: _selectedAssignees.map((employee) {
-                                  return Chip(
-                                    label: Text(employee.fullName),
-                                    onDeleted: canManageAssignees
-                                        ? () {
-                                            setState(() {
-                                              _selectedAssignees.removeWhere(
-                                                (e) =>
-                                                    e.userId == employee.userId,
-                                              );
-                                            });
-                                          }
-                                        : null,
-                                    backgroundColor: customColors.primary!
-                                        .withOpacity(0.2),
-                                    labelStyle: TextStyle(
-                                      color: customColors.textPrimary,
-                                      fontSize: 13,
-                                    ),
-                                    deleteIconColor: customColors.primary,
-                                  );
-                                }).toList(),
-                              ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Description
-                CustomInputField(
-                  controller: _descriptionController,
-                  hintText: 'Description',
-                  labelText: 'Task Description',
-                  prefixIcon: Icons.description_outlined,
-                  isMultiline: true,
-                  maxLines: 4,
-                  minLines: 4,
-                ),
-                const SizedBox(height: 24),
-
-                if (widget.task == null) ...[
-                  // Add Attachment Button
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: customColors.primary!.withOpacity(0.15),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        try {
-                          final result = await FilePicker.platform.pickFiles(
-                            allowMultiple: true,
-                            type: FileType.custom,
-                            allowedExtensions: [
-                              'pdf',
-                              'doc',
-                              'docx',
-                              'jpg',
-                              'jpeg',
-                              'png',
-                              'xlsx',
-                              'xls',
-                              'txt',
-                            ],
-                          );
-
-                          if (result != null) {
-                            setState(() {
-                              for (var file in result.files) {
-                                if (file.path != null) {
-                                  final alreadyAdded = _selectedAttachments.any(
-                                    (a) => a.isLocal && a.fileName == file.name,
-                                  );
-                                  if (!alreadyAdded) {
-                                    _selectedAttachments.add(Attachment(
-                                      fileName: file.name,
-                                      fileType: _getFileType(file.extension ?? ''),
-                                      fileSize: file.size,
-                                      localFile: File(file.path!),
-                                    ));
-                                    debugPrint('📎 File selected: ${file.name}');
+                              projectNameList.forEach(
+                                (name) => debugPrint('  - $name'),
+                              );
+              
+                              return CustomPopupDropdown(
+                                value: _selectedProjectName ?? (_selectedProjectId != null
+                                    ? projectMap[_selectedProjectId!]
+                                    : null),
+                                hint: 'Select Project',
+                                items: projectNameList,
+                                icon: Icons.folder_outlined,
+                                onChanged: (value) {
+                                  if (value != null) {
+                                    final selectedId =
+                                        projectIdList[projectNameList.indexOf(value)];
+                                    setState(() {
+                                      _selectedProjectId = selectedId;
+                                      _selectedProjectName = value;
+                                    });
+                                    debugPrint(
+                                      '✅ Project selected: $value (ID: $selectedId)',
+                                    );
                                   }
-                                }
-                              }
-                            });
+                                },
+                              );
+                            },
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 20),
+              
+                      // Task Name
+                      CustomInputField(
+                        controller: _taskNameController,
+                        hintText: 'Task Name',
+                        labelText: 'Task Name',
+                        prefixIcon: Icons.task_outlined,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter task name';
                           }
-                        } catch (e) {
-                          debugPrint('❌ Error picking files: $e');
-                        }
-                      },
-                      icon: const Icon(Icons.attach_file, size: 20),
-                      label: const Text(
-                        'Add Attachment',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.3,
-                        ),
+                          return null;
+                        },
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: customColors.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 14,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        elevation: 0,
+                      const SizedBox(height: 20),
+              
+                      // Status Dropdown
+                      CustomPopupDropdown(
+                        value: _selectedStatus,
+                        hint: 'Status',
+                        items: _statusOptions,
+                        icon: Icons.assignment_outlined,
+                        onChanged: (value) => setState(() => _selectedStatus = value),
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Display selected attachments
-                  if (_selectedAttachments.isNotEmpty)
-                    ...(_selectedAttachments.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final attachment = entry.value;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: customColors.cardBackground,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: customColors.inputBorder!),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                _getIconForFileType(attachment.fileType),
-                                color: customColors.primary,
-                                size: 24,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      attachment.fileName,
-                                      style: TextStyle(
-                                        color: customColors.textPrimary,
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                      const SizedBox(height: 20),
+              
+                      // Start Date and End Date Row
+                      Row(
+                        children: [
+                          // Start Date
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => _selectDate(context, true),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: customColors.inputFill,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: customColors.inputBorder!,
+                                    width: 1.5,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
                                     ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '${(attachment.fileSize / 1024 / 1024).toStringAsFixed(2)} MB',
-                                      style: TextStyle(
-                                        color: customColors.textSecondary,
-                                        fontSize: 12,
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today_outlined,
+                                      color: customColors.textSecondary,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        _startDate == null
+                                            ? 'Start Date'
+                                            : DateFormat(
+                                                'dd-MM-yyyy',
+                                              ).format(_startDate!),
+                                        style: TextStyle(
+                                          color: _startDate == null
+                                              ? customColors.textHint
+                                              : customColors.textPrimary,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.close, size: 20),
-                                color: customColors.error,
-                                onPressed: () {
-                                  setState(() {
-                                    _selectedAttachments.removeAt(index);
-                                  });
-                                },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // End Date
+                          Expanded(
+                            child: InkWell(
+                              onTap: () => _selectDate(context, false),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: customColors.inputFill,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: customColors.inputBorder!,
+                                    width: 1.5,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today_outlined,
+                                      color: customColors.textSecondary,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        _endDate == null
+                                            ? 'End Date'
+                                            : DateFormat(
+                                                'dd-MM-yyyy',
+                                              ).format(_endDate!),
+                                        style: TextStyle(
+                                          color: _endDate == null
+                                              ? customColors.textHint
+                                              : customColors.textPrimary,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+              
+                      // Assignee Multi-Select Dropdown
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final employeesAsync = ref.watch(employeeListProvider);
+              
+                          return employeesAsync.when(
+                            loading: () => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 16,
+                              ),
+                              decoration: BoxDecoration(
+                                color: customColors.inputFill,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: customColors.inputBorder!,
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.person_outline,
+                                    color: customColors.textSecondary,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    'Loading assignees...',
+                                    style: TextStyle(
+                                      color: customColors.textHint,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            error: (error, st) => Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: const Text(
+                                'Failed to load employees. Please try again.',
+                              ),
+                            ),
+                            data: (employees) {
+                              final activeEmployees = employees
+                                  .where((e) => e.status == 'ACTIVE')
+                                  .toList();
+                              final employeeMap = {
+                                for (var e in activeEmployees) e.fullName: e,
+                              };
+                              final employeeNameList = activeEmployees
+                                  .map((e) => e.fullName)
+                                  .toList();
+              
+                              if (!canManageAssignees && user != null) {
+                                Employee? currentEmployee;
+                                for (final e in activeEmployees) {
+                                  if (e.userId == user.id) {
+                                    currentEmployee = e;
+                                    break;
+                                  }
+                                }
+              
+                                if (currentEmployee != null) {
+                                  final alreadyOnlyCurrent =
+                                      _selectedAssignees.length == 1 &&
+                                      _selectedAssignees.first.userId ==
+                                          currentEmployee.userId;
+              
+                                  if (!alreadyOnlyCurrent) {
+                                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                                      if (!mounted) return;
+                                      setState(() {
+                                        _selectedAssignees = [currentEmployee!];
+                                      });
+                                    });
+                                  }
+                                }
+                              }
+              
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  AbsorbPointer(
+                                    absorbing: !canManageAssignees,
+                                    child: Opacity(
+                                      opacity: canManageAssignees ? 1 : 0.6,
+                                      child: CustomPopupDropdown(
+                                        value: null,
+                                        hint: 'Select Assignees',
+                                        items: employeeNameList,
+                                        icon: Icons.person_outline,
+                                        onChanged: (value) {
+                                          if (!canManageAssignees || value == null)
+                                            return;
+                                          final employee = employeeMap[value];
+                                          if (employee != null) {
+                                            setState(() {
+                                              if (!_selectedAssignees.any(
+                                                (e) => e.userId == employee.userId,
+                                              )) {
+                                                _selectedAssignees.add(employee);
+                                              }
+                                            });
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  if (_selectedAssignees.isNotEmpty)
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: _selectedAssignees.map((employee) {
+                                        return Chip(
+                                          label: Text(employee.fullName),
+                                          onDeleted: canManageAssignees
+                                              ? () {
+                                                  setState(() {
+                                                    _selectedAssignees.removeWhere(
+                                                      (e) =>
+                                                          e.userId == employee.userId,
+                                                    );
+                                                  });
+                                                }
+                                              : null,
+                                          backgroundColor: customColors.primary!
+                                              .withOpacity(0.2),
+                                          labelStyle: TextStyle(
+                                            color: customColors.textPrimary,
+                                            fontSize: 13,
+                                          ),
+                                          deleteIconColor: customColors.primary,
+                                        );
+                                      }).toList(),
+                                    ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 20),
+              
+                      // Description
+                      CustomInputField(
+                        controller: _descriptionController,
+                        hintText: 'Description',
+                        labelText: 'Task Description',
+                        prefixIcon: Icons.description_outlined,
+                        isMultiline: true,
+                        maxLines: 4,
+                        minLines: 4,
+                      ),
+                      const SizedBox(height: 24),
+              
+                      if (widget.task == null) ...[
+                        // Add Attachment Button
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                color: customColors.primary!.withOpacity(0.15),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
                               ),
                             ],
                           ),
-                        ),
-                      );
-                    }).toList()),
-                  const SizedBox(height: 24),
-                ],
-
-                // Action Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
-                            BoxShadow(
-                              color: customColors.primary!.withOpacity(0.3),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
+                          child: ElevatedButton.icon(
+                            onPressed: () async {
+                              try {
+                                final result = await FilePicker.platform.pickFiles(
+                                  allowMultiple: true,
+                                  type: FileType.custom,
+                                  allowedExtensions: [
+                                    'pdf',
+                                    'doc',
+                                    'docx',
+                                    'jpg',
+                                    'jpeg',
+                                    'png',
+                                    'xlsx',
+                                    'xls',
+                                    'txt',
+                                  ],
+                                );
+              
+                                if (result != null) {
+                                  setState(() {
+                                    for (var file in result.files) {
+                                      if (file.path != null) {
+                                        final alreadyAdded = _selectedAttachments.any(
+                                          (a) => a.isLocal && a.fileName == file.name,
+                                        );
+                                        if (!alreadyAdded) {
+                                          _selectedAttachments.add(Attachment(
+                                            fileName: file.name,
+                                            fileType: _getFileType(file.extension ?? ''),
+                                            fileSize: file.size,
+                                            localFile: File(file.path!),
+                                          ));
+                                          debugPrint('📎 File selected: ${file.name}');
+                                        }
+                                      }
+                                    }
+                                  });
+                                }
+                              } catch (e) {
+                                debugPrint('❌ Error picking files: $e');
+                              }
+                            },
+                            icon: const Icon(Icons.attach_file, size: 20),
+                            label: const Text(
+                              'Add Attachment',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.3,
+                              ),
                             ),
-                          ],
-                        ),
-                        child: ElevatedButton(
-                          onPressed: _handleSubmit,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: customColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: customColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              elevation: 0,
                             ),
-                            elevation: 0,
                           ),
-                          child: const Text(
-                            'ADD',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
+                        ),
+                        const SizedBox(height: 16),
+              
+                        // Display selected attachments
+                        if (_selectedAttachments.isNotEmpty)
+                          ...(_selectedAttachments.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final attachment = entry.value;
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: customColors.cardBackground,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: customColors.inputBorder!),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _getIconForFileType(attachment.fileType),
+                                      color: customColors.primary,
+                                      size: 24,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            attachment.fileName,
+                                            style: TextStyle(
+                                              color: customColors.textPrimary,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '${(attachment.fileSize / 1024 / 1024).toStringAsFixed(2)} MB',
+                                            style: TextStyle(
+                                              color: customColors.textSecondary,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.close, size: 20),
+                                      color: customColors.error,
+                                      onPressed: () {
+                                        setState(() {
+                                          _selectedAttachments.removeAt(index);
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }).toList()),
+                        const SizedBox(height: 24),
+                      ],
+              
+                      // Action Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(18),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: customColors.primary!.withOpacity(0.3),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton(
+                                onPressed: _handleSubmit,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: customColors.primary,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: const Text(
+                                  'ADD',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.of(context).pop(),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: customColors.error,
+                                side: BorderSide(
+                                  color: customColors.error!,
+                                  width: 2,
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                              ),
+                              child: const Text(
+                                'CANCEL',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: customColors.error,
-                          side: BorderSide(
-                            color: customColors.error!,
-                            width: 2,
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                        ),
-                        child: const Text(
-                          'CANCEL',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

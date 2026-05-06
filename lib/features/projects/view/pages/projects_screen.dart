@@ -8,7 +8,7 @@ import '../../../../core/network/connectivity_provider.dart';
 import '../../../../core/widgets/global_error.dart';
 import '../../../../core/widgets/global_loader.dart';
 import '../../viewmodel/project_viewmodel.dart';
-import '../../../users/providers/employee_provider.dart';
+import '../../../users/viewmodel/employee_viewmodel.dart';
 import '../../../../core/constants/auth_manager.dart';
 import '../../model/project_model.dart';
 import '../../../../core/widgets/custom_search_bar.dart';

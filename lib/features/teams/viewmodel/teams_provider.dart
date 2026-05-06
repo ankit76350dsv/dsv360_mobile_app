@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dsv360/features/teams/model/employee_model.dart';
 import 'package:dsv360/features/teams/model/team.dart';
 import 'package:dsv360/features/teams/repositories/team_repository.dart';
-import 'package:dsv360/features/users/providers/employee_provider.dart';
+import 'package:dsv360/features/users/viewmodel/employee_viewmodel.dart';
 
 /// Team Repository Provider
 final teamRepositoryProvider = Provider<TeamRepository>((ref) {

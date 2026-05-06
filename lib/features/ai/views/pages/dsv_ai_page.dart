@@ -8,7 +8,7 @@ import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dsv360/core/widgets/custom_input_field.dart';
-import 'package:dsv360/features/ai/repositories/ai_repository.dart';
+import 'package:dsv360/features/ai/viewmodel/ai_viewmodel.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:convert';
 import 'dart:io';

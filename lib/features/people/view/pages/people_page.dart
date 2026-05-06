@@ -1655,7 +1655,7 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           Padding(
-                            padding: const EdgeInsets.all(16.0),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             child: Column(
                               children: [
                                 Row(
@@ -1732,295 +1732,283 @@ class _CheckInTabState extends ConsumerState<_CheckInTab> {
                           ),
 
                           /// TIME ELAPSED
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Card(
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 18.0,
-                                ),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 18.0,
+                              ),
+                              child: Column(
+                                children: [
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.timer_outlined,
+                                        color: customColors.textSecondary,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'TIME ELAPSED',
+                                        style: TextStyle(
+                                          color: customColors.textSecondary,
+                                          letterSpacing: 1,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12.0),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      _TimeBox(
+                                        value: _elapsed.inDays,
+                                        label: "Days",
+                                      ),
+                                      _TimeBox(
+                                        value: _elapsed.inHours % 24,
+                                        label: "Hrs",
+                                      ),
+                                      _TimeBox(
+                                        value: _elapsed.inMinutes % 60,
+                                        label: "Mins",
+                                      ),
+                                      _TimeBox(
+                                        value: _elapsed.inSeconds % 60,
+                                        label: "Secs",
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isCheckedIn
+                                          ? customColors.primary!.withOpacity(
+                                              0.1,
+                                            )
+                                          : Colors.grey.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(
-                                          Icons.timer_outlined,
-                                          color: customColors.textSecondary,
-                                          size: 20,
+                                          Icons.circle,
+                                          size: 8,
+                                          color: isCheckedIn
+                                              ? customColors.primary
+                                              : Colors.grey,
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          'TIME ELAPSED',
+                                          isCheckedIn
+                                              ? 'Checked In'
+                                              : 'Not Checked In',
                                           style: TextStyle(
-                                            color: customColors.textSecondary,
-                                            letterSpacing: 1,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 14,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12.0),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        _TimeBox(
-                                          value: _elapsed.inDays,
-                                          label: "Days",
-                                        ),
-                                        _TimeBox(
-                                          value: _elapsed.inHours % 24,
-                                          label: "Hrs",
-                                        ),
-                                        _TimeBox(
-                                          value: _elapsed.inMinutes % 60,
-                                          label: "Mins",
-                                        ),
-                                        _TimeBox(
-                                          value: _elapsed.inSeconds % 60,
-                                          label: "Secs",
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: isCheckedIn
-                                            ? customColors.primary!.withOpacity(
-                                                0.1,
-                                              )
-                                            : Colors.grey.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(
-                                            Icons.circle,
-                                            size: 8,
                                             color: isCheckedIn
                                                 ? customColors.primary
                                                 : Colors.grey,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
                                           ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            isCheckedIn
-                                                ? 'Checked In'
-                                                : 'Not Checked In',
-                                            style: TextStyle(
-                                              color: isCheckedIn
-                                                  ? customColors.primary
-                                                  : Colors.grey,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
 
                           const SizedBox(height: 16.0),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: SingleButton(
-                              loadingKey: 'checkInCheckOutButton',
-                              text: isCheckedIn ? 'CHECK OUT' : 'CHECK IN NOW',
-                              onPressed: () => _handleAction(
-                                userId: userId,
-                                username:
-                                    "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}"
-                                        .trim(),
-                                activeStatus: status,
-                              ),
-                              icon: isCheckedIn ? Icons.logout : Icons.login,
+                          SingleButton(
+                            loadingKey: 'checkInCheckOutButton',
+                            text: isCheckedIn ? 'CHECK OUT' : 'CHECK IN NOW',
+                            onPressed: () => _handleAction(
+                              userId: userId,
+                              username:
+                                  "${activeUser?.firstName ?? ''} ${activeUser?.lastName ?? ''}"
+                                      .trim(),
+                              activeStatus: status,
                             ),
+                            icon: isCheckedIn ? Icons.logout : Icons.login,
                           ),
 
                           //Resporting manager here : reporitng to...
                           if (role != 'Admin')
                             Center(
-                              child: Padding(
+                              child: Container(
+                                margin: EdgeInsets.only(top: 20),
+                                width: double.infinity,
+                                constraints: const BoxConstraints(
+                                  maxWidth: 500,
+                                ), // ✅ keeps it centered on large screens
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
+                                  horizontal: 14,
+                                  vertical: 12,
                                 ),
-
-                                child: Container(
-                                  margin: EdgeInsets.only(top: 20),
-                                  width: double.infinity,
-                                  constraints: const BoxConstraints(
-                                    maxWidth: 500,
-                                  ), // ✅ keeps it centered on large screens
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: 12,
-                                  ),
-                                  decoration: BoxDecoration(
+                                decoration: BoxDecoration(
+                                  color:
+                                      Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.grey.shade900
+                                      : Colors.grey.shade50,
+                                  border: Border.all(
                                     color:
+                                        customColors.greyBorder ??
+                                        Colors.grey.shade300,
+                                    width: 1,
+                                  ),
+                              
+                                  /// ✅ Rounded corners
+                                  borderRadius: BorderRadius.circular(14),
+                              
+                                  /// ✅ Shadow respecting theme
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(
                                         Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? Colors.grey.shade900
-                                        : Colors.grey.shade50,
-                                    border: Border.all(
-                                      color:
-                                          customColors.greyBorder ??
-                                          Colors.grey.shade300,
-                                      width: 1,
-                                    ),
-
-                                    /// ✅ Rounded corners
-                                    borderRadius: BorderRadius.circular(14),
-
-                                    /// ✅ Shadow respecting theme
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(
-                                          Theme.of(context).brightness ==
-                                                  Brightness.dark
-                                              ? 0.3
-                                              : 0.04,
-                                        ),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      /// Avatar
-                                      CircleAvatar(
-                                        radius: 22,
-                                        backgroundColor:
-                                            Theme.of(context).brightness ==
                                                 Brightness.dark
-                                            ? Colors.grey.shade700
-                                            : Colors.grey.shade200,
-                                        child: ClipOval(
-                                          child:
-                                              (reporterImage != '' &&
-                                                  reporterImage
-                                                      .trim()
-                                                      .isNotEmpty)
-                                              ? Image.network(
-                                                  reporterImage,
-                                                  width: 44,
-                                                  height: 44,
-                                                  fit: BoxFit.cover,
-                                                  loadingBuilder:
-                                                      (
-                                                        context,
-                                                        child,
-                                                        progress,
-                                                      ) {
-                                                        if (progress == null)
-                                                          return child;
-                                                        return Center(
-                                                          child: SizedBox(
-                                                            width: 14,
-                                                            height: 14,
-                                                            child:
-                                                                CircularProgressIndicator(
-                                                                  strokeWidth:
-                                                                      2,
-                                                                ),
-                                                          ),
-                                                        );
-                                                      },
-                                                  errorBuilder:
-                                                      (
-                                                        context,
-                                                        error,
-                                                        stackTrace,
-                                                      ) {
-                                                        return Icon(
-                                                          Icons.person,
-                                                          color: customColors
-                                                              .textSecondary,
-                                                          size: 20,
-                                                        );
-                                                      },
-                                                )
-                                              : Icon(
-                                                  Icons.person,
-                                                  color: customColors
-                                                      .textSecondary,
-                                                  size: 20,
-                                                ),
-                                        ),
+                                            ? 0.3
+                                            : 0.04,
                                       ),
-
-                                      const SizedBox(width: 12),
-
-                                      /// Text Section
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              "Reporting To",
-                                              style: TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey.shade600,
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                              
+                                child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.center,
+                                  children: [
+                                    /// Avatar
+                                    CircleAvatar(
+                                      radius: 22,
+                                      backgroundColor:
+                                          Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Colors.grey.shade700
+                                          : Colors.grey.shade200,
+                                      child: ClipOval(
+                                        child:
+                                            (reporterImage != '' &&
+                                                reporterImage
+                                                    .trim()
+                                                    .isNotEmpty)
+                                            ? Image.network(
+                                                reporterImage,
+                                                width: 44,
+                                                height: 44,
+                                                fit: BoxFit.cover,
+                                                loadingBuilder:
+                                                    (
+                                                      context,
+                                                      child,
+                                                      progress,
+                                                    ) {
+                                                      if (progress == null)
+                                                        return child;
+                                                      return Center(
+                                                        child: SizedBox(
+                                                          width: 14,
+                                                          height: 14,
+                                                          child:
+                                                              CircularProgressIndicator(
+                                                                strokeWidth:
+                                                                    2,
+                                                              ),
+                                                        ),
+                                                      );
+                                                    },
+                                                errorBuilder:
+                                                    (
+                                                      context,
+                                                      error,
+                                                      stackTrace,
+                                                    ) {
+                                                      return Icon(
+                                                        Icons.person,
+                                                        color: customColors
+                                                            .textSecondary,
+                                                        size: 20,
+                                                      );
+                                                    },
+                                              )
+                                            : Icon(
+                                                Icons.person,
+                                                color: customColors
+                                                    .textSecondary,
+                                                size: 20,
                                               ),
-                                            ),
-
-                                            const SizedBox(height: 4),
-
-                                            Text(
-                                              reporterName,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-
-                                            const SizedBox(height: 4),
-
-                                            Row(
-                                              children: [
-                                                Container(
-                                                  width: 6,
-                                                  height: 6,
-                                                  decoration:
-                                                      const BoxDecoration(
-                                                        color: Colors.green,
-                                                        shape: BoxShape.circle,
-                                                      ),
-                                                ),
-                                                const SizedBox(width: 6),
-                                                Text(
-                                                  "In",
-                                                  style: TextStyle(
-                                                    fontSize: 12,
-                                                    color:
-                                                        Colors.green.shade700,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                              
+                                    const SizedBox(width: 12),
+                              
+                                    /// Text Section
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Reporting To",
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                              
+                                          const SizedBox(height: 4),
+                              
+                                          Text(
+                                            reporterName,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                              
+                                          const SizedBox(height: 4),
+                              
+                                          Row(
+                                            children: [
+                                              Container(
+                                                width: 6,
+                                                height: 6,
+                                                decoration:
+                                                    const BoxDecoration(
+                                                      color: Colors.green,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                "In",
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color:
+                                                      Colors.green.shade700,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
