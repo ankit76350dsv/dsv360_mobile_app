@@ -638,113 +638,115 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
     final projectsAsync = ref.watch(_projectListProvider);
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final roleName = (activeUser?.roleName ?? '').toLowerCase().trim();
-    final canManageSprints = roleName == 'admin' || roleName == 'super admin';
+    final canManageSprints = roleName == 'admin' || roleName == 'super admin' || roleName.contains('manager');
 
     return Scaffold(
-      body: Column(
-        children: [
-          // ── Header ────────────────────────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.only(top: 48, bottom: 8),
-            child: Column(
-              children: [
-                TopBar(
-                  title: 'Navigator',
-                  onBack: () {
-                    if (Navigator.canPop(context)) {
-                      Navigator.pop(context);
-                    } else {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const DashboardPage(),
-                        ),
-                      );
-                    }
-                  },
-                  actionIcon: Icons.refresh_rounded,
-                  onInfoTap: () {
-                    ref.invalidate(_projectListProvider);
-                    if (_selectedProjectId != null) {
-                      ref.invalidate(_hierarchyProvider(_selectedProjectId!));
-                    }
-                  },
-                ),
-
-                // Search bar
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 8),
-                  child: CustomSearchBar(
-                    controller: _searchController,
-                    focusNode: _searchFocusNode,
-                    onChanged: (value) =>
-                        setState(() => _searchQuery = value),
-                    hintText: 'Search navigator',
+      body: SafeArea(
+        child: Column(
+          children: [
+            // ── Header ────────────────────────────────────────────────────────
+            
+             
+             Column(
+                children: [
+                  TopBar(
+                    title: 'Navigator',
+                    onBack: () {
+                      if (Navigator.canPop(context)) {
+                        Navigator.pop(context);
+                      } else {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const DashboardPage(),
+                          ),
+                        );
+                      }
+                    },
+                    actionIcon: Icons.refresh_rounded,
+                    onInfoTap: () {
+                      ref.invalidate(_projectListProvider);
+                      if (_selectedProjectId != null) {
+                        ref.invalidate(_hierarchyProvider(_selectedProjectId!));
+                      }
+                    },
                   ),
-                ),
-
-                // Project dropdown
-                projectsAsync.when(
-                  loading: () => _buildProjectDropdown(
-                    projects: const [],
-                    cardBg: cardBackground,
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    greyBorder: greyBorder,
-                    primary: primary,
-                  ),
-                  error: (_, __) => Padding(
+        
+                  // Search bar
+                  Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 4),
-                    child: Text(
-                      'Error loading projects',
-                      style: TextStyle(color: textSecondary, fontSize: 13),
+                        horizontal: 16, vertical: 8),
+                    child: CustomSearchBar(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      onChanged: (value) =>
+                          setState(() => _searchQuery = value),
+                      hintText: 'Search navigator',
                     ),
                   ),
-                  data: (projects) {
-                    if (_selectedProjectId == null && projects.isNotEmpty) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                        if (!mounted || _selectedProjectId != null) return;
-                        setState(() {
-                          _selectedProjectId = projects.first.id;
-                          _selectedProjectName = projects.first.projectName;
-                        });
-                      });
-                    }
-                    return _buildProjectDropdown(
-                      projects: projects,
+        
+                  // Project dropdown
+                  projectsAsync.when(
+                    loading: () => _buildProjectDropdown(
+                      projects: const [],
                       cardBg: cardBackground,
                       textPrimary: textPrimary,
                       textSecondary: textSecondary,
                       greyBorder: greyBorder,
                       primary: primary,
-                    );
-                  },
-                ),
-
-                const SizedBox(height: 4),
-              ],
-            ),
-          ),
-
-          // ── Content ───────────────────────────────────────────────────────
-          Expanded(
-            child: _selectedProjectId == null || _selectedProjectId!.isEmpty
-                ? _buildSelectProjectPrompt(textSecondary, primary)
-                : _buildHierarchy(
-                    _selectedProjectId!,
-                    surfaceBackground,
-                    border,
-                    textPrimary,
-                    textSecondary,
-                    primary,
-                    isLightMode,
-                    canManageSprints: canManageSprints,
-                    currentUserId: activeUser?.userId,
+                    ),
+                    error: (_, __) => Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 4),
+                      child: Text(
+                        'Error loading projects',
+                        style: TextStyle(color: textSecondary, fontSize: 13),
+                      ),
+                    ),
+                    data: (projects) {
+                      if (_selectedProjectId == null && projects.isNotEmpty) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!mounted || _selectedProjectId != null) return;
+                          setState(() {
+                            _selectedProjectId = projects.first.id;
+                            _selectedProjectName = projects.first.projectName;
+                          });
+                        });
+                      }
+                      return _buildProjectDropdown(
+                        projects: projects,
+                        cardBg: cardBackground,
+                        textPrimary: textPrimary,
+                        textSecondary: textSecondary,
+                        greyBorder: greyBorder,
+                        primary: primary,
+                      );
+                    },
                   ),
-          ),
-        ],
+        
+                  const SizedBox(height: 4),
+                ],
+              ),
+           
+        
+            // ── Content ───────────────────────────────────────────────────────
+            Expanded(
+              child: _selectedProjectId == null || _selectedProjectId!.isEmpty
+                  ? _buildSelectProjectPrompt(textSecondary, primary)
+                  : _buildHierarchy(
+                      _selectedProjectId!,
+                      surfaceBackground,
+                      border,
+                      textPrimary,
+                      textSecondary,
+                      primary,
+                      isLightMode,
+                      canManageSprints: canManageSprints,
+                      currentUserId: activeUser?.userId,
+                    ),
+            ),
+          ],
+        ),
       ),
       floatingActionButton: canManageSprints
           ? FloatingActionButton(

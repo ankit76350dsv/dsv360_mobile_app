@@ -103,8 +103,11 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 
     final result = await Navigator.of(context).push<Task>(
       MaterialPageRoute(
-        builder: (context) =>
-            AddTaskDialog(task: task, projectId: widget.projectId ?? ''),
+        builder: (context) => AddTaskDialog(
+          task: task,
+          projectId: task?.projectId ?? widget.projectId ?? '',
+          projectName: task?.projectName ?? widget.projectName ?? '',
+        ),
       ),
     );
 
@@ -221,6 +224,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             description: result.description,
             startDate: startDateStr,
             dueDate: endDateStr,
+            attachments: result.attachmentsForCreation?.cast<Attachment>() ?? [],
           );
 
           debugPrint('✅ Task updated successfully via API');
@@ -522,6 +526,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                   name: task.taskName,
                                   status: task.status,
                                   isTimerRunning: _runningTaskId != null && _runningTaskId == task.taskId,
+                                  projectName: task.projectName,
                                   subtitleIcon: 'person',
                                   subtitleText: task.assignedTo,
                                   dateRange: dateRange,

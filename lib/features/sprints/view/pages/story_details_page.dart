@@ -395,7 +395,7 @@ class StoryDetailsPage extends ConsumerWidget {
                             ),
                           ),
                           const Spacer(),
-                          if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin')
+                          if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().contains('manager'))
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [

@@ -7,6 +7,7 @@ class GenericCard extends StatelessWidget {
   final String status;
   final String? subtitleIcon;
   final String? subtitleText;
+  final String? projectName;
   final String dateRange;
   final String? dueDate;
   final bool? isTimerRunning;
@@ -22,6 +23,7 @@ class GenericCard extends StatelessWidget {
     required this.status,
     this.subtitleIcon,
     this.subtitleText,
+    this.projectName,
     this.isTimerRunning,
     required this.dateRange,
     this.dueDate,
@@ -146,6 +148,33 @@ class GenericCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 12),
+
+                        // Project name
+                        if (projectName != null && projectName!.isNotEmpty)
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.folder_open,
+                                size: 18,
+                                color: customColors.textSecondary,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  projectName!,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.normal,
+                                    color: customColors.textSecondary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        if (projectName != null && projectName!.isNotEmpty)
+                          const SizedBox(height: 8),
 
                         // Subtitle (Client/Owner)
                         if (subtitleIcon != null && subtitleText != null)

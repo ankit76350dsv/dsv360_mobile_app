@@ -44,7 +44,7 @@ class _SplashScreenState extends ConsumerState<ConsumerStatefulWidget>
 
     _controller.forward();
 
-    Timer(const Duration(seconds: 3), () async {
+    Timer(const Duration(seconds: 0), () async {
       try {
         // existing user status (results[1] is the return value of authOperation)
         // The original code directly checks isLoggedIn from AppInitManager.
@@ -60,7 +60,7 @@ class _SplashScreenState extends ConsumerState<ConsumerStatefulWidget>
           if (catalystUser != null) {
             final activeUser = ActiveUserModel.fromCatalystUser(catalystUser);
             ref.read(activeUserRepositoryProvider.notifier).setUser(activeUser);
-            
+
             // Fetch User Profile
             await UserManager.instance.fetchUserProfile(catalystUser.id);
           } else {
@@ -97,14 +97,19 @@ class _SplashScreenState extends ConsumerState<ConsumerStatefulWidget>
 
   @override
   Widget build(BuildContext context) {
-    final customColors = Theme.of(context).custom;
+    final theme = Theme.of(context);
+    final customColors = theme.custom;
+    final colorScheme = theme.colorScheme;
+    final isDarkMode = theme.brightness == Brightness.dark;
+    final secondaryTextColor = isDarkMode ? colorScheme.onSurfaceVariant : Colors.grey.shade700;
 
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            SizedBox(width: 10,),
+            const SizedBox(width: 10),
             FadeTransition(
               opacity: _fadeAnimation,
               child: Column(
@@ -116,35 +121,45 @@ class _SplashScreenState extends ConsumerState<ConsumerStatefulWidget>
                   ),
                   const SizedBox(height: 20),
                   Text(
-                      'DSV360',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: customColors.logoColor,
-                        letterSpacing: 1.2,
-                      ),
+                    'DSV360',
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: customColors.primary,
+                      letterSpacing: 1.2,
                     ),
+                  ),
                 ],
               ),
             ),
-            
+
             SlideTransition(
               position: _slideAnimation,
               child: FadeTransition(
                 opacity: _fadeAnimation,
                 child: Column(
-                  
                   children: [
-                    Text("Powered by", style: TextStyle(color: Colors.grey.shade600, fontSize: 14),),
-                    SizedBox(height: 6,),
-                    Text("DSV Group", style: TextStyle(color: Color.fromARGB(255, 1, 76, 181),fontWeight: FontWeight.w800, fontSize: 20)),
+                    Text(
+                      "Powered by",
+                      style: TextStyle(
+                        color: secondaryTextColor,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "DSV Group",
+                      style: TextStyle(
+                        color: customColors.primary ?? colorScheme.primary,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 20,
+                      ),
+                    ),
+
                     //Text("Digital Synergy Venture Group", style: TextStyle(color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.bold ),),
-                    
                   ],
                 ),
               ),
             ),
-
-
           ],
         ),
       ),

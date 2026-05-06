@@ -48,6 +48,10 @@ class _ApplyEditLeavePageState extends ConsumerState<ApplyEditLeavePage> {
       _startDate = DateTime.parse(widget.leave!.startDate);
       _endDate = DateTime.parse(widget.leave!.endDate);
       _reasonController.text = widget.leave!.reason;
+      // Calculate number of days for edit mode
+      if (_startDate != null && _endDate != null) {
+        _numberOfDaysLeaveController.text = numberOfDays.toString();
+      }
     }
   }
 
@@ -63,8 +67,26 @@ class _ApplyEditLeavePageState extends ConsumerState<ApplyEditLeavePage> {
       setState(() {
         if (isStart) {
           _startDate = picked;
+          // Validate: start date cannot be after end date
+          if (_endDate != null && _startDate!.isAfter(_endDate!)) {
+            AppSnackBar.show(
+              context,
+              message: 'Start date cannot be after end date',
+            );
+            _startDate = null;
+            return;
+          }
         } else {
           _endDate = picked;
+          // Validate: end date cannot be before start date
+          if (_startDate != null && _endDate!.isBefore(_startDate!)) {
+            AppSnackBar.show(
+              context,
+              message: 'End date cannot be before start date',
+            );
+            _endDate = null;
+            return;
+          }
         }
 
         // Auto update number of days if both dates are set
@@ -150,6 +172,7 @@ class _ApplyEditLeavePageState extends ConsumerState<ApplyEditLeavePage> {
                         hintText: 'Number of Days',
                         labelText: 'Number of Days',
                         prefixIcon: Icons.calendar_month,
+                        enabled: false,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Enter number of days';
@@ -213,6 +236,24 @@ class _ApplyEditLeavePageState extends ConsumerState<ApplyEditLeavePage> {
                               AppSnackBar.show(
                                 context,
                                 message: 'Please select start and end dates',
+                              );
+                              return;
+                            }
+
+                            // Validate: start date cannot be after end date
+                            if (_startDate!.isAfter(_endDate!)) {
+                              AppSnackBar.show(
+                                context,
+                                message: 'Start date cannot be after end date',
+                              );
+                              return;
+                            }
+
+                            // Validate: number of days must be at least 1
+                            if (numberOfDays < 1) {
+                              AppSnackBar.show(
+                                context,
+                                message: 'Number of days cannot be less than 1',
                               );
                               return;
                             }

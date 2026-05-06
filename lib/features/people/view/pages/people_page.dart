@@ -3,6 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/people/repositories/people_summary_repository.dart';
 import 'package:dsv360/features/dashboard/viewmodel/dashboard_viewmodel.dart';
 import 'package:dsv360/core/widgets/custom_search_bar.dart';
@@ -880,21 +881,27 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
                             width: 1.5,
                           ),
                         ),
-                        child: PopupMenuButton<String?>(
-                          initialValue: selectedLeaveType,
+                        child: PopupMenuButton<String>(
                           tooltip: selectedLeaveType == null
                               ? 'Filter by leave type'
                               : 'Filter: $selectedLeaveType',
                           onSelected: (value) {
-                            ref.read(leaveTypeFilterProvider.notifier).state = value;
+                            if (value == '__all__') {
+                              ref.read(leaveTypeFilterProvider.notifier).state = null;
+                              _searchController.clear();
+                              ref.read(leaveSearchQueryProvider.notifier).state = '';
+                              setState(() {});
+                            } else {
+                              ref.read(leaveTypeFilterProvider.notifier).state = value;
+                            }
                           },
                           itemBuilder: (context) => [
-                            const PopupMenuItem<String?>(
-                              value: null,
+                            const PopupMenuItem<String>(
+                              value: '__all__',
                               child: Text('All Leave Types'),
                             ),
                             ...leaveTypeOptions.map(
-                              (type) => PopupMenuItem<String?>(
+                              (type) => PopupMenuItem<String>(
                                 value: type,
                                 child: Text(type),
                               ),
@@ -919,6 +926,7 @@ class _LeaveTabState extends ConsumerState<_LeaveTab> {
                         label: Text(selectedLeaveType),
                         onDeleted: () {
                           ref.read(leaveTypeFilterProvider.notifier).state = null;
+                          setState(() {});
                         },
                       ),
                     ),
@@ -2472,11 +2480,12 @@ class _AttendanceTrackerTabState extends ConsumerState<_AttendanceTrackerTab> {
                         if (tracker.selectedEmployeeId == null ||
                             tracker.startDate == null ||
                             tracker.endDate == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Please select employee and dates'),
-                            ),
-                          );
+                          showErrorSnackBar(context, 'Please select employee and dates');
+                          return;
+                        }
+
+                        if (tracker.startDate!.isAfter(tracker.endDate!)) {
+                          showErrorSnackBar(context, 'Start date cannot be after end date');
                           return;
                         }
 

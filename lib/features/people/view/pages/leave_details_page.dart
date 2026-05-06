@@ -9,6 +9,7 @@ import 'package:dsv360/features/people/repositories/leave_summary_repository.dar
 import 'package:dsv360/features/people/repositories/leaves_repository.dart';
 import 'package:dsv360/core/widgets/app_snackbar.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/people/view/widgets/leave_balance_section.dart';
 import 'package:dsv360/features/people/view/widgets/leave_info_box.dart';
 import 'package:dsv360/features/people/view/widgets/reject_leave_bottom_sheet.dart';
@@ -154,59 +155,69 @@ class LeaveDetailsPage extends ConsumerWidget {
                         button1Function: () =>
                             _showRejectBottomSheet(context, leave),
                         button2Function: () async {
-                          final activeUser = ref.read(
-                            activeUserRepositoryProvider,
+                          showWarningDialogueBox(
+                            context: context,
+                            title: 'Approve Leave',
+                            subtitle: 'Are you sure you want to approve this leave request from ${leave.username}?',
+                            primaryText: 'Approve',
+                            onPrimaryPressed: (dialogContext) async {
+                              Navigator.pop(dialogContext);
+                              
+                              final activeUser = ref.read(
+                                activeUserRepositoryProvider,
+                              );
+                              if (activeUser == null) return;
+
+                              final actionById = activeUser.userId ?? '';
+                              final actionBy =
+                                  "${activeUser.firstName ?? ''} ${activeUser.lastName ?? ''}"
+                                      .trim();
+
+                              ref
+                                  .read(
+                                    submitLoadingProvider(
+                                      bottomTwoButtonsLoadingKey,
+                                    ).notifier,
+                                  )
+                                  .state = true;
+
+                              try {
+                                await ref
+                                    .read(
+                                      leaveDetailsListRepositoryProvider.notifier,
+                                    )
+                                    .approveLeave(
+                                      rowId: leave.rowId,
+                                      actionById: actionById,
+                                      actionBy: actionBy,
+                                    );
+
+                                if (context.mounted) {
+                                  Navigator.of(context).pop();
+                                  AppSnackBar.show(
+                                    context,
+                                    message: 'Leave approved successfully',
+                                  );
+                                }
+                              } catch (e) {
+                                debugPrint("Error approving leave: $e");
+                                if (context.mounted) {
+                                  AppSnackBar.show(
+                                    context,
+                                    message: 'Try again later',
+                                  );
+                                }
+                              } finally {
+                                ref
+                                    .read(
+                                      submitLoadingProvider(
+                                        bottomTwoButtonsLoadingKey,
+                                      ).notifier,
+                                    )
+                                    .state = false;
+                              }
+                            },
                           );
-                          if (activeUser == null) return;
-
-                          final actionById = activeUser.userId ?? '';
-                          final actionBy =
-                              "${activeUser.firstName ?? ''} ${activeUser.lastName ?? ''}"
-                                  .trim();
-
-                          ref
-                              .read(
-                                submitLoadingProvider(
-                                  bottomTwoButtonsLoadingKey,
-                                ).notifier,
-                              )
-                              .state = true;
-
-                          try {
-                            await ref
-                                .read(
-                                  leaveDetailsListRepositoryProvider.notifier,
-                                )
-                                .approveLeave(
-                                  rowId: leave.rowId,
-                                  actionById: actionById,
-                                  actionBy: actionBy,
-                                );
-
-                            if (context.mounted) {
-                              Navigator.of(context).pop();
-                              AppSnackBar.show(
-                                context,
-                                message: 'Leave approved successfully',
-                              );
-                            }
-                          } catch (e) {
-                            debugPrint("Error approving leave: $e");
-                            if (context.mounted) {
-                              AppSnackBar.show(
-                                context,
-                                message: 'Try again later',
-                              );
-                            }
-                          } finally {
-                            ref
-                                .read(
-                                  submitLoadingProvider(
-                                    bottomTwoButtonsLoadingKey,
-                                  ).notifier,
-                                )
-                                .state = false;
-                          }
                         },
                       ),
                   ],

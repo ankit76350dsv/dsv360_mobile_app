@@ -146,6 +146,7 @@ class FetchTasksRepository
     String? description,
     String? startDate,
     String? dueDate,
+    List<Attachment>? attachments,
   }) {
     return UpdateTaskRepository().updateTask(
       rowId: rowId,
@@ -159,6 +160,7 @@ class FetchTasksRepository
       description: description,
       startDate: startDate,
       dueDate: dueDate,
+      attachments: attachments,
     );
   }
 

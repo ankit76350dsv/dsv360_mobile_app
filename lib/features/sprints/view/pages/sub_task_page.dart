@@ -199,6 +199,8 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
         _taskTimerFetching = false;
       });
     } catch (e) {
+      debugPrint('Timer failed error here');
+      debugPrint(e.toString());
       setState(() => _taskTimerFetching = false);
       if (!mounted) return;
      
@@ -714,7 +716,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                                       ),
                                     ),
                                     const SizedBox(width: 12),
-                                    if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin')
+                                    if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().contains('manager'))
                                       GestureDetector(
                                         onTap: () {
                                           Navigator.push(
@@ -760,7 +762,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                                 const SizedBox(height: 12),
                               ],
                             )
-                          else if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin')
+                          else if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().contains('manager'))
                             Padding(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: Row(

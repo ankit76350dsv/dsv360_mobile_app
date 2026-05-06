@@ -123,7 +123,7 @@ class _KanbanColumnState extends State<KanbanColumn> {
                     Builder(
                       builder: (context) {
                         final roleName = (AuthManager.instance.currentUser?.role?.name ?? '').toLowerCase().trim();
-                        final isAdmin = roleName == 'admin' || roleName == 'super admin';
+                        final isAdmin = roleName == 'admin' || roleName == 'super admin' || roleName.contains('manager');
                         if (!isAdmin) return const SizedBox.shrink();
                         return GestureDetector(
                           onTap: () {

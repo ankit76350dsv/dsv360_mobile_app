@@ -1,5 +1,6 @@
 import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/sprints/model/sprints_model.dart';
 import 'package:dsv360/features/sprints/model/story_model.dart';
 import 'package:dsv360/features/sprints/repositories/get_sprints_repository.dart';
@@ -249,12 +250,19 @@ class _BacklogPageState extends ConsumerState<BacklogPage> {
             duration: const Duration(seconds: 2),
           ),
         );
+        
       }
     }).catchError((e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Failed to deploy. Please try again.')),
-        );
+        
+        final errorText = e.toString();
+      debugPrint('Error completing sprint: $errorText');
+      final message = errorText.contains('do not have permission')
+          ? 'Permission denied from server, please try again.'
+          : 'Failed to deploy. Please try again.';
+      if (mounted) {
+        showErrorSnackBar(context, message);
+      }
       }
     });
   }
@@ -292,7 +300,7 @@ class _BacklogPageState extends ConsumerState<BacklogPage> {
 
         final activeUser = ref.watch(activeUserRepositoryProvider);
         final roleName = (activeUser?.roleName ?? '').toLowerCase().trim();
-        final canManageSprints = roleName == 'admin' || roleName == 'super admin';
+        final canManageSprints = roleName == 'admin' || roleName == 'super admin' || roleName.contains('manager') ;
 
         final hierarchyAsync =
             ref.watch(_backlogHierarchyProvider(widget.projectId));

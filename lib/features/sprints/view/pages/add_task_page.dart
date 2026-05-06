@@ -1,4 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/badges/repositories/fetch_badge_users_repository.dart';
 import 'package:dsv360/features/sprints/repositories/create_task_repository.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
@@ -175,9 +176,17 @@ class _AddTaskPageState extends ConsumerState<AddTaskPage> {
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to create task')),
-      );
+     
+      final errorText = e.toString();
+      debugPrint("error here");
+      debugPrint(e.toString());
+      final message = errorText.contains('do not have permission')
+          ? 'Permission denied from server, please try again.'
+          : 'Failed to create Task. Please try again.';
+
+      
+      showErrorSnackBar(context, message);
+      
     } finally {
       submitLoadingNotifier.state = false;
     }

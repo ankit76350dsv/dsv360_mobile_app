@@ -9,6 +9,7 @@ import '../../../../core/models/task.dart';
 import '../../../teams/model/employee_model.dart';
 import '../../../../core/models/attachment.dart';
 import '../../../projects/providers/project_provider.dart';
+import '../../../projects/model/project_model.dart';
 import '../../../users/providers/employee_provider.dart';
 import '../../../../core/widgets/custom_input_field.dart';
 import '../../../../core/widgets/custom_popup_dropdown.dart';
@@ -17,8 +18,9 @@ import '../../../../core/widgets/TopBar.dart';
 class AddTaskDialog extends ConsumerStatefulWidget {
   final Task? task; // For edit mode
   final String projectId;
+  final String? projectName;
 
-  const AddTaskDialog({super.key, this.task, required this.projectId});
+  const AddTaskDialog({super.key, this.task, required this.projectId, this.projectName});
 
   @override
   ConsumerState<AddTaskDialog> createState() => _AddTaskDialogState();
@@ -52,6 +54,20 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
       _endDate = widget.task!.endDate;
       _selectedProjectId = widget.task!.projectId;
       _selectedProjectName = widget.task!.projectName;
+
+      // Pre-load existing server attachments so they show and can be removed
+      for (final url in widget.task!.attachments) {
+        if (url.isNotEmpty) {
+          final fileName = url.split('/').last.split('?').first;
+          final ext = fileName.contains('.') ? fileName.split('.').last.toLowerCase() : '';
+          _selectedAttachments.add(Attachment(
+            fileName: fileName.isNotEmpty ? fileName : 'attachment',
+            fileType: _getFileType(ext),
+            fileSize: 0,
+            fileUrl: url,
+          ));
+        }
+      }
 
       // Initialize assignees from task data
       // We need to convert assignee IDs and names back to Employee objects
@@ -103,9 +119,10 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
         '✏️ EDIT MODE - Editing existing task: ${widget.task!.taskName}',
       );
     } else {
-      // For new tasks, use the passed projectId if available
-      _selectedProjectId = widget.projectId.isNotEmpty
-          ? widget.projectId
+      // For new tasks, use the passed projectId and projectName if available
+      _selectedProjectId = widget.projectId.isNotEmpty ? widget.projectId : null;
+      _selectedProjectName = (widget.projectName != null && widget.projectName!.isNotEmpty)
+          ? widget.projectName
           : null;
       debugPrint('➕ CREATE MODE - Creating new task');
     }
@@ -161,8 +178,29 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
     }
   }
 
-  void _handleSubmit() {
+  Future<void> _handleSubmit() async {
     debugPrint('🔧 SUBMIT - Form submission started');
+
+    // Ensure we have a project ID. If it's missing but we have a project name,
+    // try to resolve the ID from the projects provider.
+    if ((_selectedProjectId == null || _selectedProjectId!.isEmpty) &&
+        (_selectedProjectName != null && _selectedProjectName!.isNotEmpty)) {
+      try {
+        final projects = await ref.read(projectListProvider.future);
+        final match = projects.firstWhere(
+          (p) => p.projectName == _selectedProjectName,
+          orElse: () => ProjectModel(id: '', projectName: '', status: '', client: '', startDate: DateTime.now(), endDate: DateTime.now()),
+        );
+        if (match.id.isNotEmpty) {
+          _selectedProjectId = match.id;
+          debugPrint('🔁 Resolved project id for name "$_selectedProjectName": $_selectedProjectId');
+        } else {
+          debugPrint('⚠️ Could not resolve project id for name "$_selectedProjectName"');
+        }
+      } catch (e) {
+        debugPrint('⚠️ Error resolving projects list: $e');
+      }
+    }
 
     if (_formKey.currentState!.validate()) {
       debugPrint('✅ Form validation passed');
@@ -267,6 +305,8 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
     final user = AuthManager.instance.currentUser;
     final role = user?.role?.name ?? 'User';
     final isAdmin = role == 'Admin';
+    final canManageAssignees =
+        isAdmin || role.toLowerCase().contains('manager');
 
     return Scaffold(
       appBar: PreferredSize(
@@ -297,12 +337,16 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                     return projectsAsync.when(
                       loading: () => Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 18, vertical: 16),
+                          horizontal: 18,
+                          vertical: 16,
+                        ),
                         decoration: BoxDecoration(
                           color: customColors.inputFill,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                              color: customColors.inputBorder!, width: 1.5),
+                            color: customColors.inputBorder!,
+                            width: 1.5,
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -324,7 +368,9 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                       ),
                       error: (error, st) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: const Text('Failed to load projects. Please try again.'),
+                        child: const Text(
+                          'Failed to load projects. Please try again.',
+                        ),
                       ),
                       data: (projects) {
                         final projectMap = {
@@ -345,9 +391,9 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                         );
 
                         return CustomPopupDropdown(
-                          value: _selectedProjectId != null
+                          value: _selectedProjectName ?? (_selectedProjectId != null
                               ? projectMap[_selectedProjectId!]
-                              : null,
+                              : null),
                           hint: 'Select Project',
                           items: projectNameList,
                           icon: Icons.folder_outlined,
@@ -512,121 +558,147 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
 
                 // Assignee Multi-Select Dropdown
                 Consumer(
-  builder: (context, ref, child) {
-    final employeesAsync = ref.watch(employeeListProvider);
+                  builder: (context, ref, child) {
+                    final employeesAsync = ref.watch(employeeListProvider);
 
-    return employeesAsync.when(
-      loading: () => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-        decoration: BoxDecoration(
-          color: customColors.inputFill,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: customColors.inputBorder!, width: 1.5),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.person_outline, color: customColors.textSecondary, size: 20),
-            const SizedBox(width: 12),
-            Text(
-              'Loading assignees...',
-              style: TextStyle(color: customColors.textHint, fontSize: 16),
-            ),
-          ],
-        ),
-      ),
-      error: (error, st) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: const Text('Failed to load employees. Please try again.'),
-      ),
-      data: (employees) {
-        final activeEmployees = employees.where((e) => e.status == 'ACTIVE').toList();
-        final employeeMap = {for (var e in activeEmployees) e.fullName: e};
-        final employeeNameList = activeEmployees.map((e) => e.fullName).toList();
+                    return employeesAsync.when(
+                      loading: () => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: customColors.inputFill,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: customColors.inputBorder!,
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.person_outline,
+                              color: customColors.textSecondary,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              'Loading assignees...',
+                              style: TextStyle(
+                                color: customColors.textHint,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      error: (error, st) => Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        child: const Text(
+                          'Failed to load employees. Please try again.',
+                        ),
+                      ),
+                      data: (employees) {
+                        final activeEmployees = employees
+                            .where((e) => e.status == 'ACTIVE')
+                            .toList();
+                        final employeeMap = {
+                          for (var e in activeEmployees) e.fullName: e,
+                        };
+                        final employeeNameList = activeEmployees
+                            .map((e) => e.fullName)
+                            .toList();
 
-        if (!isAdmin && user != null) {
-          Employee? currentEmployee;
-          for (final e in activeEmployees) {
-            if (e.userId == user.id) {
-              currentEmployee = e;
-              break;
-            }
-          }
+                        if (!canManageAssignees && user != null) {
+                          Employee? currentEmployee;
+                          for (final e in activeEmployees) {
+                            if (e.userId == user.id) {
+                              currentEmployee = e;
+                              break;
+                            }
+                          }
 
-          if (currentEmployee != null) {
-            final alreadyOnlyCurrent = _selectedAssignees.length == 1 &&
-                _selectedAssignees.first.userId == currentEmployee.userId;
+                          if (currentEmployee != null) {
+                            final alreadyOnlyCurrent =
+                                _selectedAssignees.length == 1 &&
+                                _selectedAssignees.first.userId ==
+                                    currentEmployee.userId;
 
-            if (!alreadyOnlyCurrent) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (!mounted) return;
-                setState(() {
-                  _selectedAssignees = [currentEmployee!];
-                });
-              });
-            }
-          }
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AbsorbPointer(
-              absorbing: !isAdmin,
-              child: Opacity(
-                opacity: isAdmin ? 1 : 0.6,
-                child: CustomPopupDropdown(
-                  value: null,
-                  hint: 'Select Assignees',
-                  items: employeeNameList,
-                  icon: Icons.person_outline,
-                  onChanged: (value) {
-                    if (!isAdmin || value == null) return;
-                    final employee = employeeMap[value];
-                    if (employee != null) {
-                      setState(() {
-                        if (!_selectedAssignees.any((e) => e.userId == employee.userId)) {
-                          _selectedAssignees.add(employee);
+                            if (!alreadyOnlyCurrent) {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (!mounted) return;
+                                setState(() {
+                                  _selectedAssignees = [currentEmployee!];
+                                });
+                              });
+                            }
+                          }
                         }
-                      });
-                    }
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AbsorbPointer(
+                              absorbing: !canManageAssignees,
+                              child: Opacity(
+                                opacity: canManageAssignees ? 1 : 0.6,
+                                child: CustomPopupDropdown(
+                                  value: null,
+                                  hint: 'Select Assignees',
+                                  items: employeeNameList,
+                                  icon: Icons.person_outline,
+                                  onChanged: (value) {
+                                    if (!canManageAssignees || value == null)
+                                      return;
+                                    final employee = employeeMap[value];
+                                    if (employee != null) {
+                                      setState(() {
+                                        if (!_selectedAssignees.any(
+                                          (e) => e.userId == employee.userId,
+                                        )) {
+                                          _selectedAssignees.add(employee);
+                                        }
+                                      });
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            if (_selectedAssignees.isNotEmpty)
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: _selectedAssignees.map((employee) {
+                                  return Chip(
+                                    label: Text(employee.fullName),
+                                    onDeleted: canManageAssignees
+                                        ? () {
+                                            setState(() {
+                                              _selectedAssignees.removeWhere(
+                                                (e) =>
+                                                    e.userId == employee.userId,
+                                              );
+                                            });
+                                          }
+                                        : null,
+                                    backgroundColor: customColors.primary!
+                                        .withOpacity(0.2),
+                                    labelStyle: TextStyle(
+                                      color: customColors.textPrimary,
+                                      fontSize: 13,
+                                    ),
+                                    deleteIconColor: customColors.primary,
+                                  );
+                                }).toList(),
+                              ),
+                          ],
+                        );
+                      },
+                    );
                   },
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            if (_selectedAssignees.isNotEmpty)
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: _selectedAssignees.map((employee) {
-                  return Chip(
-                    label: Text(employee.fullName),
-                    onDeleted: isAdmin
-                        ? () {
-                            setState(() {
-                              _selectedAssignees.removeWhere(
-                                (e) => e.userId == employee.userId,
-                              );
-                            });
-                          }
-                        : null,
-                    backgroundColor: customColors.primary!.withOpacity(0.2),
-                    labelStyle: TextStyle(
-                      color: customColors.textPrimary,
-                      fontSize: 13,
-                    ),
-                    deleteIconColor: customColors.primary,
-                  );
-                }).toList(),
-              ),
-           
-             
-          ],
-        );
-      },
-    );
-  },
-),
                 const SizedBox(height: 20),
 
                 // Description
@@ -641,145 +713,150 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                 ),
                 const SizedBox(height: 24),
 
-                // Add Attachment Button
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: customColors.primary!.withOpacity(0.15),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      try {
-                        final result = await FilePicker.platform.pickFiles(
-                          allowMultiple: true,
-                          type: FileType.custom,
-                          allowedExtensions: [
-                            'pdf',
-                            'doc',
-                            'docx',
-                            'jpg',
-                            'jpeg',
-                            'png',
-                            'xlsx',
-                            'xls',
-                            'txt',
-                          ],
-                        );
+                if (widget.task == null) ...[
+                  // Add Attachment Button
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: customColors.primary!.withOpacity(0.15),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        try {
+                          final result = await FilePicker.platform.pickFiles(
+                            allowMultiple: true,
+                            type: FileType.custom,
+                            allowedExtensions: [
+                              'pdf',
+                              'doc',
+                              'docx',
+                              'jpg',
+                              'jpeg',
+                              'png',
+                              'xlsx',
+                              'xls',
+                              'txt',
+                            ],
+                          );
 
-                        if (result != null) {
-                          setState(() {
-                            _selectedAttachments.clear();
-                            for (var file in result.files) {
-                              if (file.path != null) {
-                                final attachment = Attachment(
-                                  fileName: file.name,
-                                  fileType: _getFileType(file.extension ?? ''),
-                                  fileSize: file.size,
-                                  localFile: File(file.path!),
-                                );
-                                _selectedAttachments.add(attachment);
-                                debugPrint('📎 File selected: ${file.name}');
+                          if (result != null) {
+                            setState(() {
+                              for (var file in result.files) {
+                                if (file.path != null) {
+                                  final alreadyAdded = _selectedAttachments.any(
+                                    (a) => a.isLocal && a.fileName == file.name,
+                                  );
+                                  if (!alreadyAdded) {
+                                    _selectedAttachments.add(Attachment(
+                                      fileName: file.name,
+                                      fileType: _getFileType(file.extension ?? ''),
+                                      fileSize: file.size,
+                                      localFile: File(file.path!),
+                                    ));
+                                    debugPrint('📎 File selected: ${file.name}');
+                                  }
+                                }
                               }
-                            }
-                          });
+                            });
+                          }
+                        } catch (e) {
+                          debugPrint('❌ Error picking files: $e');
                         }
-                      } catch (e) {
-                        debugPrint('❌ Error picking files: $e');
-                      }
-                    },
-                    icon: const Icon(Icons.attach_file, size: 20),
-                    label: const Text(
-                      'Add Attachment',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
+                      },
+                      icon: const Icon(Icons.attach_file, size: 20),
+                      label: const Text(
+                        'Add Attachment',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.3,
+                        ),
                       ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: customColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 14,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: customColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 0,
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                // Display selected attachments
-                if (_selectedAttachments.isNotEmpty)
-                  ...(_selectedAttachments.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final attachment = entry.value;
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: customColors.cardBackground,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: customColors.inputBorder!),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _getIconForFileType(attachment.fileType),
-                              color: customColors.primary,
-                              size: 24,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    attachment.fileName,
-                                    style: TextStyle(
-                                      color: customColors.textPrimary,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${(attachment.fileSize / 1024 / 1024).toStringAsFixed(2)} MB',
-                                    style: TextStyle(
-                                      color: customColors.textSecondary,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ],
+                  // Display selected attachments
+                  if (_selectedAttachments.isNotEmpty)
+                    ...(_selectedAttachments.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final attachment = entry.value;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: customColors.cardBackground,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: customColors.inputBorder!),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _getIconForFileType(attachment.fileType),
+                                color: customColors.primary,
+                                size: 24,
                               ),
-                            ),
-                            IconButton(
-                              icon: const Icon(Icons.close, size: 20),
-                              color: customColors.error,
-                              onPressed: () {
-                                setState(() {
-                                  _selectedAttachments.removeAt(index);
-                                });
-                              },
-                            ),
-                          ],
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      attachment.fileName,
+                                      style: TextStyle(
+                                        color: customColors.textPrimary,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${(attachment.fileSize / 1024 / 1024).toStringAsFixed(2)} MB',
+                                      style: TextStyle(
+                                        color: customColors.textSecondary,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, size: 20),
+                                color: customColors.error,
+                                onPressed: () {
+                                  setState(() {
+                                    _selectedAttachments.removeAt(index);
+                                  });
+                                },
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  }).toList()),
-                const SizedBox(height: 24),
+                      );
+                    }).toList()),
+                  const SizedBox(height: 24),
+                ],
 
                 // Action Buttons
                 Row(

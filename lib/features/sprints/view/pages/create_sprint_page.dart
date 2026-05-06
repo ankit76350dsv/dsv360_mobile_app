@@ -1,4 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/sprints/repositories/create_sprint_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -122,9 +123,14 @@ class _CreateSprintPageState extends ConsumerState<CreateSprintPage> {
   } catch (e) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Failed to create sprint')),
-    );
+    final errorText = e.toString();
+    debugPrint('error here');
+    debugPrint(errorText);
+    final message = errorText.contains('do not have permission')
+        ? 'Permission denied from server, please try again.'
+        : 'Failed to create sprint. Please try again.';
+
+    showErrorSnackBar(context, message);
   } finally {
     submitLoadingNotifier.state = false;
   }

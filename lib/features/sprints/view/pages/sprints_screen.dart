@@ -836,14 +836,13 @@ if (_selectedSprintId != null) {
         await _onRefresh();
       }
     } catch (e) {
-      debugPrint('Error completing sprint: $e');
+      final errorText = e.toString();
+      debugPrint('Error completing sprint: $errorText');
+      final message = errorText.contains('do not have permission')
+          ? 'Permission denied from server, please try again.'
+          : 'Failed to complete sprint. Please try again.';
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Failed to complete sprint. Please try again.'),
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        showErrorSnackBar(context, message);
       }
     }
   }
@@ -883,7 +882,7 @@ if (_selectedSprintId != null) {
         final activeUser = ref.watch(activeUserRepositoryProvider);
         final roleName = (activeUser?.roleName ?? '').toLowerCase().trim();
         final canManageSprints =
-          roleName == 'admin' || roleName == 'super admin';
+          roleName == 'admin' || roleName == 'super admin' || roleName.contains('manager');
 
         return Scaffold(
           drawer: const AppDrawer(),
@@ -1504,8 +1503,11 @@ if (_selectedSprintId != null) {
                                     ),
                                   ],
                                 ),
+                                
+                                
                               ),
                             ),
+                            SizedBox(width: 16,),
                           ],
                         ],
                       ),
@@ -1523,40 +1525,41 @@ if (_selectedSprintId != null) {
                         color: tabbarBg,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: TabBar(
-                        controller: _tabController,
-                        labelColor: textPrimary,
-                        unselectedLabelColor: textSecondary,
-                        labelStyle: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        unselectedLabelStyle: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        indicator: BoxDecoration(
-                          color: isDark
-                              ? const Color(0xFF2C2C2C)
-                              : Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(
-                                alpha: isDark ? 0.3 : 0.1,
+                      child: SizedBox(
+                        height: 44,
+                        child: TabBar(
+                          controller: _tabController,
+                          labelColor: textPrimary,
+                          unselectedLabelColor: textSecondary,
+                          labelStyle: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          unselectedLabelStyle: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          indicator: BoxDecoration(
+                            color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(
+                                  alpha: isDark ? 0.3 : 0.1,
+                                ),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
                               ),
-                              blurRadius: 4,
-                              offset: const Offset(0, 1),
-                            ),
+                            ],
+                          ),
+                          indicatorSize: TabBarIndicatorSize.tab,
+                          dividerColor: Colors.transparent,
+                          tabs: const [
+                            Tab(text: 'Board'),
+                            Tab(text: 'Backlog'),
+                            Tab(text: 'Timeline'),
                           ],
                         ),
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        dividerColor: Colors.transparent,
-                        tabs: const [
-                          Tab(text: 'Board'),
-                          Tab(text: 'Backlog'),
-                          Tab(text: 'Timeline'),
-                        ],
                       ),
                     ),
                   ),

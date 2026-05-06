@@ -135,6 +135,17 @@ class AppDrawer extends StatelessWidget {
                     },
                   ),
                   _DrawerItem(
+                    icon: Icons.access_time_outlined,
+                    label: 'Work Logs',
+                    subLabel: 'Track your time entries',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const WorkLogScreen()),
+                      );
+                    },
+                  ),
+                  _DrawerItem(
                     icon: Icons.bug_report_outlined,
                     label: 'Issues',
                     subLabel: 'Track & resolve bugs',
@@ -226,17 +237,6 @@ class AppDrawer extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const SprintsScreen()),
-                      );
-                    },
-                  ),
-                  _DrawerItem(
-                    icon: Icons.access_time_outlined,
-                    label: 'Work Logs',
-                    subLabel: 'Track your time entries',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const WorkLogScreen()),
                       );
                     },
                   ),

@@ -1,4 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/sprints/repositories/create_release_repository.dart';
 import 'package:dsv360/features/sprints/repositories/get_projects_repository.dart';
 import 'package:dsv360/features/projects/model/project_model.dart';
@@ -131,9 +132,15 @@ class _CreateReleasePageState extends ConsumerState<CreateReleasePage> {
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to create release')),
-      );
+
+      final errorText = e.toString();
+      debugPrint('error here');
+      debugPrint(errorText);
+      final message = errorText.contains('do not have permission')
+          ? 'Permission denied from server, please try again.'
+          : 'Failed to create release. Please try again.';
+
+      showErrorSnackBar(context, message);
     } finally {
       submitLoadingNotifier.state = false;
     }

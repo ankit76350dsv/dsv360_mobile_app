@@ -1,4 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/badges/model/badge_user.dart';
 import 'package:dsv360/features/badges/repositories/fetch_badge_users_repository.dart';
 import 'package:dsv360/features/sprints/model/epic_model.dart';
@@ -297,10 +298,16 @@ void initState() {
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-     
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: const Text('Failed to create story. Please try again.')),
-      );
+
+      final errorText = e.toString();
+      debugPrint("error here");
+      debugPrint(e.toString());
+      final message = errorText.contains('do not have permission')
+          ? 'Permission denied from server, please try again.'
+          : 'Failed to create story. Please try again.';
+
+      
+      showErrorSnackBar(context, message);
     } finally {
       submitLoadingNotifier.state = false;
     }
