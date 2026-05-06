@@ -51,6 +51,7 @@ class UserBadgeCard extends StatelessWidget {
                           ],
                         ),
                       ),
+                      SizedBox(width: 6,),
                       InkWell(
                         onTap: () => _openUserBadges(context),
                         borderRadius: BorderRadius.circular(14),

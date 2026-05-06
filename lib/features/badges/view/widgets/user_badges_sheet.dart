@@ -49,7 +49,9 @@ class _UserBadgesSheetState extends ConsumerState<UserBadgesSheet> {
     });
 
     try {
-      await ref.read(userBadgesViewModelProvider).deleteAssignedBadge(badge.rowId);
+      await ref
+          .read(userBadgesViewModelProvider)
+          .deleteAssignedBadge(badge.rowId);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -61,9 +63,9 @@ class _UserBadgesSheetState extends ConsumerState<UserBadgesSheet> {
       });
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to delete badge')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to delete badge')));
     } finally {
       if (!mounted) return;
       setState(() {
@@ -80,7 +82,7 @@ class _UserBadgesSheetState extends ConsumerState<UserBadgesSheet> {
         // Calculate dynamic sheet height based on badge count
         final badges = snapshot.data ?? const <AssignedBadge>[];
         final badgeCount = badges.length;
-        
+
         // Calculate initial fraction based on badge count
         double initialFraction;
         if (badgeCount == 0) {
@@ -101,61 +103,71 @@ class _UserBadgesSheetState extends ConsumerState<UserBadgesSheet> {
           minChildSize: 0.25,
           maxChildSize: 1,
           builder: (context, scrollController) {
-            return Container(
-              decoration: BoxDecoration(
-                color: colors.surface,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            return ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
               ),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.only(top: 14, bottom: 12),
-                    alignment: Alignment.center,
-                    child: Container(
-                      width: 42,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).custom.primary!.withValues(alpha: 0.7),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: colors.surface,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
                   ),
-                  Text(
-                    "${widget.user.firstName}'s Badges",
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 16),
-                  if (snapshot.connectionState == ConnectionState.waiting)
-                    const Expanded(child: Center(child: CircularLoader()))
-                  else if (snapshot.hasError)
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          snapshot.error.toString(),
-                          style: const TextStyle(color: Colors.red),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.only(top: 14, bottom: 12),
+                      alignment: Alignment.center,
+                      child: Container(
+                        width: 42,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: Theme.of(
+                            context,
+                          ).custom.primary!.withValues(alpha: 0.7),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                       ),
-                    )
-                  else if (badges.isEmpty)
-                    const Expanded(child: Center(child: Text('No badges assigned')))
-                  else
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: GridView.builder(
-                          controller: scrollController,
-                          itemCount: badges.length,
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                mainAxisSpacing: 14,
-                                crossAxisSpacing: 14,
-                                childAspectRatio: 0.65,
-                              ),
-                          itemBuilder: (context, index) {
-                            final badge = badges[index];
+                    ),
+                    Text(
+                      "${widget.user.firstName}'s Badges",
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (snapshot.connectionState == ConnectionState.waiting)
+                      const Expanded(child: Center(child: CircularLoader()))
+                    else if (snapshot.hasError)
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            snapshot.error.toString(),
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      )
+                    else if (badges.isEmpty)
+                      const Expanded(
+                        child: Center(child: Text('No badges assigned')),
+                      )
+                    else
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: GridView.builder(
+                            controller: scrollController,
+                            itemCount: badges.length,
+                            gridDelegate:
+                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 3,
+                                  mainAxisSpacing: 14,
+                                  crossAxisSpacing: 14,
+                                  childAspectRatio: 0.65,
+                                ),
+                            itemBuilder: (context, index) {
+                              final badge = badges[index];
 
                             return Column(
                               children: [
@@ -176,11 +188,12 @@ class _UserBadgesSheetState extends ConsumerState<UserBadgesSheet> {
                                           child: Image.network(
                                             badge.badgeLogo,
                                             fit: BoxFit.contain,
-                                            errorBuilder: (_, __, ___) => const Icon(
-                                              Icons.verified,
-                                              color: Colors.greenAccent,
-                                              size: 36,
-                                            ),
+                                            errorBuilder: (_, __, ___) =>
+                                                const Icon(
+                                                  Icons.verified,
+                                                  color: Colors.greenAccent,
+                                                  size: 36,
+                                                ),
                                           ),
                                         ),
                                         Positioned(
@@ -193,20 +206,31 @@ class _UserBadgesSheetState extends ConsumerState<UserBadgesSheet> {
                                                   child: CircularLoader(),
                                                 )
                                               : PopupMenuButton<String>(
-                                                  icon: const Icon(Icons.more_vert, size: 18),
+                                                  icon: const Icon(
+                                                    Icons.more_vert,
+                                                    size: 18,
+                                                  ),
                                                   color: colors.surface,
                                                   elevation: 8,
                                                   shape: RoundedRectangleBorder(
-                                                    borderRadius: BorderRadius.circular(16),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          16,
+                                                        ),
                                                     side: BorderSide(
-                                                      color: colors.outline.withValues(alpha: 0.3),
+                                                      color: colors.outline
+                                                          .withValues(
+                                                            alpha: 0.3,
+                                                          ),
                                                       width: 0.3,
                                                     ),
                                                   ),
                                                   padding: EdgeInsets.zero,
                                                   onSelected: (value) {
                                                     if (value == 'delete') {
-                                                      _deleteAssignedBadge(badge);
+                                                      _deleteAssignedBadge(
+                                                        badge,
+                                                      );
                                                     }
                                                   },
                                                   itemBuilder: (context) => [
@@ -214,7 +238,9 @@ class _UserBadgesSheetState extends ConsumerState<UserBadgesSheet> {
                                                       value: 'delete',
                                                       child: Text(
                                                         'Delete Badge',
-                                                        style: TextStyle(color: Colors.red),
+                                                        style: TextStyle(
+                                                          color: Colors.red,
+                                                        ),
                                                       ),
                                                     ),
                                                   ],
@@ -246,41 +272,35 @@ class _UserBadgesSheetState extends ConsumerState<UserBadgesSheet> {
                         ),
                       ),
                     ),
-                  const SizedBox(height: 12),
-                  SafeArea(
-                    top: false,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                       child: SizedBox(
                         width: double.infinity,
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 24),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Theme.of(context).custom.primary,
-                              foregroundColor: colors.onPrimary,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).custom.primary,
+                            foregroundColor: colors.onPrimary,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
                             ),
-                            onPressed: () => Navigator.pop(context),
-                            child: Text(
-                              'CLOSE',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.5,
-                                color: Colors.white,
-                              ),
+                          ),
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text(
+                            'CLOSE',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                              color: Colors.white,
                             ),
                           ),
                         ),
                       ),
                     ),
-                  ),
                 ],
               ),
+            ),
             );
           },
         );
