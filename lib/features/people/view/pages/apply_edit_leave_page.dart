@@ -1,4 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/people/model/leave_details.dart';
 import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:dsv360/features/people/repositories/leaves_repository.dart';
@@ -331,20 +332,15 @@ class _ApplyEditLeavePageState extends ConsumerState<ApplyEditLeavePage> {
 
                               if (mounted) {
                                 Navigator.pop(context);
-                                AppSnackBar.show(
-                                  context,
-                                  message: isEditing
+                               
+                                showSuccessSnackBar(context, isEditing
                                       ? 'Leave updated successfully'
-                                      : 'Leave request submitted successfully',
-                                );
+                                      : 'Leave request submitted successfully');
                               }
                             } catch (e) {
                               debugPrint("Error requesting leave: $e");
                               if (mounted) {
-                                AppSnackBar.show(
-                                  context,
-                                  message: 'Try again later',
-                                );
+                                showErrorSnackBar(context, 'Try again later');
                               }
                             } finally {
                               ref

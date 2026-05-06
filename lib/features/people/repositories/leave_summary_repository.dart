@@ -1,21 +1,16 @@
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/features/people/model/leave_summary.dart';
 import 'package:flutter/material.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-part 'leave_summary_repository.g.dart';
-
-@Riverpod(keepAlive: true)
-class LeaveSummaryRepository extends _$LeaveSummaryRepository {
+class LeaveSummaryRepository
+    extends AutoDisposeFamilyAsyncNotifier<LeaveSummary, ({String userId, String username})> {
   @override
-  Future<LeaveSummary> build({
-    required String userId,
-    required String username,
-  }) async {
-    return fetchLeaveSummary(userId: userId, username: username);
+  Future<LeaveSummary> build(({String userId, String username}) arg) async {
+    return _fetch(userId: arg.userId, username: arg.username);
   }
 
-  Future<LeaveSummary> fetchLeaveSummary({
+  Future<LeaveSummary> _fetch({
     required String userId,
     required String username,
   }) async {
@@ -27,20 +22,16 @@ class LeaveSummaryRepository extends _$LeaveSummaryRepository {
 
       debugPrint("Response From fetchLeaveSummary: ${response.data}");
 
-      final data = response.data;
-      final summaryData = data["data"] ?? {};
-
+      final summaryData = (response.data["data"] as Map<String, dynamic>?) ?? {};
       return LeaveSummary.fromJson(summaryData);
     } catch (e, st) {
       debugPrint("Error fetching Leave Summary: $e");
       throw AsyncError(e, st);
     }
   }
-
-  Future<void> refreshLeaveSummary() async {
-    state = const AsyncValue.loading();
-    state = await AsyncValue.guard(
-      () => fetchLeaveSummary(userId: userId, username: username),
-    );
-  }
 }
+
+final leaveSummaryRepositoryProvider = AsyncNotifierProvider.autoDispose
+    .family<LeaveSummaryRepository, LeaveSummary, ({String userId, String username})>(
+  LeaveSummaryRepository.new,
+);

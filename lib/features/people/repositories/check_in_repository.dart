@@ -1,15 +1,10 @@
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:flutter/material.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-part 'check_in_repository.g.dart';
-
-@riverpod
-class CheckInRepository extends _$CheckInRepository {
+class CheckInRepository extends AutoDisposeNotifier<void> {
   @override
-  void build() {
-    return;
-  }
+  void build() {}
 
   Future<Map<String, dynamic>> checkIn({
     required String userId,
@@ -65,3 +60,8 @@ class CheckInRepository extends _$CheckInRepository {
     }
   }
 }
+
+final checkInRepositoryProvider =
+    AutoDisposeNotifierProvider<CheckInRepository, void>(
+  CheckInRepository.new,
+);

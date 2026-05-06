@@ -31,8 +31,7 @@ class LeaveDetailsPage extends ConsumerWidget {
 
     final leaveSummaryAsync = ref.watch(
       leaveSummaryRepositoryProvider(
-        userId: leave.userId,
-        username: leave.username,
+        (userId: leave.userId, username: leave.username),
       ),
     );
 
@@ -134,8 +133,7 @@ class LeaveDetailsPage extends ConsumerWidget {
                         message: 'Failed to load data. Please try again.',
                         onRetry: () => ref.refresh(
                           leaveSummaryRepositoryProvider(
-                            userId: leave.userId,
-                            username: leave.username,
+                            (userId: leave.userId, username: leave.username),
                           ),
                         ),
                       ),
