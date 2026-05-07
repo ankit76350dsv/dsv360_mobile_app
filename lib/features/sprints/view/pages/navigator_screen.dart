@@ -18,6 +18,8 @@ import 'package:dsv360/core/widgets/custom_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+enum _NavigatorViewFilter { release, epic, story }
+
 // ── Providers ─────────────────────────────────────────────────────────────────
 
 final _projectListProvider = FutureProvider((ref) async {
@@ -55,6 +57,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
   late TextEditingController _searchController;
   late FocusNode _searchFocusNode;
   String _searchQuery = '';
+  _NavigatorViewFilter _selectedViewFilter = _NavigatorViewFilter.release;
 
   String? _selectedProjectId;
   String? _selectedProjectName;
@@ -254,6 +257,44 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
             .any((s) => s.title.toLowerCase().contains(q));
       });
     }).toList();
+  }
+
+  List<EpicModel> _filterEpics(
+    List<EpicModel> epics,
+    List<StoryModel> stories,
+  ) {
+    if (_searchQuery.isEmpty) return epics;
+    final q = _searchQuery.toLowerCase();
+
+    return epics.where((e) {
+      if (e.title.toLowerCase().contains(q)) return true;
+      return stories
+          .where((s) => s.epicId == e.id)
+          .any((s) => s.title.toLowerCase().contains(q));
+    }).toList();
+  }
+
+  List<StoryModel> _filterStories(List<StoryModel> stories) {
+    if (_searchQuery.isEmpty) return stories;
+    final q = _searchQuery.toLowerCase();
+    return stories.where((s) => s.title.toLowerCase().contains(q)).toList();
+  }
+
+  Widget _buildEmptyHierarchyState(Color textSecondary) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      children: [
+        SizedBox(
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: Center(
+            child: Text(
+              _searchQuery.isEmpty ? 'No data found' : 'No results found',
+              style: TextStyle(color: textSecondary, fontSize: 15),
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   // ── Builders ───────────────────────────────────────────────────────────────
@@ -592,62 +633,43 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
     required Color greyBorder,
     required Color primary,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              child: SizedBox(
-                height: 35,
-                child: GestureDetector(
-                  onTap: () => _showProjectSelector(
-                    projects: projects,
-                    cardBg: cardBg,
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    greyBorder: greyBorder,
-                    primary: primary,
+    return SizedBox(
+      height: 35,
+      child: GestureDetector(
+        onTap: () => _showProjectSelector(
+          projects: projects,
+          cardBg: cardBg,
+          textPrimary: textPrimary,
+          textSecondary: textSecondary,
+          greyBorder: greyBorder,
+          primary: primary,
+        ),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+          decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: greyBorder, width: 1),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _selectedProjectName ?? 'Select Project',
+                  style: TextStyle(
+                    color: _selectedProjectName == null
+                        ? textSecondary
+                        : textPrimary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
                   ),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: cardBg,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: greyBorder, width: 1),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _selectedProjectName ?? 'Select Project',
-                            style: TextStyle(
-                              color: _selectedProjectName == null
-                                  ? textSecondary
-                                  : textPrimary,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Icon(
-                          Icons.keyboard_arrow_down,
-                          color: textSecondary,
-                          size: 18,
-                        ),
-                      ],
-                    ),
-                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ),
+              Icon(Icons.keyboard_arrow_down, color: textSecondary, size: 18),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -718,15 +740,38 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                   ),
                 ),
 
-                // Project dropdown
+                // Project dropdown + view filters
                 projectsAsync.when(
-                  loading: () => _buildProjectDropdown(
-                    projects: const [],
-                    cardBg: cardBackground,
-                    textPrimary: textPrimary,
-                    textSecondary: textSecondary,
-                    greyBorder: greyBorder,
-                    primary: primary,
+                  loading: () => Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: _buildProjectDropdown(
+                            projects: const [],
+                            cardBg: cardBackground,
+                            textPrimary: textPrimary,
+                            textSecondary: textSecondary,
+                            greyBorder: greyBorder,
+                            primary: primary,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 4,
+                          child: _buildViewFilterBar(
+                            cardBg: cardBackground,
+                            textSecondary: textSecondary,
+                            greyBorder: greyBorder,
+                            primary: primary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   error: (_, __) => Padding(
                     padding: const EdgeInsets.symmetric(
@@ -748,13 +793,36 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                         });
                       });
                     }
-                    return _buildProjectDropdown(
-                      projects: projects,
-                      cardBg: cardBackground,
-                      textPrimary: textPrimary,
-                      textSecondary: textSecondary,
-                      greyBorder: greyBorder,
-                      primary: primary,
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 7,
+                            child: _buildProjectDropdown(
+                              projects: projects,
+                              cardBg: cardBackground,
+                              textPrimary: textPrimary,
+                              textSecondary: textSecondary,
+                              greyBorder: greyBorder,
+                              primary: primary,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 6,
+                            child: _buildViewFilterBar(
+                              cardBg: cardBackground,
+                              textSecondary: textSecondary,
+                              greyBorder: greyBorder,
+                              primary: primary,
+                            ),
+                          ),
+                        ],
+                      ),
                     );
                   },
                 ),
@@ -825,6 +893,81 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
     );
   }
 
+  Widget _buildViewFilterButton({
+    required String label,
+    required _NavigatorViewFilter filter,
+    required Color primary,
+    required Color textSecondary,
+  }) {
+    final isSelected = _selectedViewFilter == filter;
+
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          if (_selectedViewFilter == filter) return;
+          setState(() => _selectedViewFilter = filter);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeInOut,
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? primary : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildViewFilterBar({
+    required Color cardBg,
+    required Color textSecondary,
+    required Color greyBorder,
+    required Color primary,
+  }) {
+    return Container(
+      height: 35,
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: greyBorder, width: 1),
+      ),
+      child: Row(
+        children: [
+          _buildViewFilterButton(
+            label: 'Release',
+            filter: _NavigatorViewFilter.release,
+            primary: primary,
+            textSecondary: textSecondary,
+          ),
+          _buildViewFilterButton(
+            label: 'Epic',
+            filter: _NavigatorViewFilter.epic,
+            primary: primary,
+            textSecondary: textSecondary,
+          ),
+          _buildViewFilterButton(
+            label: 'Story',
+            filter: _NavigatorViewFilter.story,
+            primary: primary,
+            textSecondary: textSecondary,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHierarchy(
     String projectId,
     Color cardBackground,
@@ -850,41 +993,65 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
           hierarchy.epics,
           visibleStories,
         );
+        final epics = _filterEpics(hierarchy.epics, visibleStories);
+        final stories = _filterStories(visibleStories);
 
         return RefreshIndicator(
           onRefresh: () async => ref.invalidate(_hierarchyProvider(projectId)),
-          child: milestones.isEmpty
-              ? ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height * 0.6,
-                      child: Center(
-                        child: Text(
-                          _searchQuery.isEmpty
-                              ? 'No data found'
-                              : 'No results found',
-                          style: TextStyle(color: textSecondary, fontSize: 15),
-                        ),
+          child: switch (_selectedViewFilter) {
+            _NavigatorViewFilter.release =>
+              milestones.isEmpty
+                  ? _buildEmptyHierarchyState(textSecondary)
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 100),
+                      itemCount: milestones.length,
+                      itemBuilder: (context, index) => _buildMilestoneTile(
+                        milestones[index],
+                        hierarchy.epics,
+                        visibleStories,
+                        cardBackground,
+                        border,
+                        textPrimary,
+                        textSecondary,
+                        isLightMode,
+                        canManageSprints: canManageSprints,
                       ),
                     ),
-                  ],
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 100),
-                  itemCount: milestones.length,
-                  itemBuilder: (context, index) => _buildMilestoneTile(
-                    milestones[index],
-                    hierarchy.epics,
-                    visibleStories,
-                    cardBackground,
-                    border,
-                    textPrimary,
-                    textSecondary,
-                    isLightMode,
-                    canManageSprints: canManageSprints,
-                  ),
-                ),
+            _NavigatorViewFilter.epic =>
+              epics.isEmpty
+                  ? _buildEmptyHierarchyState(textSecondary)
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 100),
+                      itemCount: epics.length,
+                      itemBuilder: (context, index) => _buildEpicTile(
+                        epics[index],
+                        visibleStories,
+                        border,
+                        textPrimary,
+                        textSecondary,
+                        isLightMode,
+                        canManageSprints: canManageSprints,
+                      ),
+                    ),
+            _NavigatorViewFilter.story =>
+              stories.isEmpty
+                  ? _buildEmptyHierarchyState(textSecondary)
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 100),
+                      itemCount: stories.length,
+                      itemBuilder: (context, index) {
+                        final story = stories[index];
+                        var storyColor = primary;
+                        for (final epic in hierarchy.epics) {
+                          if (epic.id == story.epicId) {
+                            storyColor = _epicColor(epic);
+                            break;
+                          }
+                        }
+                        return _buildStoryTile(story, storyColor);
+                      },
+                    ),
+          },
         );
       },
       loading: () => const Center(child: DsvLoader()),

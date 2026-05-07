@@ -49,7 +49,7 @@ void showSuccessSnackBar(
           fontWeight: FontWeight.w500,
         ),
       ),
-      backgroundColor: const Color(0xFF4CAF50),
+      backgroundColor: const Color.fromARGB(255, 8, 64, 155),
       duration: duration,
       behavior: SnackBarBehavior.floating,
       margin: const EdgeInsets.all(16),
