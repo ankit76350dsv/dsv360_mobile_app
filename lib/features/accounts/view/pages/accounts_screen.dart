@@ -180,8 +180,11 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
                             ref.invalidate(accountsListRepositoryProvider);
                           },
                           child: ListView.builder(
-                            itemCount: filteredAccounts.length,
+                            itemCount: filteredAccounts.length + 1,
                             itemBuilder: (context, index) {
+                              if (index == filteredAccounts.length ) {
+                                      return const SizedBox(height: 60);
+                                    }
                               return Column(
                                 children: [
                                   AccountsCard(

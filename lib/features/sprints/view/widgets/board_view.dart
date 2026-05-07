@@ -1,4 +1,4 @@
-
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/sprints/view/pages/navigator_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -80,31 +80,30 @@ class _BoardViewState extends State<BoardView> {
     _pointerX = pointerX;
 
     _autoScrollTimer?.cancel();
-    _autoScrollTimer = Timer.periodic(
-      const Duration(milliseconds: 10),
-      (timer) {
-        if (!_scrollController.hasClients) return;
+    _autoScrollTimer = Timer.periodic(const Duration(milliseconds: 10), (
+      timer,
+    ) {
+      if (!_scrollController.hasClients) return;
 
-        // Scroll right when pointer is near right edge (within 80 pixels)
-        if (_pointerX > size.width - 80) {
-          _scrollController.jumpTo(
-            (_scrollController.offset + 8).clamp(
-              0,
-              _scrollController.position.maxScrollExtent,
-            ),
-          );
-        }
-        // Scroll left when pointer is near left edge (within 80 pixels)
-        else if (_pointerX < 80) {
-          _scrollController.jumpTo(
-            (_scrollController.offset - 8).clamp(
-              0,
-              _scrollController.position.maxScrollExtent,
-            ),
-          );
-        }
-      },
-    );
+      // Scroll right when pointer is near right edge (within 80 pixels)
+      if (_pointerX > size.width - 80) {
+        _scrollController.jumpTo(
+          (_scrollController.offset + 8).clamp(
+            0,
+            _scrollController.position.maxScrollExtent,
+          ),
+        );
+      }
+      // Scroll left when pointer is near left edge (within 80 pixels)
+      else if (_pointerX < 80) {
+        _scrollController.jumpTo(
+          (_scrollController.offset - 8).clamp(
+            0,
+            _scrollController.position.maxScrollExtent,
+          ),
+        );
+      }
+    });
   }
 
   void _stopAutoScroll() {
@@ -213,7 +212,8 @@ class _BoardViewState extends State<BoardView> {
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(
-                      alpha: widget.isDark ? 0.25 : 0.06),
+                    alpha: widget.isDark ? 0.25 : 0.06,
+                  ),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -247,8 +247,7 @@ class _BoardViewState extends State<BoardView> {
                     value: widget.progress,
                     minHeight: 4,
                     backgroundColor: widget.greyBorder,
-                    valueColor:
-                        const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
+                    valueColor: const AlwaysStoppedAnimation(Color(0xFF4CAF50)),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -297,21 +296,27 @@ class _BoardViewState extends State<BoardView> {
                           autoFocusSearch: true,
                           projectId: widget.projectId,
                           projectName: widget.projectName,
+                          initialViewFilter: NavigatorViewFilter.story,
                         ),
                       ),
                     );
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 12),
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
                       color: widget.greyBorder.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(30),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.search,
-                            color: widget.customColors.textPrimary, size: 18),
+                        Icon(
+                          Icons.search,
+                          color: widget.customColors.textPrimary,
+                          size: 18,
+                        ),
                         const SizedBox(width: 8),
                         Text(
                           'Search stories...',
@@ -327,17 +332,11 @@ class _BoardViewState extends State<BoardView> {
                 ),
               ),
               const SizedBox(width: 10),
-              
+
               GestureDetector(
                 onTap: () {
                   if (widget.projectId == null || widget.projectId!.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please select a project first'),
-                        behavior: SnackBarBehavior.floating,
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
+                    showErrorSnackBar(context, 'Please select a project first');
                     return;
                   }
                   Navigator.push(
@@ -352,7 +351,9 @@ class _BoardViewState extends State<BoardView> {
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 10),
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: widget.greyBorder.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(30),
@@ -373,12 +374,16 @@ class _BoardViewState extends State<BoardView> {
                         width: 24,
                         height: 24,
                         decoration: BoxDecoration(
-                          color: widget.customColors.textPrimary!
-                              .withValues(alpha: 0.2),
+                          color: widget.customColors.textPrimary!.withValues(
+                            alpha: 0.2,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Icon(Icons.arrow_forward,
-                            color: widget.customColors.textPrimary, size: 14),
+                        child: Icon(
+                          Icons.arrow_forward,
+                          color: widget.customColors.textPrimary,
+                          size: 14,
+                        ),
                       ),
                     ],
                   ),

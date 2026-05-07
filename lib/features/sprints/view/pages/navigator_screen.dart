@@ -18,7 +18,7 @@ import 'package:dsv360/core/widgets/custom_search_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum _NavigatorViewFilter { release, epic, story }
+enum NavigatorViewFilter { release, epic, story }
 
 // ── Providers ─────────────────────────────────────────────────────────────────
 
@@ -41,12 +41,14 @@ class NavigatorScreen extends ConsumerStatefulWidget {
   final bool autoFocusSearch;
   final String? projectId;
   final String? projectName;
+  final NavigatorViewFilter initialViewFilter;
 
   const NavigatorScreen({
     super.key,
     this.autoFocusSearch = false,
     this.projectId,
     this.projectName,
+    this.initialViewFilter = NavigatorViewFilter.release,
   });
 
   @override
@@ -57,7 +59,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
   late TextEditingController _searchController;
   late FocusNode _searchFocusNode;
   String _searchQuery = '';
-  _NavigatorViewFilter _selectedViewFilter = _NavigatorViewFilter.release;
+  NavigatorViewFilter _selectedViewFilter = NavigatorViewFilter.release;
 
   String? _selectedProjectId;
   String? _selectedProjectName;
@@ -73,6 +75,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
     _searchFocusNode = FocusNode();
     _selectedProjectId = widget.projectId;
     _selectedProjectName = widget.projectName;
+    _selectedViewFilter = widget.initialViewFilter;
     if (widget.autoFocusSearch) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _searchFocusNode.requestFocus();
@@ -895,7 +898,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
 
   Widget _buildViewFilterButton({
     required String label,
-    required _NavigatorViewFilter filter,
+    required NavigatorViewFilter filter,
     required Color primary,
     required Color textSecondary,
   }) {
@@ -947,19 +950,19 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
         children: [
           _buildViewFilterButton(
             label: 'Release',
-            filter: _NavigatorViewFilter.release,
+            filter: NavigatorViewFilter.release,
             primary: primary,
             textSecondary: textSecondary,
           ),
           _buildViewFilterButton(
             label: 'Epic',
-            filter: _NavigatorViewFilter.epic,
+            filter: NavigatorViewFilter.epic,
             primary: primary,
             textSecondary: textSecondary,
           ),
           _buildViewFilterButton(
             label: 'Story',
-            filter: _NavigatorViewFilter.story,
+            filter: NavigatorViewFilter.story,
             primary: primary,
             textSecondary: textSecondary,
           ),
@@ -999,7 +1002,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
         return RefreshIndicator(
           onRefresh: () async => ref.invalidate(_hierarchyProvider(projectId)),
           child: switch (_selectedViewFilter) {
-            _NavigatorViewFilter.release =>
+            NavigatorViewFilter.release =>
               milestones.isEmpty
                   ? _buildEmptyHierarchyState(textSecondary)
                   : ListView.builder(
@@ -1017,7 +1020,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                         canManageSprints: canManageSprints,
                       ),
                     ),
-            _NavigatorViewFilter.epic =>
+            NavigatorViewFilter.epic =>
               epics.isEmpty
                   ? _buildEmptyHierarchyState(textSecondary)
                   : ListView.builder(
@@ -1033,7 +1036,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                         canManageSprints: canManageSprints,
                       ),
                     ),
-            _NavigatorViewFilter.story =>
+            NavigatorViewFilter.story =>
               stories.isEmpty
                   ? _buildEmptyHierarchyState(textSecondary)
                   : ListView.builder(

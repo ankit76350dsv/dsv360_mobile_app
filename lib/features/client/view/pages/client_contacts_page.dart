@@ -181,8 +181,11 @@ class _ClientContactsState extends ConsumerState<ClientContactsPage> {
                             );
                           },
                           child: ListView.builder(
-                            itemCount: filteredClientContacts.length,
+                            itemCount: filteredClientContacts.length +1 ,
                             itemBuilder: (context, index) {
+                               if (index == filteredClientContacts.length ) {
+                                      return const SizedBox(height: 60);
+                                    }
                               return ClientContactsCard(
                                 clientContacts: filteredClientContacts[index],
                               );

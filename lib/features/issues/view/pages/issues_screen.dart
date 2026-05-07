@@ -540,8 +540,11 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                                 horizontal: 16,
                                 vertical: 8,
                               ),
-                              itemCount: filteredIssues.length,
+                              itemCount: userRole == 'admin' ? filteredIssues.length+1 : filteredIssues.length,
                               itemBuilder: (context, index) {
+                                if (index == filteredIssues.length && userRole == 'admin') {
+                                      return const SizedBox(height: 60);
+                                    }
                                 final issue = filteredIssues[index];
                                 final dateFormat = DateFormat('dd/MM/yy');
                                 final createdDate = dateFormat.format(

@@ -506,8 +506,11 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                 horizontal: 16,
                                 vertical: 8,
                               ),
-                              itemCount: filteredTasks.length,
+                              itemCount: filteredTasks.length+1,
                               itemBuilder: (context, index) {
+                                 if (index == filteredTasks.length) {
+                                      return const SizedBox(height: 60);
+                                    }
                                 final task = filteredTasks[index];
                                 final dateFormat = DateFormat('dd/MM/yy');
                                 final dateRange =

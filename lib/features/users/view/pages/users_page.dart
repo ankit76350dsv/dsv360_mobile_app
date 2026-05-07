@@ -260,8 +260,11 @@ class _UsersPageState extends ConsumerState<UsersPage> {
 
                           return ListView.builder(
                             physics: const AlwaysScrollableScrollPhysics(),
-                            itemCount: filteredUsers.length,
+                            itemCount: filteredUsers.length+1,
                             itemBuilder: (context, index) {
+                              if (index == filteredUsers.length ) {
+                                      return const SizedBox(height: 70);
+                                    }
                               return UserCard(
                                 user: filteredUsers[index],
                                 userList: users,

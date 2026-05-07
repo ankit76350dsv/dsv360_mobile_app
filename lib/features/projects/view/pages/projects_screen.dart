@@ -310,8 +310,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                   
                                 return ListView.builder(
                                   padding: const EdgeInsets.all(16),
-                                  itemCount: filteredProjects.length,
+                                  itemCount: filteredProjects.length + 1,
                                   itemBuilder: (context, index) {
+                                    if (index == filteredProjects.length) {
+                                      return const SizedBox(height: 60);
+                                    }
+
                                     final project = filteredProjects[index];
                                     final user = AuthManager.instance.currentUser;
                                     final roleName = user?.role?.name ?? '';
@@ -362,6 +366,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
           );
         },
       ),
+      
       floatingActionButton: connectivityStatus.when(
         data: (results) {
           if (results.contains(ConnectivityResult.none)) return null;

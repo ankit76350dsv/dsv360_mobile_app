@@ -198,8 +198,11 @@ class _BadgesPageState extends ConsumerState<BadgesPage> {
                           },
                           child: ListView.builder(
                             
-                            itemCount: filteredUsers.length,
+                            itemCount: filteredUsers.length + 1,
                             itemBuilder: (context, index) {
+                              if (index == filteredUsers.length ) {
+                                      return const SizedBox(height: 70);
+                                    }
                               return UserBadgeCard(user: filteredUsers[index]);
                             },
                           ),
