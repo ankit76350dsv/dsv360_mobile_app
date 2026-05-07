@@ -1,6 +1,7 @@
 import 'package:dsv360/core/constants/session_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/profile/view/widgets/profile_crop_image_page.dart';
 import 'package:dsv360/features/profile/viewmodel/profile_viewmodel.dart';
@@ -118,26 +119,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
         await _refreshProfileAndSyncImages(userId);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile image updated successfully!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        
+        showSuccessSnackBar(context, 'Profile image updated successfully!');
       }
     } catch (e) {
       debugPrint('Image upload error: $e');
       debugPrint('Stack: ${StackTrace.current}');
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Upload failed. Please try again.'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        
+        showErrorSnackBar(context, 'Upload failed. Please try again.');
       }
     } finally {
       if (mounted) {
@@ -179,25 +170,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
         await _refreshProfileAndSyncImages(userId);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Banner image updated successfully!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
+       
+        showSuccessSnackBar(context, 'Banner image updated successfully!');
       }
     } catch (e) {
       debugPrint('Banner upload error: $e');
       debugPrint('Stack: ${StackTrace.current}');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Banner upload failed. Please try again.'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
-          ),
-        );
+        
+        showErrorSnackBar(context, 'Banner upload failed. Please try again.');
       }
     } finally {
       if (mounted) {

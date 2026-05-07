@@ -92,7 +92,6 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     Task? task,
     required BuildContext context,
   }) async {
-    final customColors = Theme.of(context).custom;
     debugPrint('🔧 DIALOG OPENED - Add/Edit Task dialog opened');
     debugPrint('📝 Editing existing task: ${task != null}');
     debugPrint('📁 Current Screen Project ID: "${widget.projectId}"');
@@ -128,14 +127,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       if (isNewTask && result.projectId.isEmpty) {
         debugPrint('❌ Cannot create task without project ID');
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text(
-                'Cannot create task without selecting a project',
-              ),
-              backgroundColor: customColors.error,
-            ),
-          );
+          showErrorSnackBar(context, 'Cannot create task without selecting a project');
         }
         return;
       }
@@ -235,12 +227,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
       } catch (e) {
         debugPrint('❌ Error saving task: $e');
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Failed to add task. Please try again.'),
-              backgroundColor: customColors.error,
-            ),
-          );
+          showErrorSnackBar(context, 'Failed to add task. Please try again.');
         }
         return;
       }
@@ -251,16 +238,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
 
       if (mounted) {
         ref.invalidate(tasksListRepositoryProvider(userId));
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              task == null
-                  ? 'Task added successfully'
-                  : 'Task updated successfully',
-            ),
-            backgroundColor: customColors.primary,
-          ),
-        );
+        showSuccessSnackBar(context, task == null ? 'Task added successfully' : 'Task updated successfully');
       }
     } else {
       debugPrint('❌ Dialog closed without result (user cancelled)');
@@ -289,25 +267,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
           // Refresh the tasks list
           if (mounted) {
             ref.invalidate(tasksListRepositoryProvider(userId));
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.white),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Task "${task.taskName}" deleted successfully',
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-                backgroundColor: customColors.primary,
-                behavior: SnackBarBehavior.floating,
-                duration: const Duration(seconds: 3),
-              ),
-            );
+            showSuccessSnackBar(context, 'Task "${task.taskName}" deleted successfully');
           }
         } catch (e) {
           if (mounted) {

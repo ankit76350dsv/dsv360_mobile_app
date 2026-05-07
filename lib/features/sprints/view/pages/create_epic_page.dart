@@ -131,23 +131,17 @@ class _CreateEpicPageState extends ConsumerState<CreateEpicPage> {
 
   Future<void> _createEpic() async {
     if (_selectedProjectId == null || _selectedProjectId!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a project')),
-      );
+      showErrorSnackBar(context, 'Please select a project');
       return;
     }
 
     if (_selectedMilestoneId == null || _selectedMilestoneId!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a release')),
-      );
+      showErrorSnackBar(context, 'Please select a release');
       return;
     }
 
     if (_selectedColor == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a color')),
-      );
+      showErrorSnackBar(context, 'Please select a color');
       return;
     }
 
@@ -169,9 +163,7 @@ class _CreateEpicPageState extends ConsumerState<CreateEpicPage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Epic created successfully')),
-      );
+      showSuccessSnackBar(context, 'Epic created successfully');
 
       Navigator.pop(context);
     } catch (e) {

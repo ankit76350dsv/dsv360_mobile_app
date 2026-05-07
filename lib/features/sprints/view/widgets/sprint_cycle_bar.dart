@@ -3,6 +3,7 @@ import 'package:dsv360/features/sprints/view/pages/create_epic_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_release_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_sprint_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_story_page.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -97,12 +98,7 @@ class SprintCycleBar extends StatelessWidget {
                 label: 'SPRINT',
                 onTap: () {
                   if (selectedProjectId == null || selectedProjectId!.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please select a project first'),
-                        elevation: 5,
-                      ),
-                    );
+                    showErrorSnackBar(context, 'Please select a project');
                     return;
                   }
                   Navigator.push(

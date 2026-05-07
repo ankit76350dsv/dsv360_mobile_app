@@ -1,5 +1,6 @@
 import 'package:dsv360/core/constants/init_zcatalyst_app.dart';
 import 'package:dsv360/core/auth/loading_page.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 
 class WelcomePage extends StatelessWidget {
@@ -62,12 +63,8 @@ class WelcomePage extends StatelessWidget {
                     } catch (e) {
                       debugPrint("Login Failed: $e");
                       if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Login Failed. Please try again."),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
+                        
+                        showErrorSnackBar(context, "Login Failed. Please try again.");
                       }
                     }
                   },

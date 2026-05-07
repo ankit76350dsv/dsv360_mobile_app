@@ -302,13 +302,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
             setState(() {
               story.columnId = previousColumnId;
             });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text(
-                  'Failed to update status. Please try again.',
-                ),
-              ),
-            );
+            showErrorSnackBar(context, 'Failed to update status. Please try again.');
           }
         });
   }
@@ -365,12 +359,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
     if (_selectedSprintId == null) return;
 
     try {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Completing sprint...'),
-          duration: Duration(seconds: 2),
-        ),
-      );
+      showSuccessSnackBar(context, 'Completing sprint...');
 
       await ref
           .read(completeSprintRepositoryProvider)
@@ -380,12 +369,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
           );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Sprint completed successfully!'),
-            duration: Duration(seconds: 2),
-          ),
-        );
+        showSuccessSnackBar(context, 'Sprint completed successfully!');
 
         await _onRefresh();
       }

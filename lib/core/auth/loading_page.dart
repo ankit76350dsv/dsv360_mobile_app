@@ -2,6 +2,7 @@ import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/session_manager.dart';
 import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/core/models/active_user.dart';
 import 'package:dsv360/core/constants/active_user_repository.dart';
@@ -62,9 +63,8 @@ class _LoadingPageState extends ConsumerState<LoadingPage> {
     } catch (e) {
       debugPrint('Error fetching user data: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load user data.')),
-        );
+      
+        showErrorSnackBar(context, 'Failed to load user data.');
         // Navigate back to WelcomePage on critical failure
          Navigator.pushReplacement(
           context,

@@ -83,7 +83,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
   }
 
   Future<void> _showAddIssueDialog({IssueModel? issue}) async {
-    final customColors = Theme.of(context).custom;
+    
     final createIssueRepository = ref.read(createIssueRepositoryProvider);
     final updateIssueRepository = ref.read(updateIssueRepositoryProvider);
     final result = await Navigator.of(context).push<bool>(
@@ -98,16 +98,10 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
 
     if (result == true && mounted) {
       ref.invalidate(issueListProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            issue == null
+      
+      showSuccessSnackBar(context, issue == null
                 ? 'Issue added successfully'
-                : 'Issue updated successfully',
-          ),
-          backgroundColor: customColors.primary,
-        ),
-      );
+                : 'Issue updated successfully');
     }
   }
 
@@ -228,28 +222,16 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
 
                             if (mounted) {
                               Navigator.of(dialogContext).pop();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text(
-                                    'Issue status updated successfully',
-                                  ),
-                                  backgroundColor: customColors.primary,
-                                ),
-                              );
+                             
+                              showSuccessSnackBar(context, 'Issue status updated successfully');
                             }
                           } catch (e) {
                             if (mounted) {
                               setDialogState(() {
                                 isUpdating = false;
                               });
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text(
-                                    'Failed to update status. Please try again.',
-                                  ),
-                                  backgroundColor: customColors.error,
-                                ),
-                              );
+                              
+                              showErrorSnackBar(context, 'Failed to update status. Please try again.');
                             }
                           }
                         },
@@ -277,7 +259,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
   }
 
   void _deleteIssue(IssueModel issue) {
-    final customColors = Theme.of(context).custom;
+  
 
     showWarningDialogueBox(
       context: context,
@@ -292,47 +274,13 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
           await repository.deleteIssue(issue.id);
           ref.invalidate(issueListProvider);
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const Icon(Icons.check_circle, color: Colors.white),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Issue "${issue.issueName}" deleted successfully',
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-                backgroundColor: customColors.primary,
-                behavior: SnackBarBehavior.floating,
-                duration: const Duration(seconds: 3),
-              ),
-            );
+            
+            showSuccessSnackBar(context, 'Issue "${issue.issueName}" deleted successfully');
           }
         } catch (e) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Row(
-                  children: [
-                    const Icon(Icons.error_outline, color: Colors.white),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Failed to delete issue. Try again later.',
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
-                backgroundColor: customColors.error,
-                behavior: SnackBarBehavior.floating,
-                duration: const Duration(seconds: 3),
-              ),
-            );
+            
+            showErrorSnackBar(context, 'Failed to delete issue. Try again later.');
           }
         }
       },

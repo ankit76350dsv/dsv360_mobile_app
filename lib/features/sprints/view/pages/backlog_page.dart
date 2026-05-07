@@ -243,14 +243,7 @@ class _BacklogPageState extends ConsumerState<BacklogPage> {
         .then((_) {
       ref.invalidate(_backlogHierarchyProvider(widget.projectId));
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-                '"${story.title}" deployed to ${sprint.sprintName}'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        
+        showSuccessSnackBar(context, '"${story.title}" deployed to ${sprint.sprintName}');
       }
     }).catchError((e) {
       if (mounted) {

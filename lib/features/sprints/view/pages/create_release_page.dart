@@ -95,16 +95,12 @@ class _CreateReleasePageState extends ConsumerState<CreateReleasePage> {
 
   Future<void> _createRelease() async {
     if (_selectedProjectId == null || _selectedProjectId!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a project')),
-      );
+      showErrorSnackBar(context, 'Please select a project');
       return;
     }
 
     if (_releaseDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a release date')),
-      );
+      showErrorSnackBar(context, 'Please select a release date');
       return;
     }
 
@@ -125,9 +121,7 @@ class _CreateReleasePageState extends ConsumerState<CreateReleasePage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Release created successfully')),
-      );
+      showSuccessSnackBar(context, 'Release created successfully');
 
       Navigator.pop(context);
     } catch (e) {

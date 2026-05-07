@@ -1,3 +1,4 @@
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/badges/model/assigned_badge.dart';
 import 'package:dsv360/features/badges/model/badge_summary.dart';
 import 'package:dsv360/features/badges/model/badge_user.dart';
@@ -65,9 +66,8 @@ class AddEditBadgeViewModel {
     }
     if (!context.mounted) return;
     Navigator.pop(context, true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(badge != null ? 'Badge updated successfully' : 'Badge added successfully')),
-    );
+    
+    showSuccessSnackBar(context, badge != null ? 'Badge updated successfully' : 'Badge added successfully');
   }
 }
 
@@ -114,9 +114,8 @@ class AssignBadgesViewModel {
     await _repository.assignBadge(payload);
     if (!context.mounted) return;
     Navigator.pop(context, true);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Badge assigned successfully')),
-    );
+    
+    showSuccessSnackBar(context, 'Badge assigned successfully');
   }
 }
 

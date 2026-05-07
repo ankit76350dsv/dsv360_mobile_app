@@ -1,4 +1,5 @@
-import 'package:dsv360/features/time_entry/view/pages/request_time_entries_screen.dart';
+import 'package:dsv360/features/time_entry/view/pages/request_time_entries_screen.dart' as req_screen;
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../model/time_entry_model.dart';
@@ -6,6 +7,7 @@ import '../../../../core/constants/theme.dart';
 import '../../../../core/constants/auth_manager.dart';
 import '../../repositories/time_entry_repository.dart';
 import '../../repositories/start_timer_repository.dart';
+import '../../../../core/widgets/custom_dropdown_field.dart';
 import '../../../../core/widgets/custom_input_field.dart';
 import '../../../../core/widgets/TopBar.dart';
 import 'time_entries_screen.dart';
@@ -20,7 +22,6 @@ class AddTimeEntryDialog extends StatefulWidget {
   final String projectName;
   final String currentUser;
   final TimeEntry? editingEntry; // For editing existing entry
-
   const AddTimeEntryDialog({
     super.key,
     required this.taskId,
@@ -296,11 +297,9 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
     if (pickedDate != null) {
       // Validate that the selected date is within the last 7 days
       if (pickedDate.isBefore(sevenDaysAgo) || pickedDate.isAfter(today)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('You can only add time entries for the last 7 days'),
-            backgroundColor: customColors.error,
-          ),
+        showErrorSnackBar(
+          context,
+          'You can only add time entries for the last 7 days',
         );
         return;
       }
@@ -345,26 +344,18 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
   }
 
   Future<void> _addTimeEntry() async {
-    final customColors = Theme.of(context).custom;
     final projectId = _projectIdForRequests;
 
     if (projectId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Project ID is missing. Please reopen the task.'),
-          backgroundColor: customColors.error,
-        ),
+      showErrorSnackBar(
+        context,
+        'Project ID is missing. Please reopen the task.',
       );
       return;
     }
 
     if (_startTimeController.text.isEmpty || _endTimeController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please fill in start and end time'),
-          backgroundColor: customColors.error,
-        ),
-      );
+      showErrorSnackBar(context, 'Please fill in start and end time');
       return;
     }
 
@@ -375,21 +366,11 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
       final endTime = format.parse(_endTimeController.text);
 
       if (endTime.isBefore(startTime) || endTime.isAtSameMomentAs(startTime)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('End time must be after start time'),
-            backgroundColor: customColors.error,
-          ),
-        );
+        showErrorSnackBar(context, 'End time must be after start time');
         return;
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Invalid time format'),
-          backgroundColor: customColors.error,
-        ),
-      );
+      showErrorSnackBar(context, 'Invalid time format');
       return;
     }
 
@@ -430,20 +411,10 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
         debugPrint('✅ Time entry updated successfully');
         Navigator.pop(context, updatedEntry);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Time entry updated'),
-            backgroundColor: customColors.primary,
-          ),
-        );
+        showSuccessSnackBar(context, 'Time entry updated');
       } catch (e) {
         debugPrint('❌ Error updating entry: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Time Entry is Already Added!'),
-            backgroundColor: customColors.error,
-          ),
-        );
+        showErrorSnackBar(context, 'Time Entry is Already Added!');
       } finally {
         setState(() => _isLoading = false);
       }
@@ -494,37 +465,21 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
         _noteController.clear();
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Time entry created'),
-          backgroundColor: customColors.primary,
-        ),
-      );
+      showSuccessSnackBar(context, 'Time entry created');
     } catch (e) {
       debugPrint('❌ Error creating entry: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Time Entry is Already Added!'),
-          backgroundColor: customColors.error,
-        ),
-      );
+      showErrorSnackBar(context, 'Time Entry is Already Added!');
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
   Future<void> _startServerTimer() async {
-    final customColors = Theme.of(context).custom;
     final timer = TimerService.instance;
     final projectId = _projectIdForRequests;
 
     if (projectId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Please Reopen Tasks and Try again'),
-          backgroundColor: customColors.error,
-        ),
-      );
+      showErrorSnackBar(context, 'Please Reopen Tasks and Try again');
       return;
     }
 
@@ -571,12 +526,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
     } catch (e) {
       debugPrint('❌ Error starting server timer: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Failed to start timer. Please try again.'),
-            backgroundColor: customColors.error,
-          ),
-        );
+        showErrorSnackBar(context, 'Failed to start timer. Please try again.');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -669,127 +619,50 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
     final customColors = Theme.of(context).custom;
     return Scaffold(
       backgroundColor: customColors.background,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(120),
-        child: Padding(
-          padding: const EdgeInsets.only(top: 48),
-          child: TopBar(
-            title: '${widget.taskName} - Time Entries',
-            onBack: () => Navigator.of(context).pop(),
-            actionIcon: Icons.timer_outlined,
-            onInfoTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => TimeEntriesScreen(
-                    taskId: widget.taskId,
-                    projectId: widget.projectId,
-                    taskName: widget.taskName,
-                    projectName: widget.projectName,
-                    timeEntries: _timeEntries,
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ),
+
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // User field (read-only)
-              CustomInputField(
-                controller: _userController,
-                labelText: 'User',
-                hintText: 'User name',
-                prefixIcon: Icons.person_outline,
-                enabled: false,
-              ),
-              const SizedBox(height: 20),
-
-              // Date field
-              InkWell(
-                onTap: TimerService.instance.isRunning
-                    ? null
-                    : () => _selectDate(context),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: TimerService.instance.isRunning
-                        ? customColors.cardBackground!.withOpacity(0.5)
-                        : customColors.cardBackground,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: customColors.inputBorder!,
-                      width: 1.5,
+              TopBar(
+                title: '${widget.taskName} - Time Entries',
+                onBack: () => Navigator.of(context).pop(),
+                actionIcon: Icons.timer_outlined,
+                onInfoTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TimeEntriesScreen(
+                        taskId: widget.taskId,
+                        projectId: widget.projectId,
+                        taskName: widget.taskName,
+                        projectName: widget.projectName,
+                        timeEntries: _timeEntries,
+                      ),
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.calendar_today_outlined,
-                        color: customColors.textSecondary,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Date',
-                              style: TextStyle(
-                                color: customColors.textSecondary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _selectedDate == null
-                                  ? 'Select date'
-                                  : DateFormat(
-                                      'dd-MM-yyyy',
-                                    ).format(_selectedDate!),
-                              style: TextStyle(
-                                color: _selectedDate == null
-                                    ? customColors.textHint
-                                    : customColors.textPrimary,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                  );
+                },
               ),
-              const SizedBox(height: 20),
-
-              // Start Time and End Time Row
-              Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    // User field (read-only)
+                    CustomInputField(
+                      controller: _userController,
+                      labelText: 'User',
+                      hintText: 'User name',
+                      prefixIcon: Icons.person_outline,
+                      enabled: false,
+                    ),
+                    const SizedBox(height: 20),
+                
+                    // Date field
+                    InkWell(
                       onTap: TimerService.instance.isRunning
                           ? null
-                          : () => _selectTime(context, true),
+                          : () => _selectDate(context),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16,
@@ -815,7 +688,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                         child: Row(
                           children: [
                             Icon(
-                              Icons.access_time_outlined,
+                              Icons.calendar_today_outlined,
                               color: customColors.textSecondary,
                               size: 20,
                             ),
@@ -825,7 +698,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Start Time',
+                                    'Date',
                                     style: TextStyle(
                                       color: customColors.textSecondary,
                                       fontSize: 12,
@@ -834,11 +707,13 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    _startTimeController.text.isEmpty
-                                        ? 'hh:mm'
-                                        : _startTimeController.text,
+                                    _selectedDate == null
+                                        ? 'Select date'
+                                        : DateFormat(
+                                            'dd-MM-yyyy',
+                                          ).format(_selectedDate!),
                                     style: TextStyle(
-                                      color: _startTimeController.text.isEmpty
+                                      color: _selectedDate == null
                                           ? customColors.textHint
                                           : customColors.textPrimary,
                                       fontSize: 16,
@@ -852,427 +727,479 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: InkWell(
-                      onTap: TimerService.instance.isRunning
-                          ? null
-                          : () => _selectTime(context, false),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: TimerService.instance.isRunning
-                              ? customColors.cardBackground!.withOpacity(0.5)
-                              : customColors.cardBackground,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: customColors.inputBorder!,
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.access_time_outlined,
-                              color: customColors.textSecondary,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'End Time',
-                                    style: TextStyle(
-                                      color: customColors.textSecondary,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _endTimeController.text.isEmpty
-                                        ? 'hh:mm'
-                                        : _endTimeController.text,
-                                    style: TextStyle(
-                                      color: _endTimeController.text.isEmpty
-                                          ? customColors.textHint
-                                          : customColors.textPrimary,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-
-              // Type field
-              DropdownButtonFormField<String>(
-                value: _selectedType,
-
-                hint: Text(
-                  'Type',
-                  style: TextStyle(color: customColors.textHint),
-                ),
-                style: TextStyle(
-                  color: TimerService.instance.isRunning
-                      ? customColors.textPrimary!.withValues(alpha: 0.5)
-                      : customColors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-                dropdownColor: customColors.cardBackground,
-                decoration: InputDecoration(
-                  labelText: 'Type',
-                  labelStyle: TextStyle(
-                    color: customColors.textSecondary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  filled: true,
-                  fillColor: customColors.cardBackground,
-                  prefixIcon: Icon(
-                    Icons.category_outlined,
-                    color: customColors.textSecondary,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: customColors.inputBorder!,
-                      width: 1.5,
-                    ),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(
-                      color: customColors.inputBorder!,
-                      width: 1.5,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 12,
-                  ),
-                ),
-                items: _typeOptions.map((type) {
-                  return DropdownMenuItem(value: type, child: Text(type));
-                }).toList(),
-                onChanged: TimerService.instance.isRunning
-                    ? null
-                    : (value) {
-                        setState(() => _selectedType = value);
-                      },
-              ),
-              const SizedBox(height: 20),
-
-              // Note field
-              CustomInputField(
-                controller: _noteController,
-                labelText: 'Note',
-                hintText: 'Add notes...',
-                isMultiline: true,
-                maxLines: 4,
-                minLines: 4,
-                maxLength: 700,
-                prefixIcon: Icons.description_outlined,
-                enabled: TimerService.instance.isRunning ? false : true,
-              ),
-              const SizedBox(height: 8),
-
-              // Character count display
-              Align(
-                alignment: Alignment.centerRight,
-                child: ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _noteController,
-                  builder: (context, value, child) {
-                    final remaining = 700 - value.text.length;
-                    return Text(
-                      '$remaining characters left',
-                      style: TextStyle(
-                        color: remaining < 100
-                            ? Colors.red
-                            : customColors.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Action Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: customColors.primary!.withOpacity(0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ListenableBuilder(
-                        listenable: TimerService.instance,
-                        builder: (context, _) {
-                          return ElevatedButton(
-                            onPressed:
-                                (_isLoading || TimerService.instance.isRunning)
+                    const SizedBox(height: 20),
+                
+                    // Start Time and End Time Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: TimerService.instance.isRunning
                                 ? null
-                                : _addTimeEntry,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: customColors.primary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(24),
+                                : () => _selectTime(context, true),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 7,
                               ),
-                              elevation: 0,
-                            ),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Colors.white,
-                                      ),
-                                    ),
-                                  )
-                                : Text(
-                                    widget.editingEntry != null
-                                        ? 'SAVE'
-                                        : 'ADD',
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.5,
+                              decoration: BoxDecoration(
+                                color: TimerService.instance.isRunning
+                                    ? customColors.cardBackground!.withOpacity(
+                                        0.5,
+                                      )
+                                    : customColors.cardBackground,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: customColors.inputBorder!,
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.access_time_outlined,
+                                    color: customColors.textSecondary,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Start Time',
+                                          style: TextStyle(
+                                            color: customColors.textSecondary,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _startTimeController.text.isEmpty
+                                              ? 'hh:mm'
+                                              : _startTimeController.text,
+                                          style: TextStyle(
+                                            color:
+                                                _startTimeController.text.isEmpty
+                                                ? customColors.textHint
+                                                : customColors.textPrimary,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: InkWell(
+                            onTap: TimerService.instance.isRunning
+                                ? null
+                                : () => _selectTime(context, false),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: TimerService.instance.isRunning
+                                    ? customColors.cardBackground!.withOpacity(
+                                        0.5,
+                                      )
+                                    : customColors.cardBackground,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: customColors.inputBorder!,
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.access_time_outlined,
+                                    color: customColors.textSecondary,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'End Time',
+                                          style: TextStyle(
+                                            color: customColors.textSecondary,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          _endTimeController.text.isEmpty
+                                              ? 'hh:mm'
+                                              : _endTimeController.text,
+                                          style: TextStyle(
+                                            color: _endTimeController.text.isEmpty
+                                                ? customColors.textHint
+                                                : customColors.textPrimary,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                
+                    // Type field
+                    CustomDropDownField(
+                      hintText: 'Type',
+                      labelText: 'Type',
+                      prefixIcon: Icons.category_outlined,
+                      options: _typeOptions
+                          .map((type) => DropdownMenuItem<String>(
+                                value: type,
+                                child: Text(type),
+                              ))
+                          .toList(),
+                      selectedOption: _selectedType,
+                      enabled: !TimerService.instance.isRunning,
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _selectedType = value);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                
+                    // Note field
+                    CustomInputField(
+                      controller: _noteController,
+                      labelText: 'Note',
+                      hintText: 'Add notes...',
+                      isMultiline: true,
+                      maxLines: 4,
+                      minLines: 4,
+                      maxLength: 700,
+                      prefixIcon: Icons.description_outlined,
+                      enabled: TimerService.instance.isRunning ? false : true,
+                    ),
+                    const SizedBox(height: 8),
+                
+                    // Character count display
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: ValueListenableBuilder<TextEditingValue>(
+                        valueListenable: _noteController,
+                        builder: (context, value, child) {
+                          final remaining = 700 - value.text.length;
+                          return Text(
+                            '$remaining characters left',
+                            style: TextStyle(
+                              color: remaining < 100
+                                  ? Colors.red
+                                  : customColors.textSecondary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
                           );
                         },
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: _isLoading
-                          ? null
-                          : () => Navigator.of(context).pop(),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: customColors.error,
-                        side: BorderSide(color: customColors.error!, width: 2),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                      ),
-                      child: const Text(
-                        'CANCEL',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Timer + Request row
-              Row(
-                children: [
-                  Expanded(
-                    child: ListenableBuilder(
-                      listenable: TimerService.instance,
-                      builder: (context, _) {
-                        final timer = TimerService.instance;
-                        final isRunning = timer.isRunning;
-                        return ElevatedButton.icon(
-                          onPressed: _isLoading ? null : _startServerTimer,
-                          icon: Icon(
-                            isRunning ? Icons.stop : Icons.play_arrow,
-                            size: 18,
-                          ),
-                          label: Text(
-                            isRunning ? timer.elapsedFormatted : '00:00:00',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
+                    const SizedBox(height: 24),
+                
+                    // Action Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: customColors.primary!.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: ListenableBuilder(
+                              listenable: TimerService.instance,
+                              builder: (context, _) {
+                                return ElevatedButton(
+                                  onPressed:
+                                      (_isLoading ||
+                                          TimerService.instance.isRunning)
+                                      ? null
+                                      : _addTimeEntry,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: customColors.primary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(24),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  Colors.white,
+                                                ),
+                                          ),
+                                        )
+                                      : Text(
+                                          widget.editingEntry != null
+                                              ? 'SAVE'
+                                              : 'ADD',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                );
+                              },
                             ),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isRunning
-                                ? Colors.red
-                                : Colors.green[700],
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: _isLoading
+                                ? null
+                                : () => Navigator.of(context).pop(),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: customColors.error,
+                              side: BorderSide(
+                                color: customColors.error!,
+                                width: 2,
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
                             ),
-                            elevation: 0,
+                            child: const Text(
+                              'CANCEL',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
                           ),
-                        );
-                      },
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: (_isLoading || TimerService.instance.isRunning)
-                          ? null
-                          : () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      RequestTimeEntriesScreen(
-                                        currentUser: widget.currentUser,
-                                        projectId: widget.projectId,
-                                        projectName: widget.projectName,
-                                        taskId: widget.taskId,
-                                        taskName: widget.taskName,
-                                      ),
+                    const SizedBox(height: 12),
+                
+                    // Timer + Request row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ListenableBuilder(
+                            listenable: TimerService.instance,
+                            builder: (context, _) {
+                              final timer = TimerService.instance;
+                              final isRunning = timer.isRunning;
+                              return ElevatedButton.icon(
+                                onPressed: _isLoading ? null : _startServerTimer,
+                                icon: Icon(
+                                  isRunning ? Icons.stop : Icons.play_arrow,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  isRunning ? timer.elapsedFormatted : '00:00:00',
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isRunning
+                                      ? Colors.red
+                                      : Colors.green[700],
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  elevation: 0,
                                 ),
                               );
                             },
-                      icon: const Icon(Icons.send_outlined, size: 18),
-                      label: const Text(
-                        'REQUEST',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.5,
+                          ),
                         ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Theme.of(context).custom.textSecondary,
-                        side: BorderSide(
-                          color: Theme.of(context).custom.inputBorder!,
-                          width: 1.5,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed:
+                                (_isLoading || TimerService.instance.isRunning)
+                                ? null
+                                : () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            req_screen.RequestTimeEntriesScreen(
+                                              currentUser: widget.currentUser,
+                                              projectId: widget.projectId,
+                                              projectName: widget.projectName,
+                                              taskId: widget.taskId,
+                                              taskName: widget.taskName,
+                                            ),
+                                      ),
+                                    );
+                                  },
+                            icon: const Icon(Icons.send_outlined, size: 18),
+                            label: const Text(
+                              'REQUEST',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Theme.of(
+                                context,
+                              ).custom.textSecondary,
+                              side: BorderSide(
+                                color: Theme.of(context).custom.inputBorder!,
+                                width: 1.5,
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                            ),
+                          ),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                      ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // View All button - Always visible
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (_timeEntries.isNotEmpty)
-                    Text(
-                      'Time Entries (${_timeEntries.length})',
-                      style: TextStyle(
-                        fontWeight: FontWeight.normal,
-                        fontSize: 14,
-                        color: customColors.textPrimary,
-                      ),
-                    )
-                  else
-                    const Spacer(),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Time entries list
-              if (_timeEntries.isNotEmpty) ...[
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _timeEntries.length,
-                  itemBuilder: (context, index) {
-                    final entry = _timeEntries[index];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: customColors.cardBackground,
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.1),
-                          width: 1,
-                        ),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                    const SizedBox(height: 24),
+                
+                    // View All button - Always visible
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (_timeEntries.isNotEmpty)
+                          Text(
+                            'Time Entries (${_timeEntries.length})',
+                            style: TextStyle(
+                              fontWeight: FontWeight.normal,
+                              fontSize: 14,
+                              color: customColors.textPrimary,
+                            ),
+                          )
+                        else
+                          const Spacer(),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                
+                    // Time entries list
+                    if (_timeEntries.isNotEmpty) ...[
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _timeEntries.length,
+                        itemBuilder: (context, index) {
+                          final entry = _timeEntries[index];
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: customColors.cardBackground,
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.1),
+                                width: 1,
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
                               children: [
-                                Text(
-                                  '${entry.startTime} - ${entry.endTime}',
-                                  style: TextStyle(
-                                    color: customColors.textPrimary,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${entry.startTime} - ${entry.endTime}',
+                                        style: TextStyle(
+                                          color: customColors.textPrimary,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${DateFormat('dd/MM/yy').format(entry.date)} • ${entry.type}',
+                                        style: TextStyle(
+                                          color: customColors.textSecondary,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${DateFormat('dd/MM/yy').format(entry.date)} • ${entry.type}',
-                                  style: TextStyle(
-                                    color: customColors.textSecondary,
-                                    fontSize: 12,
+                                IconButton(
+                                  onPressed: () => _deleteTimeEntry(index),
+                                  icon: Icon(
+                                    Icons.delete,
+                                    color: customColors.error,
+                                    size: 20,
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                          IconButton(
-                            onPressed: () => _deleteTimeEntry(index),
-                            icon: Icon(
-                              Icons.delete,
-                              color: customColors.error,
-                              size: 20,
-                            ),
-                          ),
-                        ],
+                          );
+                        },
                       ),
-                    );
-                  },
+                      const SizedBox(height: 24),
+                    ],
+                  ],
                 ),
-                const SizedBox(height: 24),
-              ],
+              ),
             ],
           ),
         ),

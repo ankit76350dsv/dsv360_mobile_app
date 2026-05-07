@@ -1,6 +1,7 @@
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/core/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/core/widgets/custom_input_field.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dsv360/features/teams/viewmodel/teams_provider.dart';
@@ -66,9 +67,7 @@ class _AddEditTeamPageState extends ConsumerState<AddEditTeamPage> {
 
     if (_selectedReportingManagerId == null ||
         _selectedReportingManagerId!.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a reporting manager')),
-      );
+      showErrorSnackBar(context, 'Please select a reporting manager');
       return;
     }
 
@@ -123,15 +122,9 @@ class _AddEditTeamPageState extends ConsumerState<AddEditTeamPage> {
           .read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier)
           .state = false;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(isEditing
+      showSuccessSnackBar(context, isEditing
               ? 'Team updated successfully!'
-              : 'Team created successfully!'),
-          duration: const Duration(seconds: 2),
-          backgroundColor: Colors.green,
-        ),
-      );
+              : 'Team created successfully!');
 
       Navigator.pop(context, {
         'teamName': team.teamName,
@@ -150,13 +143,7 @@ class _AddEditTeamPageState extends ConsumerState<AddEditTeamPage> {
       // Strip the "Exception: " prefix Flutter adds so the message stays clean
       final errorMessage = e.toString().replaceFirst('Exception: ', '');
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('❌ $errorMessage'),
-          duration: const Duration(seconds: 3),
-          backgroundColor: Colors.red,
-        ),
-      );
+      showErrorSnackBar(context, errorMessage);
 
       debugPrint('❌ Error in _handleTeamSubmit: $e');
     }

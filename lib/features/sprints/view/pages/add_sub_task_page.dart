@@ -110,31 +110,24 @@ class _AddSubTaskPageState extends ConsumerState<AddSubTaskPage> {
 
   Future<void> _createSubTask() async {
     if (_titleController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter subtask title')),
-      );
+     
+      showErrorSnackBar(context, 'Please enter subtask title');
       return;
     }
 
     if (_selectedAssigneeId == null || _selectedAssigneeId!.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please select assignee')));
+      showErrorSnackBar(context, 'Please select assignee');
       return;
     }
 
     if (_dueDate == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please select due date')));
+      showErrorSnackBar(context, 'Please select due date');
       return;
     }
 
     if (_hoursController.text.trim().isEmpty &&
         _minutesController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter estimated time')),
-      );
+      showErrorSnackBar(context, 'Please enter estimated time');
       return;
     }
 
@@ -149,9 +142,7 @@ class _AddSubTaskPageState extends ConsumerState<AddSubTaskPage> {
 
       // Optional guard
       if (minutes > 59) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Minutes must be between 0 and 59')),
-        );
+        showErrorSnackBar(context, 'Minutes must be between 0 and 59');
         submitLoadingNotifier.state = false;
         return;
       }
@@ -174,17 +165,13 @@ class _AddSubTaskPageState extends ConsumerState<AddSubTaskPage> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Subtask created successfully')),
-      );
+      showSuccessSnackBar(context, 'Subtask created successfully');
 
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to create subtask')));
+      showErrorSnackBar(context, 'Failed to create subtask');
       final errorText = e.toString();
       debugPrint("error here");
       debugPrint(e.toString());

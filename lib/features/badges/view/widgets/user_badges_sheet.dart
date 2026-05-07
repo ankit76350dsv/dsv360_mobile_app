@@ -1,4 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/circular_loader.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/badges/model/assigned_badge.dart';
@@ -54,18 +55,16 @@ class _UserBadgesSheetState extends ConsumerState<UserBadgesSheet> {
           .deleteAssignedBadge(badge.rowId);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Badge deleted successfully')),
-      );
+
+      showSuccessSnackBar(context, 'Badge deleted successfully');
 
       setState(() {
         _badgesFuture = _fetchUserBadges();
       });
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to delete badge')));
+      
+      showErrorSnackBar(context, 'Failed to delete badge');
     } finally {
       if (!mounted) return;
       setState(() {
@@ -169,109 +168,111 @@ class _UserBadgesSheetState extends ConsumerState<UserBadgesSheet> {
                             itemBuilder: (context, index) {
                               final badge = badges[index];
 
-                            return Column(
-                              children: [
-                                Expanded(
-                                  child: Container(
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: Colors.grey.withOpacity(0.3),
-                                        width: 1.5,
-                                      ),
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Stack(
-                                      children: [
-                                        Padding(
-                                          padding: const EdgeInsets.all(10),
-                                          child: Image.network(
-                                            badge.badgeLogo,
-                                            fit: BoxFit.contain,
-                                            errorBuilder: (_, __, ___) =>
-                                                const Icon(
-                                                  Icons.verified,
-                                                  color: Colors.greenAccent,
-                                                  size: 36,
-                                                ),
-                                          ),
+                              return Column(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                          color: Colors.grey.withOpacity(0.3),
+                                          width: 1.5,
                                         ),
-                                        Positioned(
-                                          bottom: 0,
-                                          right: 0,
-                                          child: _deletingRowId == badge.rowId
-                                              ? const SizedBox(
-                                                  height: 20,
-                                                  width: 20,
-                                                  child: CircularLoader(),
-                                                )
-                                              : PopupMenuButton<String>(
-                                                  icon: const Icon(
-                                                    Icons.more_vert,
-                                                    size: 18,
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      child: Stack(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(10),
+                                            child: Image.network(
+                                              badge.badgeLogo,
+                                              fit: BoxFit.contain,
+                                              errorBuilder: (_, __, ___) =>
+                                                  const Icon(
+                                                    Icons.verified,
+                                                    color: Colors.greenAccent,
+                                                    size: 36,
                                                   ),
-                                                  color: colors.surface,
-                                                  elevation: 8,
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          16,
-                                                        ),
-                                                    side: BorderSide(
-                                                      color: colors.outline
-                                                          .withValues(
-                                                            alpha: 0.3,
-                                                          ),
-                                                      width: 0.3,
+                                            ),
+                                          ),
+                                          Positioned(
+                                            bottom: 0,
+                                            right: 0,
+                                            child: _deletingRowId == badge.rowId
+                                                ? const SizedBox(
+                                                    height: 20,
+                                                    width: 20,
+                                                    child: CircularLoader(),
+                                                  )
+                                                : PopupMenuButton<String>(
+                                                    icon: const Icon(
+                                                      Icons.more_vert,
+                                                      size: 18,
                                                     ),
-                                                  ),
-                                                  padding: EdgeInsets.zero,
-                                                  onSelected: (value) {
-                                                    if (value == 'delete') {
-                                                      _deleteAssignedBadge(
-                                                        badge,
-                                                      );
-                                                    }
-                                                  },
-                                                  itemBuilder: (context) => [
-                                                    const PopupMenuItem<String>(
-                                                      value: 'delete',
-                                                      child: Text(
-                                                        'Delete Badge',
-                                                        style: TextStyle(
-                                                          color: Colors.red,
-                                                        ),
+                                                    color: colors.surface,
+                                                    elevation: 8,
+                                                    shape: RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            16,
+                                                          ),
+                                                      side: BorderSide(
+                                                        color: colors.outline
+                                                            .withValues(
+                                                              alpha: 0.3,
+                                                            ),
+                                                        width: 0.3,
                                                       ),
                                                     ),
-                                                  ],
-                                                ),
-                                        ),
-                                      ],
+                                                    padding: EdgeInsets.zero,
+                                                    onSelected: (value) {
+                                                      if (value == 'delete') {
+                                                        _deleteAssignedBadge(
+                                                          badge,
+                                                        );
+                                                      }
+                                                    },
+                                                    itemBuilder: (context) => [
+                                                      const PopupMenuItem<
+                                                        String
+                                                      >(
+                                                        value: 'delete',
+                                                        child: Text(
+                                                          'Delete Badge',
+                                                          style: TextStyle(
+                                                            color: Colors.red,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  badge.badgeName,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(color: colors.onSurface),
-                                ),
-                                Text(
-                                  badge.badgeLevel,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey,
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    badge.badgeName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(color: colors.onSurface),
                                   ),
-                                ),
-                              ],
-                            );
-                          },
+                                  Text(
+                                    badge.badgeLevel,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
                         ),
                       ),
-                    ),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                       child: SizedBox(
@@ -298,9 +299,9 @@ class _UserBadgesSheetState extends ConsumerState<UserBadgesSheet> {
                         ),
                       ),
                     ),
-                ],
+                  ],
+                ),
               ),
-            ),
             );
           },
         );

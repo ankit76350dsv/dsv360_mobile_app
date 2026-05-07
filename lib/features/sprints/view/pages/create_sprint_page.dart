@@ -83,16 +83,12 @@ class _CreateSprintPageState extends ConsumerState<CreateSprintPage> {
 
   Future<void> _createSprint(BuildContext context) async {
   if (_startDate == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please select start date')),
-    );
+    showErrorSnackBar(context, 'Please select start date');
     return;
   }
 
   if (_endDate == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please select end date')),
-    );
+    showErrorSnackBar(context, 'Please select end date');
     return;
   }
 
@@ -114,9 +110,7 @@ class _CreateSprintPageState extends ConsumerState<CreateSprintPage> {
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Sprint created successfully')),
-    );
+    showSuccessSnackBar(context, 'Sprint created successfully');
 
     Navigator.pop(context, sprint); // return created sprint
 

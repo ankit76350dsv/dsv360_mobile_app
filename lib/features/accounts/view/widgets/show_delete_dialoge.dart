@@ -1,3 +1,4 @@
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/accounts/viewmodel/accounts_list_viewmodel.dart';
 import 'package:flutter/material.dart';
@@ -22,16 +23,12 @@ void showDeleteDialoge({
 				if (!context.mounted) return;
 				Navigator.of(dialogContext).pop(true);
 				ref.invalidate(accountsListRepositoryProvider);
-				ScaffoldMessenger.of(context).showSnackBar(
-					const SnackBar(content: Text('Account deleted successfully')),
-				);
+        showSuccessSnackBar(context, 'Account deleted successfully');
 			} catch (e) {
 				if (!context.mounted) return;
 				Navigator.of(dialogContext).pop(false);
 
-				ScaffoldMessenger.of(context).showSnackBar(
-					SnackBar(content: const Text('Failed to delete account. Please try again.')),
-				);
+        showErrorSnackBar(context, 'Failed to delete account. Please try again.');
 			}
 		},
 	).then((confirmed) {

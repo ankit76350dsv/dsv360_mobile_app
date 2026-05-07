@@ -1,9 +1,11 @@
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/sprints/model/task_model.dart';
 import 'package:dsv360/features/sprints/viewmodel/timer_viewmodel.dart';
 import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
+import 'package:dsv360/core/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/core/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -150,7 +152,7 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
   // ── Validation & Submit ──────────────────────────────────────────────────
 
   void _showSnack(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    showErrorSnackBar(context, msg);
   }
 
   Future<void> _submit() async {
@@ -206,9 +208,7 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
           );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Time entry saved successfully')),
-      );
+      showSuccessSnackBar(context, 'Time entry saved successfully');
       Navigator.pop(context, true); // true = refresh needed
     } catch (e) {
       if (!mounted) return;
@@ -225,7 +225,6 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
     final customColors = Theme.of(context).custom;
     final textPrimary = customColors.textPrimary ?? Colors.black;
     final textSecondary = customColors.textSecondary ?? Colors.grey;
-    final cardBg = customColors.cardBackground ?? Colors.white;
     final greyBorder = customColors.greyBorder ?? Colors.grey.shade300;
     final inputFill = customColors.inputFill ?? Colors.grey.shade50;
     final inputBorder = customColors.inputBorder ?? Colors.grey.shade300;
@@ -393,57 +392,25 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
         
                     const SizedBox(height: 16),
         
-                    // ── Type selector (Dropdown) ─────────────────────
-                    _FieldLabel(label: 'Type *', textSecondary: textSecondary),
-                    const SizedBox(height: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: inputFill,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: inputBorder, width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: DropdownButton<String>(
-                        value: _type,
-                        isExpanded: true,
-                        underline: const SizedBox(),
-                        style: TextStyle(
-                          color: textPrimary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        dropdownColor: cardBg,
-                        items: _typeOptions.map((option) {
-                          return DropdownMenuItem<String>(
-                            value: option,
-                            child: Row(
-                              children: [
-                                Icon(
-                                  option == 'Billable'
-                                      ? Icons.attach_money_rounded
-                                      : Icons.money_off_rounded,
-                                  size: 16,
-                                  color: primary,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(option),
-                              ],
+                    // ── Type selector ───────────────────────────────
+                    CustomDropDownField(
+                      hintText: 'Type',
+                      labelText: 'Type *',
+                      prefixIcon: Icons.category_outlined,
+                      options: _typeOptions
+                          .map(
+                            (option) => DropdownMenuItem<String>(
+                              value: option,
+                              child: Text(option),
                             ),
-                          );
-                        }).toList(),
-                        onChanged: (value) {
-                          if (value != null) setState(() => _type = value);
-                        },
-                      ),
+                          )
+                          .toList(),
+                      selectedOption: _type,
+                      onChanged: (value) {
+                        if (value != null) setState(() => _type = value);
+                      },
                     ),
-                     const SizedBox(height: 16),
+                    const SizedBox(height: 16),
         
                     // ── Note ────────────────────────────────────────
                     _FieldLabel(label: 'Note *', textSecondary: textSecondary),

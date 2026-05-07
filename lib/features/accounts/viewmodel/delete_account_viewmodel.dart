@@ -1,3 +1,4 @@
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/accounts/repositories/account_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,9 +20,7 @@ class DeleteAccountViewModel {
       await _deleteRepository.deleteAccount(rowId: rowId);
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      showErrorSnackBar(context, 'Something went wrong. Plase try again');
     }
   }
 }

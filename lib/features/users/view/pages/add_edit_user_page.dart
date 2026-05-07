@@ -3,6 +3,7 @@ import 'package:dsv360/features/users/repositories/users_repository.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
 import 'package:dsv360/core/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/core/widgets/custom_input_field.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -203,11 +204,7 @@ class _AddEditUserPageState extends ConsumerState<AddEditUserPage> {
                           if (!_formKey.currentState!.validate()) return;
 
                           if (_roleId == null || _roleId!.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Please select role'),
-                              ),
-                            );
+                            showErrorSnackBar(context, 'Please select role');
                             return;
                           }
 

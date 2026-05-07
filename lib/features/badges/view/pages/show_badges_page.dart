@@ -1,3 +1,4 @@
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:dsv360/core/widgets/dsv_loader.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
@@ -51,16 +52,14 @@ class _ShowBadgesPageState extends ConsumerState<ShowBadgesPage> {
       await ref.read(showBadgesViewModelProvider).deleteBadge(badge);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Badge deleted successfully')),
-      );
+      
+      showSuccessSnackBar(context, 'Badge deleted successfully');
 
       _retryFetch();
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to delete badge')),
-      );
+      
+      showErrorSnackBar(context, 'Failed to delete badge');
     } finally {
       if (!mounted) return;
       setState(() {

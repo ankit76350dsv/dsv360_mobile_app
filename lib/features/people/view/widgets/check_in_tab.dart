@@ -3,6 +3,7 @@ import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/core/widgets/single_button.dart';
@@ -186,12 +187,8 @@ class _CheckInTabState extends ConsumerState<CheckInTab> {
           dayDate: dayDate,
         );
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Successfully checked in!'),
-              duration: Duration(seconds: 2),
-            ),
-          );
+          
+          showSuccessSnackBar(context, 'Successfully checked in!');
         }
       } else {
         await checkInRepo.checkOut(
@@ -203,12 +200,8 @@ class _CheckInTabState extends ConsumerState<CheckInTab> {
           rowId: activeStatus.rowId ?? '',
         );
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Successfully checked out!'),
-              duration: Duration(seconds: 2),
-            ),
-          );
+          
+          showSuccessSnackBar(context, 'Successfully checked out!');
         }
       }
 
@@ -216,12 +209,8 @@ class _CheckInTabState extends ConsumerState<CheckInTab> {
       ref.invalidate(attendanceDashboardRepositoryProvider);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            duration: const Duration(seconds: 3),
-          ),
-        );
+       
+        showErrorSnackBar(context, "Failed to Check Out, Please try again.");
       }
       debugPrint('Check-in/out error: $e');
     } finally {

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -207,22 +208,22 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
 
       if (_selectedStatus == null) {
         debugPrint('❌ Status is null');
-        _showError('Please select a status');
+        showErrorSnackBar(context, 'Please select a status');
         return;
       }
       if (_startDate == null) {
         debugPrint('❌ Start date is null');
-        _showError('Please select a start date');
+        showErrorSnackBar(context, 'Please select a start date');
         return;
       }
       if (_endDate == null) {
         debugPrint('❌ End date is null');
-        _showError('Please select an end date');
+        showErrorSnackBar(context, 'Please select an end date');
         return;
       }
       if (_selectedProjectId == null || _selectedProjectId!.isEmpty) {
         debugPrint('❌ Project ID is empty');
-        _showError('Please select a project');
+        showErrorSnackBar(context, 'Please select a project');
         return;
       }
 
@@ -265,12 +266,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
     }
   }
 
-  void _showError(String message) {
-    final customColors = Theme.of(context).custom;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: customColors.error),
-    );
-  }
+
 
   String _getFileType(String extension) {
     extension = extension.toLowerCase();

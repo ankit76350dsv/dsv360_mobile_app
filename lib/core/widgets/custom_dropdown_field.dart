@@ -10,6 +10,7 @@ class CustomDropDownField extends StatefulWidget {
   final ValueChanged<String?> onChanged;
   final bool searchable;
   final String searchHintText;
+  final bool enabled;
 
   const CustomDropDownField({
     super.key,
@@ -21,6 +22,7 @@ class CustomDropDownField extends StatefulWidget {
     required this.prefixIcon,
     this.searchable = false,
     this.searchHintText = 'Search',
+    this.enabled = true,
   });
 
   @override
@@ -152,39 +154,42 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
                 highlightColor: Colors.transparent,
                 hoverColor: Colors.transparent,
               ),
-              // Changed dropdown implementation to PopupMenuButton for better menu styling and responsiveness.
-              child: PopupMenuButton<String>(
-                color: customColors.cardBackground,
-                elevation: 8,
-                shadowColor: Colors.black.withOpacity(0.10),
-                offset: const Offset(0, 40),
-                constraints: BoxConstraints(
-                  minWidth: popupWidth,
-                  maxWidth: popupWidth,
-                ),
-                onOpened: () {
-                  if (widget.searchable) {
-                    _searchController.clear();
-                    _searchQuery = '';
-                  }
-                },
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(
-                    color: colorScheme.outline.withOpacity(0.15),
-                    width: 1,
-                  ),
-                ),
-                onSelected: (value) {
-                  setState(() {
-                    _selectedOption = value;
-                    _selectedDisplayText = _findDisplayText(value);
-                  });
-                  widget.onChanged(value);
-                },
-                itemBuilder: (context) {
-                  if (widget.searchable) {
-                    return [
+              child: Opacity(
+                opacity: widget.enabled ? 1 : 0.6,
+                child: IgnorePointer(
+                  ignoring: !widget.enabled,
+                  child: PopupMenuButton<String>(
+                    color: customColors.cardBackground,
+                    elevation: 8,
+                    shadowColor: Colors.black.withOpacity(0.10),
+                    offset: const Offset(0, 40),
+                    constraints: BoxConstraints(
+                      minWidth: popupWidth,
+                      maxWidth: popupWidth,
+                    ),
+                    onOpened: () {
+                      if (widget.searchable) {
+                        _searchController.clear();
+                        _searchQuery = '';
+                      }
+                    },
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                        color: colorScheme.outline.withOpacity(0.15),
+                        width: 1,
+                      ),
+                    ),
+                    onSelected: (value) {
+                      setState(() {
+                        _selectedOption = value;
+                        _selectedDisplayText = _findDisplayText(value);
+                      });
+                      widget.onChanged(value);
+                    },
+                    itemBuilder: (context) {
+                      if (widget.searchable) {
+                        return [
                       PopupMenuItem<String>(
                         enabled: false,
                         padding: EdgeInsets.zero,
@@ -327,96 +332,98 @@ class _CustomDropDownFieldState extends State<CustomDropDownField> {
                         ),
                       ),
                     ];
-                  }
+                      }
 
-                  return widget.options.map((item) {
-                    final value = item.value;
-                    if (value == null) return const PopupMenuItem<String>(child: SizedBox.shrink());
-                    final isSelected = value == _selectedOption;
-                    final cs = Theme.of(context).colorScheme;
-                    return PopupMenuItem<String>(
-                      value: value,
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          color: isSelected
-                              ? Colors.blue.withOpacity(0.12)
-                              : Theme.of(context).custom.cardBackground!,
-                          border: Border.all(
-                            color: isSelected
-                                ? const Color.fromARGB(255, 181, 221, 254).withOpacity(0.45)
-                                : cs.outline.withOpacity(0.25),
-                            width: 0,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            DefaultTextStyle.merge(
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                color: isSelected ? Colors.blue.shade400 : cs.onSurface,
-
+                      return widget.options.map((item) {
+                        final value = item.value;
+                        if (value == null) return const PopupMenuItem<String>(child: SizedBox.shrink());
+                        final isSelected = value == _selectedOption;
+                        final cs = Theme.of(context).colorScheme;
+                        return PopupMenuItem<String>(
+                          value: value,
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 150),
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              color: isSelected
+                                  ? Colors.blue.withOpacity(0.12)
+                                  : Theme.of(context).custom.cardBackground!,
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color.fromARGB(255, 181, 221, 254).withOpacity(0.45)
+                                    : cs.outline.withOpacity(0.25),
+                                width: 0,
                               ),
-                              child: item.child,
                             ),
-                            const Spacer(),
-                            if (isSelected)
-                              Icon(
-                                Icons.check_rounded,
-                                size: 16,
-                                color: Colors.blue.shade400,
-                              ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }).toList();
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: customColors.inputFill,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: colorScheme.outline.withOpacity(0.2),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      Icon(
-                        widget.prefixIcon,
-                        size: 20,
-                        color: Colors.grey.withOpacity(0.85),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          _selectedDisplayText ?? widget.hintText,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: _selectedOption == null
-                                ? Colors.grey
-                                : customColors.textPrimary,
+                            child: Row(
+                              children: [
+                                DefaultTextStyle.merge(
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                    color: isSelected ? Colors.blue.shade400 : cs.onSurface,
+
+                                  ),
+                                  child: item.child,
+                                ),
+                                const Spacer(),
+                                if (isSelected)
+                                  Icon(
+                                    Icons.check_rounded,
+                                    size: 16,
+                                    color: Colors.blue.shade400,
+                                  ),
+                              ],
+                            ),
                           ),
+                        );
+                      }).toList();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: customColors.inputFill,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: colorScheme.outline.withOpacity(0.2),
+                          width: 1.5,
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Icon(
-                        Icons.keyboard_arrow_down_rounded,
-                        size: 18,
-                        color: customColors.textPrimary,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.max,
+                        children: [
+                          Icon(
+                            widget.prefixIcon,
+                            size: 20,
+                            color: Colors.grey.withOpacity(0.85),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              _selectedDisplayText ?? widget.hintText,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: _selectedOption == null
+                                    ? Colors.grey
+                                    : customColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            size: 18,
+                            color: customColors.textPrimary,
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),

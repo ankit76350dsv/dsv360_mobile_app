@@ -1,4 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -188,7 +189,7 @@ class _AddProjectDialogState extends ConsumerState<AddProjectDialog> {
   }
 
   Future<void> _handleAddAttachment() async {
-    final customColors = Theme.of(context).custom;
+  
     try {
       final result = await FilePicker.platform.pickFiles(
         allowMultiple: false,
@@ -219,13 +220,9 @@ class _AddProjectDialogState extends ConsumerState<AddProjectDialog> {
         });
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${file.name} added'),
-              backgroundColor: customColors.primary!,
-              duration: const Duration(seconds: 1),
-            ),
-          );
+          
+          showSuccessSnackBar(context, '${file.name} added');
+
         }
       }
     } catch (e) {
@@ -324,10 +321,7 @@ class _AddProjectDialogState extends ConsumerState<AddProjectDialog> {
   }
 
   void _showError(String message) {
-    final customColors = Theme.of(context).custom;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: customColors.error!),
-    );
+    showErrorSnackBar(context, message);
   }
 
   @override

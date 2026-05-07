@@ -805,11 +805,7 @@ class _DeleteUserBottomSheetState
 
                               Navigator.pop(context, true);
 
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('User deleted successfully.'),
-                                ),
-                              );
+showSuccessSnackBar(context, 'User deleted successfully.');
 
                               ref.invalidate(usersRepositoryProvider);
                             } catch (e) {
@@ -817,11 +813,7 @@ class _DeleteUserBottomSheetState
 
                               Navigator.pop(context, true);
 
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Failed to delete user'),
-                                ),
-                              );
+                              showErrorSnackBar(context, 'Failed to delete user. Please try again.');
                             } finally {
                               ref
                                       .read(

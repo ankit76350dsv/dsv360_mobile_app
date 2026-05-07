@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
@@ -59,9 +60,8 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
     if (images.isNotEmpty) {
       if ((_selectedImages.length + images.length) > 3) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('You can only upload up to 3 images')),
-          );
+          
+          showErrorSnackBar(context, 'You can only upload up to 3 images');
         }
         return;
       }
@@ -90,11 +90,8 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
         );
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Feedback submitted successfully'),
-            ),
-          );
+          
+          showSuccessSnackBar(context, 'Feedback submitted successfully');
           _messageController.clear();
           setState(() {
             _selectedImages.clear();
@@ -110,9 +107,8 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: const Text('Something went wrong. Please try again.')),
-          );
+          
+          showErrorSnackBar(context, 'Something went wrong. Please try again.');
         }
       } finally {
         if (mounted) {

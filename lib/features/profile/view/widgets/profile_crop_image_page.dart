@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crop_your_image/crop_your_image.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 
 /// Crop Image Page using crop_your_image
@@ -32,9 +33,8 @@ class _CropImagePageState extends State<CropImagePage> {
     } catch (e) {
       debugPrint('Crop error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: const Text('Image crop failed. Please try again.')),
-        );
+        
+        showErrorSnackBar(context, 'Image crop failed. Please try again.');
       }
     } finally {
       if (mounted) {

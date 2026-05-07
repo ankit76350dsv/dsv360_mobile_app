@@ -1,3 +1,4 @@
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/accounts/viewmodel/accounts_list_viewmodel.dart';
 import 'package:dsv360/features/accounts/repositories/account_repository.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
@@ -50,16 +51,14 @@ class AccountFormViewModel {
     required Map<String, dynamic> body,
   }) async {
     if (orgStatus == null || orgStatus.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select organization status')),
-      );
+     
+      showErrorSnackBar(context, 'Please select organization status');
       return;
     }
 
     if (orgType == null || orgType.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select organization type')),
-      );
+      
+      showErrorSnackBar(context, 'Please select organization type');
       return;
     }
 
@@ -75,22 +74,16 @@ class AccountFormViewModel {
       if (!context.mounted) return;
       Navigator.pop(context, true);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isEditing ? 'Account updated successfully' : 'Account added successfully',
-          ),
-        ),
-      );
+      
+      showSuccessSnackBar(context, isEditing ? 'Account updated successfully' : 'Account added successfully');
 
       ref.invalidate(accountsListRepositoryProvider);
     } catch (e) {
       debugPrint('❌ Failed to submit user: $e');
 
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to save account')),
-      );
+      
+      showErrorSnackBar(context, 'Failed to save account');
     } finally {
       ref.read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier).state = false;
     }

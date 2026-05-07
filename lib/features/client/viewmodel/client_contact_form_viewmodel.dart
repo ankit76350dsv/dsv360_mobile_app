@@ -1,5 +1,6 @@
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/core/network/dio_client.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/accounts/viewmodel/accounts_list_viewmodel.dart';
 import 'package:dsv360/features/client/repositories/client_contacts_repository.dart';
 import 'package:dsv360/core/constants/active_user_repository.dart';
@@ -46,9 +47,8 @@ class ClientContactFormViewModel {
     required String? rowId,
   }) async {
     if (organization == null || organization.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select organization')),
-      );
+      
+      showErrorSnackBar(context, 'Please select organization');
       return;
     }
 
@@ -69,13 +69,8 @@ class ClientContactFormViewModel {
     }
 
     if (orgId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Could not determine OrgID for the selected organization.',
-          ),
-        ),
-      );
+      
+      showErrorSnackBar(context, 'Could not determine Organization.');
       ref
           .read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier)
           .state = false;
@@ -87,13 +82,8 @@ class ClientContactFormViewModel {
     final userId = activeUser?.userId?.toString() ?? userProfile?.userId ?? '';
 
     if (creatorId.isEmpty || userId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Missing user session fields (CREATORID/UserID). Please re-login and try again.',
-          ),
-        ),
-      );
+     
+      showErrorSnackBar(context, 'Something went wrong. Please re-login and try again.');
       ref
           .read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier)
           .state = false;
@@ -120,23 +110,17 @@ class ClientContactFormViewModel {
       if (!context.mounted) return;
 
       Navigator.pop(context, true);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isEditing
+      
+      showSuccessSnackBar(context, isEditing
                 ? 'Client contact updated successfully'
-                : 'Client contact added successfully',
-          ),
-        ),
-      );
+                : 'Client contact added successfully');
 
       ref.invalidate(clientContactsListRepositoryProvider);
     } catch (e) {
       if (!context.mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to save client contact. Please try again.')),
-      );
+      
+      showErrorSnackBar(context, 'Failed to save client contact. Please try again.');
     } finally {
       ref
           .read(submitLoadingProvider(bottomTwoButtonsLoadingKey).notifier)

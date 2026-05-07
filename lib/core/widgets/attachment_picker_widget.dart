@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dsv360/core/models/attachment.dart';
@@ -58,9 +59,8 @@ class AttachmentPickerWidgetState extends State<AttachmentPickerWidget> {
       }
     } catch (e) {
       debugPrint('❌ Error picking files: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: const Text('Failed to pick files. Please try again.')),
-      );
+      
+      showErrorSnackBar(context, 'Failed to pick files. Please try again.');
     }
   }
 

@@ -240,23 +240,17 @@ void initState() {
     final sprintId = _selectedSprintId;
 
     if (projectId == null || projectId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a project')),
-      );
+      showErrorSnackBar(context, 'Please select a project');
       return;
     }
 
     if (sprintId == null || sprintId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a sprint')),
-      );
+      showErrorSnackBar(context, 'Please select a sprint');
       return;
     }
 
     if (_selectedEpicId == null || _selectedEpicId!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select an epic')),
-      );
+      showErrorSnackBar(context, 'Please select an epic');
       return;
     }
 
@@ -292,9 +286,7 @@ void initState() {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Story created successfully')),
-      );
+      showSuccessSnackBar(context, 'Story created successfully');
 
       Navigator.pop(context, true);
     } catch (e) {

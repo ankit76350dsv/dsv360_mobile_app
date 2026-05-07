@@ -1,3 +1,4 @@
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/badges/model/dsvbadge.dart';
 import 'package:dsv360/features/badges/viewmodel/badges_viewmodel.dart';
 import 'package:dsv360/core/widgets/bottom_two_buttons.dart';
@@ -74,9 +75,8 @@ class _AddEditBadgePageState extends ConsumerState<AddEditBadgePage> {
       await viewModel.submitBadge(context: context, badge: widget.badge, body: body);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to save badge')),
-      );
+      
+      showErrorSnackBar(context, 'Failed to save badge');
     } finally {
       submitLoadingNotifier.state = false;
       if (mounted) {

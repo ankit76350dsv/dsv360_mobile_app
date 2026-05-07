@@ -1,4 +1,5 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/client/model/client_contacts.dart';
 import 'package:dsv360/features/client/repositories/client_contacts_repository.dart';
@@ -149,19 +150,13 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard>
       if (!mounted) return;
 
       ref.invalidate(clientContactsListRepositoryProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Client status updated to ${newStatus ? 'Active' : 'Inactive'} successfully',
-          ),
-        ),
-      );
+      
+      showSuccessSnackBar(context, 'Client status updated to ${newStatus ? 'Active' : 'Inactive'} successfully');
     } catch (e) {
       if (!mounted) return;
       setState(() => clientStatus = previous);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to update client status')),
-      );
+      
+      showErrorSnackBar(context, 'Failed to update client status');
     } finally {
       if (mounted) setState(() => _isUpdatingStatus = false);
     }
@@ -190,14 +185,12 @@ class _ClientContactsCardState extends ConsumerState<ClientContactsCard>
           );
       if (!mounted) return;
       ref.invalidate(clientContactsListRepositoryProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Client contact deleted successfully')),
-      );
+      
+      showSuccessSnackBar(context, 'Client contact deleted successfully');
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to delete client contact')),
-      );
+      
+      showErrorSnackBar(context, 'Failed to delete client contact');
     } finally {
       if (mounted) setState(() => _isDeleting = false);
     }

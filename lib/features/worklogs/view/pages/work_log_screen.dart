@@ -12,6 +12,7 @@ import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:dsv360/features/task/views/pages/tasks_screen.dart';
 import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:dsv360/core/widgets/custom_search_bar.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -190,7 +191,29 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
             child: connectivityStatus.when(
               data: (results) {
                 if (results.contains(ConnectivityResult.none)) {
-                  return Column(
+                  return SafeArea(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TopBar(
+                          title: 'Work Logs',
+                          onBack: () {
+                            if (Navigator.canPop(context)) Navigator.pop(context);
+                          },
+                        ),
+                        Expanded(
+                          child: GlobalError(
+                            message: 'Please check your internet connection.',
+                            isNetworkError: true,
+                            onRetry: () => ref.invalidate(checkConnectivityProvider),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                return SafeArea(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       TopBar(
@@ -198,51 +221,33 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
                         onBack: () {
                           if (Navigator.canPop(context)) Navigator.pop(context);
                         },
+                        onInfoTap: _loadData,
+                        actionIcon: Icons.refresh_rounded,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: _buildSearchBar(),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                        child: _buildTimelineAndAddRow(primary, textSecondary),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                        child: _buildDateRangeRow(
+                          context, cardBg, greyBorder, textPrimary, textSecondary,
+                        ),
                       ),
                       Expanded(
-                        child: GlobalError(
-                          message: 'Please check your internet connection.',
-                          isNetworkError: true,
-                          onRetry: () => ref.invalidate(checkConnectivityProvider),
+                        child: RefreshIndicator(
+                          onRefresh: () => _loadData(isRefresh: true),
+                          child: _buildScrollContent(
+                            cardBg, textPrimary, textSecondary, greyBorder, primary, isDark,
+                          ),
                         ),
                       ),
                     ],
-                  );
-                }
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TopBar(
-                      title: 'Work Logs',
-                      onBack: () {
-                        if (Navigator.canPop(context)) Navigator.pop(context);
-                      },
-                      onInfoTap: _loadData,
-                      actionIcon: Icons.refresh_rounded,
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      child: _buildSearchBar(),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                      child: _buildTimelineAndAddRow(primary, textSecondary),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                      child: _buildDateRangeRow(
-                        context, cardBg, greyBorder, textPrimary, textSecondary,
-                      ),
-                    ),
-                    Expanded(
-                      child: RefreshIndicator(
-                        onRefresh: () => _loadData(isRefresh: true),
-                        child: _buildScrollContent(
-                          cardBg, textPrimary, textSecondary, greyBorder, primary, isDark,
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 );
               },
               error: (error, stack) => GlobalError(
@@ -322,16 +327,11 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
         const Spacer(),
         GestureDetector(
           onTap: (){
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Add Work Logs through Tasks'),
-                duration: Duration(seconds: 5),
-              ),
-            );
+            showErrorSnackBar(context, 'Add Work Logs through Tasks');
             Navigator.push(context, MaterialPageRoute(builder: (context)=>TasksScreen()));
           },
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
               color: primary,
               borderRadius: BorderRadius.circular(8),
@@ -340,7 +340,7 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
               '+ Add Log',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: 15,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
             ),

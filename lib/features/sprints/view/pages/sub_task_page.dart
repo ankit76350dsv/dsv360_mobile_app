@@ -294,9 +294,9 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
 
       _showSnackBar(
         SnackBar(
-          content: Text(
-            'Task status updated to ${_statusLabel(updatedStatus)}',
-            style: const TextStyle(
+          content: const Text(
+            'Task status updated successfully',
+            style: TextStyle(
               color: Colors.white,
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -314,19 +314,19 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
       setState(() => _isUpdatingStatus = false);
 
       _showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
-            'Failed to update task status: $e',
-            style: const TextStyle(
+            'Failed to update task status',
+            style: TextStyle(
               color: Colors.white,
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
           ),
           backgroundColor: Colors.red,
-          duration: const Duration(seconds: 2),
+          duration: Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(16),
+          margin: EdgeInsets.all(16),
         ),
       );
     }
@@ -1276,8 +1276,8 @@ class _SubTaskCardState extends State<_SubTaskCard> {
       setState(() => _timerFetching = false);
       if (!mounted) return;
       _showSnackBar(
-        SnackBar(
-          content: const Text('Failed to start timer. Please try again.'),
+        const SnackBar(
+          content: Text('Failed to start timer. Please try again.'),
           backgroundColor: Colors.red,
         ),
       );
@@ -1367,9 +1367,9 @@ class _SubTaskCardState extends State<_SubTaskCard> {
 
       _showSnackBar(
         SnackBar(
-          content: Text(
-            'Status updated to ${_statusLabel(newStatus)}',
-            style: const TextStyle(
+          content: const Text(
+            'Status updated successfully',
+            style: TextStyle(
               color: Colors.white,
               fontSize: 13,
               fontWeight: FontWeight.w500,
@@ -1385,19 +1385,19 @@ class _SubTaskCardState extends State<_SubTaskCard> {
       if (!mounted) return;
 
       _showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text(
-            'Failed to update status: $e',
-            style: const TextStyle(
+            'Failed to update status',
+            style: TextStyle(
               color: Colors.white,
               fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
           ),
           backgroundColor: Colors.red,
-          duration: const Duration(seconds: 2),
+          duration: Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(16),
+          margin: EdgeInsets.all(16),
         ),
       );
     }

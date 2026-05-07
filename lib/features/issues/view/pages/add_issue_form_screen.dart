@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -105,9 +106,8 @@ class _AddIssueFormScreenState extends ConsumerState<AddIssueFormScreen> {
     } catch (e) {
       setState(() => _isLoadingProjects = false);
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Failed to load projects. Please try again.')));
+       
+        showErrorSnackBar(context, 'Failed to load projects. Please try again.');
       }
     }
   }
@@ -124,9 +124,7 @@ class _AddIssueFormScreenState extends ConsumerState<AddIssueFormScreen> {
     } catch (e) {
       setState(() => _isLoadingEmployees = false);
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Failed to load employees. Please try again.')));
+        showErrorSnackBar(context, 'Failed to load employees. Please try again.');
       }
     }
   }
@@ -255,9 +253,8 @@ class _AddIssueFormScreenState extends ConsumerState<AddIssueFormScreen> {
     if (images.isNotEmpty) {
       if ((_selectedImages.length + images.length) > 3) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('You can only upload up to 3 images')),
-          );
+         
+          showErrorSnackBar(context, 'You can only upload up to 3 images');
         }
         return;
       }
@@ -269,10 +266,9 @@ class _AddIssueFormScreenState extends ConsumerState<AddIssueFormScreen> {
   }
 
   void _showError(String message) {
-    final customColors = Theme.of(context).custom;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: customColors.error!),
-    );
+   
+    
+    showErrorSnackBar(context, message);
   }
 
   /// Shows a multi-select bottom sheet for assignees.

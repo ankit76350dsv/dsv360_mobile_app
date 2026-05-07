@@ -1,10 +1,12 @@
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../model/time_entry_model.dart';
 import '../../repositories/time_entry_repository.dart';
 import '../widgets/time_entry_card.dart';
 import '../../../../core/widgets/TopBar.dart';
+import '../../../../core/widgets/custom_dropdown_field.dart';
 import 'add_time_entry_dialog.dart';
 
 class TimeEntriesScreen extends StatefulWidget {
@@ -175,7 +177,6 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
   }
 
   void _editTimeEntry(TimeEntry entry) {
-    final customColors = Theme.of(context).custom;
     showDialog(
       context: context,
       builder: (context) => AddTimeEntryDialog(
@@ -195,12 +196,7 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
           }
           _applyFilters();
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Time entry updated'),
-            backgroundColor: customColors.primary,
-          ),
-        );
+        showSuccessSnackBar(context, 'Time entry updated');
       }
     });
   }
@@ -229,8 +225,6 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
           ),
           TextButton(
             onPressed: () async {
-              // Capture the scaffold messenger before popping dialog
-              final scaffoldMessenger = ScaffoldMessenger.of(context);
               Navigator.pop(context);
               try {
                 final success = await _repository.deleteTimeEntry(entry.id);
@@ -239,7 +233,7 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
                     _allEntries.removeWhere((e) => e.id == entry.id);
                     _applyFilters();
                   });
-                  scaffoldMessenger.showSnackBar(
+                  ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Row(
                         children: [
@@ -253,7 +247,7 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
                           ),
                         ],
                       ),
-                      backgroundColor: customColors.primary,
+                      backgroundColor: Theme.of(context).custom.primary,
                       behavior: SnackBarBehavior.floating,
                       duration: const Duration(seconds: 3),
                     ),
@@ -263,25 +257,7 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
                 }
               } catch (e) {
                 debugPrint('❌ Error deleting entry: $e');
-                scaffoldMessenger.showSnackBar(
-                  SnackBar(
-                    content: Row(
-                      children: [
-                        Icon(Icons.error_outline, color: Colors.white),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Failed to delete: $e',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                    backgroundColor: customColors.error,
-                    behavior: SnackBarBehavior.floating,
-                    duration: const Duration(seconds: 3),
-                  ),
-                );
+                showErrorSnackBar(context, 'Failed to delete: $e');
               }
             },
             style: TextButton.styleFrom(foregroundColor: customColors.error),
@@ -297,136 +273,135 @@ class _TimeEntriesScreenState extends State<TimeEntriesScreen> {
     final customColors = Theme.of(context).custom;
     return Scaffold(
       backgroundColor: customColors.background,
-      body: Column(
-        children: [
-          // Header with TopBar
-          Container(
-            padding: const EdgeInsets.only(top: 48, bottom: 12),
-            child: TopBar(
-              title: '${widget.taskName} - Time Entries',
-              onBack: () {
-                Navigator.pop(context);
-              },
-              onInfoTap: () {
-                // Info tap action
-              },
-            ),
-          ),
-          // Body Content
-          Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
-                : _error != null
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header with TopBar
+            
+             TopBar(
+                title: '${widget.taskName} - Time Entries',
+                onBack: () {
+                  Navigator.pop(context);
+                },
+                
+              ),
+          
+            // Body Content
+            Expanded(
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : _error != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 48,
+                                color: customColors.textSecondary,
+                              ),
+                              const SizedBox(height: 16),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                child: Text(
+                                  _error!,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: customColors.textSecondary,
+                                    fontSize: 15, // bodyLarge equivalent
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              ElevatedButton(
+                                onPressed: _fetchTimeEntries,
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Column(
                           children: [
-                            Icon(
-                              Icons.error_outline,
-                              size: 48,
-                              color: customColors.textSecondary,
-                            ),
-                            const SizedBox(height: 16),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              child: Text(
-                                _error!,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: customColors.textSecondary,
-                                  fontSize: 15, // bodyLarge equivalent
+                      // Filter Button Section
+                      Padding(
+                        padding: const EdgeInsets.only(left: 18.0, top: 14.0, right: 18.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: () => _showFilterDialog(context),
+                              icon: const Icon(Icons.filter_list),
+                              label: const Text('Filters'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: customColors.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 24),
-                            ElevatedButton(
-                              onPressed: _fetchTimeEntries,
-                              child: const Text('Retry'),
-                            ),
+                            if (_fromDate != null || _toDate != null || _billableFilter != 'All')
+                              Chip(
+                                label: Text(
+                                  _getActiveFilterCount(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                backgroundColor: customColors.primary,
+                                deleteIcon: const Icon(Icons.close, size: 16, color: Colors.white),
+                                onDeleted: _clearFilters,
+                              ),
                           ],
                         ),
-                      )
-                    : Column(
-                        children: [
-                    // Filter Button Section
-                    Padding(
-                      padding: const EdgeInsets.only(left: 18.0, top: 14.0, right: 18.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: () => _showFilterDialog(context),
-                            icon: const Icon(Icons.filter_list),
-                            label: const Text('Filters'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: customColors.primary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                          if (_fromDate != null || _toDate != null || _billableFilter != 'All')
-                            Chip(
-                              label: Text(
-                                _getActiveFilterCount(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              backgroundColor: customColors.primary,
-                              deleteIcon: const Icon(Icons.close, size: 16, color: Colors.white),
-                              onDeleted: _clearFilters,
-                            ),
-                        ],
                       ),
-                    ),
-
-                    // Time Entries List
-                    Expanded(
-                      child: displayedEntries.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.schedule_outlined,
-                                    size: 64,
-                                    color: customColors.textSecondary!.withValues(alpha: 0.5),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'No time entries found',
-                                    style: TextStyle(
-                                      color: customColors.textSecondary,
-                                      fontSize: 18, // bodyLarge equivalent
+        
+                      // Time Entries List
+                      Expanded(
+                        child: displayedEntries.isEmpty
+                            ? Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.schedule_outlined,
+                                      size: 64,
+                                      color: customColors.textSecondary!.withValues(alpha: 0.5),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'No time entries found',
+                                      style: TextStyle(
+                                        color: customColors.textSecondary,
+                                        fontSize: 18, // bodyLarge equivalent
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : ListView.builder(
+                                padding: const EdgeInsets.all(16),
+                                itemCount: displayedEntries.length,
+                                itemBuilder: (context, index) {
+                                  final entry = displayedEntries[index];
+                                  return TimeEntryCard(
+                                    entry: entry,
+                                    onEdit: () => _editTimeEntry(entry),
+                                    onDelete: () => _deleteTimeEntry(entry),
+                                  );
+                                },
                               ),
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: displayedEntries.length,
-                              itemBuilder: (context, index) {
-                                final entry = displayedEntries[index];
-                                return TimeEntryCard(
-                                  entry: entry,
-                                  onEdit: () => _editTimeEntry(entry),
-                                  onDelete: () => _deleteTimeEntry(entry),
-                                );
-                              },
-                            ),
-                    ),
-                  ],
-                ),
-          ),
-        ],
+                      ),
+                    ],
+                  ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -638,58 +613,26 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
               const SizedBox(height: 28),
 
               // Entry Type Dropdown
-              DropdownButtonFormField<String>(
-                value: _tempBillableFilter,
-                hint: Text(
-                  'Entry Type',
-                  style: TextStyle(color: customColors.textHint),
-                ),
-                style: TextStyle(
-                  color: customColors.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-                dropdownColor: customColors.inputFill,
-                decoration: InputDecoration(
-                  labelText: 'Entry Type',
-                  labelStyle: TextStyle(
-                    color: customColors.textSecondary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  filled: true,
-                  fillColor: customColors.inputFill,
-                  prefixIcon: Icon(Icons.category_outlined, color: customColors.textSecondary),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: customColors.inputBorder!, width: 1.5),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: customColors.inputBorder!, width: 1.5),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                ),
-                items: [
-                  DropdownMenuItem(
+              CustomDropDownField(
+                hintText: 'Entry Type',
+                labelText: 'Entry Type',
+                prefixIcon: Icons.category_outlined,
+                options: [
+                  DropdownMenuItem<String>(
                     value: 'All',
                     child: Text(
                       'All Entries',
                       style: TextStyle(color: customColors.textPrimary),
                     ),
                   ),
-                  DropdownMenuItem(
+                  DropdownMenuItem<String>(
                     value: 'Billable',
                     child: Text(
                       'Billable Only',
                       style: TextStyle(color: customColors.primary),
                     ),
                   ),
-                  DropdownMenuItem(
+                  DropdownMenuItem<String>(
                     value: 'Non-Billable',
                     child: Text(
                       'Non-Billable Only',
@@ -697,6 +640,7 @@ class _FilterBottomSheetState extends State<_FilterBottomSheet> {
                     ),
                   ),
                 ],
+                selectedOption: _tempBillableFilter,
                 onChanged: (value) {
                   if (value != null) {
                     setState(() {

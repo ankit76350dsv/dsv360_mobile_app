@@ -1,3 +1,4 @@
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/badges/model/badge_user.dart';
 import 'package:dsv360/features/badges/model/dsvbadge.dart';
 import 'package:dsv360/features/badges/viewmodel/badges_viewmodel.dart';
@@ -98,37 +99,32 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
 
   Future<void> _assignBadge({required BuildContext context}) async {
     if (_selectedUserName == null || _selectedUserName!.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select user')),
-      );
+      
+      showErrorSnackBar(context, 'Please select user');
       return;
     }
 
     if (_selectedBadgeName == null || _selectedBadgeName!.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select badge name')),
-      );
+      
+      showErrorSnackBar(context, 'Please select badge name');
       return;
     }
 
     if (_selectedBadgeLevel == null || _selectedBadgeLevel!.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select badge level')),
-      );
+      
+      showErrorSnackBar(context, 'Please select badge level');
       return;
     }
 
     if (_selectedUserId == null || _selectedUserId!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selected user not found')),
-      );
+      
+      showErrorSnackBar(context, 'Selected user not found');
       return;
     }
 
     if (_selectedBadgeRowId == null || _selectedBadgeRowId!.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selected badge not found')),
-      );
+      
+      showErrorSnackBar(context, 'Selected badge not found');
       return;
     }
 
@@ -153,9 +149,8 @@ class _AssignBadgesPageState extends ConsumerState<ConsumerStatefulWidget> {
           .assignBadge(context: context, payload: payload);
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to assign badge')),
-      );
+      
+      showErrorSnackBar(context, 'Failed to assign badge');
     } finally {
       submitLoadingNotifier.state = false;
     }
