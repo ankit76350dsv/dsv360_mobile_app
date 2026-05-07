@@ -54,12 +54,12 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     super.dispose();
   }
 
-
-
   Future<void> _fetchTimerStatus() async {
     final userId = ref.read(currentUserIdProvider);
     try {
-      final status = await CheckTimerStatusRepository().checkTimerStatus(userId);
+      final status = await CheckTimerStatusRepository().checkTimerStatus(
+        userId,
+      );
       debugPrint('⏱️ Timer status response: $status');
 
       final message = (status['message'] ?? '').toString().toLowerCase();
@@ -69,7 +69,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         final taskId = (status['Task_ID'] ?? '').toString();
         // startTime from server: "2026-04-01 17:20:32"
         final startTimeStr = (status['startTime'] ?? '').toString();
-        final serverStart = DateTime.tryParse(startTimeStr.replaceFirst(' ', 'T'));
+        final serverStart = DateTime.tryParse(
+          startTimeStr.replaceFirst(' ', 'T'),
+        );
         debugPrint('⏱️ Running taskId=$taskId  serverStart=$serverStart');
         if (serverStart != null) {
           TimerService.instance.restoreFromServer(serverStart);
@@ -224,7 +226,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
             description: result.description,
             startDate: startDateStr,
             dueDate: endDateStr,
-            attachments: result.attachmentsForCreation?.cast<Attachment>() ?? [],
+            attachments:
+                result.attachmentsForCreation?.cast<Attachment>() ?? [],
           );
 
           debugPrint('✅ Task updated successfully via API');
@@ -270,11 +273,12 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     showWarningDialogueBox(
       context: context,
       title: 'Delete Task',
-      subtitle: 'Are you sure you want to delete "${task.taskName}"? This action cannot be undone.',
+      subtitle:
+          'Are you sure you want to delete "${task.taskName}"? This action cannot be undone.',
       primaryText: 'Delete',
       onPrimaryPressed: (dialogContext) async {
         Navigator.pop(dialogContext);
-        
+
         try {
           // Delete task using repository
           final userId = ref.read(currentUserIdProvider);
@@ -366,35 +370,39 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 return SafeArea(
                   child: Column(
                     children: [
-                   
-                        
                       TopBar(
-                          title: title,
-                          onBack: onBack,
-                          onInfoTap: () async {
-                            if (_isRefreshingData) return;
-                            setState(() => _isRefreshingData = true);
-                            try {
-                              final _ = await ref.refresh(
-                                tasksListRepositoryProvider(userId).future,
+                        title: title,
+                        onBack: onBack,
+                        onInfoTap: () async {
+                          if (_isRefreshingData) return;
+                          setState(() => _isRefreshingData = true);
+                          try {
+                            final _ = await ref.refresh(
+                              tasksListRepositoryProvider(userId).future,
+                            );
+                            if (mounted) {
+                              showSuccessSnackBar(
+                                context,
+                                'Tasks refreshed successfully',
                               );
-                              if (mounted) {
-                                showSuccessSnackBar(context, 'Tasks refreshed successfully');
-                              }
-                            } catch (e) {
-                              debugPrint('Refresh error: $e');
-                              if (mounted) {
-                                showErrorSnackBar(context, 'Refresh failed. Please try again.');
-                              }
-                            } finally {
-                              if (mounted) {
-                                setState(() => _isRefreshingData = false);
-                              }
                             }
-                          },
-                          actionIcon: Icons.refresh_rounded,
-                        ),
-                   
+                          } catch (e) {
+                            debugPrint('Refresh error: $e');
+                            if (mounted) {
+                              showErrorSnackBar(
+                                context,
+                                'Refresh failed. Please try again.',
+                              );
+                            }
+                          } finally {
+                            if (mounted) {
+                              setState(() => _isRefreshingData = false);
+                            }
+                          }
+                        },
+                        actionIcon: Icons.refresh_rounded,
+                      ),
+
                       Expanded(
                         child: GlobalError(
                           message: 'Please check your internet connection.',
@@ -421,83 +429,105 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 child: SafeArea(
                   child: Column(
                     children: [
-                     
-                            
                       Column(
-                          children: [
-                            TopBar(
-                              title: title,
-                              onBack: onBack,
-                              onInfoTap: () async {
-                                if (_isRefreshingData) return;
-                                setState(() => _isRefreshingData = true);
-                                try {
-                                  final _ = await ref.refresh(
-                                    tasksListRepositoryProvider(userId).future,
+                        children: [
+                          TopBar(
+                            title: title,
+                            onBack: onBack,
+                            onInfoTap: () async {
+                              if (_isRefreshingData) return;
+                              setState(() => _isRefreshingData = true);
+                              try {
+                                final _ = await ref.refresh(
+                                  tasksListRepositoryProvider(userId).future,
+                                );
+                                if (mounted) {
+                                  showSuccessSnackBar(
+                                    context,
+                                    'Tasks refreshed successfully',
                                   );
-                                  if (mounted) {
-                                    showSuccessSnackBar(context, 'Tasks refreshed successfully');
-                                  }
-                                } catch (e) {
-                                  debugPrint('Refresh error: $e');
-                                  if (mounted) {
-                                    showErrorSnackBar(context, 'Refresh failed. Please try again.');
-                                  }
-                                } finally {
-                                  if (mounted) {
-                                    setState(() => _isRefreshingData = false);
-                                  }
                                 }
+                              } catch (e) {
+                                debugPrint('Refresh error: $e');
+                                if (mounted) {
+                                  showErrorSnackBar(
+                                    context,
+                                    'Refresh failed. Please try again.',
+                                  );
+                                }
+                              } finally {
+                                if (mounted) {
+                                  setState(() => _isRefreshingData = false);
+                                }
+                              }
+                            },
+                            actionIcon: Icons.refresh_rounded,
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: CustomSearchBar(
+                              controller: _searchController,
+                              onChanged: (value) {
+                                ref
+                                        .read(tasksSearchQueryProvider.notifier)
+                                        .state =
+                                    value;
                               },
-                              actionIcon: Icons.refresh_rounded,
+                              hintText: 'Search task',
                             ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              child: CustomSearchBar(
-                                controller: _searchController,
-                                onChanged: (value) {
-                                  ref.read(tasksSearchQueryProvider.notifier).state = value;
-                                },
-                                hintText: 'Search task',
-                              ),
-                            ),
-                          ],
-                        ),
-                     
+                          ),
+                        ],
+                      ),
+
                       Expanded(
                         child: tasksAsync.when(
                           skipLoadingOnRefresh: true,
                           data: (tasks) {
-                            final projectFilteredTasks = widget.projectId != null && widget.projectId!.isNotEmpty
-                                ? tasks.where((task) => task.projectId == widget.projectId).toList()
+                            final projectFilteredTasks =
+                                widget.projectId != null &&
+                                    widget.projectId!.isNotEmpty
+                                ? tasks
+                                      .where(
+                                        (task) =>
+                                            task.projectId == widget.projectId,
+                                      )
+                                      .toList()
                                 : tasks;
-                  
+
                             final filteredTasks = searchQuery.isEmpty
                                 ? projectFilteredTasks
                                 : projectFilteredTasks.where((task) {
-                                    return task.taskName.toLowerCase().contains(searchQuery.toLowerCase()) ||
-                                        task.taskId.toLowerCase().contains(searchQuery.toLowerCase());
+                                    return task.taskName.toLowerCase().contains(
+                                          searchQuery.toLowerCase(),
+                                        ) ||
+                                        task.taskId.toLowerCase().contains(
+                                          searchQuery.toLowerCase(),
+                                        );
                                   }).toList();
-                  
+
                             if (filteredTasks.isEmpty) {
                               return Stack(
                                 children: [
                                   ListView(),
                                   Center(
                                     child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Icon(
                                           Icons.inbox_outlined,
                                           size: 64,
-                                          color: customColors.textSecondary!.withValues(alpha: 0.5),
+                                          color: customColors.textSecondary!
+                                              .withValues(alpha: 0.5),
                                         ),
                                         const SizedBox(height: 16),
                                         Text(
-                                          searchQuery.isEmpty ? 'No tasks yet' : 'No tasks found',
+                                          searchQuery.isEmpty
+                                              ? 'No tasks yet'
+                                              : 'No tasks found',
                                           style: TextStyle(
                                             color: customColors.textPrimary,
                                             fontSize: 16,
@@ -510,16 +540,19 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                 ],
                               );
                             }
-                  
+
                             return ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
                               itemCount: filteredTasks.length,
                               itemBuilder: (context, index) {
                                 final task = filteredTasks[index];
                                 final dateFormat = DateFormat('dd/MM/yy');
                                 final dateRange =
                                     '${dateFormat.format(task.startDate ?? DateTime.now())} - ${dateFormat.format(task.endDate ?? DateTime.now())}';
-                  
+
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 12),
                                   child: GenericCard(
@@ -528,7 +561,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                         : 'T${task.taskId}',
                                     name: task.taskName,
                                     status: task.status,
-                                    isTimerRunning: _runningTaskId != null && _runningTaskId == task.taskId,
+                                    isTimerRunning:
+                                        _runningTaskId != null &&
+                                        _runningTaskId == task.taskId,
                                     projectName: task.projectName,
                                     subtitleIcon: 'person',
                                     subtitleText: task.assignedTo,
@@ -536,7 +571,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                     chips: [
                                       CardChip(
                                         icon: Icons.attach_file,
-                                        count: task.attachments.length.toString(),
+                                        count: task.attachments.length
+                                            .toString(),
                                         isActive: task.attachments.isNotEmpty,
                                         onTap: () {
                                           FocusScope.of(context).unfocus();
@@ -544,9 +580,10 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                             context: context,
                                             isScrollControlled: true,
                                             backgroundColor: Colors.transparent,
-                                            builder: (context) => AttachmentListModal(
-                                              attachments: task.attachments,
-                                            ),
+                                            builder: (context) =>
+                                                AttachmentListModal(
+                                                  attachments: task.attachments,
+                                                ),
                                           );
                                         },
                                       ),
@@ -558,13 +595,22 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                           FocusScope.of(context).unfocus();
                                           Navigator.of(context).push<List>(
                                             MaterialPageRoute(
-                                              builder: (context) => AddTimeEntryDialog(
-                                                taskId: task.taskId,
-                                                projectId: task.projectId,
-                                                taskName: task.taskName,
-                                                projectName: task.projectName,
-                                                currentUser: task.assignedTo,
-                                              ),
+                                              builder: (context) =>
+                                                  AddTimeEntryDialog(
+                                                    taskId: task.taskId,
+                                                    projectId:
+                                                        task
+                                                            .projectId
+                                                            .isNotEmpty
+                                                        ? task.projectId
+                                                        : (widget.projectId ??
+                                                              ''),
+                                                    taskName: task.taskName,
+                                                    projectName:
+                                                        task.projectName,
+                                                    currentUser:
+                                                        task.assignedTo,
+                                                  ),
                                             ),
                                           );
                                         },
@@ -576,10 +622,14 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                                         context: context,
                                         isScrollControlled: true,
                                         backgroundColor: Colors.transparent,
-                                        builder: (context) => TaskDetailsDialog(task: task),
+                                        builder: (context) =>
+                                            TaskDetailsDialog(task: task),
                                       );
                                     },
-                                    onEdit: () => _showAddTaskDialog(task: task, context: context),
+                                    onEdit: () => _showAddTaskDialog(
+                                      task: task,
+                                      context: context,
+                                    ),
                                     onDelete: () => _deleteTask(task, context),
                                   ),
                                 );
@@ -590,7 +640,9 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                           error: (err, stack) => GlobalError(
                             message: 'Failed to load tasks. Please try again.',
                             onRetry: () {
-                              ref.invalidate(tasksListRepositoryProvider(userId));
+                              ref.invalidate(
+                                tasksListRepositoryProvider(userId),
+                              );
                               _fetchTimerStatus();
                             },
                           ),
@@ -610,7 +662,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                 _fetchTimerStatus();
               },
             ),
-            loading: () => const GlobalLoader(message: 'Checking connection...'),
+            loading: () =>
+                const GlobalLoader(message: 'Checking connection...'),
           );
         },
       ),

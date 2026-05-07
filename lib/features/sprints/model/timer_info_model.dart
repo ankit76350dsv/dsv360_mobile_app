@@ -25,7 +25,7 @@ class TimerInfoModel {
     this.sprintSubTaskId,
   });
 
-  bool get isRunning => message.toLowerCase().contains('running');
+  bool get isRunning => message.trim().toLowerCase() == 'timer is running';
 
   factory TimerInfoModel.fromJson(Map<String, dynamic> json) {
     return TimerInfoModel(

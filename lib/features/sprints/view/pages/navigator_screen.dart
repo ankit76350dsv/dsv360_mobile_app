@@ -10,7 +10,8 @@ import 'package:dsv360/features/sprints/view/pages/create_epic_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_release_page.dart';
 import 'package:dsv360/features/sprints/view/pages/create_story_page.dart';
 import 'package:dsv360/features/sprints/view/pages/story_details_page.dart';
-import 'package:dsv360/features/sprints/viewmodel/sprints_project_viewmodel.dart' as sprints_projects;
+import 'package:dsv360/features/sprints/viewmodel/sprints_project_viewmodel.dart'
+    as sprints_projects;
 import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:dsv360/core/widgets/custom_search_bar.dart';
@@ -23,11 +24,13 @@ final _projectListProvider = FutureProvider((ref) async {
   return ref.read(sprints_projects.projectRepositoryProvider).fetchProjects();
 });
 
-final _hierarchyProvider =
-    FutureProvider.family<HierarchyModel, String>((ref, projectId) async {
-  return ref.read(hierarchyRepositoryProvider).fetchHierarchy(
-        projectId: projectId,
-      );
+final _hierarchyProvider = FutureProvider.family<HierarchyModel, String>((
+  ref,
+  projectId,
+) async {
+  return ref
+      .read(hierarchyRepositoryProvider)
+      .fetchHierarchy(projectId: projectId);
 });
 
 // ── Screen ────────────────────────────────────────────────────────────────────
@@ -101,7 +104,10 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
 
         return Dialog(
           backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 24,
+          ),
           child: StatefulBuilder(
             builder: (ctx, setDialogState) {
               final filtered = projects.where((p) {
@@ -127,15 +133,22 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                         style: TextStyle(color: textPrimary, fontSize: 13),
                         decoration: InputDecoration(
                           hintText: 'Search project...',
-                          hintStyle:
-                              TextStyle(color: textSecondary, fontSize: 12),
+                          hintStyle: TextStyle(
+                            color: textSecondary,
+                            fontSize: 12,
+                          ),
                           isDense: true,
                           filled: true,
                           fillColor: cardBg,
-                          prefixIcon:
-                              Icon(Icons.search, color: textSecondary, size: 18),
+                          prefixIcon: Icon(
+                            Icons.search,
+                            color: textSecondary,
+                            size: 18,
+                          ),
                           contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 10),
+                            horizontal: 10,
+                            vertical: 10,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
                             borderSide: BorderSide(color: greyBorder),
@@ -159,13 +172,14 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                                 child: Text(
                                   'No projects found',
                                   style: TextStyle(
-                                      color: textSecondary, fontSize: 12),
+                                    color: textSecondary,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ),
                             )
                           : ListView.builder(
-                              padding:
-                                  const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
                               itemCount: filtered.length,
                               itemBuilder: (context, index) {
                                 final project = filtered[index];
@@ -186,9 +200,12 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                                   },
                                   child: Container(
                                     margin: const EdgeInsets.symmetric(
-                                        vertical: 2),
+                                      vertical: 2,
+                                    ),
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 10),
+                                      horizontal: 10,
+                                      vertical: 10,
+                                    ),
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(10),
                                       color: isSelected
@@ -260,59 +277,63 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
             builder: (_) => StoryDetailsPage(
               storyId: story.id,
               projectId: _selectedProjectId!,
+              projectName: _selectedProjectName ?? widget.projectName ?? '',
               storyTitle: story.title,
             ),
           ),
         );
       },
       child: Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: epicColor,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                story.title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                story.id.length > 4
-                    ? 'Story-${story.id.substring(story.id.length - 4)}'
-                    : 'Story-${story.id}',
-                style: TextStyle(
-                  color: epicColor,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: epicColor,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-      ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  story.title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  story.id.length > 4
+                      ? 'Story-${story.id.substring(story.id.length - 4)}'
+                      : 'Story-${story.id}',
+                  style: TextStyle(
+                    color: epicColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -323,9 +344,9 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
     Color border,
     Color textPrimary,
     Color textSecondary,
-    bool isLightMode,
-    {bool canManageSprints = false}
-  ) {
+    bool isLightMode, {
+    bool canManageSprints = false,
+  }) {
     final epicColor = _epicColor(epic);
     final epicStories = allStories.where((s) => s.epicId == epic.id).toList();
     final isExpanded = _epicExpanded[epic.id] ?? false;
@@ -352,11 +373,9 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
         children: [
           InkWell(
             borderRadius: BorderRadius.circular(10),
-            onTap: () =>
-                setState(() => _epicExpanded[epic.id] = !isExpanded),
+            onTap: () => setState(() => _epicExpanded[epic.id] = !isExpanded),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Row(
                 children: [
                   Container(
@@ -391,7 +410,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                               epicId: epic.id,
                               projectNameSelected: _selectedProjectName,
                               //here
-                              epicName : epic.title,
+                              epicName: epic.title,
                             ),
                           ),
                         );
@@ -419,14 +438,19 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                 ? Column(
                     children: [
                       if (epicStories.isNotEmpty) ...[
-                        ...epicStories.map((s) => _buildStoryTile(s, epicColor)),
+                        ...epicStories.map(
+                          (s) => _buildStoryTile(s, epicColor),
+                        ),
                         const SizedBox(height: 8),
                       ] else
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Text(
                             'No stories',
-                            style: TextStyle(color: textSecondary, fontSize: 13),
+                            style: TextStyle(
+                              color: textSecondary,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                     ],
@@ -446,11 +470,12 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
     Color border,
     Color textPrimary,
     Color textSecondary,
-    bool isLightMode,
-    {bool canManageSprints = false}
-  ) {
-    final milestoneEpics =
-        allEpics.where((e) => e.milestoneId == milestone.id).toList();
+    bool isLightMode, {
+    bool canManageSprints = false,
+  }) {
+    final milestoneEpics = allEpics
+        .where((e) => e.milestoneId == milestone.id)
+        .toList();
     final isExpanded = _milestoneExpanded[milestone.id] ?? false;
 
     return Container(
@@ -471,11 +496,10 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
         children: [
           InkWell(
             borderRadius: BorderRadius.circular(12),
-            onTap: () => setState(
-                () => _milestoneExpanded[milestone.id] = !isExpanded),
+            onTap: () =>
+                setState(() => _milestoneExpanded[milestone.id] = !isExpanded),
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Row(
                 children: [
                   Expanded(
@@ -499,7 +523,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                             projectId: _selectedProjectId!,
                             milestoneId: milestone.id,
                             projectName: _selectedProjectName,
-                           releaseName: milestone.title,
+                            releaseName: milestone.title,
                           ),
                         ),
                       ),
@@ -543,7 +567,10 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                           padding: const EdgeInsets.only(bottom: 12),
                           child: Text(
                             'No epics',
-                            style: TextStyle(color: textSecondary, fontSize: 13),
+                            style: TextStyle(
+                              color: textSecondary,
+                              fontSize: 13,
+                            ),
                           ),
                         ),
                     ],
@@ -569,7 +596,6 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
         children: [
-          
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -586,7 +612,9 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                   ),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 2),
+                      horizontal: 10,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: cardBg,
                       borderRadius: BorderRadius.circular(8),
@@ -607,8 +635,11 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        Icon(Icons.keyboard_arrow_down,
-                            color: textSecondary, size: 18),
+                        Icon(
+                          Icons.keyboard_arrow_down,
+                          color: textSecondary,
+                          size: 18,
+                        ),
                       ],
                     ),
                   ),
@@ -638,97 +669,100 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
     final projectsAsync = ref.watch(_projectListProvider);
     final activeUser = ref.watch(activeUserRepositoryProvider);
     final roleName = (activeUser?.roleName ?? '').toLowerCase().trim();
-    final canManageSprints = roleName == 'admin' || roleName == 'super admin' || roleName.contains('manager');
+    final canManageSprints =
+        roleName == 'admin' ||
+        roleName == 'super admin' ||
+        roleName.contains('manager');
 
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
             // ── Header ────────────────────────────────────────────────────────
-            
-             
-             Column(
-                children: [
-                  TopBar(
-                    title: 'Navigator',
-                    onBack: () {
-                      if (Navigator.canPop(context)) {
-                        Navigator.pop(context);
-                      } else {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const DashboardPage(),
-                          ),
-                        );
-                      }
-                    },
-                    actionIcon: Icons.refresh_rounded,
-                    onInfoTap: () {
-                      ref.invalidate(_projectListProvider);
-                      if (_selectedProjectId != null) {
-                        ref.invalidate(_hierarchyProvider(_selectedProjectId!));
-                      }
-                    },
+            Column(
+              children: [
+                TopBar(
+                  title: 'Navigator',
+                  onBack: () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    } else {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const DashboardPage(),
+                        ),
+                      );
+                    }
+                  },
+                  actionIcon: Icons.refresh_rounded,
+                  onInfoTap: () {
+                    ref.invalidate(_projectListProvider);
+                    if (_selectedProjectId != null) {
+                      ref.invalidate(_hierarchyProvider(_selectedProjectId!));
+                    }
+                  },
+                ),
+
+                // Search bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
                   ),
-        
-                  // Search bar
-                  Padding(
+                  child: CustomSearchBar(
+                    controller: _searchController,
+                    focusNode: _searchFocusNode,
+                    onChanged: (value) => setState(() => _searchQuery = value),
+                    hintText: 'Search navigator',
+                  ),
+                ),
+
+                // Project dropdown
+                projectsAsync.when(
+                  loading: () => _buildProjectDropdown(
+                    projects: const [],
+                    cardBg: cardBackground,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    greyBorder: greyBorder,
+                    primary: primary,
+                  ),
+                  error: (_, __) => Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
-                    child: CustomSearchBar(
-                      controller: _searchController,
-                      focusNode: _searchFocusNode,
-                      onChanged: (value) =>
-                          setState(() => _searchQuery = value),
-                      hintText: 'Search navigator',
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    child: Text(
+                      'Error loading projects',
+                      style: TextStyle(color: textSecondary, fontSize: 13),
                     ),
                   ),
-        
-                  // Project dropdown
-                  projectsAsync.when(
-                    loading: () => _buildProjectDropdown(
-                      projects: const [],
+                  data: (projects) {
+                    if (_selectedProjectId == null && projects.isNotEmpty) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (!mounted || _selectedProjectId != null) return;
+                        setState(() {
+                          _selectedProjectId = projects.first.id;
+                          _selectedProjectName = projects.first.projectName;
+                        });
+                      });
+                    }
+                    return _buildProjectDropdown(
+                      projects: projects,
                       cardBg: cardBackground,
                       textPrimary: textPrimary,
                       textSecondary: textSecondary,
                       greyBorder: greyBorder,
                       primary: primary,
-                    ),
-                    error: (_, __) => Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 4),
-                      child: Text(
-                        'Error loading projects',
-                        style: TextStyle(color: textSecondary, fontSize: 13),
-                      ),
-                    ),
-                    data: (projects) {
-                      if (_selectedProjectId == null && projects.isNotEmpty) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (!mounted || _selectedProjectId != null) return;
-                          setState(() {
-                            _selectedProjectId = projects.first.id;
-                            _selectedProjectName = projects.first.projectName;
-                          });
-                        });
-                      }
-                      return _buildProjectDropdown(
-                        projects: projects,
-                        cardBg: cardBackground,
-                        textPrimary: textPrimary,
-                        textSecondary: textSecondary,
-                        greyBorder: greyBorder,
-                        primary: primary,
-                      );
-                    },
-                  ),
-        
-                  const SizedBox(height: 4),
-                ],
-              ),
-           
-        
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 4),
+              ],
+            ),
+
             // ── Content ───────────────────────────────────────────────────────
             Expanded(
               child: _selectedProjectId == null || _selectedProjectId!.isEmpty
@@ -775,8 +809,11 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.folder_open_outlined,
-              size: 56, color: textSecondary.withValues(alpha: 0.4)),
+          Icon(
+            Icons.folder_open_outlined,
+            size: 56,
+            color: textSecondary.withValues(alpha: 0.4),
+          ),
           const SizedBox(height: 12),
           Text(
             'Select a project to view\nthe navigator',
@@ -795,64 +832,61 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
     Color textPrimary,
     Color textSecondary,
     Color primary,
-    bool isLightMode,
-    {bool canManageSprints = false, String? currentUserId}
-  ) {
+    bool isLightMode, {
+    bool canManageSprints = false,
+    String? currentUserId,
+  }) {
     final hierarchyAsync = ref.watch(_hierarchyProvider(projectId));
 
     return hierarchyAsync.when(
       data: (hierarchy) {
-  final visibleStories = canManageSprints
-      ? hierarchy.stories
-      : hierarchy.stories
-          .where((s) => s.assigneeId == currentUserId)
-          .toList();
-  final milestones = _filterMilestones(
-    hierarchy.milestones,
-    hierarchy.epics,
-    visibleStories,
-  );
+        final visibleStories = canManageSprints
+            ? hierarchy.stories
+            : hierarchy.stories
+                  .where((s) => s.assigneeId == currentUserId)
+                  .toList();
+        final milestones = _filterMilestones(
+          hierarchy.milestones,
+          hierarchy.epics,
+          visibleStories,
+        );
 
-  return RefreshIndicator(
-    onRefresh: () async =>
-        ref.invalidate(_hierarchyProvider(projectId)),
-    child: milestones.isEmpty
-    ? ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: Center(
-              child: Text(
-                _searchQuery.isEmpty
-                    ? 'No data found'
-                    : 'No results found',
-                style: TextStyle(
-                  color: textSecondary,
-                  fontSize: 15,
+        return RefreshIndicator(
+          onRefresh: () async => ref.invalidate(_hierarchyProvider(projectId)),
+          child: milestones.isEmpty
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.6,
+                      child: Center(
+                        child: Text(
+                          _searchQuery.isEmpty
+                              ? 'No data found'
+                              : 'No results found',
+                          style: TextStyle(color: textSecondary, fontSize: 15),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 100),
+                  itemCount: milestones.length,
+                  itemBuilder: (context, index) => _buildMilestoneTile(
+                    milestones[index],
+                    hierarchy.epics,
+                    visibleStories,
+                    cardBackground,
+                    border,
+                    textPrimary,
+                    textSecondary,
+                    isLightMode,
+                    canManageSprints: canManageSprints,
+                  ),
                 ),
-              ),
-            ),
-          ),
-        ],
-      )
-        : ListView.builder(
-            padding: const EdgeInsets.only(bottom: 100),
-            itemCount: milestones.length,
-            itemBuilder: (context, index) => _buildMilestoneTile(
-              milestones[index],
-              hierarchy.epics,
-              visibleStories,
-              cardBackground,
-              border,
-              textPrimary,
-              textSecondary,
-              isLightMode,
-              canManageSprints: canManageSprints,
-            ),
-          ),
-  );
-},
+        );
+      },
       loading: () => const Center(child: DsvLoader()),
       error: (err, _) => Center(
         child: Padding(
@@ -860,8 +894,7 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline,
-                  size: 48, color: Colors.red.shade300),
+              Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
               const SizedBox(height: 12),
               Text(
                 'Failed to load hierarchy',
@@ -875,10 +908,11 @@ class _NavigatorPageState extends ConsumerState<NavigatorScreen> {
               ),
               const SizedBox(height: 16),
               TextButton(
-                onPressed: () =>
-                    ref.invalidate(_hierarchyProvider(projectId)),
-                child: Text('Retry',
-                    style: TextStyle(color: Colors.blue.shade400)),
+                onPressed: () => ref.invalidate(_hierarchyProvider(projectId)),
+                child: Text(
+                  'Retry',
+                  style: TextStyle(color: Colors.blue.shade400),
+                ),
               ),
             ],
           ),
@@ -895,11 +929,7 @@ class _AddButton extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;
 
-  const _AddButton({
-    required this.color,
-    this.label = 'Epic',
-    this.onTap,
-  });
+  const _AddButton({required this.color, this.label = 'Epic', this.onTap});
 
   @override
   Widget build(BuildContext context) {

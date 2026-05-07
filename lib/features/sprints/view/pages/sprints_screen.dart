@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/app_colors.dart';
 import 'package:dsv360/core/constants/theme.dart';
@@ -16,6 +18,7 @@ import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/sprint_story.dart';
 import '../widgets/sprint_project_selector.dart';
 import '../widgets/sprint_cycle_bar.dart';
@@ -108,40 +111,142 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
   String? _selectedSprintName;
   String? _selectedSprintId;
 
+  bool _hasLoadedPersistedSelection = false;
+
   bool _isRefreshingData = false;
 
-  void _autoSelectFirstProject(List<dynamic> projects) {
-    if (_selectedProjectId != null || projects.isEmpty) return;
-
-    final firstProject = projects.first;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _selectedProjectId != null) return;
-      setState(() {
-        _selectedProjectName = firstProject.projectName;
-        _selectedProjectId = firstProject.id;
-      });
-    });
-  }
-
-  void _autoSelectFirstSprint(List<SprintModel> sprints) {
-    if (_selectedProjectId == null || _selectedProjectId!.isEmpty) return;
-    if (_selectedSprintId != null || sprints.isEmpty) return;
-
-    final firstSprint = sprints.first;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || _selectedSprintId != null) return;
-      setState(() {
-        _selectedSprintName = firstSprint.sprintName;
-        _selectedSprintId = firstSprint.rowId;
-        _selectedSprintStatus = firstSprint.status;
-      });
-    });
-  }
+  static const _selectedProjectIdKey = 'sprints.selected_project_id';
+  static const _selectedProjectNameKey = 'sprints.selected_project_name';
+  static const _selectedSprintIdKey = 'sprints.selected_sprint_id';
+  static const _selectedSprintNameKey = 'sprints.selected_sprint_name';
+  static const _selectedSprintStatusKey = 'sprints.selected_sprint_status';
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _loadPersistedSelection();
+  }
+
+  Future<void> _loadPersistedSelection() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+
+    String? normalize(String? value) =>
+        value == null || value.isEmpty ? null : value;
+
+    setState(() {
+      _selectedProjectId = normalize(prefs.getString(_selectedProjectIdKey));
+      _selectedProjectName =
+          normalize(prefs.getString(_selectedProjectNameKey));
+      _selectedSprintId = normalize(prefs.getString(_selectedSprintIdKey));
+      _selectedSprintName = normalize(prefs.getString(_selectedSprintNameKey));
+      _selectedSprintStatus =
+          normalize(prefs.getString(_selectedSprintStatusKey));
+      _hasLoadedPersistedSelection = true;
+    });
+  }
+
+  Future<void> _saveSelectionToPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_selectedProjectIdKey, _selectedProjectId ?? '');
+    await prefs.setString(_selectedProjectNameKey, _selectedProjectName ?? '');
+    await prefs.setString(_selectedSprintIdKey, _selectedSprintId ?? '');
+    await prefs.setString(_selectedSprintNameKey, _selectedSprintName ?? '');
+    await prefs.setString(_selectedSprintStatusKey, _selectedSprintStatus ?? '');
+  }
+
+  void _persistSelection() {
+    unawaited(_saveSelectionToPrefs());
+  }
+
+  dynamic _findProjectById(List<dynamic> projects, String? projectId) {
+    if (projectId == null || projectId.isEmpty) return null;
+    for (final project in projects) {
+      if (project.id == projectId) return project;
+    }
+    return null;
+  }
+
+  SprintModel? _findSprintById(List<SprintModel> sprints, String? sprintId) {
+    if (sprintId == null || sprintId.isEmpty) return null;
+    for (final sprint in sprints) {
+      if (sprint.rowId == sprintId) return sprint;
+    }
+    return null;
+  }
+
+  void _syncProjectSelection(List<dynamic> projects) {
+    if (!_hasLoadedPersistedSelection || projects.isEmpty) return;
+
+    final validProject = _findProjectById(projects, _selectedProjectId);
+    final fallbackProject = _findProjectById(projects, widget.projectId);
+    final nextProject = validProject ?? fallbackProject ?? projects.first;
+
+    final nextProjectId = nextProject.id;
+    final nextProjectName = nextProject.projectName;
+    final projectIdChanged = _selectedProjectId != nextProjectId;
+    final projectNameChanged = _selectedProjectName != nextProjectName;
+    final shouldUpdateProject =
+        projectIdChanged || projectNameChanged;
+
+    if (!shouldUpdateProject) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        _selectedProjectId = nextProjectId;
+        _selectedProjectName = nextProjectName;
+        if (projectIdChanged) {
+          _selectedSprintId = null;
+          _selectedSprintName = null;
+          _selectedSprintStatus = null;
+        }
+      });
+      _persistSelection();
+    });
+  }
+
+  void _syncSprintSelection(List<SprintModel> sprints) {
+    if (!_hasLoadedPersistedSelection) return;
+
+    if (sprints.isEmpty) {
+      if (_selectedSprintId == null &&
+          _selectedSprintName == null &&
+          _selectedSprintStatus == null) {
+        return;
+      }
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _selectedSprintId = null;
+          _selectedSprintName = null;
+          _selectedSprintStatus = null;
+        });
+        _persistSelection();
+      });
+      return;
+    }
+
+    final validSprint = _findSprintById(sprints, _selectedSprintId);
+    final nextSprint = validSprint ?? sprints.first;
+    final shouldUpdateSprint =
+        _selectedSprintId != nextSprint.rowId ||
+        _selectedSprintName != nextSprint.sprintName ||
+        _selectedSprintStatus != nextSprint.status;
+
+    if (!shouldUpdateSprint) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        _selectedSprintId = nextSprint.rowId;
+        _selectedSprintName = nextSprint.sprintName;
+        _selectedSprintStatus = nextSprint.status;
+      });
+      _persistSelection();
+    });
   }
 
   @override
@@ -432,9 +537,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                               final projectsAsync =
                                   ref.watch(projectListProvider);
                               if (projectsAsync.hasValue) {
-                                _autoSelectFirstProject(
-                                  projectsAsync.value!,
-                                );
+                                _syncProjectSelection(projectsAsync.value!);
                               }
                               return SprintProjectSelector(
                                 projectsAsync: projectsAsync,
@@ -464,7 +567,9 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                       _selectedProjectId = project.id;
                                       _selectedSprintName = null;
                                       _selectedSprintId = null;
+                                      _selectedSprintStatus = null;
                                     });
+                                    _persistSelection();
                                     debugPrint(
                                       'Selected Project: $_selectedProjectName ($_selectedProjectId)',
                                     );
@@ -503,7 +608,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                   ? ref.watch(sprintListProvider(projectId))
                                   : const AsyncValue<List<SprintModel>>.data([]);
                               if (sprintsAsync.hasValue) {
-                                _autoSelectFirstSprint(sprintsAsync.value!);
+                                _syncSprintSelection(sprintsAsync.value!);
                               }
                               return SprintCycleBar(
                                 sprintsAsync: sprintsAsync,
@@ -535,6 +640,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                       _selectedSprintId = sprint.rowId;
                                       _selectedSprintStatus = sprint.status;
                                     });
+                                    _persistSelection();
                                   },
                                 ),
                               );

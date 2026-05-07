@@ -7,6 +7,7 @@ import 'package:dsv360/features/badges/model/badge_user.dart';
 
 import 'package:dsv360/features/sprints/model/sub_task_model.dart';
 import 'package:dsv360/features/sprints/model/task_model.dart';
+import 'package:dsv360/features/sprints/model/timer_info_model.dart';
 import 'package:dsv360/features/sprints/repositories/timer_repository.dart';
 import 'package:dsv360/features/sprints/repositories/task_subtask_repository.dart';
 import 'package:dsv360/features/sprints/viewmodel/hierarchy_viewmodel.dart';
@@ -36,7 +37,10 @@ final _subTaskPageDataProvider =
           .read(fetchBadgeUsersRepositoryProvider)
           .fetchUsers();
 
-      final results = await Future.wait<dynamic>([hierarchyFuture, usersFuture]);
+      final results = await Future.wait<dynamic>([
+        hierarchyFuture,
+        usersFuture,
+      ]);
       final hierarchy = results[0] as dynamic;
       final users = results[1] as List<BadgeUser>;
 
@@ -87,8 +91,9 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
+  TimerInfoModel? _runningTimerInfo;
+
   // ── Task-level timer state ─────────────────────────────────────────────────
-  bool _taskTimerRunning = false;
   bool _taskTimerFetching = true;
   String? _taskTimerRowId;
   DateTime? _taskTimerStartTime;
@@ -125,6 +130,24 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
     ScaffoldMessenger.of(context).showSnackBar(snackbar);
   }
 
+  bool _hasRunningTimer() {
+    return _runningTimerInfo?.isRunning == true;
+  }
+
+  bool _isTaskTimerActive() {
+    final timerInfo = _runningTimerInfo;
+    if (timerInfo == null || !timerInfo.isRunning) return false;
+
+    final runningSubTaskId = timerInfo.sprintSubTaskId?.trim() ?? '';
+    if (runningSubTaskId.isNotEmpty) return false;
+
+    return timerInfo.sprintTaskId.trim() == widget.task.sprintTaskId;
+  }
+
+  bool _canStartTaskTimer() {
+    return !_hasRunningTimer() || _isTaskTimerActive();
+  }
+
   Future<void> _fetchTimerStatus() async {
     setState(() => _taskTimerFetching = true);
     try {
@@ -140,21 +163,20 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
 
       if (!mounted) return;
 
-      final isRunning =
-          timerInfo != null && !timerInfo.message.toLowerCase().contains('not');
+      final isRunning = timerInfo?.isRunning ?? false;
 
       setState(() {
+        _runningTimerInfo = isRunning ? timerInfo : null;
         _taskTimerFetching = false;
-        if (isRunning) {
-          _taskTimerRunning = true;
-          _taskTimerRowId = timerInfo.timerId;
+        if (isRunning && _isTaskTimerActive()) {
+          final activeTimerInfo = timerInfo!;
+          _taskTimerRowId = activeTimerInfo.timerId;
           // Parse server's startTime for accurate elapsed time
           final parsed = DateTime.tryParse(
-            timerInfo.startTime.replaceFirst(' ', 'T'),
+            activeTimerInfo.startTime.replaceFirst(' ', 'T'),
           );
           _taskTimerStartTime = parsed;
         } else {
-          _taskTimerRunning = false;
           _taskTimerRowId = null;
           _taskTimerStartTime = null;
         }
@@ -181,7 +203,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
             projectName: widget.projectName,
             sourceType: 'SPRINT_TASK',
             sprintId: widget.sprintId,
-            sprintTaskId: widget.task.id,
+            sprintTaskId: widget.task.sprintTaskId,
             storyId: widget.task.storyId,
             taskId: widget.task.id,
             taskName: widget.task.title,
@@ -194,7 +216,21 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
         // For freshly started timers, use DateTime.now() so timer starts from 0
         // (server time is already a few milliseconds old by navigation time)
         _taskTimerStartTime = DateTime.now();
-        _taskTimerRunning = true;
+        _runningTimerInfo = TimerInfoModel(
+          message: 'Timer is Running',
+          timerId: result.rowId,
+          taskId: widget.task.id,
+          taskName: widget.task.title,
+          entryDate: today,
+          startTime: result.startTime.isNotEmpty
+              ? result.startTime
+              : DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now()),
+          sourceType: 'SPRINT_TASK',
+          sprintId: widget.sprintId,
+          storyId: widget.task.storyId,
+          sprintTaskId: widget.task.sprintTaskId,
+          sprintSubTaskId: null,
+        );
         _taskTimerFetching = false;
       });
     } catch (e) {
@@ -202,7 +238,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
       debugPrint(e.toString());
       setState(() => _taskTimerFetching = false);
       if (!mounted) return;
-     
+
       showErrorSnackBar(context, 'Failed to start timer. Please try again.');
     }
   }
@@ -220,7 +256,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
     );
     if (result == true) {
       setState(() {
-        _taskTimerRunning = false;
+        _runningTimerInfo = null;
         _taskTimerRowId = null;
         _taskTimerStartTime = null;
       });
@@ -242,7 +278,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
 
       // Extract the updated status from server response
       final updatedStatus = response['Status'] as String? ?? newStatus;
-      
+
       // Update local status with server response
       setState(() => _taskStatusOverride = updatedStatus);
 
@@ -422,23 +458,23 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
         child: Column(
           children: [
             // ── Top Bar ──────────────────────────────────────────────────────
-           
-             
-              TopBar(
-                title: 'SubTasks',
-                onBack: () {
-                  if (Navigator.canPop(context)) Navigator.pop(context);
-                },
-                actionIcon: Icons.refresh,
-                onInfoTap: () {
-                  _fetchTimerStatus();
-                  final dataArgs = (projectId: widget.projectId, taskId: widget.task.id);
-                  ref.invalidate(_subTaskPageDataProvider(dataArgs));
-                  ref.invalidate(_timeEntriesProvider(widget.task.id));
-                },
-              ),
-           
-        
+            TopBar(
+              title: 'SubTasks',
+              onBack: () {
+                if (Navigator.canPop(context)) Navigator.pop(context);
+              },
+              actionIcon: Icons.refresh,
+              onInfoTap: () {
+                _fetchTimerStatus();
+                final dataArgs = (
+                  projectId: widget.projectId,
+                  taskId: widget.task.id,
+                );
+                ref.invalidate(_subTaskPageDataProvider(dataArgs));
+                ref.invalidate(_timeEntriesProvider(widget.task.id));
+              },
+            ),
+
             // ── Task title + status badge ─────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -476,7 +512,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                 ],
               ),
             ),
-        
+
             // ── Log Time / Start Timer ────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -526,9 +562,11 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                     child: ElevatedButton.icon(
                       onPressed: (_taskTimerFetching || _isUpdatingStatus)
                           ? null
-                          : _taskTimerRunning
+                          : _isTaskTimerActive()
                           ? _openStopTaskTimer
-                          : _startTaskTimer,
+                          : _canStartTaskTimer()
+                          ? _startTaskTimer
+                          : null,
                       icon: _taskTimerFetching
                           ? const SizedBox(
                               width: 14,
@@ -541,16 +579,20 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                               ),
                             )
                           : Icon(
-                              _taskTimerRunning ? Icons.pause : Icons.play_arrow,
+                              _isTaskTimerActive()
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
                               size: 16,
                               color: Colors.white,
                             ),
                       label: Text(
                         _taskTimerFetching
                             ? 'Loading...'
-                            : _taskTimerRunning
+                            : _isTaskTimerActive()
                             ? 'Pause Timer'
-                            : 'Start Timer',
+                            : _canStartTaskTimer()
+                            ? 'Start Timer'
+                            : 'Timer Running',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 13,
@@ -558,9 +600,11 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _taskTimerRunning
+                        backgroundColor: _isTaskTimerActive()
                             ? const Color(0xFFD32F2F)
-                            : const Color(0xFF2E7D32),
+                            : _canStartTaskTimer()
+                            ? const Color(0xFF2E7D32)
+                            : Colors.grey,
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -572,7 +616,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                 ],
               ),
             ),
-        
+
             // ── Status row ────────────────────────────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -611,7 +655,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                 ],
               ),
             ),
-        
+
             // ── Tab Bar ───────────────────────────────────────────────────
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -653,7 +697,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                 ],
               ),
             ),
-        
+
             // ── Tab Views ─────────────────────────────────────────────────
             Expanded(
               child: TabBarView(
@@ -676,7 +720,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                       final completedCount = subTasks
                           .where((s) => s.status.toLowerCase() == 'closed')
                           .length;
-        
+
                       return RefreshIndicator(
                         onRefresh: () async =>
                             ref.invalidate(_subTaskPageDataProvider(dataArgs)),
@@ -691,17 +735,20 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                                     children: [
                                       Expanded(
                                         child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(4),
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                           child: LinearProgressIndicator(
                                             value: subTasks.isEmpty
                                                 ? 0
-                                                : completedCount / subTasks.length,
-                                            backgroundColor: Colors.grey.withValues(
-                                              alpha: 0.2,
-                                            ),
-                                            valueColor: AlwaysStoppedAnimation<Color>(
-                                              primary,
-                                            ),
+                                                : completedCount /
+                                                      subTasks.length,
+                                            backgroundColor: Colors.grey
+                                                .withValues(alpha: 0.2),
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  primary,
+                                                ),
                                             minHeight: 6,
                                           ),
                                         ),
@@ -716,17 +763,45 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                                         ),
                                       ),
                                       const SizedBox(width: 12),
-                                      if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().contains('manager'))
+                                      if ((ref
+                                                          .watch(
+                                                            activeUserRepositoryProvider,
+                                                          )
+                                                          ?.roleName ??
+                                                      '')
+                                                  .toLowerCase()
+                                                  .trim() ==
+                                              'admin' ||
+                                          (ref
+                                                          .watch(
+                                                            activeUserRepositoryProvider,
+                                                          )
+                                                          ?.roleName ??
+                                                      '')
+                                                  .toLowerCase()
+                                                  .trim() ==
+                                              'super admin' ||
+                                          (ref
+                                                      .watch(
+                                                        activeUserRepositoryProvider,
+                                                      )
+                                                      ?.roleName ??
+                                                  '')
+                                              .toLowerCase()
+                                              .contains('manager'))
                                         GestureDetector(
                                           onTap: () {
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (context) => AddSubTaskPage(
-                                                  projectId: widget.projectId,
-                                                  storyId: widget.task.storyId,
-                                                  taskId: widget.task.id,
-                                                ),
+                                                builder: (context) =>
+                                                    AddSubTaskPage(
+                                                      projectId:
+                                                          widget.projectId,
+                                                      storyId:
+                                                          widget.task.storyId,
+                                                      taskId: widget.task.id,
+                                                    ),
                                               ),
                                             ); //here
                                           },
@@ -737,10 +812,13 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                                             ),
                                             decoration: BoxDecoration(
                                               color: primary,
-                                              borderRadius: BorderRadius.circular(8),
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                               boxShadow: [
                                                 BoxShadow(
-                                                  color: primary.withValues(alpha: 0.3),
+                                                  color: primary.withValues(
+                                                    alpha: 0.3,
+                                                  ),
                                                   blurRadius: 4,
                                                   offset: const Offset(0, 2),
                                                 ),
@@ -762,7 +840,30 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                                   const SizedBox(height: 12),
                                 ],
                               )
-                            else if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().contains('manager'))
+                            else if ((ref
+                                                .watch(
+                                                  activeUserRepositoryProvider,
+                                                )
+                                                ?.roleName ??
+                                            '')
+                                        .toLowerCase()
+                                        .trim() ==
+                                    'admin' ||
+                                (ref
+                                                .watch(
+                                                  activeUserRepositoryProvider,
+                                                )
+                                                ?.roleName ??
+                                            '')
+                                        .toLowerCase()
+                                        .trim() ==
+                                    'super admin' ||
+                                (ref
+                                            .watch(activeUserRepositoryProvider)
+                                            ?.roleName ??
+                                        '')
+                                    .toLowerCase()
+                                    .contains('manager'))
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: Row(
@@ -773,11 +874,12 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                                         Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) => AddSubTaskPage(
-                                              projectId: widget.projectId,
-                                              storyId: widget.task.storyId,
-                                              taskId: widget.task.id,
-                                            ),
+                                            builder: (context) =>
+                                                AddSubTaskPage(
+                                                  projectId: widget.projectId,
+                                                  storyId: widget.task.storyId,
+                                                  taskId: widget.task.id,
+                                                ),
                                           ),
                                         );
                                       },
@@ -788,10 +890,14 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                                         ),
                                         decoration: BoxDecoration(
                                           color: primary,
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
                                           boxShadow: [
                                             BoxShadow(
-                                              color: primary.withValues(alpha: 0.3),
+                                              color: primary.withValues(
+                                                alpha: 0.3,
+                                              ),
                                               blurRadius: 4,
                                               offset: const Offset(0, 2),
                                             ),
@@ -811,10 +917,12 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                                   ],
                                 ),
                               ),
-        
+
                             if (subTasks.isEmpty)
                               Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 32),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 32,
+                                ),
                                 child: Center(
                                   child: Text(
                                     'No sub-tasks yet',
@@ -857,6 +965,8 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                                   projectId: widget.projectId,
                                   projectName: widget.projectName,
                                   sprintId: widget.sprintId,
+                                  runningTimerInfo: _runningTimerInfo,
+                                  timerStatusLoading: _taskTimerFetching,
                                   onTimeEntryAdded: () => ref.invalidate(
                                     _timeEntriesProvider(widget.task.id),
                                   ),
@@ -878,7 +988,7 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
                       );
                     },
                   ),
-        
+
                   // ── Time Entries tab ───────────────────────────────
                   RefreshIndicator(
                     onRefresh: () async =>
@@ -1057,6 +1167,8 @@ class _SubTaskCard extends StatefulWidget {
   final VoidCallback onTimeEntryAdded;
   final Future<void> Function() onReturnFromPage;
   final Future<void> Function() onStatusChanged;
+  final TimerInfoModel? runningTimerInfo;
+  final bool timerStatusLoading;
 
   const _SubTaskCard({
     required this.subTask,
@@ -1076,6 +1188,8 @@ class _SubTaskCard extends StatefulWidget {
     required this.onTimeEntryAdded,
     required this.onReturnFromPage,
     required this.onStatusChanged,
+    required this.runningTimerInfo,
+    required this.timerStatusLoading,
   });
 
   @override
@@ -1103,6 +1217,23 @@ class _SubTaskCardState extends State<_SubTaskCard> {
     ScaffoldMessenger.of(context).showSnackBar(snackbar);
   }
 
+  bool _isRunningOnThisCard() {
+    if (_timerRunning) return true;
+
+    final timerInfo = widget.runningTimerInfo;
+    if (timerInfo == null || !timerInfo.isRunning) return false;
+
+    final runningSubTaskId = timerInfo.sprintSubTaskId?.trim() ?? '';
+    return runningSubTaskId.isNotEmpty &&
+        runningSubTaskId == widget.subTask.rowId;
+  }
+
+  bool _isAnotherTimerRunning() {
+    final timerInfo = widget.runningTimerInfo;
+    if (timerInfo == null || !timerInfo.isRunning) return false;
+    return !_isRunningOnThisCard();
+  }
+
   Future<void> _startSubTaskTimer() async {
     setState(() => _timerFetching = true);
     try {
@@ -1122,7 +1253,7 @@ class _SubTaskCardState extends State<_SubTaskCard> {
         projectName: widget.projectName,
         sourceType: 'SPRINT_SUBTASK',
         sprintId: widget.sprintId,
-        sprintTaskId: widget.task.id,
+        sprintTaskId: widget.task.sprintTaskId,
         storyId: storyId,
         taskId: widget.task.id,
         taskName: subTaskName,
@@ -1139,6 +1270,8 @@ class _SubTaskCardState extends State<_SubTaskCard> {
         _timerRunning = true;
         _timerFetching = false;
       });
+
+      await widget.onReturnFromPage();
     } catch (e) {
       setState(() => _timerFetching = false);
       if (!mounted) return;
@@ -1273,6 +1406,10 @@ class _SubTaskCardState extends State<_SubTaskCard> {
   @override
   Widget build(BuildContext context) {
     final statusColor = _statusColor(_status);
+    final isRunningOnThisCard = _isRunningOnThisCard();
+    final anotherTimerRunning = _isAnotherTimerRunning();
+    final timerButtonEnabled =
+        !_timerFetching && !widget.timerStatusLoading && !anotherTimerRunning;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -1443,12 +1580,17 @@ class _SubTaskCardState extends State<_SubTaskCard> {
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : _SmallButton(
-                      label: _timerRunning ? 'STOP' : 'TIMER',
-                      color: _timerRunning
+                      label: isRunningOnThisCard ? 'STOP' : 'TIMER',
+                      color: isRunningOnThisCard
                           ? const Color(0xFFD32F2F)
-                          : const Color(0xFF2E7D32),
-                      icon: _timerRunning ? Icons.pause : Icons.play_arrow,
-                      onTap: _timerRunning
+                          : timerButtonEnabled
+                          ? const Color(0xFF2E7D32)
+                          : Colors.grey,
+                      icon: isRunningOnThisCard
+                          ? Icons.pause
+                          : Icons.play_arrow,
+                      enabled: timerButtonEnabled || isRunningOnThisCard,
+                      onTap: isRunningOnThisCard
                           ? _openStopSubTaskTimer
                           : _startSubTaskTimer,
                     ),
@@ -1939,27 +2081,29 @@ class _SmallButton extends StatelessWidget {
   final String label;
   final Color color;
   final IconData? icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool enabled;
 
   const _SmallButton({
     required this.label,
     required this.color,
     this.icon,
     required this.onTap,
+    this.enabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: enabled ? onTap : null,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: color,
+          color: enabled ? color : color.withValues(alpha: 0.45),
           borderRadius: BorderRadius.circular(7),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.3),
+              color: color.withValues(alpha: enabled ? 0.3 : 0.12),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),

@@ -10,6 +10,12 @@ class StartTimerResult {
 }
 
 class TimerRepository {
+  String _normalizeId(String? value) {
+    final normalized = value?.trim() ?? '';
+    if (normalized.isEmpty || normalized.toLowerCase() == 'null') return '';
+    return normalized;
+  }
+
   Future<StartTimerResult> startTimer({
     required String entryDate,
     required String projectId,
@@ -24,22 +30,52 @@ class TimerRepository {
     required String username,
     String? sprintSubTaskId,
   }) async {
+    final normalizedEntryDate = _normalizeId(entryDate);
+    final normalizedProjectId = _normalizeId(projectId);
+    final normalizedProjectName = projectName.trim();
+    final normalizedSourceType = sourceType.trim();
+    final normalizedSprintId = _normalizeId(sprintId);
+    final normalizedSprintTaskId = _normalizeId(sprintTaskId);
+    final normalizedStoryId = _normalizeId(storyId);
+    final normalizedTaskId = _normalizeId(taskId);
+    final normalizedTaskName = taskName.trim();
+    final normalizedUserId = _normalizeId(userId);
+    final normalizedUsername = username.trim();
+    final normalizedSprintSubTaskId = _normalizeId(sprintSubTaskId);
+
+    final missingFields = <String>[];
+    if (normalizedEntryDate.isEmpty) missingFields.add('Entry_Date');
+    if (normalizedProjectId.isEmpty) missingFields.add('Project_ID');
+    if (normalizedSprintId.isEmpty) missingFields.add('Sprint_ID');
+    if (normalizedSprintTaskId.isEmpty) missingFields.add('Sprint_Task_ID');
+    if (normalizedStoryId.isEmpty) missingFields.add('Story_ID');
+    if (normalizedTaskId.isEmpty) missingFields.add('Task_ID');
+    if (normalizedTaskName.isEmpty) missingFields.add('Task_Name');
+    if (normalizedUserId.isEmpty) missingFields.add('User_ID');
+    if (normalizedUsername.isEmpty) missingFields.add('Username');
+
+    if (missingFields.isNotEmpty) {
+      throw Exception(
+        'Missing required timer fields: ${missingFields.join(', ')}',
+      );
+    }
+
     final payload = <String, dynamic>{
-      'Entry_Date': entryDate,
-      'Project_ID': projectId,
-      'Project_Name': projectName,
-      'Source_Type': sourceType,
-      'Sprint_ID': sprintId,
-      'Sprint_Task_ID': sprintTaskId,
-      'Story_ID': storyId,
-      'Task_ID': taskId,
-      'Task_Name': taskName,
-      'User_ID': userId,
-      'Username': username,
+      'Entry_Date': normalizedEntryDate,
+      'Project_ID': normalizedProjectId,
+      'Project_Name': normalizedProjectName,
+      'Source_Type': normalizedSourceType,
+      'Sprint_ID': normalizedSprintId,
+      'Sprint_Task_ID': normalizedSprintTaskId,
+      'Story_ID': normalizedStoryId,
+      'Task_ID': normalizedTaskId,
+      'Task_Name': normalizedTaskName,
+      'User_ID': normalizedUserId,
+      'Username': normalizedUsername,
     };
 
-    if (sprintSubTaskId != null && sprintSubTaskId.isNotEmpty) {
-      payload['Sprint_SubTask_ID'] = sprintSubTaskId;
+    if (normalizedSprintSubTaskId.isNotEmpty) {
+      payload['Sprint_SubTask_ID'] = normalizedSprintSubTaskId;
     }
 
     debugPrint('⏱️ Starting timer payload: $payload');
@@ -57,7 +93,9 @@ class TimerRepository {
         startTime: timerData['Start_time']?.toString() ?? '',
       );
     }
-    throw Exception((data is Map ? data['message'] : null) ?? 'Failed to start timer');
+    throw Exception(
+      (data is Map ? data['message'] : null) ?? 'Failed to start timer',
+    );
   }
 
   Future<void> stopTimer({
@@ -75,7 +113,9 @@ class TimerRepository {
 
     final data = response.data;
     if (data is Map && data['success'] == true) return;
-    throw Exception((data is Map ? data['message'] : null) ?? 'Failed to stop timer');
+    throw Exception(
+      (data is Map ? data['message'] : null) ?? 'Failed to stop timer',
+    );
   }
 
   Future<TimerInfoModel?> getTimerInfo({required String userId}) async {
@@ -87,7 +127,8 @@ class TimerRepository {
     );
 
     final data = response.data;
-    if (data is Map) return TimerInfoModel.fromJson(Map<String, dynamic>.from(data));
+    if (data is Map)
+      return TimerInfoModel.fromJson(Map<String, dynamic>.from(data));
     return null;
   }
 
@@ -112,8 +153,13 @@ class TimerRepository {
     String? endDate,
   }) async {
     final now = DateTime.now();
-    final start = startDate ??
-        DateTime(now.year - 1, now.month, now.day).toIso8601String().split('T').first;
+    final start =
+        startDate ??
+        DateTime(
+          now.year - 1,
+          now.month,
+          now.day,
+        ).toIso8601String().split('T').first;
     final end = endDate ?? now.toIso8601String().split('T').first;
 
     final response = await ApiClient.instance.get(
@@ -130,7 +176,8 @@ class TimerRepository {
       if (details is! List) continue;
       for (final detail in details) {
         final raw = detail['Time_Entries'];
-        if (raw is Map) entries.add(TimeEntry.fromJson(Map<String, dynamic>.from(raw)));
+        if (raw is Map)
+          entries.add(TimeEntry.fromJson(Map<String, dynamic>.from(raw)));
       }
     }
     return entries;
@@ -155,22 +202,22 @@ class TimerRepository {
     String? subTaskId,
   }) async {
     final payload = <String, dynamic>{
-      'Sprint_Task_ID': taskId,
-      'Task_ID': taskId,
-      'Task_Name': taskName,
-      'Story_ID': storyId,
-      'Sprint_ID': sprintId,
-      'Project_ID': projectId,
-      'Project_Name': projectName,
-      'User_ID': userId,
-      'Username': username,
-      'Entry_Date': entryDate,
+      'Sprint_Task_ID': _normalizeId(taskId),
+      'Task_ID': _normalizeId(taskId),
+      'Task_Name': taskName.trim(),
+      'Story_ID': _normalizeId(storyId),
+      'Sprint_ID': _normalizeId(sprintId),
+      'Project_ID': _normalizeId(projectId),
+      'Project_Name': projectName.trim(),
+      'User_ID': _normalizeId(userId),
+      'Username': username.trim(),
+      'Entry_Date': _normalizeId(entryDate),
       'Start_time': startTime,
       'End_time': endTime,
       'Total_time': totalMinutes,
       'Type': type,
       'Note': note,
-      'Source_Type': sourceType,
+      'Source_Type': sourceType.trim(),
     };
 
     if (subTaskId != null && subTaskId.isNotEmpty) {
@@ -186,7 +233,9 @@ class TimerRepository {
     if (data is Map && data['success'] == true && data['data'] != null) {
       return TimeEntry.fromJson(Map<String, dynamic>.from(data['data']));
     }
-    throw Exception((data is Map ? data['message'] : null) ?? 'Failed to create time entry');
+    throw Exception(
+      (data is Map ? data['message'] : null) ?? 'Failed to create time entry',
+    );
   }
 }
 

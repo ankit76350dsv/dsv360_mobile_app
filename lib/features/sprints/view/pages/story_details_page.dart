@@ -86,447 +86,448 @@ class StoryDetailsPage extends ConsumerWidget {
     ));
 
     return Scaffold(
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.only(top: 48, bottom: 8),
-            child: TopBar(
-              title: storyTitle != null
-                  ? '${_truncate(storyTitle!)} | Story Details'
-                  : 'Story Details',
-              onBack: () {
-                if (Navigator.canPop(context)) {
-                  Navigator.pop(context);
-                } else {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const DashboardPage()),
-                  );
-                }
-              },
-            ),
-          ),
-          Expanded(
-            child: dataAsync.when(
-              loading: () => const Center(child: DsvLoader()),
-              error: (err, _) => GlobalError(
-                message: 'Something went wrong. Please check your connection.',
-                onRetry: () => ref.invalidate(
-                  _storyDetailsProvider(
-                      (projectId: projectId, storyId: storyId)),
-                ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            
+             TopBar(
+                title: storyTitle != null
+                    ? '${_truncate(storyTitle!)} | Story Details'
+                    : 'Story Details',
+                onBack: () {
+                  if (Navigator.canPop(context)) {
+                    Navigator.pop(context);
+                  } else {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const DashboardPage()),
+                    );
+                  }
+                },
               ),
-              data: (data) {
-                final story = data.story;
-                final tasks = data.tasks;
-                final sprints = data.sprints;
-                final userIdToName = data.userIdToName;
-
-                if (story == null) {
-                  return Center(
-                    child: Text('Story not found',
-                        style: TextStyle(
-                            color: textSecondary, fontSize: 15)),
-                  );
-                }
-
-                final sprintName = sprints
-                    .where((s) => s.rowId == story.sprintId)
-                    .map((s) => s.sprintName)
-                    .firstOrNull;
-
-                final completedTaskCount = tasks
-                    .where((t) => t.status.toLowerCase() == 'closed')
-                    .length;
-
-                return RefreshIndicator(
-                  onRefresh: () async => ref.invalidate(
+            
+            Expanded(
+              child: dataAsync.when(
+                loading: () => const Center(child: DsvLoader()),
+                error: (err, _) => GlobalError(
+                  message: 'Something went wrong. Please check your connection.',
+                  onRetry: () => ref.invalidate(
                     _storyDetailsProvider(
                         (projectId: projectId, storyId: storyId)),
                   ),
-                  child: ListView(
-                    padding:
-                        const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                    children: [
-                      // ── Story title ──────────────────────────────────
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: Row(
+                ),
+                data: (data) {
+                  final story = data.story;
+                  final tasks = data.tasks;
+                  final sprints = data.sprints;
+                  final userIdToName = data.userIdToName;
+        
+                  if (story == null) {
+                    return Center(
+                      child: Text('Story not found',
+                          style: TextStyle(
+                              color: textSecondary, fontSize: 15)),
+                    );
+                  }
+        
+                  final sprintName = sprints
+                      .where((s) => s.rowId == story.sprintId)
+                      .map((s) => s.sprintName)
+                      .firstOrNull;
+        
+                  final completedTaskCount = tasks
+                      .where((t) => t.status.toLowerCase() == 'closed')
+                      .length;
+        
+                  return RefreshIndicator(
+                    onRefresh: () async => ref.invalidate(
+                      _storyDetailsProvider(
+                          (projectId: projectId, storyId: storyId)),
+                    ),
+                    child: ListView(
+                      padding:
+                          const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                      children: [
+                        // ── Story title ──────────────────────────────────
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  story.title,
+                                  style: TextStyle(
+                                    color: textPrimary,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: primary.withValues(alpha: 0.1),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: primary.withValues(alpha: 0.3),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+        
+                                    Text(
+                                      '${story.points.toString()} SP',
+                                      style: TextStyle(
+                                        color: primary,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+        
+                        // ── Description (full width) ─────────────────────
+                        _buildDetailCard(
+                          context: context,
+                          icon: Icons.description_outlined,
+                          label: 'Description',
+                          value: story.description.isEmpty
+                              ? 'Not set'
+                              : story.description,
+                          customColors: customColors,
+                          maxLines: 4,
+                        ),
+                        const SizedBox(height: 12),
+        
+                        // ── Assignee & Sprint row ────────────────────────
+                        Row(
                           children: [
                             Expanded(
-                              child: Text(
-                                story.title,
-                                style: TextStyle(
-                                  color: textPrimary,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                              child: _buildDetailCard(
+                                context: context,
+                                icon: Icons.person_outline,
+                                label: 'Assignee',
+                                value: story.assigneeId.isEmpty
+                                    ? 'Not set'
+                                    : userIdToName[story.assigneeId] ?? story.assigneeId,
+                                customColors: customColors,
                               ),
                             ),
                             const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: primary.withValues(alpha: 0.3),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-
-                                  Text(
-                                    '${story.points.toString()} SP',
-                                    style: TextStyle(
-                                      color: primary,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ],
+                            Expanded(
+                              child: _buildDetailCard(
+                                context: context,
+                                icon: Icons.loop_outlined,
+                                label: 'Sprint',
+                                value: sprintName ??
+                                    (story.sprintId.isEmpty
+                                        ? 'Not set'
+                                        : story.sprintId),
+                                customColors: customColors,
                               ),
                             ),
                           ],
                         ),
-                      ),
-
-                      // ── Description (full width) ─────────────────────
-                      _buildDetailCard(
-                        context: context,
-                        icon: Icons.description_outlined,
-                        label: 'Description',
-                        value: story.description.isEmpty
-                            ? 'Not set'
-                            : story.description,
-                        customColors: customColors,
-                        maxLines: 4,
-                      ),
-                      const SizedBox(height: 12),
-
-                      // ── Assignee & Sprint row ────────────────────────
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildDetailCard(
-                              context: context,
-                              icon: Icons.person_outline,
-                              label: 'Assignee',
-                              value: story.assigneeId.isEmpty
-                                  ? 'Not set'
-                                  : userIdToName[story.assigneeId] ?? story.assigneeId,
-                              customColors: customColors,
+                        const SizedBox(height: 12),
+        
+                        // ── Status (full width) ──────────────────────────
+                        _buildStatusCard(
+                          context: context,
+                          label: 'Status',
+                          value: story.status.isEmpty
+                              ? 'Not set'
+                              : story.status
+                                  .replaceAll('_', ' ')
+                                  .toUpperCase(),
+                          rawStatus: story.status,
+                          primary: primary,
+                          customColors: customColors,
+                        ),
+                        const SizedBox(height: 12),
+        
+                        // ── Group & Module row ───────────────────────────
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildDetailCard(
+                                context: context,
+                                icon: Icons.folder_outlined,
+                                label: 'Group',
+                                value: story.groupName.isEmpty
+                                    ? 'Not set'
+                                    : story.groupName,
+                                customColors: customColors,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildDetailCard(
-                              context: context,
-                              icon: Icons.loop_outlined,
-                              label: 'Sprint',
-                              value: sprintName ??
-                                  (story.sprintId.isEmpty
-                                      ? 'Not set'
-                                      : story.sprintId),
-                              customColors: customColors,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildDetailCard(
+                                context: context,
+                                icon: Icons.view_module_outlined,
+                                label: 'Module',
+                                value: story.moduleName.isEmpty
+                                    ? 'Not set'
+                                    : story.moduleName,
+                                customColors: customColors,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // ── Status (full width) ──────────────────────────
-                      _buildStatusCard(
-                        context: context,
-                        label: 'Status',
-                        value: story.status.isEmpty
-                            ? 'Not set'
-                            : story.status
-                                .replaceAll('_', ' ')
-                                .toUpperCase(),
-                        rawStatus: story.status,
-                        primary: primary,
-                        customColors: customColors,
-                      ),
-                      const SizedBox(height: 12),
-
-                      // ── Group & Module row ───────────────────────────
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildDetailCard(
-                              context: context,
-                              icon: Icons.folder_outlined,
-                              label: 'Group',
-                              value: story.groupName.isEmpty
-                                  ? 'Not set'
-                                  : story.groupName,
-                              customColors: customColors,
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+        
+                        // ── Requirement Type & Billing Type row ──────────
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildDetailCard(
+                                context: context,
+                                icon: Icons.bug_report_outlined,
+                                label: 'Requirement Type',
+                                value: story.requirementType.isEmpty
+                                    ? 'Not set'
+                                    : story.requirementType,
+                                customColors: customColors,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildDetailCard(
-                              context: context,
-                              icon: Icons.view_module_outlined,
-                              label: 'Module',
-                              value: story.moduleName.isEmpty
-                                  ? 'Not set'
-                                  : story.moduleName,
-                              customColors: customColors,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildDetailCard(
+                                context: context,
+                                icon: Icons.receipt_outlined,
+                                label: 'Billing Type',
+                                value: story.billingType.isEmpty
+                                    ? 'Not set'
+                                    : story.billingType,
+                                customColors: customColors,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // ── Requirement Type & Billing Type row ──────────
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildDetailCard(
-                              context: context,
-                              icon: Icons.bug_report_outlined,
-                              label: 'Requirement Type',
-                              value: story.requirementType.isEmpty
-                                  ? 'Not set'
-                                  : story.requirementType,
-                              customColors: customColors,
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+        
+                        // ── Product (full width) ─────────────────────────
+                        _buildDetailCard(
+                          context: context,
+                          icon: Icons.inventory_2_outlined,
+                          label: 'Product',
+                          value: story.zohoProductName.isEmpty
+                              ? 'Not set'
+                              : story.zohoProductName,
+                          customColors: customColors,
+                        ),
+                        const SizedBox(height: 12),
+        
+                        // ── Primary & Secondary Owner row ────────────────
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildDetailCard(
+                                context: context,
+                                icon: Icons.person_pin_outlined,
+                                label: 'Primary Owner',
+                                value: story.primaryOwnership.isEmpty
+                                    ? 'Not set'
+                                    : userIdToName[story.primaryOwnership] ?? story.primaryOwnership,
+                                customColors: customColors,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildDetailCard(
-                              context: context,
-                              icon: Icons.receipt_outlined,
-                              label: 'Billing Type',
-                              value: story.billingType.isEmpty
-                                  ? 'Not set'
-                                  : story.billingType,
-                              customColors: customColors,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildDetailCard(
+                                context: context,
+                                icon: Icons.people_outline,
+                                label: 'Secondary Owner',
+                                value: story.secondaryOwnership.isEmpty
+                                    ? 'Not set'
+                                    : userIdToName[story.secondaryOwnership] ?? story.secondaryOwnership,
+                                customColors: customColors,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // ── Product (full width) ─────────────────────────
-                      _buildDetailCard(
-                        context: context,
-                        icon: Icons.inventory_2_outlined,
-                        label: 'Product',
-                        value: story.zohoProductName.isEmpty
-                            ? 'Not set'
-                            : story.zohoProductName,
-                        customColors: customColors,
-                      ),
-                      const SizedBox(height: 12),
-
-                      // ── Primary & Secondary Owner row ────────────────
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildDetailCard(
-                              context: context,
-                              icon: Icons.person_pin_outlined,
-                              label: 'Primary Owner',
-                              value: story.primaryOwnership.isEmpty
-                                  ? 'Not set'
-                                  : userIdToName[story.primaryOwnership] ?? story.primaryOwnership,
-                              customColors: customColors,
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+        
+                        // ── FI Remarks (full width) ──────────────────────
+                        _buildDetailCard(
+                          context: context,
+                          icon: Icons.comment_outlined,
+                          label: 'FI Remarks',
+                          value: story.fiRemarks.isEmpty
+                              ? 'Not set'
+                              : story.fiRemarks,
+                          customColors: customColors,
+                          maxLines: 4,
+                        ),
+                        const SizedBox(height: 12),
+        
+                        // ── Client Remarks (full width) ──────────────────
+                        _buildDetailCard(
+                          context: context,
+                          icon: Icons.rate_review_outlined,
+                          label: 'Client Remarks',
+                          value: story.clientRemarks.isEmpty
+                              ? 'Not set'
+                              : story.clientRemarks,
+                          customColors: customColors,
+                          maxLines: 4,
+                        ),
+                        const SizedBox(height: 20),
+        
+                        // ── Tasks section header ─────────────────────────
+                        Row(
+                          children: [
+                            Text(
+                              'TASKS',
+                              style: TextStyle(
+                                color: textSecondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.6,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildDetailCard(
-                              context: context,
-                              icon: Icons.people_outline,
-                              label: 'Secondary Owner',
-                              value: story.secondaryOwnership.isEmpty
-                                  ? 'Not set'
-                                  : userIdToName[story.secondaryOwnership] ?? story.secondaryOwnership,
-                              customColors: customColors,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      // ── FI Remarks (full width) ──────────────────────
-                      _buildDetailCard(
-                        context: context,
-                        icon: Icons.comment_outlined,
-                        label: 'FI Remarks',
-                        value: story.fiRemarks.isEmpty
-                            ? 'Not set'
-                            : story.fiRemarks,
-                        customColors: customColors,
-                        maxLines: 4,
-                      ),
-                      const SizedBox(height: 12),
-
-                      // ── Client Remarks (full width) ──────────────────
-                      _buildDetailCard(
-                        context: context,
-                        icon: Icons.rate_review_outlined,
-                        label: 'Client Remarks',
-                        value: story.clientRemarks.isEmpty
-                            ? 'Not set'
-                            : story.clientRemarks,
-                        customColors: customColors,
-                        maxLines: 4,
-                      ),
-                      const SizedBox(height: 20),
-
-                      // ── Tasks section header ─────────────────────────
-                      Row(
-                        children: [
-                          Text(
-                            'TASKS',
-                            style: TextStyle(
-                              color: textSecondary,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.6,
-                            ),
-                          ),
-                          const Spacer(),
-                          if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().contains('manager'))
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                GestureDetector(
-                                  onTap: () async {
-                                    final result = await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => EditStoryPage(
-                                          story: story,
-                                          projectName: projectName,
-                                          sprintName: sprintName,
-                                          epicName: null,
+                            const Spacer(),
+                            if ((ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().trim() == 'super admin' || (ref.watch(activeUserRepositoryProvider)?.roleName ?? '').toLowerCase().contains('manager'))
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  GestureDetector(
+                                    onTap: () async {
+                                      final result = await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => EditStoryPage(
+                                            story: story,
+                                            projectName: projectName,
+                                            sprintName: sprintName,
+                                            epicName: null,
+                                          ),
+                                        ),
+                                      );
+                                      if (result == true) {
+                                        ref.invalidate(_storyDetailsProvider(
+                                            (projectId: projectId, storyId: storyId)));
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: customColors.cardBackground,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: (customColors.primary ?? const Color(0xFF2563EB))
+                                              .withValues(alpha: 0.5),
+                                          width: 1,
                                         ),
                                       ),
-                                    );
-                                    if (result == true) {
-                                      ref.invalidate(_storyDetailsProvider(
-                                          (projectId: projectId, storyId: storyId)));
-                                    }
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: customColors.cardBackground,
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        color: (customColors.primary ?? const Color(0xFF2563EB))
-                                            .withValues(alpha: 0.5),
-                                        width: 1,
+                                      child: Text(
+                                        'Edit Story',
+                                        style: TextStyle(
+                                          color: customColors.primary,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          letterSpacing: 0.1,
+                                        ),
                                       ),
                                     ),
-                                    child: Text(
-                                      'Edit Story',
-                                      style: TextStyle(
+                                  ),
+                                  const SizedBox(width: 8),
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) => AddTaskPage(
+                                            projectId: projectId,
+                                            storyId: story.id,
+                                            storyTitle: story.title,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
                                         color: customColors.primary,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 0.1,
+                                        borderRadius: BorderRadius.circular(10),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: (customColors.primary ??
+                                                    const Color(0xFF2563EB))
+                                                .withValues(alpha: 0.3),
+                                            blurRadius: 3,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
+                                      ),
+                                      child: const Text(
+                                        '+ Add Task',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          letterSpacing: 0.1,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                GestureDetector(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => AddTaskPage(
-                                          projectId: projectId,
-                                          storyId: story.id,
-                                          storyTitle: story.title,
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: customColors.primary,
-                                      borderRadius: BorderRadius.circular(10),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: (customColors.primary ??
-                                                  const Color(0xFF2563EB))
-                                              .withValues(alpha: 0.3),
-                                          blurRadius: 3,
-                                          offset: const Offset(0, 3),
-                                        ),
-                                      ],
-                                    ),
-                                    child: const Text(
-                                      '+ Add Task',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 0.1,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                                ],
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+        
+                        // ── Task tiles ───────────────────────────────────
+                        if (tasks.isEmpty)
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 8),
+                            child: Text(
+                              'No tasks yet',
+                              style: TextStyle(
+                                  color: textSecondary, fontSize: 13),
                             ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-
-                      // ── Task tiles ───────────────────────────────────
-                      if (tasks.isEmpty)
-                        Padding(
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 8),
-                          child: Text(
-                            'No tasks yet',
-                            style: TextStyle(
-                                color: textSecondary, fontSize: 13),
-                          ),
-                        )
-                      else
-        ...tasks.map((task) => _TaskTile(
-              task: task,
-              totalTasks: tasks.length,
-              completedTasks: completedTaskCount,
-              greyBorder: greyBorder,
-              customColors: customColors,
-              isLightMode: isLightMode,
-              projectId: projectId,
-              projectName: projectName,
-              sprintId: story.sprintId,
-              onTaskStatusChanged: () => ref.invalidate(
-                _storyDetailsProvider(
-                  (projectId: projectId, storyId: storyId),
-                ),
-              ),
-            )),
-                    ],
+                          )
+                        else
+          ...tasks.map((task) => _TaskTile(
+                task: task,
+                totalTasks: tasks.length,
+                completedTasks: completedTaskCount,
+                greyBorder: greyBorder,
+                customColors: customColors,
+                isLightMode: isLightMode,
+                projectId: projectId,
+                projectName: projectName,
+                sprintId: story.sprintId,
+                onTaskStatusChanged: () => ref.invalidate(
+                  _storyDetailsProvider(
+                    (projectId: projectId, storyId: storyId),
                   ),
-                );
-              },
+                ),
+              )),
+                      ],
+                    ),
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -41,10 +41,10 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
   late TextEditingController _startTimeController;
   late TextEditingController _endTimeController;
   late TextEditingController _noteController;
-  
+
   String? _selectedType;
   final List<String> _typeOptions = ['Billable', 'Non-Billable'];
-  
+
   DateTime? _selectedDate;
 
   final isRunning = TimerService.instance.isRunning;
@@ -60,18 +60,20 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
     _repository = TimeEntryRepository();
     final firstName = AuthManager.instance.currentUser?.firstName ?? '';
     final lastName = AuthManager.instance.currentUser?.lastName ?? '';
-    final loggedInUser = '$firstName $lastName'.trim().isNotEmpty ? '$firstName $lastName'.trim() : widget.currentUser;
+    final loggedInUser = '$firstName $lastName'.trim().isNotEmpty
+        ? '$firstName $lastName'.trim()
+        : widget.currentUser;
     _userController = TextEditingController(text: loggedInUser);
     _dateController = TextEditingController();
     _startTimeController = TextEditingController();
     _endTimeController = TextEditingController();
     _noteController = TextEditingController();
-    
+
     _selectedType = 'Non-Billable';
     _selectedDate = DateTime.now();
-    
+
     _dateController.text = DateFormat('dd-MM-yyyy').format(_selectedDate!);
-    
+
     // If editing, populate fields with existing entry data
     if (widget.editingEntry != null) {
       final entry = widget.editingEntry!;
@@ -83,7 +85,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
       _noteController.text = entry.note;
       _userController.text = loggedInUser;
     }
-    
+
     // Fetch existing time entries to see the structure
     _fetchExistingTimeEntries();
     // Sync timer state from server in case app was restarted while timer was running
@@ -96,12 +98,16 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
     try {
       final userId = AuthManager.instance.currentUser?.id ?? '';
       if (userId.isEmpty) return;
-      final status = await CheckTimerStatusRepository().checkTimerStatus(userId);
+      final status = await CheckTimerStatusRepository().checkTimerStatus(
+        userId,
+      );
       final message = (status['message'] ?? '').toString().toLowerCase();
       final isRunning = message.contains('running') && !message.contains('not');
       if (isRunning) {
         final startTimeStr = (status['startTime'] ?? '').toString();
-        final serverStart = DateTime.tryParse(startTimeStr.replaceFirst(' ', 'T'));
+        final serverStart = DateTime.tryParse(
+          startTimeStr.replaceFirst(' ', 'T'),
+        );
         if (serverStart != null) {
           TimerService.instance.restoreFromServer(serverStart);
         }
@@ -110,6 +116,8 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
       debugPrint('⏱️ Could not sync timer from server: $e');
     }
   }
+
+  String get _projectIdForRequests => widget.projectId.trim();
 
   /// Convert TimeOfDay to 12-hour AM/PM format (e.g., "3:35 PM")
   String _timeOfDayToAMPM(TimeOfDay time) {
@@ -125,7 +133,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
       final format = DateFormat('h:mm a');
       final startTime = format.parse(startTimeAMPM);
       final endTime = format.parse(endTimeAMPM);
-      
+
       Duration duration = endTime.difference(startTime);
       if (duration.isNegative) {
         // If end time is before start time, assume next day
@@ -140,25 +148,37 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
 
   Future<void> _fetchExistingTimeEntries() async {
     try {
-      debugPrint('🔍 Fetching existing time entries for project: ${widget.projectId}');
-      final entries = await _repository.getTimeEntriesByProject(widget.projectId);
+      debugPrint(
+        '🔍 Fetching existing time entries for project: ${widget.projectId}',
+      );
+      final entries = await _repository.getTimeEntriesByProject(
+        widget.projectId,
+      );
       setState(() {
         _existingEntries = entries;
       });
     } catch (e) {
-      debugPrint('❌ Error fetching time entries (this is just for debugging): $e');
+      debugPrint(
+        '❌ Error fetching time entries (this is just for debugging): $e',
+      );
     }
   }
 
-  bool _hasTimeOverlap(String newStart, String newEnd, DateTime newDate, {String? excludeEntryId}) {
+  bool _hasTimeOverlap(
+    String newStart,
+    String newEnd,
+    DateTime newDate, {
+    String? excludeEntryId,
+  }) {
     try {
       final format = DateFormat('h:mm a');
       final newStartTime = format.parse(newStart);
       final newEndTime = format.parse(newEnd);
 
-      final allEntries = [..._existingEntries, ..._timeEntries]
-          .where((e) => e.id != excludeEntryId)
-          .toList();
+      final allEntries = [
+        ..._existingEntries,
+        ..._timeEntries,
+      ].where((e) => e.id != excludeEntryId).toList();
 
       for (final entry in allEntries) {
         if (entry.date.year == newDate.year &&
@@ -166,7 +186,8 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
             entry.date.day == newDate.day) {
           final entryStart = format.parse(entry.startTime);
           final entryEnd = format.parse(entry.endTime);
-          if (newStartTime.isBefore(entryEnd) && newEndTime.isAfter(entryStart)) {
+          if (newStartTime.isBefore(entryEnd) &&
+              newEndTime.isAfter(entryStart)) {
             return true;
           }
         }
@@ -183,7 +204,11 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
         content: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Icon(Icons.warning_amber_rounded, color: Colors.white, size: 22),
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -247,7 +272,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
     final customColors = Theme.of(context).custom;
     final DateTime today = DateTime.now();
     final DateTime sevenDaysAgo = today.subtract(const Duration(days: 6));
-    
+
     final DateTime? pickedDate = await showDatePicker(
       context: context,
       initialDate: _selectedDate ?? DateTime.now(),
@@ -279,7 +304,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
         );
         return;
       }
-      
+
       setState(() {
         _selectedDate = pickedDate;
         _dateController.text = DateFormat('dd-MM-yyyy').format(pickedDate);
@@ -320,7 +345,18 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
   }
 
   Future<void> _addTimeEntry() async {
-        final customColors = Theme.of(context).custom;
+    final customColors = Theme.of(context).custom;
+    final projectId = _projectIdForRequests;
+
+    if (projectId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Project ID is missing. Please reopen the task.'),
+          backgroundColor: customColors.error,
+        ),
+      );
+      return;
+    }
 
     if (_startTimeController.text.isEmpty || _endTimeController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -360,7 +396,12 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
     // Check for overlapping entries
     final checkDate = _selectedDate ?? DateTime.now();
     final excludeId = widget.editingEntry?.id;
-    if (_hasTimeOverlap(_startTimeController.text, _endTimeController.text, checkDate, excludeEntryId: excludeId)) {
+    if (_hasTimeOverlap(
+      _startTimeController.text,
+      _endTimeController.text,
+      checkDate,
+      excludeEntryId: excludeId,
+    )) {
       _showOverlapSnackbar();
       return;
     }
@@ -369,14 +410,14 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
     if (widget.editingEntry != null) {
       try {
         setState(() => _isLoading = true);
-        
+
         // Calculate total time in minutes
         final totalMinutes = _calculateTotalMinutes(
           _startTimeController.text,
           _endTimeController.text,
         );
         debugPrint('⏱️ Calculated total minutes: $totalMinutes');
-        
+
         final updatedEntry = await _repository.updateTimeEntry(
           timeEntryId: widget.editingEntry!.id,
           startTime: _startTimeController.text,
@@ -385,10 +426,10 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
           description: _noteController.text,
           totalMinutes: totalMinutes,
         );
-        
+
         debugPrint('✅ Time entry updated successfully');
         Navigator.pop(context, updatedEntry);
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Time entry updated'),
@@ -412,7 +453,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
     // Create new entry via API immediately
     try {
       setState(() => _isLoading = true);
-      
+
       final userId = AuthManager.instance.currentUser?.id ?? '';
       final firstName = AuthManager.instance.currentUser?.firstName ?? '';
       final lastName = AuthManager.instance.currentUser?.lastName ?? '';
@@ -420,7 +461,6 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
       if (userId.isEmpty || username.isEmpty) {
         throw Exception('User information not found');
       }
-
 
       // Calculate total time in minutes
       final totalMinutes = _calculateTotalMinutes(
@@ -431,7 +471,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
 
       final createdEntry = await _repository.createTimeEntry(
         taskId: widget.taskId,
-        projectId: widget.projectId,
+        projectId: projectId,
         userId: userId,
         username: username,
         taskName: widget.taskName,
@@ -445,7 +485,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
       );
 
       debugPrint('✅ Time entry created successfully');
-      
+
       // Add to local list for instant display
       setState(() {
         _timeEntries.add(createdEntry);
@@ -476,6 +516,17 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
   Future<void> _startServerTimer() async {
     final customColors = Theme.of(context).custom;
     final timer = TimerService.instance;
+    final projectId = _projectIdForRequests;
+
+    if (projectId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please Reopen Tasks and Try again'),
+          backgroundColor: customColors.error,
+        ),
+      );
+      return;
+    }
 
     if (timer.isRunning) {
       Navigator.push(
@@ -489,12 +540,11 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
           ),
         ),
       ).then((_) {
-  // This runs when you pop back to the parent page
-  // Call your data reload methods here
-  _fetchExistingTimeEntries(); // or whatever method reloads your data
-  _syncTimerFromServer();
-  
-});
+        // This runs when you pop back to the parent page
+        // Call your data reload methods here
+        _fetchExistingTimeEntries(); // or whatever method reloads your data
+        _syncTimerFromServer();
+      });
       return;
     }
 
@@ -510,18 +560,14 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
         username: username,
         taskId: widget.taskId,
         taskName: widget.taskName,
-        projectId: widget.projectId,
+        projectId: projectId,
         projectName: widget.projectName,
         entryDate: DateTime.now(),
       );
 
       timer.startLocal();
-       await _fetchExistingTimeEntries();
-        await _syncTimerFromServer();
-
-
-
-
+      await _fetchExistingTimeEntries();
+      await _syncTimerFromServer();
     } catch (e) {
       debugPrint('❌ Error starting server timer: $e');
       if (mounted) {
@@ -557,7 +603,7 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
 
   //   try {
   //     setState(() => _isLoading = true);
-      
+
   //     final userId = AuthManager.instance.currentUser?.id ?? '';
   //     if (userId.isEmpty) {
   //       throw Exception('User ID not found');
@@ -585,10 +631,10 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
   //     }
 
   //     debugPrint('✅ All time entries submitted successfully');
-      
+
   //     // Refresh the list to show newly added entries
   //     await _fetchExistingTimeEntries();
-      
+
   //     // Clear the form
   //     setState(() {
   //       _timeEntries.clear();
@@ -596,9 +642,9 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
   //       _endTimeController.clear();
   //       _noteController.clear();
   //     });
-      
+
   //     Navigator.pop(context, submittedEntries);
-      
+
   //     ScaffoldMessenger.of(context).showSnackBar(
   //       SnackBar(
   //         content: Text('${submittedEntries.length} time entries submitted'),
@@ -631,20 +677,20 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
             title: '${widget.taskName} - Time Entries',
             onBack: () => Navigator.of(context).pop(),
             actionIcon: Icons.timer_outlined,
-              onInfoTap: () {
-                 Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => TimeEntriesScreen(
-                            taskId: widget.taskId,
-                            projectId: widget.projectId,
-                            taskName: widget.taskName,
-                            projectName: widget.projectName,
-                            timeEntries: _timeEntries,
-                          ),
-                        ),
-                      );
-              },
+            onInfoTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TimeEntriesScreen(
+                    taskId: widget.taskId,
+                    projectId: widget.projectId,
+                    taskName: widget.taskName,
+                    projectName: widget.projectName,
+                    timeEntries: _timeEntries,
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -667,13 +713,23 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
 
               // Date field
               InkWell(
-                onTap: TimerService.instance.isRunning ? null : () => _selectDate(context),
+                onTap: TimerService.instance.isRunning
+                    ? null
+                    : () => _selectDate(context),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 7,
+                  ),
                   decoration: BoxDecoration(
-                    color: TimerService.instance.isRunning ? customColors.cardBackground!.withOpacity(0.5) : customColors.cardBackground,
+                    color: TimerService.instance.isRunning
+                        ? customColors.cardBackground!.withOpacity(0.5)
+                        : customColors.cardBackground,
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: customColors.inputBorder!, width: 1.5),
+                    border: Border.all(
+                      color: customColors.inputBorder!,
+                      width: 1.5,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.05),
@@ -684,7 +740,11 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.calendar_today_outlined, color: customColors.textSecondary, size: 20),
+                      Icon(
+                        Icons.calendar_today_outlined,
+                        color: customColors.textSecondary,
+                        size: 20,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -702,7 +762,9 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                             Text(
                               _selectedDate == null
                                   ? 'Select date'
-                                  : DateFormat('dd-MM-yyyy').format(_selectedDate!),
+                                  : DateFormat(
+                                      'dd-MM-yyyy',
+                                    ).format(_selectedDate!),
                               style: TextStyle(
                                 color: _selectedDate == null
                                     ? customColors.textHint
@@ -725,13 +787,23 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                 children: [
                   Expanded(
                     child: InkWell(
-                      onTap: TimerService.instance.isRunning ? null : () => _selectTime(context, true),
+                      onTap: TimerService.instance.isRunning
+                          ? null
+                          : () => _selectTime(context, true),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 7,
+                        ),
                         decoration: BoxDecoration(
-                          color: TimerService.instance.isRunning ? customColors.cardBackground!.withOpacity(0.5) : customColors.cardBackground,
+                          color: TimerService.instance.isRunning
+                              ? customColors.cardBackground!.withOpacity(0.5)
+                              : customColors.cardBackground,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: customColors.inputBorder!, width: 1.5),
+                          border: Border.all(
+                            color: customColors.inputBorder!,
+                            width: 1.5,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
@@ -742,7 +814,11 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.access_time_outlined, color: customColors.textSecondary, size: 20),
+                            Icon(
+                              Icons.access_time_outlined,
+                              color: customColors.textSecondary,
+                              size: 20,
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -780,13 +856,23 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: InkWell(
-                      onTap: TimerService.instance.isRunning ? null : () => _selectTime(context, false),
+                      onTap: TimerService.instance.isRunning
+                          ? null
+                          : () => _selectTime(context, false),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 7,
+                        ),
                         decoration: BoxDecoration(
-                          color: TimerService.instance.isRunning ? customColors.cardBackground!.withOpacity(0.5) : customColors.cardBackground,
+                          color: TimerService.instance.isRunning
+                              ? customColors.cardBackground!.withOpacity(0.5)
+                              : customColors.cardBackground,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: customColors.inputBorder!, width: 1.5),
+                          border: Border.all(
+                            color: customColors.inputBorder!,
+                            width: 1.5,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.05),
@@ -797,7 +883,11 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                         ),
                         child: Row(
                           children: [
-                            Icon(Icons.access_time_outlined, color: customColors.textSecondary, size: 20),
+                            Icon(
+                              Icons.access_time_outlined,
+                              color: customColors.textSecondary,
+                              size: 20,
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -839,13 +929,15 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
               // Type field
               DropdownButtonFormField<String>(
                 value: _selectedType,
-               
+
                 hint: Text(
                   'Type',
                   style: TextStyle(color: customColors.textHint),
                 ),
                 style: TextStyle(
-                  color: TimerService.instance.isRunning ? customColors.textPrimary!.withValues(alpha: 0.5) : customColors.textPrimary,
+                  color: TimerService.instance.isRunning
+                      ? customColors.textPrimary!.withValues(alpha: 0.5)
+                      : customColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                 ),
@@ -859,31 +951,41 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                   ),
                   filled: true,
                   fillColor: customColors.cardBackground,
-                  prefixIcon: Icon(Icons.category_outlined, color: customColors.textSecondary),
+                  prefixIcon: Icon(
+                    Icons.category_outlined,
+                    color: customColors.textSecondary,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: customColors.inputBorder!, width: 1.5),
+                    borderSide: BorderSide(
+                      color: customColors.inputBorder!,
+                      width: 1.5,
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide(color: customColors.inputBorder!, width: 1.5),
+                    borderSide: BorderSide(
+                      color: customColors.inputBorder!,
+                      width: 1.5,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
                     borderSide: BorderSide(color: Colors.grey[400]!, width: 2),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 12,
+                  ),
                 ),
                 items: _typeOptions.map((type) {
-                  return DropdownMenuItem(
-                    value: type,                    
-                    child: Text(type),
-                    
-                    );
+                  return DropdownMenuItem(value: type, child: Text(type));
                 }).toList(),
-                onChanged: TimerService.instance.isRunning ? null : (value) {
-                  setState(() => _selectedType = value);
-                },
+                onChanged: TimerService.instance.isRunning
+                    ? null
+                    : (value) {
+                        setState(() => _selectedType = value);
+                      },
               ),
               const SizedBox(height: 20),
 
@@ -897,10 +999,10 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                 minLines: 4,
                 maxLength: 700,
                 prefixIcon: Icons.description_outlined,
-                enabled: TimerService.instance.isRunning ?false : true,
+                enabled: TimerService.instance.isRunning ? false : true,
               ),
               const SizedBox(height: 8),
-              
+
               // Character count display
               Align(
                 alignment: Alignment.centerRight,
@@ -940,46 +1042,53 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                       ),
                       child: ListenableBuilder(
                         listenable: TimerService.instance,
-                        builder: (context, _){
-                          
+                        builder: (context, _) {
                           return ElevatedButton(
-                          onPressed: (_isLoading || TimerService.instance.isRunning) ? null : _addTimeEntry,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: customColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
+                            onPressed:
+                                (_isLoading || TimerService.instance.isRunning)
+                                ? null
+                                : _addTimeEntry,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: customColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              elevation: 0,
                             ),
-                            elevation: 0,
-                          ),
-                          child: _isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : Text(
+                                    widget.editingEntry != null
+                                        ? 'SAVE'
+                                        : 'ADD',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      letterSpacing: 0.5,
+                                    ),
                                   ),
-                                )
-                              : Text(
-                                  widget.editingEntry != null ? 'SAVE' : 'ADD',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                        );
+                          );
                         },
-                       
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: customColors.error,
                         side: BorderSide(color: customColors.error!, width: 2),
@@ -1026,7 +1135,9 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                             ),
                           ),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: isRunning ? Colors.red : Colors.green[700],
+                            backgroundColor: isRunning
+                                ? Colors.red
+                                : Colors.green[700],
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(
@@ -1041,14 +1152,23 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: (_isLoading || TimerService.instance.isRunning) ? null : () {
-                        
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>RequestTimeEntriesScreen(currentUser: widget.currentUser, projectId: widget.projectId, projectName: widget.projectName, taskId: widget.taskId, taskName: widget.taskName,)));
-                        
-
-                       
-                        
-                      },
+                      onPressed: (_isLoading || TimerService.instance.isRunning)
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      RequestTimeEntriesScreen(
+                                        currentUser: widget.currentUser,
+                                        projectId: widget.projectId,
+                                        projectName: widget.projectName,
+                                        taskId: widget.taskId,
+                                        taskName: widget.taskName,
+                                      ),
+                                ),
+                              );
+                            },
                       icon: const Icon(Icons.send_outlined, size: 18),
                       label: const Text(
                         'REQUEST',
@@ -1090,7 +1210,6 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
                     )
                   else
                     const Spacer(),
-                  
                 ],
               ),
               const SizedBox(height: 12),

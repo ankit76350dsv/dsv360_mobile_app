@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:dsv360/core/constants/theme.dart';
+import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/sprints/viewmodel/timer_viewmodel.dart';
 import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
@@ -66,9 +67,8 @@ class _StopTimerPageState extends ConsumerState<StopTimerPage> {
 
   Future<void> _stopTimer() async {
     if (_noteController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add a note before stopping')),
-      );
+      
+      showErrorSnackBar(context, 'Please add a note before stopping');
       return;
     }
 

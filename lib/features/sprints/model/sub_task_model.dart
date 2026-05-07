@@ -37,15 +37,27 @@ class SubTaskModel {
   });
 
   factory SubTaskModel.fromJson(Map<String, dynamic> json) {
-    final storyIdValue =
-      json['StoryID'] ?? json['Story_ID'] ?? json['StoryId'];
+    final storyIdValue = json['StoryID'] ?? json['Story_ID'] ?? json['StoryId'];
     final storyId = storyIdValue == null
-      ? ''
-      : storyIdValue.toString().trim().toLowerCase() == 'null'
+        ? ''
+        : storyIdValue.toString().trim().toLowerCase() == 'null'
         ? ''
         : storyIdValue.toString();
+
+    final rowIdValue =
+        json['ROWID'] ??
+        json['SubTaskID'] ??
+        json['Sub_Task_ID'] ??
+        json['SubTaskId'] ??
+        json['id'];
+    final rowId = rowIdValue == null
+        ? ''
+        : rowIdValue.toString().trim().toLowerCase() == 'null'
+        ? ''
+        : rowIdValue.toString();
+
     return SubTaskModel(
-      rowId: json['ROWID']?.toString() ?? '',
+      rowId: rowId,
       title: json['Title']?.toString() ?? '',
       description: json['Description']?.toString() ?? '',
       status: json['Status']?.toString() ?? '',
@@ -58,9 +70,8 @@ class SubTaskModel {
       orgId: json['OrgID']?.toString() ?? '',
       assigneeId: json['AssigneeID']?.toString() ?? '',
 
-      estimatedHours: double.tryParse(
-        json['EstimatedHours']?.toString() ?? '0'
-      ) ?? 0,
+      estimatedHours:
+          double.tryParse(json['EstimatedHours']?.toString() ?? '0') ?? 0,
 
       dueDate: json['DueDate'] != null
           ? DateTime.tryParse(json['DueDate'])

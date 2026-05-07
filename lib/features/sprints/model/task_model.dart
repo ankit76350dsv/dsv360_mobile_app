@@ -1,5 +1,6 @@
 class TaskModel {
   final String id;
+  final String sprintTaskId;
   final String title;
   final String description;
   final String storyId;
@@ -10,6 +11,7 @@ class TaskModel {
 
   TaskModel({
     required this.id,
+    required this.sprintTaskId,
     required this.title,
     required this.description,
     required this.storyId,
@@ -20,15 +22,38 @@ class TaskModel {
   });
 
   factory TaskModel.fromJson(Map<String, dynamic> json) {
-    final storyIdValue =
-        json['StoryID'] ?? json['Story_ID'] ?? json['StoryId'];
+    final storyIdValue = json['StoryID'] ?? json['Story_ID'] ?? json['StoryId'];
     final storyId = storyIdValue == null
         ? ''
         : storyIdValue.toString().trim().toLowerCase() == 'null'
-            ? ''
-            : storyIdValue.toString();
+        ? ''
+        : storyIdValue.toString();
+
+    final idValue =
+        json['ROWID'] ??
+        json['TaskID'] ??
+        json['Task_ID'] ??
+        json['TaskId'] ??
+        json['id'];
+    final id = idValue == null
+        ? ''
+        : idValue.toString().trim().toLowerCase() == 'null'
+        ? ''
+        : idValue.toString();
+
+    final sprintTaskIdValue =
+        json['Sprint_Task_ID'] ??
+        json['SprintTaskID'] ??
+        json['SprintTaskId'];
+    final sprintTaskId = sprintTaskIdValue == null
+        ? ''
+        : sprintTaskIdValue.toString().trim().toLowerCase() == 'null'
+        ? ''
+        : sprintTaskIdValue.toString();
+
     return TaskModel(
-      id: json['ROWID'] ?? '',
+      id: id,
+      sprintTaskId: sprintTaskId.isNotEmpty ? sprintTaskId : id,
       title: json['Title'] ?? '',
       description: json['Description'] ?? '',
       storyId: storyId,

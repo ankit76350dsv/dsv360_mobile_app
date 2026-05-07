@@ -34,13 +34,32 @@ class Task {
   List<dynamic>? get attachmentsForCreation => _attachmentsForCreation;
 
   factory Task.fromJson(Map<String, dynamic> json) {
+    final projectIdValue =
+        json['ProjectID'] ??
+        json['Project_ID'] ??
+        json['ProjectId'] ??
+        json['projectId'];
+    final projectId = projectIdValue == null
+        ? ''
+        : projectIdValue.toString().trim().toLowerCase() == 'null'
+        ? ''
+        : projectIdValue.toString();
+
+    final projectNameValue =
+        json['Project_Name'] ?? json['ProjectName'] ?? json['projectName'];
+    final projectName = projectNameValue == null
+        ? ''
+        : projectNameValue.toString().trim().toLowerCase() == 'null'
+        ? ''
+        : projectNameValue.toString();
+
     return Task(
       taskName: json['Task_Name']?.toString() ?? "",
       taskId: json['ROWID']?.toString() ?? "",
       description: json['Description']?.toString() ?? "",
       status: json['Status']?.toString() ?? "",
-      projectId: json['ProjectID']?.toString() ?? "",
-      projectName: json['Project_Name']?.toString() ?? "",
+      projectId: projectId,
+      projectName: projectName,
       assignedTo: json['Assign_To']?.toString() ?? "",
       assignedToId: json['Assign_To_ID']?.toString() ?? "",
       startDate: _parseDate(json['Start_Date']),
@@ -60,7 +79,11 @@ class Task {
     if (files == null) return [];
     if (files is List) return List<String>.from(files);
     if (files is String && files.isNotEmpty) {
-      return files.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+      return files
+          .split(',')
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
     }
     return [];
   }
