@@ -327,7 +327,7 @@ class _WorkLogScreenState extends ConsumerState<WorkLogScreen> {
         const Spacer(),
         GestureDetector(
           onTap: (){
-            showErrorSnackBar(context, 'Add Work Logs through Tasks');
+            showSuccessSnackBar(context, 'Add Work Logs through Tasks');
             Navigator.push(context, MaterialPageRoute(builder: (context)=>TasksScreen()));
           },
           child: Container(

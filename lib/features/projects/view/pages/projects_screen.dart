@@ -246,7 +246,7 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                   
                             // Search Bar
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              padding: const EdgeInsets.fromLTRB(16,0,16,8),
                               child: CustomSearchBar(
                                 controller: _searchController,
                                 hintText: 'Search Projects',
