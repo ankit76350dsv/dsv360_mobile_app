@@ -14,7 +14,7 @@ import 'package:dsv360/features/dashboard/view/widgets/TopHeader.dart';
 import 'package:dsv360/features/profile/view/pages/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:dsv360/features/profile/cache/image_cache_service.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -27,6 +27,12 @@ class DashboardPage extends StatelessWidget {
 
 class _DashboardScaffold extends ConsumerWidget {
   const _DashboardScaffold();
+
+  Future<ImageProvider?> _getCachedProfileImage() async {
+    final file = await ImageCacheService.cachedFileIfExists('cached_profile_image.jpg');
+    if (file != null) return FileImage(file);
+    return null;
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -88,19 +94,34 @@ class _DashboardScaffold extends ConsumerWidget {
                 context,
               ).push(MaterialPageRoute(builder: (_) => const ProfilePage()));
             },
-            icon: userProfile?.profileLink != null &&
-                    userProfile!.profileLink.isNotEmpty
-                ? SizedBox(
+            icon: FutureBuilder<ImageProvider?>(
+              future: _getCachedProfileImage(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data != null) {
+                  return SizedBox(
+                    width: 30,
+                    height: 30,
+                    child: CircleAvatar(
+                      backgroundImage: snapshot.data,
+                    ),
+                  );
+                }
+                if (userProfile?.profileLink != null &&
+                    userProfile!.profileLink.isNotEmpty) {
+                  return SizedBox(
                     width: 30,
                     height: 30,
                     child: CircleAvatar(
                       backgroundImage: NetworkImage(userProfile.profileLink),
                     ),
-                  )
-                : Icon(
-                    Icons.account_circle_outlined,
-                    color: customColors.textPrimary,
-                  ),
+                  );
+                }
+                return Icon(
+                  Icons.account_circle_outlined,
+                  color: customColors.textPrimary,
+                );
+              },
+            ),
           ),
         ],
       ),

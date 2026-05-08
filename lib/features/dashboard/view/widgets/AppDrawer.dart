@@ -21,9 +21,16 @@ import 'package:dsv360/features/ai/views/pages/dsv_ai_page.dart';
 import 'package:dsv360/features/feedback/view/pages/feedbacks_screen.dart';
 import 'package:dsv360/features/feedback/view/pages/feedback_form_screen.dart';
 import 'package:dsv360/features/settings/views/pages/settings_page.dart';
+import 'package:dsv360/features/profile/cache/image_cache_service.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
+
+  Future<ImageProvider?> _getCachedProfileImage() async {
+    final file = await ImageCacheService.cachedFileIfExists('cached_profile_image.jpg');
+    if (file != null) return FileImage(file);
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -381,14 +388,23 @@ class AppDrawer extends StatelessWidget {
         children: [
           Stack(
             children: [
-              CircleAvatar(
-                radius: 36,
-                backgroundImage:
-                    (userProfile?.profileLink != null &&
-                        userProfile!.profileLink.isNotEmpty)
-                    ? NetworkImage(userProfile.profileLink)
-                    : const AssetImage("assets/icons/profile.png")
-                          as ImageProvider,
+              FutureBuilder<ImageProvider?>(
+                future: _getCachedProfileImage(),
+                builder: (context, snapshot) {
+                  ImageProvider? imageProvider;
+                  if (snapshot.hasData && snapshot.data != null) {
+                    imageProvider = snapshot.data;
+                  } else if (userProfile?.profileLink != null &&
+                      userProfile!.profileLink.isNotEmpty) {
+                    imageProvider = NetworkImage(userProfile.profileLink);
+                  } else {
+                    imageProvider = const AssetImage("assets/icons/profile.png");
+                  }
+                  return CircleAvatar(
+                    radius: 36,
+                    backgroundImage: imageProvider,
+                  );
+                },
               ),
               Positioned(
                 bottom: 2,

@@ -5,6 +5,7 @@ import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/profile/view/widgets/profile_crop_image_page.dart';
 import 'package:dsv360/features/profile/viewmodel/profile_viewmodel.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:dsv360/features/profile/view/widgets/about_me.dart';
 import 'package:dsv360/core/welcome/welcome_page.dart';
@@ -13,6 +14,8 @@ import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:io';
+import 'package:dsv360/features/profile/cache/image_cache_service.dart';
+
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -24,8 +27,13 @@ class ProfilePage extends ConsumerStatefulWidget {
 class _ProfilePageState extends ConsumerState<ProfilePage> {
   bool _isUploading = false;
   bool _isBannerUploading = false;
-  String? _profileImageUrl;
-  String? _bannerImageUrl;
+  int _cacheVersion = 0;
+
+  // Cache filenames
+  static const _kProfileCacheFile = 'cached_profile_image.jpg';
+  static const _kBannerCacheFile = 'cached_banner_image.jpg';
+  static const _kProfileCachedUrlKey = 'profile_cached_remote_url';
+  static const _kBannerCachedUrlKey = 'banner_cached_remote_url';
 
   ProfileViewModel get _viewModel => ref.read(profileViewModelProvider);
 
@@ -33,8 +41,64 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   void initState() {
     super.initState();
     final userProfile = UserManager.instance.userProfile;
-    _profileImageUrl = userProfile?.profileLink;
-    _bannerImageUrl = userProfile?.coverLink;
+    // attempt to load cached images; if cache is empty and remote urls exist,
+    // download once and save to private storage for subsequent usage.
+    _loadCachedImages(userProfile?.profileLink, userProfile?.coverLink);
+  }
+
+  // Cache operations are provided by ImageCacheService
+
+  Future<void> _loadCachedImages(String? profileUrl, String? bannerUrl) async {
+    // Get the previously cached URLs
+    final prevProfileUrl = await ImageCacheService.getCachedRemoteUrl(_kProfileCachedUrlKey);
+    final prevBannerUrl = await ImageCacheService.getCachedRemoteUrl(_kBannerCachedUrlKey);
+
+    // Check if URLs have changed
+    final profileChanged = profileUrl != prevProfileUrl;
+    final bannerChanged = bannerUrl != prevBannerUrl;
+
+    // Only sync if something changed
+    if (profileChanged) {
+      await ImageCacheService.syncCacheByUrlPolicy(
+        remoteUrl: profileUrl,
+        cacheFile: _kProfileCacheFile,
+        cachedUrlKey: _kProfileCachedUrlKey,
+      );
+    }
+
+    if (bannerChanged) {
+      await ImageCacheService.syncCacheByUrlPolicy(
+        remoteUrl: bannerUrl,
+        cacheFile: _kBannerCacheFile,
+        cachedUrlKey: _kBannerCachedUrlKey,
+      );
+    }
+
+    if (!mounted) return;
+
+    // Only update UI if something actually changed
+    if (profileChanged || bannerChanged) {
+      if (profileChanged) {
+        final profileFile = await ImageCacheService.cachedFileIfExists(_kProfileCacheFile);
+        await ImageCacheService.evictCachedImageProvider(profileFile?.path);
+      }
+      if (bannerChanged) {
+        final bannerFile = await ImageCacheService.cachedFileIfExists(_kBannerCacheFile);
+        await ImageCacheService.evictCachedImageProvider(bannerFile?.path);
+      }
+
+      setState(() {
+        _cacheVersion++;
+      });
+    }
+  }
+
+  Future<String?> _extractUrlFromResponse(dynamic data, String key) async {
+    if (data is Map && data[key] != null) {
+      final url = data[key].toString();
+      if (url.isNotEmpty) return url;
+    }
+    return null;
   }
 
   Future<String> _resolveUserId() async {
@@ -45,14 +109,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final refreshed = await _viewModel.fetchUserProfile(userId);
     if (!mounted || refreshed == null) return;
 
-    setState(() {
-      if (refreshed.profileLink.isNotEmpty) {
-        _profileImageUrl = refreshed.profileLink;
-      }
-      if (refreshed.coverLink.isNotEmpty) {
-        _bannerImageUrl = refreshed.coverLink;
-      }
-    });
+    // Keep cache as the source of truth for UI images.
+    // This prevents fresh uploads from being overwritten by remote URLs.
+    await _loadCachedImages(refreshed.profileLink, refreshed.coverLink);
   }
 
   /// Crops the profile image
@@ -110,16 +169,36 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       debugPrint('Response data: ${response.data}');
 
       if (mounted) {
-        final responseUrl = (response.data is Map)
-            ? (response.data['profileURL'] ?? '').toString()
-            : '';
-        setState(() {
-          _profileImageUrl = responseUrl.isNotEmpty ? responseUrl : croppedFile.path;
-        });
+        // After upload: fetch server image into cache, then show from cache instantly
+        try {
+          String? serverProfileUrl = await _extractUrlFromResponse(
+            response.data,
+            'profileURL',
+          );
 
-        await _refreshProfileAndSyncImages(userId);
+          if (serverProfileUrl == null || serverProfileUrl.isEmpty) {
+            final refreshed = await _viewModel.fetchUserProfile(userId);
+            serverProfileUrl = refreshed?.profileLink;
+          }
 
-        
+          // Sync from server URL into cache
+          final saved = await ImageCacheService.syncCacheByUrlPolicy(
+            remoteUrl: serverProfileUrl,
+            cacheFile: _kProfileCacheFile,
+            cachedUrlKey: _kProfileCachedUrlKey,
+          );
+
+          // Update UI instantly from cached file
+          if (mounted && saved != null) {
+            await ImageCacheService.evictCachedImageProvider(saved.path);
+            setState(() {
+              _cacheVersion++;
+            });
+          }
+        } catch (e) {
+          debugPrint('Profile cache sync after upload failed: $e');
+        }
+
         showSuccessSnackBar(context, 'Profile image updated successfully!');
       }
     } catch (e) {
@@ -159,18 +238,36 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       debugPrint('Banner upload response: ${response.data}');
 
       if (mounted) {
-        final responseCoverUrl = (response.data is Map)
-            ? (response.data['coverURL'] ?? '').toString()
-            : '';
-        setState(() {
-          _bannerImageUrl = responseCoverUrl.isNotEmpty
-              ? responseCoverUrl
-              : image.path;
-        });
+        // After upload: fetch server image into cache, then show from cache instantly
+        try {
+          String? serverBannerUrl = await _extractUrlFromResponse(
+            response.data,
+            'coverURL',
+          );
 
-        await _refreshProfileAndSyncImages(userId);
+          if (serverBannerUrl == null || serverBannerUrl.isEmpty) {
+            final refreshed = await _viewModel.fetchUserProfile(userId);
+            serverBannerUrl = refreshed?.coverLink;
+          }
 
-       
+          // Sync from server URL into cache
+          final saved = await ImageCacheService.syncCacheByUrlPolicy(
+            remoteUrl: serverBannerUrl,
+            cacheFile: _kBannerCacheFile,
+            cachedUrlKey: _kBannerCachedUrlKey,
+          );
+
+          // Update UI instantly from cached file
+          if (mounted && saved != null) {
+            await ImageCacheService.evictCachedImageProvider(saved.path);
+            setState(() {
+              _cacheVersion++;
+            });
+          }
+        } catch (e) {
+          debugPrint('Banner cache sync after upload failed: $e');
+        }
+
         showSuccessSnackBar(context, 'Banner image updated successfully!');
       }
     } catch (e) {
@@ -226,33 +323,49 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             SizedBox(
                               height: 200,
                               width: double.infinity,
-                              child: DecoratedBox(
-                                decoration: BoxDecoration(
-                                  image: DecorationImage(
-                                    image: _bannerImageUrl != null
-                                        ? (_bannerImageUrl!.startsWith('http')
-                                            ? NetworkImage(_bannerImageUrl!)
-                                            : FileImage(File(_bannerImageUrl!)))
-                                            as ImageProvider
-                                        : (userProfile?.coverLink != null
-                                            ? NetworkImage(userProfile!.coverLink)
-                                            : const AssetImage('assets/images/banner.jpg')
-                                                as ImageProvider),
-                                    fit: BoxFit.cover,
-                                  ),
-                                ),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Colors.transparent,
-                                        customColors.background!.withValues(alpha: 0.8),
-                                      ],
+                              child: FutureBuilder<File?>(
+                                key: ValueKey<int>(_cacheVersion),
+                                future: ImageCacheService.cachedFileIfExists(_kBannerCacheFile),
+                                builder: (context, snapshot) {
+                                  final banner = snapshot.data;
+                                  
+                                  if (banner != null) {
+                                    return DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        image: DecorationImage(
+                                          image: FileImage(banner),
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topCenter,
+                                            end: Alignment.bottomCenter,
+                                            colors: [
+                                              Colors.transparent,
+                                              customColors.background!.withValues(alpha: 0.8),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                  
+                                  // No cache, show just gradient without background
+                                  return Container(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          Colors.transparent,
+                                          customColors.background!.withValues(alpha: 0.8),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ),
+                                  );
+                                },
                               ),
                             ),
                 
@@ -319,17 +432,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                             color: customColors.background,
                                             shape: BoxShape.circle,
                                           ),
-                                          child: CircleAvatar(
-                                            radius: 50,
-                                            backgroundImage: _profileImageUrl != null
-                                                ? (_profileImageUrl!.startsWith('http')
-                                                    ? NetworkImage(_profileImageUrl!)
-                                                    : FileImage(File(_profileImageUrl!)))
-                                                    as ImageProvider
-                                                : (userProfile?.profileLink != null
-                                                    ? NetworkImage(userProfile!.profileLink)
-                                                    : const AssetImage('assets/images/profile.jpg')
-                                                        as ImageProvider),
+                                          child: FutureBuilder<File?>(
+                                            key: ValueKey<int>(_cacheVersion),
+                                            future: ImageCacheService.cachedFileIfExists(_kProfileCacheFile),
+                                            builder: (context, snapshot) {
+                                              final profile = snapshot.data;
+                                              
+                                              return CircleAvatar(
+                                                radius: 50,
+                                                backgroundImage: profile != null
+                                                  ? FileImage(profile)
+                                                  : null,
+                                              );
+                                            },
                                           ),
                                         ),
                                       ),
