@@ -2,7 +2,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
-import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/features/dashboard/viewmodel/dashboard_viewmodel.dart';
 import 'package:dsv360/features/dashboard/view/widgets/AppDrawer.dart';
@@ -28,16 +27,85 @@ class DashboardPage extends StatelessWidget {
 class _DashboardScaffold extends ConsumerWidget {
   const _DashboardScaffold();
 
+  Future<void> _refreshDashboard(WidgetRef ref) async {
+    ref.invalidate(taskStatusDataProvider);
+    ref.invalidate(projectAnalyticsDataProvider);
+    ref.invalidate(dashboardDataProvider);
+    final refreshFuture = ref.refresh(dashboardDataProvider.future);
+    await refreshFuture;
+  }
+
   Future<ImageProvider?> _getCachedProfileImage() async {
-    final file = await ImageCacheService.cachedFileIfExists('cached_profile_image.jpg');
+    final file = await ImageCacheService.cachedFileIfExists(
+      'cached_profile_image.jpg',
+    );
     if (file != null) return FileImage(file);
     return null;
+  }
+
+  Widget _buildStatusView({
+    required BuildContext context,
+    required WidgetRef ref,
+    required String title,
+    required String message,
+    required IconData icon,
+  }) {
+    final customColors = Theme.of(context).custom;
+    debugPrint("refresh pressed");
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 56, color: customColors.textPrimary),
+              const SizedBox(height: 16),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: customColors.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: customColors.textSecondary),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () => _refreshDashboard(ref),
+                icon: const Icon(Icons.refresh),
+                label: const Text('Refresh'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final userProfile = UserManager.instance.userProfile;
     final connectivityStatus = ref.watch(checkConnectivityProvider);
+    ref.listen(connectivityStatusProvider, (previous, next) {
+      final previousHasNoInternet = previous?.valueOrNull?.contains(ConnectivityResult.none) ?? false;
+      final nextHasInternet = next.valueOrNull?.contains(ConnectivityResult.none) == false;
+
+      if (previousHasNoInternet && nextHasInternet) {
+        ref.invalidate(checkConnectivityProvider);
+        ref.invalidate(taskStatusDataProvider);
+        ref.invalidate(projectAnalyticsDataProvider);
+        ref.invalidate(dashboardDataProvider);
+      }
+    });
     final dashboardAsyncValue = ref.watch(dashboardDataProvider);
     final customColors = Theme.of(context).custom;
 
@@ -74,7 +142,6 @@ class _DashboardScaffold extends ConsumerWidget {
           },
         ),
         actions: [
-
           //Commented Icon Button, will be used in future (Uncommented)
 
           // IconButton(
@@ -101,9 +168,7 @@ class _DashboardScaffold extends ConsumerWidget {
                   return SizedBox(
                     width: 30,
                     height: 30,
-                    child: CircleAvatar(
-                      backgroundImage: snapshot.data,
-                    ),
+                    child: CircleAvatar(backgroundImage: snapshot.data),
                   );
                 }
                 if (userProfile?.profileLink != null &&
@@ -129,12 +194,12 @@ class _DashboardScaffold extends ConsumerWidget {
         child: connectivityStatus.when(
           data: (results) {
             if (results.contains(ConnectivityResult.none)) {
-              return GlobalError(
-                message: 'Please check your internet connection.',
-                isNetworkError: true,
-                onRetry: () {
-                  ref.invalidate(checkConnectivityProvider);
-                },
+              return _buildStatusView(
+                context: context,
+                ref: ref,
+                title: 'No internet connection',
+                message: 'Please connect to the internet and refresh.',
+                icon: Icons.wifi_off_rounded,
               );
             }
             // When connected, show dashboard data
@@ -237,17 +302,23 @@ class _DashboardScaffold extends ConsumerWidget {
                   ),
                 );
               },
-              error: (error, stack) => GlobalError(
-                message: 'Failed to load data. Please try again.',
-                onRetry: () => ref.refresh(dashboardDataProvider),
+              error: (error, stack) => _buildStatusView(
+                context: context,
+                ref: ref,
+                title: 'Failed to load dashboard',
+                message: 'Tap refresh to load the data again.',
+                icon: Icons.error_outline_rounded,
               ),
               loading: () =>
                   const GlobalLoader(message: 'Loading dashboard...'),
             );
           },
-          error: (error, stack) => GlobalError(
-            message: 'Something went wrong. Please check your connection.',
-            onRetry: () => ref.invalidate(checkConnectivityProvider),
+          error: (error, stack) => _buildStatusView(
+            context: context,
+            ref: ref,
+            title: 'Something went wrong',
+            message: 'Try refreshing the dashboard.',
+            icon: Icons.refresh_rounded,
           ),
           loading: () => const GlobalLoader(message: 'Checking connection...'),
         ),
