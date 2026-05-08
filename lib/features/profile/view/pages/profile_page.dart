@@ -15,6 +15,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:io';
 import 'package:dsv360/features/profile/cache/image_cache_service.dart';
+import 'package:dsv360/features/profile/cache/user_data_cache_service.dart';
+import 'dart:convert';
 
 
 class ProfilePage extends ConsumerStatefulWidget {
@@ -37,6 +39,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   ProfileViewModel get _viewModel => ref.read(profileViewModelProvider);
 
+  Map<String, dynamic>? _cachedProfileData;
+
   @override
   void initState() {
     super.initState();
@@ -44,6 +48,25 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     // attempt to load cached images; if cache is empty and remote urls exist,
     // download once and save to private storage for subsequent usage.
     _loadCachedImages(userProfile?.profileLink, userProfile?.coverLink);
+    _loadCachedUserData(userProfile?.profileLink);
+  }
+
+  Future<void> _loadCachedUserData(String? remoteUrl) async {
+    final file = await UserDataCacheService.syncDataByUrlPolicy(
+      remoteUrl: remoteUrl,
+      cacheFile: 'cached_user_profile.json',
+      cachedUrlKey: 'user_profile_cached_remote_url',
+      jsonData: null,
+    );
+    if (file != null) {
+      final str = await file.readAsString();
+      try {
+        _cachedProfileData = jsonDecode(str) as Map<String, dynamic>;
+      } catch (_) {
+        _cachedProfileData = null;
+      }
+      if (mounted) setState(() {});
+    }
   }
 
   // Cache operations are provided by ImageCacheService
@@ -112,6 +135,34 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     // Keep cache as the source of truth for UI images.
     // This prevents fresh uploads from being overwritten by remote URLs.
     await _loadCachedImages(refreshed.profileLink, refreshed.coverLink);
+
+    // Sync user data cache as well (persist refreshed profile JSON)
+    try {
+      final jsonMap = {
+        'Username': refreshed.username,
+        'AboutME': refreshed.aboutMe,
+        'Phone': refreshed.phone,
+        'Skills': refreshed.skills,
+        'Address': refreshed.address,
+        'Profile_Link': refreshed.profileLink,
+        'Cover_Link': refreshed.coverLink,
+        // also persist email and role from authenticated user
+        'Email': AuthManager.instance.currentUser?.emailId ?? '',
+        'Role': AuthManager.instance.currentUser?.role?.name ?? '',
+      };
+
+      final saved = await UserDataCacheService.syncDataByUrlPolicy(
+        remoteUrl: refreshed.profileLink,
+        cacheFile: 'cached_user_profile.json',
+        cachedUrlKey: 'user_profile_cached_remote_url',
+        jsonData: jsonMap,
+      );
+
+      if (saved != null) {
+        _cachedProfileData = jsonMap;
+        if (mounted) setState(() {});
+      }
+    } catch (_) {}
   }
 
   /// Crops the profile image
@@ -289,15 +340,43 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final user = AuthManager.instance.currentUser;
     final userProfile = UserManager.instance.userProfile;
 
-    final fullName = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
-    final email = user?.emailId ?? 'No Email';
-    final role = user?.role?.name ?? 'User';
+    final cachedName = _cachedProfileData != null ? (_cachedProfileData!['Username'] as String?) : null;
+    final fullName = (cachedName != null && cachedName.isNotEmpty)
+      ? cachedName
+      : '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
+
+    final cachedEmail = _cachedProfileData != null ? (_cachedProfileData!['Email'] as String?) : null;
+    final cachedRole = _cachedProfileData != null ? (_cachedProfileData!['Role'] as String?) : null;
+
+    final email = (cachedEmail != null && cachedEmail.isNotEmpty)
+      ? cachedEmail
+      : (user?.emailId ?? 'No Email');
+
+    final role = (cachedRole != null && cachedRole.isNotEmpty)
+      ? cachedRole
+      : (user?.role?.name ?? 'User');
 
     debugPrint(
       '👤 👤 👤 👤 👤 👤 👤 👤 👤 👤 Building ProfilePage for user: ${userProfile?.skills}',
     );
 
     final customColors = Theme.of(context).custom;
+
+    final displayedAbout = (_cachedProfileData != null && (_cachedProfileData!['AboutME'] as String?) != null)
+      ? _cachedProfileData!['AboutME'] as String
+      : userProfile?.aboutMe ?? 'No description available.';
+
+    final displayedPhone = (_cachedProfileData != null && (_cachedProfileData!['Phone'] as String?) != null)
+      ? _cachedProfileData!['Phone'] as String
+      : userProfile?.phone ?? 'No Phone details available.';
+
+    final displayedAddress = (_cachedProfileData != null && (_cachedProfileData!['Address'] as String?) != null)
+      ? _cachedProfileData!['Address'] as String
+      : userProfile?.address ?? 'No Address available.';
+
+    final displayedSkillsStr = (_cachedProfileData != null && (_cachedProfileData!['Skills'] as String?) != null)
+      ? _cachedProfileData!['Skills'] as String
+      : userProfile?.skills ?? '';
 
     return Scaffold(
       body: SafeArea(
@@ -570,9 +649,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 
                             AboutMe(
                               title: 'About Me',
-                              content:
-                                  userProfile?.aboutMe ??
-                                  'No description available.',
+                              content: displayedAbout,
                               backgroundColor: customColors.cardBackground!,
                               textColor: customColors.textPrimary!,
                               accentColor: customColors.statusCompleted!,
@@ -626,8 +703,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                   _buildContactRow(
                                     Icons.phone_outlined,
                                     'Phone',
-                                    userProfile?.phone ??
-                                        'No Phone details available.',
+                                    displayedPhone,
                                     customColors.textSecondary!,
                                     context,
                                   ),
@@ -638,8 +714,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                   _buildContactRow(
                                     Icons.location_on_outlined,
                                     'Address',
-                                    userProfile?.address ??
-                                        'No Address available.',
+                                    displayedAddress,
                                     customColors.textSecondary!,
                                     context,
                                   ),
@@ -681,23 +756,21 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                                     ],
                                   ),
                                   const SizedBox(height: 16),
-                                  if (userProfile?.skills != null &&
-                                      userProfile!.skills.isNotEmpty)
+                                  if (displayedSkillsStr.isNotEmpty)
                                     Wrap(
                                       spacing: 12,
                                       runSpacing: 12,
-                                      children:
-                                          (userProfile.skills.contains(',')
-                                                  ? userProfile.skills.split(',')
-                                                  : [userProfile.skills])
-                                              .map(
-                                                (skill) => _buildSkillChip(
-                                                  skill.trim(),
-                                                  customColors.textSecondary!,
-                                                  context,
-                                                ),
-                                              )
-                                              .toList(),
+                                      children: (displayedSkillsStr.contains(',')
+                                              ? displayedSkillsStr.split(',')
+                                              : [displayedSkillsStr])
+                                          .map(
+                                            (skill) => _buildSkillChip(
+                                              skill.trim(),
+                                              customColors.textSecondary!,
+                                              context,
+                                            ),
+                                          )
+                                          .toList(),
                                     )
                                   else
                                     Text(
