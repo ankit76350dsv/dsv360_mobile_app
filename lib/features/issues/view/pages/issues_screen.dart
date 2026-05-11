@@ -420,7 +420,7 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
                       actionIcon: Icons.refresh_rounded,
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.fromLTRB(16,0,16,8),
                       child: Row(
                         children: [
                           Expanded(

@@ -1,6 +1,8 @@
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/features/profile/model/user_profile_model.dart';
 import 'package:flutter/foundation.dart';
+import 'package:dsv360/features/profile/repositories/user_cache_repository.dart';
+import 'package:dsv360/core/constants/auth_manager.dart';
 
 class UserManager {
   UserManager._internal();
@@ -11,6 +13,40 @@ class UserManager {
 
   /// Fetch the user profile details and store them
   Future<UserProfileModel?> fetchUserProfile(String userId) async {
+    // Try to load the cached profile first so UI can show something immediately.
+    try {
+      final cached = await UserCacheRepository.loadUserMap();
+      if (cached != null) {
+        userProfile = UserProfileModel(
+          address: '',
+          aboutMe: '',
+          resumeId: '',
+          teamName: '',
+          teamId: '',
+          roleId: cached['Role'] ?? '',
+          orgId: '',
+          reporterImage: '',
+          skills: '',
+          phone: cached['Phone'] ?? '',
+          countryCode: '',
+          shiftEndTime: '',
+          creatorId: '',
+          reporterName: cached['Username'] ?? '',
+          reporterId: '',
+          resumeLink: '',
+          coverLink: '',
+          shiftStartTime: '',
+          modifiedTime: '',
+          username: cached['Username'] ?? '',
+          createdTime: '',
+          userId: cached['UserId'] ?? userId,
+          profileLink: '',
+          empId: '',
+          rowId: '',
+          location: '',
+        );
+      }
+    } catch (_) {}
     try {
       final response = await ApiClient.instance.get(
         'time_entry_management_application_function/userprofile/$userId',
@@ -37,6 +73,19 @@ class UserManager {
           final profile = UserProfileModel.fromJson(profileJson);
           userProfile = profile;
           debugPrint('User Profile fetched: ${profile.userId}');
+
+          // Persist minimal user values to local cache for quick access.
+          try {
+            final map = <String, String?>{
+              'Username': profile.username,
+              'Email': AuthManager.instance.currentUser?.emailId ?? '',
+              'UserId': profile.userId,
+              'Role': profile.roleId,
+              'Phone': profile.phone,
+            };
+            await UserCacheRepository.saveUserMap(map);
+          } catch (_) {}
+
           return profile;
         }
       }

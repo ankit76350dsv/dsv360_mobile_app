@@ -137,12 +137,14 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
 
     setState(() {
       _selectedProjectId = normalize(prefs.getString(_selectedProjectIdKey));
-      _selectedProjectName =
-          normalize(prefs.getString(_selectedProjectNameKey));
+      _selectedProjectName = normalize(
+        prefs.getString(_selectedProjectNameKey),
+      );
       _selectedSprintId = normalize(prefs.getString(_selectedSprintIdKey));
       _selectedSprintName = normalize(prefs.getString(_selectedSprintNameKey));
-      _selectedSprintStatus =
-          normalize(prefs.getString(_selectedSprintStatusKey));
+      _selectedSprintStatus = normalize(
+        prefs.getString(_selectedSprintStatusKey),
+      );
       _hasLoadedPersistedSelection = true;
     });
   }
@@ -153,7 +155,10 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
     await prefs.setString(_selectedProjectNameKey, _selectedProjectName ?? '');
     await prefs.setString(_selectedSprintIdKey, _selectedSprintId ?? '');
     await prefs.setString(_selectedSprintNameKey, _selectedSprintName ?? '');
-    await prefs.setString(_selectedSprintStatusKey, _selectedSprintStatus ?? '');
+    await prefs.setString(
+      _selectedSprintStatusKey,
+      _selectedSprintStatus ?? '',
+    );
   }
 
   void _persistSelection() {
@@ -187,8 +192,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
     final nextProjectName = nextProject.projectName;
     final projectIdChanged = _selectedProjectId != nextProjectId;
     final projectNameChanged = _selectedProjectName != nextProjectName;
-    final shouldUpdateProject =
-        projectIdChanged || projectNameChanged;
+    final shouldUpdateProject = projectIdChanged || projectNameChanged;
 
     if (!shouldUpdateProject) return;
 
@@ -302,7 +306,10 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
             setState(() {
               story.columnId = previousColumnId;
             });
-            showErrorSnackBar(context, 'Failed to update status. Please try again.');
+            showErrorSnackBar(
+              context,
+              'Failed to update status. Please try again.',
+            );
           }
         });
   }
@@ -456,8 +463,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                       );
                     }
 
-                    final projectId =
-                        _selectedProjectId ?? widget.projectId;
+                    final projectId = _selectedProjectId ?? widget.projectId;
 
                     return RefreshIndicator(
                       onRefresh: _onRefresh,
@@ -518,8 +524,9 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                           // ── Project selector + Complete button ──
                           Consumer(
                             builder: (context, ref, _) {
-                              final projectsAsync =
-                                  ref.watch(projectListProvider);
+                              final projectsAsync = ref.watch(
+                                projectListProvider,
+                              );
                               if (projectsAsync.hasValue) {
                                 _syncProjectSelection(projectsAsync.value!);
                               }
@@ -561,7 +568,9 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                 ),
                                 onCompleteSprintTap: () async {
                                   if (_selectedProjectId == null ||
-                                      _selectedProjectId!.isEmpty) { return; }
+                                      _selectedProjectId!.isEmpty) {
+                                    return;
+                                  }
                                   final sprints = await ref
                                       .read(getSprintsRepositoryProvider)
                                       .fetchSprints(
@@ -587,10 +596,12 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                           // ── Cycle status + Sprint dropdown + action buttons ──
                           Consumer(
                             builder: (context, ref, _) {
-                              final sprintsAsync = projectId != null &&
-                                      projectId.isNotEmpty
+                              final sprintsAsync =
+                                  projectId != null && projectId.isNotEmpty
                                   ? ref.watch(sprintListProvider(projectId))
-                                  : const AsyncValue<List<SprintModel>>.data([]);
+                                  : const AsyncValue<List<SprintModel>>.data(
+                                      [],
+                                    );
                               if (sprintsAsync.hasValue) {
                                 _syncSprintSelection(sprintsAsync.value!);
                               }
