@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/cache/user_cache_provider.dart';
 import 'package:dsv360/core/constants/active_user_repository.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
+import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
 import 'package:dsv360/core/widgets/global_loader.dart';
@@ -222,7 +225,9 @@ class _CheckInTabState extends ConsumerState<CheckInTab> {
   Widget build(BuildContext context) {
     final summaryAsync = ref.watch(peopleSummaryProvider);
     final activeUser = ref.watch(activeUserRepositoryProvider);
-    final userId = activeUser?.userId ?? '';
+    final userId = (activeUser?.userId?.isNotEmpty == true
+        ? activeUser!.userId
+        : ref.watch(globalUserProvider)?.id) ?? '';
 
     final userProfile = UserManager.instance.userProfile;
     final empId = userProfile?.empId ?? '';
@@ -230,9 +235,7 @@ class _CheckInTabState extends ConsumerState<CheckInTab> {
     final reporterImage = userProfile?.reporterImage ?? '';
 
     final user = AuthManager.instance.currentUser;
-    final role = user?.role?.name;
-
-    debugPrint(role);
+    final role = user?.role?.name ?? ref.watch(globalUserProvider)?.role;
 
     final dashboardAsync = ref.watch(dashboardDataProvider);
     var totalEmployees = 0;
@@ -240,20 +243,35 @@ class _CheckInTabState extends ConsumerState<CheckInTab> {
       totalEmployees = dashboard.userCnt;
     });
 
-    if (userId.isEmpty) {
-      return const GlobalLoader(message: 'Loading user info...');
+    final connectivity = ref.watch(checkConnectivityProvider);
+    final isOffline = connectivity.valueOrNull?.contains(ConnectivityResult.none) ?? false;
+
+    if (isOffline || userId.isEmpty) {
+      return GlobalError(
+        message: isOffline
+            ? 'No internet connection. Please check your network and try again.'
+            : 'Unable to load user data. Please try again.',
+        isNetworkError: true,
+        onRetry: () {
+          ref.invalidate(checkConnectivityProvider);
+          ref.invalidate(activeUserRepositoryProvider);
+          ref.invalidate(userStatusRepositoryProvider);
+          ref.invalidate(peopleSummaryProvider);
+        },
+      );
     }
 
     final userStatusAsync = ref.watch(userStatusRepositoryProvider);
-    debugPrint("userStatusAsync: $userStatusAsync");
     final isApplePlatform =
         Theme.of(context).platform == TargetPlatform.iOS ||
         Theme.of(context).platform == TargetPlatform.macOS;
 
     return RefreshIndicator(
       onRefresh: () async {
-        final _ = await ref.refresh(userStatusRepositoryProvider.future);
-        final _ = await ref.refresh(peopleSummaryProvider.future);
+        await Future.wait([
+          ref.refresh(userStatusRepositoryProvider.future),
+          ref.refresh(peopleSummaryProvider.future),
+        ]);
       },
       child: ColoredBox(
         color: Theme.of(context).scaffoldBackgroundColor,
@@ -261,8 +279,11 @@ class _CheckInTabState extends ConsumerState<CheckInTab> {
           loading: () =>
               const GlobalLoader(message: 'Loading Check In/Out status...'),
           error: (error, stack) => GlobalError(
-            message: 'Failed to load Check In/Out status: Try Again',
-            onRetry: () => ref.invalidate(userStatusRepositoryProvider),
+            message: 'Something went wrong. Please try again.',
+            onRetry: () {
+              ref.invalidate(userStatusRepositoryProvider);
+              ref.invalidate(peopleSummaryProvider);
+            },
           ),
           data: (status) {
             final isCheckedIn = status.isCheckIn;

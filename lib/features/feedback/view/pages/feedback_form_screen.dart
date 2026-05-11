@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/cache/user_cache_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/features/feedback/repositories/create_feedback_repository.dart';
 import 'package:flutter/material.dart';
@@ -12,14 +14,14 @@ import '../../../../core/widgets/primary_button.dart';
 import '../../../../core/widgets/TopBar.dart';
 import 'feedbacks_screen.dart';
 
-class FeedbackFormScreen extends StatefulWidget {
+class FeedbackFormScreen extends ConsumerStatefulWidget {
   const FeedbackFormScreen({super.key});
 
   @override
-  State<FeedbackFormScreen> createState() => _FeedbackFormScreenState();
+  ConsumerState<FeedbackFormScreen> createState() => _FeedbackFormScreenState();
 }
 
-class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
+class _FeedbackFormScreenState extends ConsumerState<FeedbackFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
@@ -39,9 +41,13 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
 
   void _loadUserData() {
     final user = AuthManager.instance.currentUser;
+    final cached = ref.read(globalUserProvider);
     if (user != null) {
       _nameController.text = "${user.firstName} ${user.lastName}";
       _emailController.text = user.emailId;
+    } else if (cached != null) {
+      _nameController.text = cached.name;
+      _emailController.text = cached.email;
     }
   }
 
@@ -76,11 +82,6 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
       setState(() => _isSubmitting = true);
 
       try {
-        final user = AuthManager.instance.currentUser;
-        if (user == null) {
-          throw Exception("User not found");
-        }
-
         // Use CreateFeedbackRepository to submit feedback
         await _feedbackRepository.createFeedback(
           name: _nameController.text.trim(),

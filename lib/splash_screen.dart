@@ -6,6 +6,7 @@ import 'package:dsv360/core/constants/user_manager.dart';
 import 'package:dsv360/core/constants/token_manager.dart';
 import 'package:dsv360/core/models/active_user.dart';
 import 'package:dsv360/core/constants/active_user_repository.dart';
+import 'package:dsv360/core/cache/user_cache_provider.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 import 'package:dsv360/core/welcome/welcome_page.dart';
 import 'package:flutter/material.dart';
@@ -61,8 +62,12 @@ class _SplashScreenState extends ConsumerState<ConsumerStatefulWidget>
             final activeUser = ActiveUserModel.fromCatalystUser(catalystUser);
             ref.read(activeUserRepositoryProvider.notifier).setUser(activeUser);
 
-            // Fetch User Profile
+            // Fetch User Profile (also writes extended fields to SharedPrefs cache)
             await UserManager.instance.fetchUserProfile(catalystUser.id);
+
+            // Populate the centralised cache provider so every page can read
+            // user data (id, name, role, email, etc.) from local cache.
+            await ref.read(globalUserProvider.notifier).refresh();
           } else {
             ref.read(activeUserRepositoryProvider.notifier).clear();
           }

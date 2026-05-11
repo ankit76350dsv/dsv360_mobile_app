@@ -1,4 +1,5 @@
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/cache/user_cache_provider.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/sprints/model/task_model.dart';
@@ -179,8 +180,9 @@ class _CreateTimeEntryPageState extends ConsumerState<CreateTimeEntryPage> {
     }
 
     final user = AuthManager.instance.currentUser;
-    final userId = user?.id.toString() ?? '';
-    final username = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
+    final cached = ref.read(globalUserProvider);
+    final userId = user?.id.toString().isNotEmpty == true ? user!.id.toString() : cached?.id ?? '';
+    final username = '${user?.firstName ?? cached?.firstName ?? ''} ${user?.lastName ?? cached?.lastName ?? ''}'.trim();
 
     final notifier = ref.read(submitLoadingProvider(_loadingKey).notifier);
     notifier.state = true;

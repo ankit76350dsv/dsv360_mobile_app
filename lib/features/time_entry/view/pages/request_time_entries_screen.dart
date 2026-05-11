@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/cache/user_cache_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:dsv360/features/time_entry/model/time_entry_model.dart';
@@ -12,7 +14,7 @@ import 'package:dsv360/core/widgets/custom_dropdown_field.dart';
 import 'package:dsv360/core/widgets/custom_input_field.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-class RequestTimeEntriesScreen extends StatefulWidget {
+class RequestTimeEntriesScreen extends ConsumerStatefulWidget {
   final String currentUser;
   final TimeEntry? editingEntry;
   final String projectId;
@@ -31,11 +33,11 @@ class RequestTimeEntriesScreen extends StatefulWidget {
   });
 
   @override
-  State<RequestTimeEntriesScreen> createState() =>
+  ConsumerState<RequestTimeEntriesScreen> createState() =>
       _RequestTimeEntriesScreenState();
 }
 
-class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
+class _RequestTimeEntriesScreenState extends ConsumerState<RequestTimeEntriesScreen> {
   late TextEditingController _userController;
   late TextEditingController _dateController;
   late TextEditingController _startTimeController;
@@ -82,8 +84,9 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
   void initState() {
     super.initState();
 
-    final firstName = AuthManager.instance.currentUser?.firstName ?? '';
-    final lastName = AuthManager.instance.currentUser?.lastName ?? '';
+    final cached = ref.read(globalUserProvider);
+    final firstName = AuthManager.instance.currentUser?.firstName ?? cached?.firstName ?? '';
+    final lastName = AuthManager.instance.currentUser?.lastName ?? cached?.lastName ?? '';
     final loggedInUser = '$firstName $lastName'.trim().isNotEmpty
         ? '$firstName $lastName'.trim()
         : widget.currentUser;
@@ -161,8 +164,9 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
     }
 
     // Resolve username for the entry
-    final firstName = AuthManager.instance.currentUser?.firstName ?? '';
-    final lastName = AuthManager.instance.currentUser?.lastName ?? '';
+    final cachedU = ref.read(globalUserProvider);
+    final firstName = AuthManager.instance.currentUser?.firstName ?? cachedU?.firstName ?? '';
+    final lastName = AuthManager.instance.currentUser?.lastName ?? cachedU?.lastName ?? '';
     final username = '$firstName $lastName'.trim().isNotEmpty
         ? '$firstName $lastName'.trim()
         : widget.currentUser;
@@ -197,9 +201,10 @@ class _RequestTimeEntriesScreenState extends State<RequestTimeEntriesScreen> {
 
     setState(() => _isLoading = true);
 
-    final userId = AuthManager.instance.currentUser?.id ?? '';
-    final firstName = AuthManager.instance.currentUser?.firstName ?? '';
-    final lastName = AuthManager.instance.currentUser?.lastName ?? '';
+    final cachedUser = ref.read(globalUserProvider);
+    final userId = AuthManager.instance.currentUser?.id ?? cachedUser?.id ?? '';
+    final firstName = AuthManager.instance.currentUser?.firstName ?? cachedUser?.firstName ?? '';
+    final lastName = AuthManager.instance.currentUser?.lastName ?? cachedUser?.lastName ?? '';
     final username = '$firstName $lastName'.trim().isNotEmpty
         ? '$firstName $lastName'.trim()
         : widget.currentUser;

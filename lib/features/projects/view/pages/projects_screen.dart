@@ -9,7 +9,7 @@ import '../../../../core/widgets/global_error.dart';
 import '../../../../core/widgets/global_loader.dart';
 import '../../viewmodel/project_viewmodel.dart';
 import '../../../users/viewmodel/employee_viewmodel.dart';
-import '../../../../core/constants/auth_manager.dart';
+import '../../../../core/cache/user_cache_provider.dart';
 import '../../model/project_model.dart';
 import '../../../../core/widgets/custom_search_bar.dart';
 import '../widgets/project_card.dart';
@@ -50,14 +50,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
   }
 
   bool _isAdminUser() {
-    final user = AuthManager.instance.currentUser;
-    final roleName = user?.role?.name ?? '';
+    final roleName = ref.read(globalUserProvider)?.role ?? '';
     final isAdminOrManager = roleName == 'Admin' ||
-                             roleName == 'Admin (Default)' || 
-                             roleName == 'Super Admin' || 
+                             roleName == 'Admin (Default)' ||
+                             roleName == 'Super Admin' ||
                              roleName == 'App Administrator' ||
                              roleName == 'Manager/Team Lead';
-    debugPrint('🔐 Projects Screen - Checking permission: $isAdminOrManager | Role: $roleName');
     return isAdminOrManager;
   }
 
@@ -317,14 +315,12 @@ class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
                                     }
 
                                     final project = filteredProjects[index];
-                                    final user = AuthManager.instance.currentUser;
-                                    final roleName = user?.role?.name ?? '';
+                                    final roleName = ref.read(globalUserProvider)?.role ?? '';
                                     final isAdminOrManager = roleName == 'Admin' ||
-                                                             roleName == 'Admin (Default)' || 
-                                                             roleName == 'Super Admin' || 
+                                                             roleName == 'Admin (Default)' ||
+                                                             roleName == 'Super Admin' ||
                                                              roleName == 'App Administrator' ||
                                                              roleName == 'Manager/Team Lead';
-                                    debugPrint('👤 ProjectCard Permission Check - Role: "$roleName" | isAdminOrManager: $isAdminOrManager | User: ${user?.firstName}');
                                     return ProjectCard(
                                       project: project,
                                       onTap: () {

@@ -1,5 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:dsv360/core/constants/is_have_access.dart';
+import 'package:dsv360/core/cache/user_cache_provider.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
 import 'package:dsv360/core/widgets/global_error.dart';
@@ -24,16 +24,43 @@ class PeoplePage extends ConsumerStatefulWidget {
 }
 
 class _PeoplePageState extends ConsumerState<PeoplePage>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tabController;
+    with TickerProviderStateMixin {
+  late TabController _tabController;
+  bool _isAdmin = false;
+  bool _isManager = false;
+
+  int get _tabCount => _isManager ? 6 : (_isAdmin ? 4 : 4);
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(
-      length: IsHaveAccess.instance.isManager ? 6 : 4,
-      vsync: this,
-    );
+    _tabController = TabController(length: _tabCount, vsync: this);
+  }
+
+  void _updateRoleAndTabs() {
+    final role = ref.read(globalUserProvider)?.role ?? '';
+    final isAdmin = role == 'Admin' ||
+        role == 'Admin (Default)' ||
+        role == 'Super Admin' ||
+        role == 'App Administrator';
+    final isManager = role.toLowerCase().contains('manager');
+
+    if (isAdmin != _isAdmin || isManager != _isManager) {
+      final newCount = isManager ? 6 : 4;
+      final oldCount = _tabController.length;
+      _isAdmin = isAdmin;
+      _isManager = isManager;
+      if (newCount != oldCount) {
+        _tabController.dispose();
+        _tabController = TabController(length: newCount, vsync: this);
+      }
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateRoleAndTabs();
   }
 
   @override
@@ -46,6 +73,19 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
     final connectivityStatus = ref.watch(checkConnectivityProvider);
+
+    // Watch so widget rebuilds when role loads from cache
+    final role = ref.watch(globalUserProvider)?.role ?? '';
+    final isAdmin = role == 'Admin' ||
+        role == 'Admin (Default)' ||
+        role == 'Super Admin' ||
+        role == 'App Administrator';
+    final isManager = role.toLowerCase().contains('manager');
+
+    // Sync tab controller if role changed after first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _updateRoleAndTabs();
+    });
 
     return Scaffold(
       drawer: const AppDrawer(),
@@ -113,7 +153,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: Colors.black.withValues(alpha: 0.05),
                           blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
@@ -126,19 +166,11 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
                     dividerColor: Colors.transparent,
                     tabs: [
                       const Tab(text: 'Check In'),
-                      if (!IsHaveAccess.instance.isAdmin ||
-                          IsHaveAccess.instance.isManager)
-                        const Tab(text: 'Activities'),
+                      if (!isAdmin || isManager) const Tab(text: 'Activities'),
                       const Tab(text: 'Leave'),
-                      if (!IsHaveAccess.instance.isAdmin ||
-                          IsHaveAccess.instance.isManager)
-                        const Tab(text: 'Attendance'),
-                      if (IsHaveAccess.instance.isAdmin ||
-                          IsHaveAccess.instance.isManager)
-                        const Tab(text: 'Attendance Tracker'),
-                      if (IsHaveAccess.instance.isAdmin ||
-                          IsHaveAccess.instance.isManager)
-                        const Tab(text: 'Leave Calendar'),
+                      if (!isAdmin || isManager) const Tab(text: 'Attendance'),
+                      if (isAdmin || isManager) const Tab(text: 'Attendance Tracker'),
+                      if (isAdmin || isManager) const Tab(text: 'Leave Calendar'),
                     ],
                   ),
                 ),
@@ -148,19 +180,11 @@ class _PeoplePageState extends ConsumerState<PeoplePage>
                   controller: _tabController,
                   children: [
                     const CheckInTab(),
-                    if (!IsHaveAccess.instance.isAdmin ||
-                        IsHaveAccess.instance.isManager)
-                      const ActivitiesTab(),
+                    if (!isAdmin || isManager) const ActivitiesTab(),
                     const LeaveTab(),
-                    if (!IsHaveAccess.instance.isAdmin ||
-                        IsHaveAccess.instance.isManager)
-                      const AttendanceTab(),
-                    if (IsHaveAccess.instance.isAdmin ||
-                        IsHaveAccess.instance.isManager)
-                      const AttendanceTrackerTab(),
-                    if (IsHaveAccess.instance.isAdmin ||
-                        IsHaveAccess.instance.isManager)
-                      const LeaveCalendarTab(),
+                    if (!isAdmin || isManager) const AttendanceTab(),
+                    if (isAdmin || isManager) const AttendanceTrackerTab(),
+                    if (isAdmin || isManager) const LeaveCalendarTab(),
                   ],
                 ),
               ),

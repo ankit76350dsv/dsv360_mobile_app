@@ -96,9 +96,13 @@ class _LeaveTabState extends ConsumerState<LeaveTab> {
                 children: [
                   if (!IsHaveAccess.instance.isAdmin)
                     leaveSummaryAsync.when(
-                      loading: () => const GlobalLoader(
-                        message: 'Loading leave summary...',
-                      ),
+                      loading: () => Center(child: Padding(
+                        padding: const EdgeInsets.only(top:8),
+                        child: SizedBox(
+                          width: 30,
+                          height: 30,
+                          child: const CircularProgressIndicator()),
+                      )),
                       error: (error, stack) => GlobalError(
                         message:
                             'Failed to load leave summary: Try Again later',

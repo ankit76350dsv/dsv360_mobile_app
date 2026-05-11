@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 
 import 'package:dio/dio.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/cache/user_cache_service.dart';
 import 'package:dsv360/core/constants/environment.dart';
 import 'package:dsv360/core/models/attachment.dart';
 import 'package:dsv360/core/models/task.dart';
@@ -23,7 +24,8 @@ class FetchTasksRepository extends FamilyAsyncNotifier<List<Task>, String> {
   Future<List<Task>> fetchTasks(String userId) async {
     try {
       final user = AuthManager.instance.currentUser;
-      final roleName = user?.role?.name ?? '';
+      final cachedMap = user == null ? await UserCacheService.loadUserMap() : null;
+      final roleName = user?.role?.name ?? cachedMap?['Role'] ?? '';
 
       final isAdmin =
           roleName == 'Admin' ||

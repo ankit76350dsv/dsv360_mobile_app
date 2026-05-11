@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:dsv360/features/profile/view/widgets/about_me.dart';
 import 'package:dsv360/core/welcome/welcome_page.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/cache/user_cache_provider.dart';
 import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -147,8 +148,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         'Profile_Link': refreshed.profileLink,
         'Cover_Link': refreshed.coverLink,
         // also persist email and role from authenticated user
-        'Email': AuthManager.instance.currentUser?.emailId ?? '',
-        'Role': AuthManager.instance.currentUser?.role?.name ?? '',
+        'Email': AuthManager.instance.currentUser?.emailId ?? ref.read(globalUserProvider)?.email ?? '',
+        'Role': AuthManager.instance.currentUser?.role?.name ?? ref.read(globalUserProvider)?.role ?? '',
       };
 
       final saved = await UserDataCacheService.syncDataByUrlPolicy(

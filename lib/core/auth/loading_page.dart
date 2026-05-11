@@ -1,3 +1,4 @@
+import 'package:dsv360/core/cache/user_cache_provider.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/session_manager.dart';
 import 'package:dsv360/core/constants/token_manager.dart';
@@ -32,6 +33,8 @@ class _LoadingPageState extends ConsumerState<LoadingPage> {
 
       if (user != null) {
         await UserManager.instance.fetchUserProfile(user.id);
+        // Populate centralised cache provider from SharedPrefs after profile fetch.
+        await ref.read(globalUserProvider.notifier).refresh();
       }
 
       // Fetch access token

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/cache/user_cache_service.dart';
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:dsv360/features/issues/model/issue_model.dart';
 import 'package:dsv360/features/projects/model/project_model.dart';
@@ -11,9 +12,11 @@ class IssueRepository {
 
   Future<List<IssueModel>> fetchIssues() async {
     final user = AuthManager.instance.currentUser;
-    if (user == null) throw Exception('User not logged in');
+    final cachedMap = user == null ? await UserCacheService.loadUserMap() : null;
+    final userId = user?.id ?? cachedMap?['UserId'] ?? '';
+    if (userId.isEmpty) throw Exception('User not logged in');
 
-    final roleName = user.role?.name ?? '';
+    final roleName = user?.role?.name ?? cachedMap?['Role'] ?? '';
     final isAdmin =
         roleName == 'Admin' ||
         roleName == 'Admin (Default)' ||
@@ -22,9 +25,9 @@ class IssueRepository {
 
     final String path = isAdmin
         ? 'time_entry_management_application_function/issue'
-        : 'time_entry_management_application_function/assignissue/${user.id}';
+        : 'time_entry_management_application_function/assignissue/$userId';
 
-    debugPrint('Fetching issues | isAdmin: $isAdmin | path: $path | Role: ${user.role?.name}');
+    debugPrint('Fetching issues | isAdmin: $isAdmin | path: $path | Role: $roleName');
 
     try {
       final response = await _client.get(path);
@@ -87,7 +90,9 @@ class IssueRepository {
     List<XFile>? files,
   }) async {
     final user = AuthManager.instance.currentUser;
-    if (user == null) throw Exception('User not logged in');
+    final cachedMapCreate = user == null ? await UserCacheService.loadUserMap() : null;
+    final creatorId = user?.id ?? cachedMapCreate?['UserId'] ?? '';
+    if (creatorId.isEmpty) throw Exception('User not logged in');
 
     const path = 'time_entry_management_application_function/issue';
 
@@ -99,8 +104,8 @@ class IssueRepository {
       'Project_ID': projectId,
       'Assignee_ID': assigneeId,
       'Due_Date': dueDate,
-      'Reporter_ID': user.id,
-      'Reporter_Name': '${user.firstName} ${user.lastName}'.trim(),
+      'Reporter_ID': creatorId,
+      'Reporter_Name': '${user?.firstName ?? cachedMapCreate?['FirstName'] ?? ''} ${user?.lastName ?? cachedMapCreate?['LastName'] ?? ''}'.trim(),
       if (projectName != null && projectName.isNotEmpty) 'Project_Name': projectName,
       if (assigneeName != null && assigneeName.isNotEmpty) 'Assignee_Name': assigneeName,
     });

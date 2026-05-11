@@ -1,10 +1,12 @@
 import 'dart:convert';
 
+import 'package:dsv360/core/cache/user_cache_provider.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/features/time_entry/repositories/time_entry_history_repository.dart';
 import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 
@@ -99,14 +101,14 @@ class _RequestEntry {
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
-class TimeEntryHistory extends StatefulWidget {
+class TimeEntryHistory extends ConsumerStatefulWidget {
   const TimeEntryHistory({super.key});
 
   @override
-  State<TimeEntryHistory> createState() => _TimeEntryHistoryState();
+  ConsumerState<TimeEntryHistory> createState() => _TimeEntryHistoryState();
 }
 
-class _TimeEntryHistoryState extends State<TimeEntryHistory> {
+class _TimeEntryHistoryState extends ConsumerState<TimeEntryHistory> {
   final TimeEntryHistoryRepository _repository = TimeEntryHistoryRepository();
 
 List<_RequestEntry> _requests = [];
@@ -118,7 +120,12 @@ void initState() {
   super.initState();
   fetchHistory();
 }
-final userId = AuthManager.instance.currentUser?.id ?? '';
+
+String get userId {
+  final live = AuthManager.instance.currentUser?.id ?? '';
+  if (live.isNotEmpty) return live;
+  return ref.read(globalUserProvider)?.id ?? '';
+}
 
 Future<void> fetchHistory() async {
   try {

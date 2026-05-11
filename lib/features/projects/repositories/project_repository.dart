@@ -2,6 +2,7 @@ import 'package:dio/dio.dart'; // needed only for FormData and MultipartFile (fi
 import 'package:dsv360/core/network/dio_client.dart'; // single import — no raw http, Dio, or TokenManager needed
 import 'package:flutter/foundation.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/cache/user_cache_service.dart';
 import 'package:dsv360/features/projects/model/project_model.dart';
 import 'package:dsv360/core/models/attachment.dart';
 
@@ -17,40 +18,34 @@ class ProjectRepository {
   // Use the centralized client — no manual http, no manual token injection.
   final _client = ApiClient.instance;
   Future<List<ProjectModel>> fetchProjects() async {
-    final user = AuthManager.instance.currentUser;
-    if (user == null) {
-      throw Exception('User not logged in');
+    // Prefer live auth; fall back to SharedPrefs cache for offline resilience.
+    final liveUser = AuthManager.instance.currentUser;
+    String userId;
+    String roleName;
+    if (liveUser != null) {
+      userId = liveUser.id;
+      roleName = liveUser.role?.name ?? '';
+    } else {
+      final cached = await UserCacheService.loadUserMap();
+      if (cached == null) throw Exception('User not logged in');
+      userId = cached['UserId'] ?? '';
+      roleName = cached['Role'] ?? '';
     }
+    if (userId.isEmpty) throw Exception('User not logged in');
 
-    // Using simple string check for role for now based on context, or just checking fetching logic.
-    // The user provided URLs:
-    // User: .../projects/17682000000114004 (ID)
-    // Admin: .../projects or .../projects/
-    
-    // We need to know if the user is Admin or AppUser.
-    // AuthManager has currentUser.role.name usually.
-    // Let's assume 'Super Admin' or similar for Admin.
-    
-    final roleName = user.role?.name ?? '';
-    // For endpoint selection: Only true Admin roles get all projects
-    // Manager and other roles should use user-specific endpoint
     final isAdmin = roleName == 'Admin' ||
-                    roleName == 'Admin (Default)' || 
-                    roleName == 'Super Admin' || 
-                    roleName == 'App Administrator'; 
-    // Adjust based on actual role names if known, typically 'Super Admin' in Catalyst.
-
+                    roleName == 'Admin (Default)' ||
+                    roleName == 'Super Admin' ||
+                    roleName == 'App Administrator';
 
     String url;
     if (isAdmin) {
-       // Relative path for admin — base URL and token handled by ApiClient.
-       url = 'time_entry_management_application_function/projects';
+      url = 'time_entry_management_application_function/projects';
     } else {
-       // Relative path for regular user.
-       url = 'time_entry_management_application_function/projects/${user.id}';
+      url = 'time_entry_management_application_function/projects/$userId';
     }
     debugPrint(
-      '🩸 Fetching projects | isAdmin: $isAdmin | path: $url | Role: ${user.role?.name}',
+      '🩸 Fetching projects | isAdmin: $isAdmin | path: $url | Role: $roleName',
     );
     try {
       final response = await _client.get(url);

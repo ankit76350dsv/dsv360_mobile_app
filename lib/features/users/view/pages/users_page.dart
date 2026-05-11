@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/cache/user_cache_provider.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/is_have_access.dart';
 import 'package:dsv360/core/constants/theme.dart';
@@ -57,8 +58,9 @@ class _UsersPageState extends ConsumerState<UsersPage> {
     final connectivityStatus = ref.watch(checkConnectivityProvider);
     final customColors = Theme.of(context).custom;
 
-    final userRole = AuthManager.instance.currentUser?.role?.name
-        .toLowerCase(); //get user role here
+    final userRole = (AuthManager.instance.currentUser?.role?.name ??
+            ref.read(globalUserProvider)?.role ?? '')
+        .toLowerCase();
 
     return Scaffold(
       drawer: const AppDrawer(),

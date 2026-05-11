@@ -14,7 +14,7 @@ import 'package:dsv360/features/sprints/viewmodel/hierarchy_viewmodel.dart';
 import 'package:dsv360/features/sprints/viewmodel/story_viewmodel.dart';
 import 'package:dsv360/features/sprints/viewmodel/sprints_project_viewmodel.dart'
     as sprints_projects_vm;
-import 'package:dsv360/core/constants/active_user_repository.dart';
+import 'package:dsv360/core/cache/user_cache_provider.dart';
 import 'package:dsv360/core/widgets/TopBar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -425,8 +425,8 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
             (isDark
                 ? AppColorsDark.tabbarBackground
                 : AppColorsLight.tabbarBackground);
-        final activeUser = ref.watch(activeUserRepositoryProvider);
-        final roleName = (activeUser?.roleName ?? '').toLowerCase().trim();
+        final globalUser = ref.watch(globalUserProvider);
+        final roleName = (globalUser?.role ?? '').toLowerCase().trim();
         final canManageSprints =
             roleName == 'admin' ||
             roleName == 'super admin' ||
@@ -691,7 +691,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                       widgetProjectId: widget.projectId,
                                       widgetProjectName: widget.projectName,
                                       canManageSprints: canManageSprints,
-                                      activeUserId: activeUser?.userId,
+                                      activeUserId: globalUser?.id,
                                       isDark: isDark,
                                       customColors: customColors,
                                       cardBg: cardBg,
@@ -760,7 +760,7 @@ class _SprintsScreenState extends ConsumerState<SprintsScreen>
                                       greyBorder: greyBorder,
                                       primary: primary,
                                       canManageSprints: canManageSprints,
-                                      currentUserId: activeUser?.userId,
+                                      currentUserId: globalUser?.id,
                                       onRetry: () => ref.invalidate(
                                         rawHierarchyProvider(projectId),
                                       ),

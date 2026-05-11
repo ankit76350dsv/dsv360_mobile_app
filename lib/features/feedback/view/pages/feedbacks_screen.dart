@@ -7,8 +7,7 @@ import 'package:dsv360/core/widgets/global_loader.dart';
 import 'package:dsv360/features/dashboard/view/pages/dashboard_page.dart';
 import 'package:dsv360/features/feedback/view/pages/feedback_detail_screen.dart';
 import 'package:dsv360/features/feedback/view/pages/feedback_form_screen.dart';
-import 'package:dsv360/core/constants/auth_manager.dart';
-import 'package:dsv360/core/constants/is_have_access.dart';
+import 'package:dsv360/core/cache/user_cache_provider.dart';
 import 'package:dsv360/core/widgets/feedback_card.dart';
 import 'package:dsv360/core/widgets/custom_search_bar.dart';
 import 'package:dsv360/features/feedback/viewmodel/feedback_viewmodel.dart';
@@ -31,7 +30,7 @@ class _FeedbacksScreenState extends ConsumerState<FeedbacksScreen> {
   bool _isRefreshingData = false;
   final List<String> _filterOptions = const ['All', 'Fixed', 'Will Fix Soon'];
 
-  final userRole = AuthManager.instance.currentUser?.role?.name.toLowerCase();
+  String get _cachedRole => ref.read(globalUserProvider)?.role.toLowerCase() ?? '';
 
   List<FeedbackModel> _filterFeedbacks(List<FeedbackModel> feedbacks) {
     var filtered = feedbacks;
@@ -126,7 +125,7 @@ class _FeedbacksScreenState extends ConsumerState<FeedbacksScreen> {
         ],
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: (userRole != 'admin' || userRole != 'admin') ? connectivityStatus.when(
+      floatingActionButton: connectivityStatus.when(
         data: (results) {
           if (results.contains(ConnectivityResult.none)) {
             return null;
@@ -147,7 +146,7 @@ class _FeedbacksScreenState extends ConsumerState<FeedbacksScreen> {
         },
         loading: () => null,
         error: (_, __) => null,
-      ) : null,
+      ),
       body: SafeArea(
         child: connectivityStatus.when(
           data: (results) {
@@ -183,21 +182,9 @@ class _FeedbacksScreenState extends ConsumerState<FeedbacksScreen> {
                                           },
                                         ),
                                       ),
-                                      if (AuthManager
-                                              .instance
-                                              .currentUser
-                                              ?.role
-                                              ?.name
-                                              .toLowerCase() ==
-                                          "admin")
+                                      if (_cachedRole == "admin")
                                         const SizedBox(width: 8),
-                                      if (AuthManager
-                                              .instance
-                                              .currentUser
-                                              ?.role
-                                              ?.name
-                                              .toLowerCase() ==
-                                          "admin")
+                                      if (_cachedRole == "admin")
                                         Container(
                                           decoration: BoxDecoration(
                                             border: Border.all(
@@ -292,16 +279,12 @@ class _FeedbacksScreenState extends ConsumerState<FeedbacksScreen> {
                       }
 
                       try {
-                        if (!IsHaveAccess.instance.isAdmin) {
-                          final currentUser = AuthManager.instance.currentUser;
-                          if (currentUser != null) {
-                            final String? uid = (currentUser as dynamic).id
-                                ?.toString();
-                            if (uid != null && uid.isNotEmpty) {
-                              displayFeedbacks = displayFeedbacks
-                                  .where((f) => f.userId == uid)
-                                  .toList();
-                            }
+                        if (_cachedRole != 'admin') {
+                          final uid = ref.read(globalUserProvider)?.id ?? '';
+                          if (uid.isNotEmpty) {
+                            displayFeedbacks = displayFeedbacks
+                                .where((f) => f.userId == uid)
+                                .toList();
                           }
                         }
                       } catch (e) {

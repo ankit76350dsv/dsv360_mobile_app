@@ -74,14 +74,19 @@ class UserManager {
           userProfile = profile;
           debugPrint('User Profile fetched: ${profile.userId}');
 
-          // Persist minimal user values to local cache for quick access.
+          // Persist user values to local cache for quick access (includes
+          // offline-required fields: firstName, lastName, orgId).
           try {
+            final catalystUser = AuthManager.instance.currentUser;
             final map = <String, String?>{
               'Username': profile.username,
-              'Email': AuthManager.instance.currentUser?.emailId ?? '',
+              'Email': catalystUser?.emailId ?? '',
               'UserId': profile.userId,
-              'Role': profile.roleId,
+              'Role': catalystUser?.role?.name ?? profile.roleId,
               'Phone': profile.phone,
+              'FirstName': catalystUser?.firstName ?? '',
+              'LastName': catalystUser?.lastName ?? '',
+              'OrgId': catalystUser?.zaaid.toString() ?? '',
             };
             await UserCacheRepository.saveUserMap(map);
           } catch (_) {}

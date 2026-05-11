@@ -8,6 +8,9 @@ class GlobalUser {
   final String email;
   final String role;
   final String phone;
+  final String firstName;
+  final String lastName;
+  final String orgId;
 
   GlobalUser({
     required this.id,
@@ -15,6 +18,9 @@ class GlobalUser {
     required this.email,
     required this.role,
     required this.phone,
+    this.firstName = '',
+    this.lastName = '',
+    this.orgId = '',
   });
 
   factory GlobalUser.fromMap(Map<String, String> map) {
@@ -24,6 +30,9 @@ class GlobalUser {
       email: map['Email'] ?? '',
       role: map['Role'] ?? '',
       phone: map['Phone'] ?? '',
+      firstName: map['FirstName'] ?? '',
+      lastName: map['LastName'] ?? '',
+      orgId: map['OrgId'] ?? '',
     );
   }
 
@@ -33,6 +42,9 @@ class GlobalUser {
         'Email': email,
         'Role': role,
         'Phone': phone,
+        'FirstName': firstName,
+        'LastName': lastName,
+        'OrgId': orgId,
       };
 }
 

@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dsv360/core/cache/user_cache_provider.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/network/connectivity_provider.dart';
@@ -290,8 +291,9 @@ class _IssuesScreenState extends ConsumerState<IssuesScreen> {
   @override
   Widget build(BuildContext context) {
     final customColors = Theme.of(context).custom;
-    final userRole =
-        AuthManager.instance.currentUser?.role?.name.toLowerCase() ?? '';
+    final userRole = (AuthManager.instance.currentUser?.role?.name ??
+            ref.read(globalUserProvider)?.role ?? '')
+        .toLowerCase();
     final connectivityStatus = ref.watch(checkConnectivityProvider);
 
     return Scaffold(

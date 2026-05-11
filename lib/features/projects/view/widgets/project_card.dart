@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../model/project_model.dart';
-import '../../../../core/constants/auth_manager.dart';
+import '../../../../core/cache/user_cache_provider.dart';
 import '../../../../core/models/attachment_list_modal.dart';
-// import '../../screens/tasks_screen.dart';
 import '../../../task/views/pages/tasks_screen.dart';
 import '../../../issues/view/pages/issues_screen.dart';
 import '../../../time_entry/view/pages/time_entries_screen.dart';
 import '../../../../core/widgets/generic_card.dart';
 
-class ProjectCard extends StatelessWidget {
+class ProjectCard extends ConsumerWidget {
   final ProjectModel project;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
@@ -24,13 +24,13 @@ class ProjectCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final dateFormat = DateFormat('dd/MM/yy');
     final dateRange =
         '${dateFormat.format(project.startDate)} - ${dateFormat.format(project.endDate)}';
-    
-    final user = AuthManager.instance.currentUser;
-    final isAdmin = user?.role?.name == 'Admin';
+
+    final roleName = ref.watch(globalUserProvider)?.role ?? '';
+    final isAdmin = roleName == 'Admin';
 
     // Build chips list based on user role
     final chipsList = <CardChip>[

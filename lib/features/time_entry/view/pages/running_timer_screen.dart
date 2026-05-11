@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/constants/theme.dart';
 import '../../../../core/constants/auth_manager.dart';
+import '../../../../core/cache/user_cache_provider.dart';
 import '../../../../core/utils/snackbar_utils.dart';
 import '../../repositories/check_timer_status_repository.dart';
 import '../../repositories/end_timer_repository.dart';
@@ -10,7 +12,7 @@ import '../../../../core/widgets/custom_input_field.dart';
 import '../../../../core/widgets/TopBar.dart';
 import 'timer_service.dart';
 
-class RunningTimerScreen extends StatefulWidget {
+class RunningTimerScreen extends ConsumerStatefulWidget {
   final String taskId;
   final String projectId;
   final String taskName;
@@ -25,10 +27,10 @@ class RunningTimerScreen extends StatefulWidget {
   });
 
   @override
-  State<RunningTimerScreen> createState() => _RunningTimerScreenState();
+  ConsumerState<RunningTimerScreen> createState() => _RunningTimerScreenState();
 }
 
-class _RunningTimerScreenState extends State<RunningTimerScreen> {
+class _RunningTimerScreenState extends ConsumerState<RunningTimerScreen> {
   late TextEditingController _userController;
   late TextEditingController _noteController;
 
@@ -42,8 +44,9 @@ class _RunningTimerScreenState extends State<RunningTimerScreen> {
     super.initState();
     TimerService.instance.addListener(_onTick);
 
-    final firstName = AuthManager.instance.currentUser?.firstName ?? '';
-    final lastName = AuthManager.instance.currentUser?.lastName ?? '';
+    final cached = ref.read(globalUserProvider);
+    final firstName = AuthManager.instance.currentUser?.firstName ?? cached?.firstName ?? '';
+    final lastName = AuthManager.instance.currentUser?.lastName ?? cached?.lastName ?? '';
     _userController = TextEditingController(
       text: '$firstName $lastName'.trim(),
     );
@@ -67,7 +70,7 @@ class _RunningTimerScreenState extends State<RunningTimerScreen> {
 
     setState(() => _isLoading = true);
     try {
-      final userId = AuthManager.instance.currentUser?.id ?? '';
+      final userId = AuthManager.instance.currentUser?.id ?? ref.read(globalUserProvider)?.id ?? '';
 
       // Fetch the server-side timer row ID
       final statusResponse = await CheckTimerStatusRepository().checkTimerStatus(userId);

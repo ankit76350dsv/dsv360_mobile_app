@@ -1,11 +1,12 @@
-import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/cache/user_cache_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dsv360/features/sprints/view/pages/create_story_page.dart';
 import 'sprint_story.dart';
 import 'sprint_column.dart';
 import 'story_card.dart';
 
-class KanbanColumn extends StatefulWidget {
+class KanbanColumn extends ConsumerStatefulWidget {
   final SprintColumn column;
   final List<SprintStory> stories;
   final List<SprintStory> allStories;
@@ -43,10 +44,10 @@ class KanbanColumn extends StatefulWidget {
   });
 
   @override
-  State<KanbanColumn> createState() => _KanbanColumnState();
+  ConsumerState<KanbanColumn> createState() => _KanbanColumnState();
 }
 
-class _KanbanColumnState extends State<KanbanColumn> {
+class _KanbanColumnState extends ConsumerState<KanbanColumn> {
   bool _isDragOver = false;
 
   @override
@@ -122,7 +123,7 @@ class _KanbanColumnState extends State<KanbanColumn> {
                     const SizedBox(width: 4),
                     Builder(
                       builder: (context) {
-                        final roleName = (AuthManager.instance.currentUser?.role?.name ?? '').toLowerCase().trim();
+                        final roleName = (ref.read(globalUserProvider)?.role ?? '').toLowerCase().trim();
                         final isAdmin = roleName == 'admin' || roleName == 'super admin' || roleName.contains('manager');
                         if (!isAdmin) return const SizedBox.shrink();
                         return GestureDetector(

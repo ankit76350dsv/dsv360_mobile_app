@@ -1,4 +1,5 @@
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/cache/user_cache_provider.dart';
 import 'package:dsv360/features/badges/viewmodel/badge_image_viewmodel.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/utils/snackbar_utils.dart';
@@ -152,7 +153,9 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
     setState(() => _taskTimerFetching = true);
     try {
       final user = AuthManager.instance.currentUser;
-      final userId = user?.id.toString() ?? '';
+      final userId = user?.id.toString().isNotEmpty == true
+          ? user!.id.toString()
+          : ref.read(globalUserProvider)?.id ?? '';
       if (userId.isEmpty) {
         setState(() => _taskTimerFetching = false);
         return;
@@ -190,9 +193,11 @@ class _SubTaskPageState extends ConsumerState<SubTaskPage>
     setState(() => _taskTimerFetching = true);
     try {
       final user = AuthManager.instance.currentUser;
-      final userId = user?.id.toString() ?? '';
-      final username = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'
-          .trim();
+      final cached = ref.read(globalUserProvider);
+      final userId = user?.id.toString().isNotEmpty == true
+          ? user!.id.toString()
+          : cached?.id ?? '';
+      final username = '${user?.firstName ?? cached?.firstName ?? ''} ${user?.lastName ?? cached?.lastName ?? ''}'.trim();
       final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
 
       final result = await ref
@@ -1149,7 +1154,7 @@ class _StatusButtonState extends State<_StatusButton> {
 
 // ── Sub-task Card ─────────────────────────────────────────────────────────────
 
-class _SubTaskCard extends StatefulWidget {
+class _SubTaskCard extends ConsumerStatefulWidget {
   final SubTaskModel subTask;
   final int index;
   final String assigneeName;
@@ -1193,10 +1198,10 @@ class _SubTaskCard extends StatefulWidget {
   });
 
   @override
-  State<_SubTaskCard> createState() => _SubTaskCardState();
+  ConsumerState<_SubTaskCard> createState() => _SubTaskCardState();
 }
 
-class _SubTaskCardState extends State<_SubTaskCard> {
+class _SubTaskCardState extends ConsumerState<_SubTaskCard> {
   late String _status;
 
   // ── SubTask timer state ────────────────────────────────────────────────────
@@ -1238,9 +1243,11 @@ class _SubTaskCardState extends State<_SubTaskCard> {
     setState(() => _timerFetching = true);
     try {
       final user = AuthManager.instance.currentUser;
-      final userId = user?.id.toString() ?? '';
-      final username = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'
-          .trim();
+      final cachedSub = ref.read(globalUserProvider);
+      final userId = user?.id.toString().isNotEmpty == true
+          ? user!.id.toString()
+          : cachedSub?.id ?? '';
+      final username = '${user?.firstName ?? cachedSub?.firstName ?? ''} ${user?.lastName ?? cachedSub?.lastName ?? ''}'.trim();
       final today = DateFormat('yyyy-MM-dd').format(DateTime.now());
       final subTaskName = '${widget.task.title} > ${widget.subTask.title}';
       final storyId = widget.subTask.storyId.isNotEmpty

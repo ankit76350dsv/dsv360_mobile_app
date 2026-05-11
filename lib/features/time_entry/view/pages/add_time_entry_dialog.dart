@@ -1,10 +1,12 @@
 import 'package:dsv360/features/time_entry/view/pages/request_time_entries_screen.dart' as req_screen;
 import 'package:dsv360/core/utils/snackbar_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../model/time_entry_model.dart';
 import '../../../../core/constants/theme.dart';
 import '../../../../core/constants/auth_manager.dart';
+import '../../../../core/cache/user_cache_provider.dart';
 import '../../repositories/time_entry_repository.dart';
 import '../../repositories/start_timer_repository.dart';
 import '../../../../core/widgets/custom_dropdown_field.dart';
@@ -15,7 +17,7 @@ import 'timer_service.dart';
 import 'running_timer_screen.dart';
 import '../../repositories/check_timer_status_repository.dart';
 
-class AddTimeEntryDialog extends StatefulWidget {
+class AddTimeEntryDialog extends ConsumerStatefulWidget {
   final String taskId;
   final String projectId;
   final String taskName;
@@ -33,10 +35,10 @@ class AddTimeEntryDialog extends StatefulWidget {
   });
 
   @override
-  State<AddTimeEntryDialog> createState() => _AddTimeEntryDialogState();
+  ConsumerState<AddTimeEntryDialog> createState() => _AddTimeEntryDialogState();
 }
 
-class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
+class _AddTimeEntryDialogState extends ConsumerState<AddTimeEntryDialog> {
   late TextEditingController _userController;
   late TextEditingController _dateController;
   late TextEditingController _startTimeController;
@@ -59,8 +61,9 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
   void initState() {
     super.initState();
     _repository = TimeEntryRepository();
-    final firstName = AuthManager.instance.currentUser?.firstName ?? '';
-    final lastName = AuthManager.instance.currentUser?.lastName ?? '';
+    final cached = ref.read(globalUserProvider);
+    final firstName = AuthManager.instance.currentUser?.firstName ?? cached?.firstName ?? '';
+    final lastName = AuthManager.instance.currentUser?.lastName ?? cached?.lastName ?? '';
     final loggedInUser = '$firstName $lastName'.trim().isNotEmpty
         ? '$firstName $lastName'.trim()
         : widget.currentUser;
@@ -97,7 +100,8 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
     // Only sync if TimerService thinks it's not running — avoids duplicate tickers
     if (TimerService.instance.isRunning) return;
     try {
-      final userId = AuthManager.instance.currentUser?.id ?? '';
+      final _cached = ref.read(globalUserProvider);
+      final userId = AuthManager.instance.currentUser?.id ?? _cached?.id ?? '';
       if (userId.isEmpty) return;
       final status = await CheckTimerStatusRepository().checkTimerStatus(
         userId,
@@ -425,9 +429,10 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
     try {
       setState(() => _isLoading = true);
 
-      final userId = AuthManager.instance.currentUser?.id ?? '';
-      final firstName = AuthManager.instance.currentUser?.firstName ?? '';
-      final lastName = AuthManager.instance.currentUser?.lastName ?? '';
+      final cachedUser = ref.read(globalUserProvider);
+      final userId = AuthManager.instance.currentUser?.id ?? cachedUser?.id ?? '';
+      final firstName = AuthManager.instance.currentUser?.firstName ?? cachedUser?.firstName ?? '';
+      final lastName = AuthManager.instance.currentUser?.lastName ?? cachedUser?.lastName ?? '';
       final username = '$firstName $lastName'.trim();
       if (userId.isEmpty || username.isEmpty) {
         throw Exception('User information not found');
@@ -505,9 +510,10 @@ class _AddTimeEntryDialogState extends State<AddTimeEntryDialog> {
 
     setState(() => _isLoading = true);
     try {
-      final userId = AuthManager.instance.currentUser?.id ?? '';
-      final firstName = AuthManager.instance.currentUser?.firstName ?? '';
-      final lastName = AuthManager.instance.currentUser?.lastName ?? '';
+      final cachedUser2 = ref.read(globalUserProvider);
+      final userId = AuthManager.instance.currentUser?.id ?? cachedUser2?.id ?? '';
+      final firstName = AuthManager.instance.currentUser?.firstName ?? cachedUser2?.firstName ?? '';
+      final lastName = AuthManager.instance.currentUser?.lastName ?? cachedUser2?.lastName ?? '';
       final username = '$firstName $lastName'.trim();
 
       await StartTimerRepository().startTimer(

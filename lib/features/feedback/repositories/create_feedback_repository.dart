@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/cache/user_cache_service.dart';
 import 'package:dsv360/core/network/dio_client.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
@@ -16,7 +17,9 @@ class CreateFeedbackRepository {
     const path = 'time_entry_management_application_function/feedback';
 
     final user = AuthManager.instance.currentUser;
-    if (user == null) throw Exception('User not logged in');
+    final cachedMap = user == null ? await UserCacheService.loadUserMap() : null;
+    final userId = user?.id ?? cachedMap?['UserId'] ?? '';
+    if (userId.isEmpty) throw Exception('User not logged in');
 
     if (images.length > 3) throw Exception('Maximum 3 images allowed');
 
@@ -24,7 +27,7 @@ class CreateFeedbackRepository {
       'Name': name.trim(),
       'Email': email.trim(),
       'Message': message.trim(),
-      'User_ID': user.id,
+      'User_ID': userId,
     });
 
     final now = DateTime.now().millisecondsSinceEpoch;

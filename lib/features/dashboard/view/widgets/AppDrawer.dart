@@ -1,8 +1,8 @@
-import 'package:dsv360/core/constants/auth_manager.dart';
+import 'package:dsv360/core/cache/user_cache_provider.dart';
 import 'package:dsv360/core/constants/session_manager.dart';
 import 'package:dsv360/core/constants/theme.dart';
 import 'package:dsv360/core/constants/user_manager.dart';
-import 'package:dsv360/core/constants/is_have_access.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dsv360/core/widgets/warning_dialogue_box.dart';
 import 'package:dsv360/features/sprints/view/pages/sprints_screen.dart';
 import 'package:dsv360/features/worklogs/view/pages/work_log_screen.dart';
@@ -23,7 +23,7 @@ import 'package:dsv360/features/feedback/view/pages/feedback_form_screen.dart';
 import 'package:dsv360/features/settings/views/pages/settings_page.dart';
 import 'package:dsv360/features/profile/cache/image_cache_service.dart';
 
-class AppDrawer extends StatelessWidget {
+class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
 
   Future<ImageProvider?> _getCachedProfileImage() async {
@@ -33,9 +33,10 @@ class AppDrawer extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textTheme = Theme.of(context).textTheme;
     final customColors = Theme.of(context).custom;
+    final isAdmin = (ref.watch(globalUserProvider)?.role ?? '') == 'Admin';
 
     return SizedBox(
       width: MediaQuery.of(context).size.width * 0.8, // 80% screen
@@ -97,7 +98,7 @@ class AppDrawer extends StatelessWidget {
                         ],
                       ),
                     ),
-                    profileCardUi(context),
+                    profileCardUi(context, ref),
                   ],
                 ),
               ),
@@ -163,7 +164,7 @@ class AppDrawer extends StatelessWidget {
                       );
                     },
                   ),
-                  if (IsHaveAccess.instance.isAdmin)
+                  if (isAdmin)
                     _DrawerItem(
                       icon: Icons.apartment_outlined,
                       label: 'Accounts',
@@ -175,7 +176,7 @@ class AppDrawer extends StatelessWidget {
                         );
                       },
                     ),
-                  if (IsHaveAccess.instance.isAdmin)
+                  if (isAdmin)
                     _DrawerItem(
                       icon: Icons.filter_alt_outlined,
                       label: 'Client Contacts',
@@ -189,7 +190,7 @@ class AppDrawer extends StatelessWidget {
                         );
                       },
                     ),
-                  if (IsHaveAccess.instance.isAdmin)
+                  if (isAdmin)
                     _DrawerItem(
                       icon: Icons.verified_outlined,
                       label: 'Badges',
@@ -224,7 +225,7 @@ class AppDrawer extends StatelessWidget {
                     },
                   ),
                   
-                  if (IsHaveAccess.instance.isAdmin)
+                  if (isAdmin)
                     _DrawerItem(
                       icon: Icons.groups_outlined,
                       label: 'Teams',
@@ -263,7 +264,7 @@ class AppDrawer extends StatelessWidget {
                     label: 'Feedback',
                     subLabel: 'User suggestions',
                     onTap: () {
-                      if (IsHaveAccess.instance.isAdmin) {
+                      if (isAdmin) {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -371,10 +372,10 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  Widget profileCardUi(BuildContext context) {
+  Widget profileCardUi(BuildContext context, WidgetRef ref) {
     final customColors = Theme.of(context).custom;
     final userProfile = UserManager.instance.userProfile;
-    final user = AuthManager.instance.currentUser;
+    final globalUser = ref.watch(globalUserProvider);
 
     return Container(
       width: double.infinity,
@@ -426,14 +427,14 @@ class AppDrawer extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            userProfile?.username ?? 'User Name',
+            userProfile?.username ?? globalUser?.name ?? 'User Name',
             style: TextStyle(
               fontWeight: FontWeight.w600,
               color: customColors.textPrimary,
             ),
           ),
           Text(
-            user?.role?.name ?? 'No Role',
+            globalUser?.role ?? 'No Role',
             style: TextStyle(fontSize: 12.0, color: customColors.textSecondary),
           ),
         ],
